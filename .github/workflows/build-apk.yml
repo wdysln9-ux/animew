@@ -40,6 +40,20 @@ jobs:
           echo "Disk space after cleanup:"
           df -h /
 
+      # Reuse Android native toolchains and Gradle dependencies between runs.
+      # The first successful cache save prevents downloading/unpacking the NDK again.
+      - name: Cache Android toolchain and Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/lib/android/sdk/ndk/28.2.13676358
+            /usr/local/lib/android/sdk/cmake/3.22.1
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: android-${{ runner.os }}-${{ hashFiles('android/gradle/wrapper/gradle-wrapper.properties', 'android/settings.gradle', 'android/build.gradle', 'pubspec.lock') }}
+          restore-keys: |
+            android-${{ runner.os }}-
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -76,6 +90,8 @@ jobs:
         env:
           BUILD_NAME: 1.0.${{ github.run_number }}
           BUILD_NUMBER: ${{ github.run_number }}
+          # Disable Gradle's file-system watcher on this ephemeral runner.
+          GRADLE_OPTS: -Dorg.gradle.vfs.watch=false
         run: |
           flutter build apk --release --target-platform android-arm64 \
             --build-name="$BUILD_NAME" \
