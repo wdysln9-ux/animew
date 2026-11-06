@@ -1,6 +1,5 @@
 name: Build AnimeW ARM64 APK
 # Feature branches run the same arm64 release build for validation.
-# Build trigger refreshed for the latest episode detail layout changes.
 
 on:
   push:
@@ -23,6 +22,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Free space used by unrelated preinstalled tools on GitHub's runner.
+      # Keep Android platform/build-tools, NDK, and CMake required by Flutter plugins.
+      - name: Free runner disk space
+        run: |
+          echo "Disk space before cleanup:"
+          df -h /
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/share/powershell \
+            /usr/local/share/boost \
+            /usr/share/swift \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/local/lib/android/sdk/system-images \
+            /usr/local/lib/android/sdk/emulator \
+            /usr/local/lib/android/sdk/sources \
+            /usr/local/lib/android/sdk/skins
+          sudo apt-get clean
+          sudo docker system prune -af || true
+          echo "Disk space after cleanup:"
+          df -h /
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -33,6 +53,7 @@ jobs:
         run: |
           flutter --version
           dart --version
+          df -h /
 
       - name: Install dependencies
         run: flutter pub get
@@ -48,7 +69,7 @@ jobs:
         run: |
           if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
             printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/release-keystore.jks
-            printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=release-keystore.jks\n' \
+            printf 'storePassword=%s\\nkeyPassword=%s\\nkeyAlias=%s\\nstoreFile=release-keystore.jks\\n' \
               "$ANDROID_KEYSTORE_PASSWORD" "$ANDROID_KEY_PASSWORD" "$ANDROID_KEY_ALIAS" > android/key.properties
           else
             echo "No persistent signing secrets configured; APK will use runner debug signing."
@@ -62,6 +83,7 @@ jobs:
           flutter build apk --release --target-platform android-arm64 \
             --build-name="$BUILD_NAME" \
             --build-number="$((30000 + BUILD_NUMBER))"
+          df -h /
 
       # Give the APK a versioned filename. GitHub Release stores this as a
       # raw .apk asset; Actions artifacts are ZIP-wrapped, so do not upload it
