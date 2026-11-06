@@ -25,9 +25,9 @@ jobs:
           ref: 0e8bb861eb190176c1ad351dc9dcb9b4f2d668c7
           path: source
 
-      - name: Copy complete source tree
+      - name: Copy complete source tree without workflow files
         run: |
-          rsync -a --delete --exclude='/.git/' --exclude='/source/' source/ ./
+          rsync -a --delete --exclude='/.git/' --exclude='/source/' --exclude='/.github/workflows/' source/ ./
           rm -rf source
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
