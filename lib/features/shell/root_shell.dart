@@ -225,6 +225,13 @@ class _RootShellState extends State<RootShell>
   /// Only reached when Back would otherwise close the app — deep screens
   /// (detail, player, …) are pushed above this shell and pop normally.
   void _onBack() {
+    // Back from the shell while a mini-player is active restores the player
+    // instead of showing the root double-back-to-exit toast.
+    final miniPlayer = MiniPlayerState.active.value;
+    if (miniPlayer != null) {
+      miniPlayer.onRestore(false);
+      return;
+    }
     // A sub-page inside the current tab (an open Settings section, an active
     // search) owns this Back — its own PopScope handles it in the same event.
     // Both PopScopes share this route, so Flutter fires ours too; bail so we
