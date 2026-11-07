@@ -1766,52 +1766,60 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// YouTube-style quick settings shown from the player gear button.
   void _openSettings() {
     _bumpControls();
+    final active = _c.state.active;
+    final qualityValue = _c.state.activeQuality?.quality ??
+        (active == null ? null : _sourceResolution(active)) ??
+        (( _c.player.state.height ?? 0) > 0
+            ? '${_c.player.state.height}p'
+            : 'Otomatis');
+    final subtitleTrack = _c.activeSubtitleTrack;
+    final subtitleValue = subtitleTrack.id == 'no'
+        ? 'Nonaktif'
+        : (subtitleTrack.title?.trim().isNotEmpty == true
+            ? subtitleTrack.title!
+            : 'Aktif');
     _sheet<void>(
       _SheetColumn(
         header: 'Setelan',
         children: [
-          _SheetRow(
+          _QuickSettingRow(
+            icon: Icons.tune_rounded,
             label: 'Kualitas video',
-            active: false,
-            subtitle: _c.state.qualities.isNotEmpty || _c.mediaVideoTracks.length > 1
-                ? (_c.state.activeQuality?.quality ??
-                    _c.state.active?.quality ??
-                    'Otomatis')
-                : (_c.state.active?.quality ?? 'Saat ini'),
+            value: qualityValue,
             onTap: () {
               Navigator.pop(context);
               _openQualitySheet();
             },
           ),
-          _SheetRow(
+          _QuickSettingRow(
+            icon: Icons.speed_rounded,
             label: 'Kecepatan pemutaran',
-            active: false,
-            subtitle: '${_c.player.state.rate}x',
+            value: '${_c.player.state.rate}x',
             onTap: () {
               Navigator.pop(context);
               _openSpeedSheet();
             },
           ),
-          _SheetRow(
+          _QuickSettingRow(
+            icon: Icons.subtitles_outlined,
             label: 'Subtitle',
-            active: false,
-            subtitle: 'Pilih atau atur subtitle',
+            value: subtitleValue,
             onTap: () {
               Navigator.pop(context);
               _openAudioSubsSheet();
             },
           ),
-          _SheetRow(
+          _QuickSettingRow(
+            icon: Icons.photo_camera_outlined,
             label: 'Screenshot',
-            active: false,
             onTap: () {
               Navigator.pop(context);
               _captureScreenshot();
             },
           ),
-          _SheetRow(
+          _QuickSettingRow(
+            icon: Icons.settings_outlined,
             label: 'Selengkapnya',
-            active: false,
             onTap: () {
               Navigator.pop(context);
               _openPlaybackSettings();
