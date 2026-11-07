@@ -109,6 +109,16 @@ class MediaItem extends Equatable {
   /// without any caller having to ask which kind of row it is holding.
   final int? score;
 
+  /// AniList popularity / MAL list users. Null when unavailable.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final int? popularity;
+
+  /// Metadata format and total episode count for the poster's secondary line.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? format;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final int? totalEpisodes;
+
   /// True only when a catalogue explicitly marks this listing adult.
   final bool isAdult;
 
@@ -136,6 +146,9 @@ class MediaItem extends Equatable {
     this.genres = const [],
     this.status,
     this.score,
+    this.popularity,
+    this.format,
+    this.totalEpisodes,
     this.isAdult = false,
   });
 
@@ -181,6 +194,9 @@ class MediaItem extends Equatable {
     genres: genres,
     status: status,
     score: score,
+    popularity: popularity,
+    format: format,
+    totalEpisodes: totalEpisodes,
     isAdult: isAdult,
   );
 
@@ -207,6 +223,9 @@ class MediaItem extends Equatable {
     genres,
     status,
     score,
+    popularity,
+    format,
+    totalEpisodes,
     isAdult,
   ];
 }
