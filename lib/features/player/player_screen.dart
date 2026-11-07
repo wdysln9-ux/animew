@@ -2701,25 +2701,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
           header: context.l10n.playbackSpeed,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final rate in rates)
-                    ChoiceChip(
-                      label: Text(rate == 1.0 ? context.l10n.normalSpeed : '${rate}x'),
-                      selected: (current - rate).abs() < 0.01,
-                      onSelected: (_) {
-                        current = rate;
-                        _c.setRateRemembered(rate);
-                        refresh(() {});
-                      },
-                    ),
-                ],
-              ),
-            ),
-            Padding(
               padding: const EdgeInsets.fromLTRB(18, 8, 18, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2764,6 +2745,30 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// In-player decoder switch (top-right). Applies LIVE — mpv re-inits the
   /// decoder in place, so a stuttering/green/black stream can be fixed without
   /// leaving the video.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final rate in rates)
+                    ChoiceChip(
+                      label: Text(rate == 1.0 ? context.l10n.normalSpeed : '${rate}x'),
+                      selected: (current - rate).abs() < 0.01,
+                      onSelected: (_) {
+                        current = rate;
+                        _c.setRateRemembered(rate);
+                        refresh(() {});
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   void _openDecoderSheet() {
     const modes = [
       ('copy', 'Hardware+ (recommended)'),
