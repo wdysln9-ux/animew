@@ -83,7 +83,7 @@ class AniListCatalogue implements AnimeCatalogue {
       'id idMal title{romaji english native} coverImage{large} bannerImage '
       // One int, for the poster's score badge. The rest of the detail fields
       // stay out for the reason above; this one is a number, not a payload.
-      'averageScore genres';
+      'averageScore popularity format episodes status genres';
 
   static String _type(ZKind k) => k == ZKind.anime ? 'ANIME' : 'MANGA';
   static String _format(ZKind k) => switch (k) {
@@ -490,6 +490,10 @@ class AniListCatalogue implements AnimeCatalogue {
       genres: [for (final g in (m['genres'] as List? ?? const [])) '$g'],
       // Already 0-100 here; the other three scale theirs to match.
       score: m['averageScore'] as int?,
+      popularity: m['popularity'] as int?,
+      format: _prettyEnum(m['format'] as String?),
+      totalEpisodes: m['episodes'] as int?,
+      status: _status(m['status'] as String?),
       isAdult: m['isAdult'] == true,
     );
   }
