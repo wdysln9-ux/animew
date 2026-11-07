@@ -321,7 +321,13 @@ class _ControlsOverlay extends StatelessWidget {
       case 'quality':
         // Nothing to switch inside the stream that's playing -> no button,
         // rather than a menu of other servers pretending to be qualities.
-        if (state.qualities.isEmpty && c.mediaVideoTracks.length <= 1) {
+        final hasSourceQualities = state.sources.any((source) =>
+            (source.quality?.trim().isNotEmpty ?? false) ||
+            RegExp(r'(2160|1440|1080|720|576|540|480|360|240|144)\\s*p?', caseSensitive: false)
+                .hasMatch(source.label ?? ''));
+        if (state.qualities.isEmpty &&
+            c.mediaVideoTracks.length <= 1 &&
+            !hasSourceQualities) {
           return null;
         }
         return (Icons.high_quality_rounded, 'Quality', onQuality);
