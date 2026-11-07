@@ -920,15 +920,15 @@ class _EpisodePickerButton extends StatelessWidget {
     message: 'Episode lainnya',
     child: Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(9),
+      borderRadius: BorderRadius.circular(11),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(11),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.16), width: 0.8),
           ),
           padding: const EdgeInsets.fromLTRB(11, 6, 6, 6),
           child: Row(
@@ -947,8 +947,7 @@ class _EpisodePickerButton extends StatelessWidget {
                 width: 54,
                 height: 31,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: Colors.white, width: 1.5),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: thumbnail != null && thumbnail!.trim().isNotEmpty
