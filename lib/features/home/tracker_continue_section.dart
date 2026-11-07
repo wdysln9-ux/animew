@@ -192,6 +192,7 @@ class NewEpisodesSection extends StatelessWidget {
         caption: trackerNextSubtitle(items[i]),
         captionColor: AppColors.accent,
         captionBold: true,
+        showCaption: false,
         onTap: () => onOpen(items[i]),
         onLongPress: onLongPress == null ? null : () => onLongPress!(items[i]),
       ),
@@ -215,6 +216,7 @@ class _TrackerPosterCard extends StatelessWidget {
     required this.onTap,
     this.onLongPress,
     this.captionBold = false,
+    this.showCaption = true,
   });
 
   final TrackerListItem entry;
@@ -222,6 +224,7 @@ class _TrackerPosterCard extends StatelessWidget {
   final String caption;
   final Color captionColor;
   final bool captionBold;
+  final bool showCaption;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
@@ -265,29 +268,19 @@ class _TrackerPosterCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  caption,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.caption.copyWith(
-                    color: captionColor,
-                    fontWeight: captionBold ? FontWeight.w700 : null,
-                    fontSize: 11.5,
-                  ),
-                ),
+          if (showCaption) ...[
+            const SizedBox(height: 8),
+            Text(
+              caption,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.caption.copyWith(
+                color: captionColor,
+                fontWeight: captionBold ? FontWeight.w700 : null,
+                fontSize: 10.5,
               ),
-              if (entry.item.popularity != null && entry.item.popularity! > 0) ...[
-                const SizedBox(width: 6),
-                Icon(Icons.visibility_rounded, size: 14, color: AppColors.textSecondary),
-                const SizedBox(width: 3),
-                Text(_trackerPopularity(entry.item.popularity!), style: AppText.caption.copyWith(fontSize: 11.5, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
-              ],
-            ],
-          ),
+            ),
+          ],
           if (!titleInside)
             PosterCardTitle(
               title: entry.item.title,

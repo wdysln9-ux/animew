@@ -398,31 +398,12 @@ class _PosterCardState extends State<PosterCard> {
                           right: 6,
                           child: _ScoreTag(widget.scoreBadge!),
                         ),
-                      if (showStatus)
-                        Positioned(
-                          top: 6,
-                          left: 6,
-                          child: _PosterTag(widget.statusBadge!, color: widget.statusBadge == 'Selesai' ? const Color(0xFF438BE8) : widget.statusBadge == 'Segera' ? const Color(0xFFE6A52D) : const Color(0xFF20B86B)),
-                        ),
                       if (showRank)
                         Positioned(
                           left: 8,
                           top: 34,
                           child: IgnorePointer(
                             child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 28, height: 1, fontWeight: FontWeight.w500, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
-                          ),
-                        ),
-                      if (showViews)
-                        Positioned(
-                          left: 6,
-                          bottom: 6,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
-                              const SizedBox(width: 3),
-                              Text(_compactPopularity(widget.viewsBadge!), style: TextStyle(fontFamily: AppText.fontFamily, fontFamilyFallback: AppText.fontFamilyFallback, fontSize: 11.5, height: 1, fontWeight: FontWeight.w700, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)])),
-                            ],
                           ),
                         ),
                       if (widget.dubBadge != null &&
@@ -495,17 +476,35 @@ class _PosterCardState extends State<PosterCard> {
                 // leftover space and posters came out different heights across
                 // the same row. Pinning the text also pins the gap to whatever
                 // follows the row.
-                PosterCardTitle(
-                  title: widget.title,
-                  logoItem: widget.logoItem,
-                  width: widget.cellWidth,
-                  maxHeight: _titleBoxHeight,
-                  inside: false,
+                SizedBox(
+                  height: _titleBoxHeight,
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: PosterCardTitle(
+                      title: widget.title,
+                      logoItem: widget.logoItem,
+                      width: widget.cellWidth,
+                      maxHeight: _titleBoxHeight,
+                      inside: false,
+                    ),
+                  ),
                 ),
-                if ((prefs?.posterMetaLine ?? true) && widget.metaLine?.isNotEmpty == true)
+                if ((prefs?.posterMetaLine ?? true) &&
+                    (widget.metaLine?.isNotEmpty == true ||
+                        widget.statusBadge != null ||
+                        (widget.viewsBadge ?? 0) > 0))
                   Padding(
                     padding: EdgeInsets.zero,
-                    child: Text(widget.metaLine!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(fontSize: 11, color: AppColors.textSecondary)),
+                    child: Text(
+                      [
+                        if (widget.statusBadge?.isNotEmpty == true) widget.statusBadge!,
+                        if ((widget.viewsBadge ?? 0) > 0) '◉ ${_compactPopularity(widget.viewsBadge!)}',
+                        if (widget.metaLine?.isNotEmpty == true) widget.metaLine!,
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary),
+                    ),
                   ),
               ],
             ],
@@ -752,7 +751,7 @@ class _PosterTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: color ?? Colors.black.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(15),
@@ -766,8 +765,8 @@ class _PosterTag extends StatelessWidget {
           style: TextStyle(
             fontFamily: AppText.fontFamily,
             fontFamilyFallback: AppText.fontFamilyFallback,
-            fontSize: 11.5,
-            height: 1.1,
+            fontSize: 10.5,
+            height: 1.05,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,
             color: Colors.white,
