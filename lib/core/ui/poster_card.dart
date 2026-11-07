@@ -597,7 +597,6 @@ class _PosterCardTitleState extends State<PosterCardTitle> {
     super.dispose();
   }
 
-  @override
   double _measuredTitleHeight(BuildContext context) {
     final style = widget.textStyle ??
         AppText.caption.copyWith(
@@ -610,7 +609,7 @@ class _PosterCardTitleState extends State<PosterCardTitle> {
       textDirection: Directionality.of(context),
       ellipsis: '…',
     )..layout(maxWidth: widget.width);
-    return painter.height.clamp(1.0, widget.maxHeight);
+    return painter.height.clamp(1.0, widget.maxHeight).toDouble();
   }
 
   @override
