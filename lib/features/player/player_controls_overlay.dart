@@ -867,18 +867,25 @@ class _EpisodePickerButton extends StatelessWidget {
   Widget build(BuildContext context) => Tooltip(
     message: 'Episode lainnya',
     child: Material(
-      color: const Color(0xCC252525),
-      borderRadius: BorderRadius.circular(24),
+      // Same translucent surface family as the player's other controls,
+      // while keeping YouTube's compact rounded-chip silhouette.
+      color: const Color(0x66000000),
+      borderRadius: BorderRadius.circular(20),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          child: Row(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.video_library_outlined, color: Colors.white, size: 17),
-              SizedBox(width: 6),
+              SizedBox(width: 7),
               Text(
                 'Episode lainnya',
                 style: TextStyle(
