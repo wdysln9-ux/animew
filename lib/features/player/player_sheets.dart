@@ -1817,6 +1817,69 @@ class _SheetChips extends StatelessWidget {
   }
 }
 
+class _QuickSettingRow extends StatelessWidget {
+  const _QuickSettingRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String? value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: AppColors.textPrimary),
+            const SizedBox(width: 18),
+            Expanded(
+              child: Text(
+                label,
+                style: AppText.body.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (value != null) ...[
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  value!,
+                  style: AppText.body.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 5),
+            ],
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: AppColors.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _SheetColumn extends StatelessWidget {
   const _SheetColumn({required this.header, required this.children});
   final String header;
