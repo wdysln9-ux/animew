@@ -858,7 +858,6 @@ class _ControlsOverlay extends StatelessWidget {
                             children: [
                               if (left.isNotEmpty) _BarGroup(children: left),
                               const Spacer(),
-                              if (right.isNotEmpty) _BarGroup(children: right),
                               if (showEpisodePicker) ...[
                                 const SizedBox(width: 10),
                                 _EpisodePickerButton(
@@ -870,6 +869,10 @@ class _ControlsOverlay extends StatelessWidget {
                                     onInteract();
                                   },
                                 ),
+                              ],
+                              if (right.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                _BarGroup(children: right),
                               ],
                             ],
                           );
@@ -886,9 +889,6 @@ class _ControlsOverlay extends StatelessWidget {
                           child: Row(
                             children: [
                               if (left.isNotEmpty) _BarGroup(children: left),
-                              if (left.isNotEmpty && right.isNotEmpty)
-                                SizedBox(width: compactEpisodePortrait ? 2 : 8),
-                              if (right.isNotEmpty) _BarGroup(children: right),
                               if (showEpisodePicker) ...[
                                 const SizedBox(width: 10),
                                 _EpisodePickerButton(
@@ -900,6 +900,10 @@ class _ControlsOverlay extends StatelessWidget {
                                     onInteract();
                                   },
                                 ),
+                              ],
+                              if (right.isNotEmpty) ...[
+                                SizedBox(width: left.isNotEmpty ? 8 : 0),
+                                _BarGroup(children: right),
                               ],
                             ],
                           ),
@@ -927,17 +931,13 @@ class _EpisodePickerButton extends StatelessWidget {
   Widget build(BuildContext context) => Tooltip(
     message: 'Episode lainnya',
     child: Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(11),
+      color: Colors.black.withValues(alpha: 0.3),
+      borderRadius: BorderRadius.circular(26),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(11),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.16), width: 0.8),
-          ),
+        borderRadius: BorderRadius.circular(26),
+        child: Padding(
           padding: const EdgeInsets.fromLTRB(11, 6, 6, 6),
           child: Row(
             mainAxisSize: MainAxisSize.min,
