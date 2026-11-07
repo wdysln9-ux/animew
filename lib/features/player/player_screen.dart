@@ -4559,7 +4559,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     // and routed to _handleCloseRequest. This catches the back button, the
     // system/gesture back, and the cast-panel back — all of which maybePop().
     return PopScope(
-      canPop: sl<PlaybackPrefs>().closeConfirmation == 'direct',
+      // In episode-detail mode, the first system Back while fullscreen must
+      // return to the inline episode page instead of popping the player route.
+      // Once details are visible, preserve the configured close behaviour.
+      canPop: (!widget.episodeDetailMode || _showEpisodeDetails) &&
+          sl<PlaybackPrefs>().closeConfirmation == 'direct',
       onPopInvokedWithResult: (didPop, _) {
         AppLogger.instance.log(
           '[player-route] pop didPop=$didPop loading=${_c.state.loadingSources} '
@@ -4567,6 +4571,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
           'deadEnd=$_handlingDeadEnd',
         );
         if (didPop) return;
+        if (widget.episodeDetailMode && !_showEpisodeDetails) {
+          _handlePlayerBack();
+          return;
+        }
         _handleCloseRequest();
       },
       child: scaffold,
