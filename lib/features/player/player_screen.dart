@@ -1663,7 +1663,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     // Use a deliberately slower scrub rate so small finger movements
     // don't jump across minutes of playback. A full screen-width drag moves
     // through 30% of the episode duration, allowing finer positioning.
-    const scrubSensitivity = 0.30;
+    const scrubSensitivity = 0.15;
     final perPx = (_duration.inMilliseconds / w) * scrubSensitivity;
     final deltaMs = (d.primaryDelta! * perPx).round();
     var t = _hSeekTarget.inMilliseconds + deltaMs;
