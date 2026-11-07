@@ -440,7 +440,7 @@ class _PosterCardState extends State<PosterCard> {
                           left: 8,
                           top: 34,
                           child: IgnorePointer(
-                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 28, height: 1, fontWeight: FontWeight.w400, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
+                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 28, height: 1, fontWeight: FontWeight.w600, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
                           ),
                         ),
                       if (widget.dubBadge != null &&
