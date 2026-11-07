@@ -45,7 +45,7 @@ class UpdateInfo {
 /// the newest successful build tag to the running build, downloads the matching
 /// ARM64 APK and hands it to the Android package installer.
 class UpdateService {
-  static const String _repo = 'wdysln9-ux/Zangetsu';
+  static const String _repo = 'wdysln9-ux/animew';
   static const String _latestUrl =
       'https://api.github.com/repos/$_repo/releases/latest';
   static const String _releasesUrl =
@@ -56,7 +56,7 @@ class UpdateService {
 
   final Dio _dio = Dio();
   static const MethodChannel _downloadsChannel =
-      MethodChannel('zangetsu/update_downloads');
+      MethodChannel('animew/update_downloads');
 
   /// Query GitHub for the latest release. Returns an [UpdateInfo] when it is
   /// newer than the installed version (and, when [respectSkip] is true, not the

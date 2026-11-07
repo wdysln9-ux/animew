@@ -693,30 +693,18 @@ class _Comment extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.only(left: depth == 0 ? 0 : 3, bottom: depth == 0 ? 2 : 0),
-      child: IntrinsicHeight(
-        child: Stack(
-          children: [
-            if (depth > 0)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(
-                    painter: const _CommentThreadConnectorPainter(),
-                  ),
-                ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (depth > 0)
+            SizedBox(
+              width: 17,
+              child: CustomPaint(
+                painter: _CommentThreadConnectorPainter(),
+                child: const SizedBox.expand(),
               ),
-            if (children.isNotEmpty)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(
-                    painter: _CommentThreadRailPainter(x: 15.0 + (17.0 * depth)),
-                  ),
-                ),
-              ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-              if (depth > 0) const SizedBox(width: 17),
-              Expanded(
+            ),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -767,11 +755,13 @@ class _Comment extends StatelessWidget {
                                     height: 1.5,
                                   ),
                                 )
-                              : ClipRect(
-                                  child: SizedBox(
-                                    width: double.infinity,
-                                    child: _TranslatedMarkdown(
-                                      text: '${data['comment'] ?? ''}',
+                              : LayoutBuilder(
+                                  builder: (context, constraints) => ClipRect(
+                                    child: SizedBox(
+                                      width: constraints.maxWidth,
+                                      child: _TranslatedMarkdown(
+                                        text: '${data['comment'] ?? ''}',
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -826,10 +816,7 @@ class _Comment extends StatelessWidget {
               ],
             ),
           ),
-              ],
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

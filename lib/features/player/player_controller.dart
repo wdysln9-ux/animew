@@ -2423,6 +2423,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       await sl<TitlePrefsStore>().setSourceLabel(sourceId, url, label);
     }
     await switchSource(s);
+    _buildQualityMenu(_gen);
   }
 
   // Language tokens used to re-match a remembered source across re-resolves
@@ -2492,7 +2493,11 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     VideoSource? tagged;
     VideoSource? byUrl;
-    for (final s in state.sources) {
+    final activeSource = state.active;
+    final candidates = activeSource == null
+        ? <VideoSource>[]
+        : state.sources.where((s) => s.url == activeSource.url).toList();
+    for (final s in candidates) {
       if (!playable(s)) continue;
       if (tagged == null && s.container == SourceContainer.hls) tagged = s;
       if (byUrl == null && looksLikeHlsUrl(s.url)) byUrl = s;
@@ -2502,7 +2507,7 @@ class PlayerCubit extends Cubit<PlayerState> {
     final active = state.active;
     final guess = (active != null && playable(active))
         ? active
-        : state.sources.where(playable).firstOrNull;
+        : candidates.where(playable).firstOrNull;
 
     final candidate = tagged ?? byUrl ?? guess;
     if (candidate == null) return;

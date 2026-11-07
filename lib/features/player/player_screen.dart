@@ -1773,6 +1773,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             ? '${_c.player.state.height}p'
             : 'Otomatis');
     final subtitleTrack = _c.activeSubtitleTrack;
+    final hasSoftSubs = (_c.state.active?.subtitles.isNotEmpty ?? false) || _c.softSubs.isNotEmpty;
     final subtitleValue = subtitleTrack.id == 'no'
         ? 'Nonaktif'
         : (subtitleTrack.title?.trim().isNotEmpty == true
@@ -1803,15 +1804,23 @@ class _PlayerScreenState extends State<PlayerScreen> {
           _QuickSettingRow(
             icon: Icons.subtitles_outlined,
             label: 'Subtitle',
-            value: subtitleValue,
+            value: hasSoftSubs ? (subtitleTrack.id == 'no' ? null : subtitleValue) : null,
+            showChevron: hasSoftSubs,
             onTap: () {
               Navigator.pop(context);
+              if (!hasSoftSubs) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Subtitle hanya tersedia untuk sumber softsubs')),
+                );
+                return;
+              }
               _openAudioSubsSheet();
             },
           ),
           _QuickSettingRow(
             icon: Icons.photo_camera_outlined,
             label: 'Screenshot',
+            showChevron: false,
             onTap: () {
               Navigator.pop(context);
               _captureScreenshot();
@@ -2683,25 +2692,62 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _openSpeedSheet() {
-    const rates = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.84, 4.0, 5.0];
-    final current = _c.player.state.rate;
-    // Chips, not a list. Six rows at 52px each came to 388 — on a 393px-tall
-    // landscape phone that's the entire screen, so you were picking a speed
-    // with the video completely hidden behind the sheet. One wrapping row is
-    // about a fifth of that, and you can see what the speed is doing to the
-    // picture while you choose.
+    const rates = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0];
+    var current = _c.player.state.rate.clamp(0.25, 6.0).toDouble();
     _sheet<void>(
-      _SheetChips(
-        header: context.l10n.playbackSpeed,
-        labels: [
-          for (final r in rates) r == 1.0 ? context.l10n.normalSpeed : '${r}x',
-        ],
-        selected: rates.indexWhere((r) => (current - r).abs() < 0.01),
-        onSelect: (i) {
-          Navigator.pop(context);
-          _c.setRateRemembered(rates[i]);
-          _bumpControls();
-        },
+      StatefulBuilder(
+        builder: (sheetContext, refresh) => _SheetColumn(
+          header: context.l10n.playbackSpeed,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final rate in rates)
+                    ChoiceChip(
+                      label: Text(rate == 1.0 ? context.l10n.normalSpeed : '${rate}x'),
+                      selected: (current - rate).abs() < 0.01,
+                      onSelected: (_) {
+                        current = rate;
+                        _c.setRateRemembered(rate);
+                        refresh(() {});
+                      },
+                    ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    const Expanded(child: Text('Kecepatan khusus')),
+                    Text('${current.toStringAsFixed(current % 1 == 0 ? 0 : 2)}x'),
+                  ]),
+                  Slider(
+                    value: current,
+                    min: 0.25,
+                    max: 6,
+                    divisions: 115,
+                    label: '${current.toStringAsFixed(2)}x',
+                    onChanged: (value) {
+                      current = value;
+                      _c.setRateRemembered(value);
+                      refresh(() {});
+                    },
+                  ),
+                  const Align(
+                    alignment: Alignment.centerRight,
+                    child: Text('Maksimal 6x', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2909,9 +2955,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _openQualitySheet() {
-    final sourceOptions = sortByQuality(
-      _c.state.sources.where((s) => _sourceResolution(s) != null).toList(),
-    );
+    final activeSource = _c.state.active;
+    final sourceOptions = activeSource == null
+        ? <VideoSource>[]
+        : sortByQuality(_c.state.sources
+            .where((s) => s.url == activeSource.url && _sourceResolution(s) != null)
+            .toList());
     final List<Widget> rows;
     if (_c.state.qualities.isNotEmpty) {
       rows = [
@@ -3051,9 +3100,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 );
                 return _SheetRow(
                   label: displayName,
-                  subtitle: options.length > 1
-                      ? '${options.length} pilihan server'
-                      : null,
+                  subtitle: [
+                    if (options.length > 1)
+                      options.map(_sourceResolution).whereType<String>().toSet().join(' • '),
+                    if (options.any((s) => s.subtitles.isNotEmpty)) 'Softsubs',
+                  ].where((s) => s.isNotEmpty).join(' • '),
                   subtitleWidget: _RemoteFileSizeLabel(
                     url: active.url,
                     headers: active.headers,

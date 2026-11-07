@@ -142,7 +142,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
       try {
         await widget.service.saveApkToDownloads(
           file,
-          fileName: 'Zangetsu-v${widget.info.version}.apk',
+          fileName: 'AnimeW-v${widget.info.version}.apk',
         );
         if (mounted) setState(() => _savedToDownloads = true);
       } catch (_) {

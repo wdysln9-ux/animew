@@ -1823,11 +1823,13 @@ class _QuickSettingRow extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.value,
+    this.showChevron = true,
   });
 
   final IconData icon;
   final String label;
   final String? value;
+  final bool showChevron;
   final VoidCallback onTap;
 
   @override
@@ -1854,11 +1856,12 @@ class _QuickSettingRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (value != null) ...[
-              const SizedBox(width: 12),
+            const Spacer(),
+            if (value != null)
               Flexible(
                 child: Text(
                   value!,
+                  textAlign: TextAlign.end,
                   style: AppText.body.copyWith(
                     color: AppColors.textSecondary,
                     fontSize: 14,
@@ -1867,13 +1870,11 @@ class _QuickSettingRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+            if (showChevron) ...[
               const SizedBox(width: 5),
+              Icon(Icons.chevron_right_rounded,
+                  size: 20, color: AppColors.textSecondary),
             ],
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 20,
-              color: AppColors.textSecondary,
-            ),
           ],
         ),
       ),

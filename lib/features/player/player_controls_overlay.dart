@@ -403,16 +403,8 @@ class _ControlsOverlay extends StatelessWidget {
   List<Widget> _barButtons(BuildContext context, List<String> ids) {
     return [
       for (final id in ids)
-        if (id == 'episodes' && !portraitMode && controller.episodes.length > 1 && onEpisodes != null)
-          _EpisodePickerButton(
-            thumbnail: (controller.state.currentIndex + 1 < controller.episodes.length)
-                ? controller.episodes[controller.state.currentIndex + 1].thumbnail
-                : null,
-            onTap: () {
-            onEpisodes!();
-            onInteract();
-          })
-        else if (_specFor(context, id) case (final icon, final tip, final tap))
+        if (id != 'episodes' &&
+            _specFor(context, id) case (final icon, final tip, final tap))
           _BarButton(icon: icon, tooltip: tip, onTap: tap),
     ];
   }
@@ -689,10 +681,20 @@ class _ControlsOverlay extends StatelessWidget {
                   // _AnimatedPlayPause's disc exactly, so the episode arrows
                   // don't twitch every time playback stalls.
                   if (buffering) {
-                    // Keep the loading indicator visible, but make its full
-                    // 58px hit area interactive so users can pause/resume
-                    // immediately instead of waiting for buffering to end.
-                    return SizedBox(
+                    return StreamBuilder<bool>(
+                      stream: c.player.stream.playing,
+                      builder: (context, playingSnap) {
+                        final isPlaying = playingSnap.data ?? c.player.state.playing;
+                        if (!isPlaying) {
+                          return _AnimatedPlayPause(
+                            playing: false,
+                            onTap: () {
+                              c.togglePlay();
+                              onInteract();
+                            },
+                          );
+                        }
+                        return SizedBox(
                       width: 58,
                       height: 58,
                       child: Material(
@@ -716,6 +718,8 @@ class _ControlsOverlay extends StatelessWidget {
                           ),
                         ),
                       ),
+                        );
+                      },
                     );
                   }
                   return StreamBuilder<bool>(
@@ -827,6 +831,9 @@ class _ControlsOverlay extends StatelessWidget {
                           context,
                           barConfig.right,
                         );
+                        final showEpisodePicker = !portraitMode &&
+                            controller.episodes.length > 1 &&
+                            onEpisodes != null;
                         // Buttons are a uniform 48 (12 padding + 24 icon + 12)
                         // and each group adds 8 of its own, so the width the bar
                         // wants is arithmetic rather than something to measure.
@@ -835,7 +842,8 @@ class _ControlsOverlay extends StatelessWidget {
                         double groupWidth(int n) =>
                             n == 0 ? 0 : n * buttonWidth + groupPadding;
                         final wanted =
-                            groupWidth(left.length) + groupWidth(right.length);
+                            groupWidth(left.length) + groupWidth(right.length) +
+                            (showEpisodePicker ? 158.0 : 0.0);
 
                         if (wanted <= constraints.maxWidth) {
                           return Row(
@@ -843,6 +851,18 @@ class _ControlsOverlay extends StatelessWidget {
                               if (left.isNotEmpty) _BarGroup(children: left),
                               const Spacer(),
                               if (right.isNotEmpty) _BarGroup(children: right),
+                              if (showEpisodePicker) ...[
+                                const SizedBox(width: 10),
+                                _EpisodePickerButton(
+                                  thumbnail: (controller.state.currentIndex + 1 < controller.episodes.length)
+                                      ? controller.episodes[controller.state.currentIndex + 1].thumbnail
+                                      : null,
+                                  onTap: () {
+                                    onEpisodes!();
+                                    onInteract();
+                                  },
+                                ),
+                              ],
                             ],
                           );
                         }
@@ -861,6 +881,18 @@ class _ControlsOverlay extends StatelessWidget {
                               if (left.isNotEmpty && right.isNotEmpty)
                                 SizedBox(width: compactEpisodePortrait ? 2 : 8),
                               if (right.isNotEmpty) _BarGroup(children: right),
+                              if (showEpisodePicker) ...[
+                                const SizedBox(width: 10),
+                                _EpisodePickerButton(
+                                  thumbnail: (controller.state.currentIndex + 1 < controller.episodes.length)
+                                      ? controller.episodes[controller.state.currentIndex + 1].thumbnail
+                                      : null,
+                                  onTap: () {
+                                    onEpisodes!();
+                                    onInteract();
+                                  },
+                                ),
+                              ],
                             ],
                           ),
                         );
@@ -887,7 +919,7 @@ class _EpisodePickerButton extends StatelessWidget {
   Widget build(BuildContext context) => Tooltip(
     message: 'Episode lainnya',
     child: Material(
-      color: const Color(0x66000000),
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(9),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
