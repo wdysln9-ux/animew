@@ -2862,37 +2862,118 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _sheet<void>(_SheetColumn(header: context.l10n.quality, children: rows));
   }
 
+  String _sourceGroupName(VideoSource source) {
+    final raw = (source.label?.trim().isNotEmpty == true)
+        ? source.label!.trim()
+        : (source.quality?.trim().isNotEmpty == true
+            ? source.quality!.trim()
+            : source.container.name);
+    // Remove resolution suffixes so "Rapsodi 360p", "Rapsodi 720p",
+    // and "Rapsodi 1080p" become one provider entry.
+    return raw
+        .replaceAll(
+          RegExp(r'\\s*[-|•·:]?\\s*(?:2160|1440|1080|720|576|540|480|360|240|144|\\d{3,4})\\s*p\\s*$', caseSensitive: false),
+          '',
+        )
+        .replaceAll(RegExp(r'\\s*[-|•·:]\\s*$'), '')
+        .trim()
+        .ifEmpty(source.label?.trim() ?? raw);
+  }
+
+  void _openGroupedSourceQualities(String name, List<VideoSource> sources) {
+    final ordered = sortByQuality(sources);
+    _sheet<void>(
+      _SheetColumn(
+        header: name,
+        children: [
+          for (final s in ordered)
+            _SheetRow(
+              label: s.quality?.trim().isNotEmpty == true
+                  ? s.quality!.trim()
+                  : (RegExp(r'\\d{3,4}\\s*p', caseSensitive: false)
+                          .firstMatch(s.label ?? '')
+                          ?.group(0) ??
+                      s.container.name),
+              subtitleWidget: _RemoteFileSizeLabel(url: s.url, headers: s.headers),
+              active: s == _c.state.active,
+              onTap: () async {
+                Navigator.pop(context);
+                await _c.selectSource(s);
+                await _maybeRecast();
+                _bumpControls();
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
   void _openSourceSheet() {
     final kinds = availableKinds(_c.state.sources);
+    final groups = <String, List<VideoSource>>{};
+    final groupKinds = <String, AudioKind>{};
+    for (final kind in kinds) {
+      for (final source in sourcesForKind(_c.state.sources, kind)) {
+        final name = _sourceGroupName(source);
+        final key = '${kind.name}::${name.toLowerCase()}';
+        groups.putIfAbsent(key, () => <VideoSource>[]).add(source);
+        groupKinds[key] = kind;
+      }
+    }
+
     _sheet<void>(
       _SheetColumn(
         header: context.l10n.sources,
         children: [
-          for (final k in kinds)
-            for (final s in sortByQuality(sourcesForKind(_c.state.sources, k)))
-              _SheetRow(
-                // Prefer the provider's own per-mirror name (e.g. a HubCloud
-                // server) AND append its resolution (e.g. "… · 1080p"), matching
-                // how CloudStream shows it; fall back to kind + quality/container
-                // when the source has no name of its own.
-                label: s.label?.isNotEmpty == true
-                    ? _sourceLabelWithQuality(s.label!, s.quality)
-                    // Only prefix the audio kind when it's a real sub/dub — an
-                    // `unknown` kind (e.g. Aniyomi sources) would otherwise read
-                    // as a stray "UNKNOWN •".
-                    : '${k != AudioKind.unknown ? '${k.name.toUpperCase()} • ' : ''}'
-                          '${s.quality?.isNotEmpty == true ? s.quality : s.container.name}',
-                subtitleWidget: _RemoteFileSizeLabel(url: s.url, headers: s.headers),
-                active: s == _c.state.active,
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _c.selectSource(
-                    s,
-                  ); // remembers this source for the title
-                  await _maybeRecast();
-                  _bumpControls();
-                },
-              ),
+          for (final entry in groups.entries)
+            Builder(
+              builder: (context) {
+                final options = entry.value;
+                final name = _sourceGroupName(options.first);
+                final kind = groupKinds[entry.key]!;
+                final displayName = kind != AudioKind.unknown
+                    ? '${kind.name.toUpperCase()} • $name'
+                    : name;
+                if (options.length > 1) {
+                  final active = options.any((s) => s == _c.state.active);
+                  final qualities = options
+                      .map((s) => s.quality?.trim().isNotEmpty == true
+                          ? s.quality!.trim()
+                          : (RegExp(r'\\d{3,4}\\s*p', caseSensitive: false)
+                                  .firstMatch(s.label ?? '')
+                                  ?.group(0) ??
+                              ''))
+                      .where((q) => q.isNotEmpty)
+                      .toSet()
+                      .toList();
+                  return _SheetRow(
+                    label: displayName,
+                    subtitle: qualities.isEmpty
+                        ? '${options.length} pilihan'
+                        : qualities.join(' · '),
+                    active: active,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _openGroupedSourceQualities(displayName, options);
+                    },
+                  );
+                }
+                final s = options.first;
+                return _SheetRow(
+                  label: s.label?.isNotEmpty == true
+                      ? _sourceLabelWithQuality(s.label!, s.quality)
+                      : displayName,
+                  subtitleWidget: _RemoteFileSizeLabel(url: s.url, headers: s.headers),
+                  active: s == _c.state.active,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _c.selectSource(s);
+                    await _maybeRecast();
+                    _bumpControls();
+                  },
+                );
+              },
+            ),
         ],
       ),
     );
