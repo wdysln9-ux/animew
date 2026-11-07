@@ -256,7 +256,7 @@ class _TrackerPosterCard extends StatelessWidget {
                     progressBadge: entry.progress == null
                         ? null
                         : trackerProgressSubtitle(entry),
-                    statusBadge: entry.status == WatchStatus.completed ? 'Selesai' : entry.status == WatchStatus.watching ? 'Tayang' : null,
+                    statusBadge: trackerName == 'AniList' ? (entry.status == WatchStatus.completed ? 'Selesai' : entry.status == WatchStatus.watching ? 'Tayang' : null) : null,
                     viewsBadge: entry.item.popularity,
                     metaLine: [if (entry.item.format?.isNotEmpty == true) entry.item.format!, if (entry.totalEpisodes != null && entry.totalEpisodes! > 0) '${entry.totalEpisodes} Eps'].join(' · '),
                     showTitle: titleInside,
@@ -386,7 +386,7 @@ class TrackerListSection extends StatelessWidget {
           genres: e.item.genres,
           isAdult: e.item.isAdult,
           progressBadge: e.progress == null ? null : trackerProgressSubtitle(e),
-          statusBadge: e.status == WatchStatus.completed ? 'Selesai' : e.status == WatchStatus.watching ? 'Tayang' : null,
+          statusBadge: trackerName == 'AniList' ? (e.status == WatchStatus.completed ? 'Selesai' : e.status == WatchStatus.watching ? 'Tayang' : null) : null,
           viewsBadge: e.item.popularity,
           metaLine: [if (e.item.format?.isNotEmpty == true) e.item.format!, if (e.totalEpisodes != null && e.totalEpisodes! > 0) '${e.totalEpisodes} Eps'].join(' · '),
           onTap: () => onOpen(e),
