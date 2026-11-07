@@ -369,7 +369,7 @@ class AniListCatalogue implements AnimeCatalogue {
       sourceId: ZmodeIds.sourceId,
       malId: map['idMal'] as int?,
       score: map['averageScore'] as int?,
-      format: _prettyEnum(map['format'] as String?),
+      format: _prettyFormat(map['format'] as String?),
       durationMins: map['duration'] as int?,
       airingAt: _airingAt(map['nextAiringEpisode']),
       nextEpisode: (map['nextAiringEpisode'] as Map?)?['episode'] as int?,
@@ -388,6 +388,21 @@ class AniListCatalogue implements AnimeCatalogue {
 
   Future<List<Episode>> episodes(ZCanonical c) async =>
       (await detail(c)).episodes;
+
+  /// Keep common format abbreviations uppercase in poster metadata.
+  static String? _prettyFormat(String? v) {
+    if (v == null || v.isEmpty) return null;
+    return switch (v.toUpperCase()) {
+      'TV' => 'TV',
+      'TV_SHORT' => 'TV Short',
+      'OVA' => 'OVA',
+      'ONA' => 'ONA',
+      'MOVIE' => 'Movie',
+      'SPECIAL' => 'Special',
+      'MUSIC' => 'Music',
+      _ => _prettyEnum(v),
+    };
+  }
 
   /// `TV_SHORT` → `TV short`, `LIGHT_NOVEL` → `Light novel`. AniList SHOUTS
   /// its enums; nothing on the page should.
@@ -491,7 +506,7 @@ class AniListCatalogue implements AnimeCatalogue {
       // Already 0-100 here; the other three scale theirs to match.
       score: m['averageScore'] as int?,
       popularity: m['popularity'] as int?,
-      format: _prettyEnum(m['format'] as String?),
+      format: _prettyFormat(m['format'] as String?),
       totalEpisodes: m['episodes'] as int?,
       status: _status(m['status'] as String?),
       isAdult: m['isAdult'] == true,
