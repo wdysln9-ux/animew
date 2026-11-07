@@ -2509,6 +2509,24 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return d.inHours > 0 ? '${d.inHours}:$m:$s' : '$m:$s';
   }
+  
+  static String _fmtSeekClock(Duration d) {
+    final totalSeconds = d.inSeconds;
+    final hours = totalSeconds ~/ 3600;
+    final minutes = (totalSeconds ~/ 60).remainder(60);
+    final seconds = totalSeconds.remainder(60).toString().padLeft(2, '0');
+    return hours > 0
+        ? '$hours:${minutes.toString().padLeft(2, '0')}:$seconds'
+        : '${totalSeconds ~/ 60}:$seconds';
+  }
+
+  static String _fmtSeekDelta(Duration delta) {
+    final sign = delta.isNegative ? '-' : '+';
+    final totalSeconds = delta.inSeconds.abs();
+    final minutes = totalSeconds ~/ 60;
+    final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$sign$minutes:$seconds';
+  }
 
   Widget _buildUpNextCard() {
     final nextIdx = _c.state.currentIndex + 1;
@@ -4190,7 +4208,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                             vertical: 10,
                           ),
                           child: Text(
-                            '${_fmtDur(_hSeekTarget)} / ${_fmtDur(_duration)}',
+                            '${_fmtSeekClock(_hSeekTarget)} (${_fmtSeekDelta(_hSeekTarget - _hSeekStart)}) / ${_fmtSeekClock(_duration)}',
                             style: AppText.headline.copyWith(
                               color: Colors.white,
                             ),
