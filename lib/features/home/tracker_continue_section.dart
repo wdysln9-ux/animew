@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models/home_row.dart';
+import '../../core/models/media_detail.dart';
 import '../../core/models/provider_info.dart';
 import '../../core/playback/playback_prefs.dart';
 import '../../core/models/watch_status.dart';
@@ -258,7 +259,7 @@ class _TrackerPosterCard extends StatelessWidget {
                     genres: entry.item.genres,
                     isAdult: entry.item.isAdult,
                     scoreBadge: entry.item.score,
-                    statusBadge: trackerName == 'AniList' ? (entry.item.isUpcoming ? 'Segera' : entry.status == WatchStatus.completed ? 'Selesai' : entry.status == WatchStatus.watching ? 'Tayang' : null) : null,
+                    statusBadge: trackerName == 'AniList' ? (entry.item.isUpcoming ? 'Segera' : entry.item.status == MediaStatus.completed ? 'Selesai' : entry.item.status == MediaStatus.ongoing ? 'Tayang' : null) : null,
                     viewsBadge: entry.item.popularity,
                     metaLine: [if (entry.item.format?.isNotEmpty == true) entry.item.format!, if (entry.totalEpisodes != null && entry.totalEpisodes! > 0) '${entry.totalEpisodes} Eps'].join(' · '),
                     showTitle: titleInside,
@@ -394,7 +395,7 @@ class TrackerListSection extends StatelessWidget {
           // Episode progress belongs only on the AniList Continue / New Episodes rows.
           progressBadge: null,
           scoreBadge: e.score,
-        statusBadge: trackerName == 'AniList' ? (e.isUpcoming ? 'Segera' : e.status == WatchStatus.completed ? 'Selesai' : e.status == WatchStatus.watching ? 'Tayang' : null) : null,
+        statusBadge: trackerName == 'AniList' ? (e.isUpcoming ? 'Segera' : e.status == MediaStatus.completed ? 'Selesai' : e.status == MediaStatus.ongoing ? 'Tayang' : null) : null,
           viewsBadge: e.item.popularity,
           metaLine: [if (e.item.format?.isNotEmpty == true) e.item.format!, if (e.totalEpisodes != null && e.totalEpisodes! > 0) '${e.totalEpisodes} Eps'].join(' · '),
           onTap: () => onOpen(e),
