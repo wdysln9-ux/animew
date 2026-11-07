@@ -700,10 +700,7 @@ class _Comment extends StatelessWidget {
               Positioned.fill(
                 child: IgnorePointer(
                   child: CustomPaint(
-                    painter: _CommentThreadConnectorPainter(
-                      isLast: isLast,
-                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    ),
+                    painter: const _CommentThreadConnectorPainter(),
                   ),
                 ),
               ),
@@ -841,13 +838,7 @@ class _Comment extends StatelessWidget {
 /// Draws the elbow into this reply. The final sibling also masks the
 /// ancestor rail below its avatar, so the line cannot hang past the thread.
 class _CommentThreadConnectorPainter extends CustomPainter {
-  const _CommentThreadConnectorPainter({
-    required this.isLast,
-    required this.backgroundColor,
-  });
-
-  final bool isLast;
-  final Color backgroundColor;
+  const _CommentThreadConnectorPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -875,8 +866,7 @@ class _CommentThreadConnectorPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CommentThreadConnectorPainter oldDelegate) =>
-      oldDelegate.isLast != isLast ||
-      oldDelegate.backgroundColor != backgroundColor;
+      false;
 }
 
 /// Keeps the ancestor's vertical rail behind all replies. The final reply's
