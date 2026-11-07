@@ -1792,7 +1792,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
           _SheetRow(
             label: 'Subtitle',
-            subtitle: _c.state.subtitle?.label ?? 'Pilih subtitle',
+            subtitle: 'Pilih atau atur subtitle',
             onTap: () {
               Navigator.pop(context);
               _openAudioSubsSheet();
