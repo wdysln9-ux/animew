@@ -328,11 +328,10 @@ class _ControlsOverlay extends StatelessWidget {
       case 'sources':
         return (Icons.layers_rounded, 'Sources', onSources);
       case 'more':
-        return (Icons.more_vert_rounded, 'More', () => _showMore(context));
+        return (Icons.more_horiz_rounded, 'More', () => _showMore(context));
       case 'episodes':
-        // Episodes has its own YouTube-style floating pill in the lower-right,
-        // not a member of the configurable control bar.
-        return null;
+        if (portraitMode || c.episodes.length <= 1) return null;
+        return (Icons.video_library_outlined, 'Episode lainnya', onEpisodes);
       case 'summary':
         return (Icons.subject_rounded, 'Episode summary', onEpisodeSummary);
       case 'comments':
@@ -397,7 +396,12 @@ class _ControlsOverlay extends StatelessWidget {
   List<Widget> _barButtons(BuildContext context, List<String> ids) {
     return [
       for (final id in ids)
-        if (_specFor(context, id) case (final icon, final tip, final tap))
+        if (id == 'episodes' && !portraitMode && controller.episodes.length > 1)
+          _EpisodePickerButton(onTap: () {
+            onEpisodes();
+            onInteract();
+          })
+        else if (_specFor(context, id) case (final icon, final tip, final tap))
           _BarButton(icon: icon, tooltip: tip, onTap: tap),
     ];
   }
@@ -911,6 +915,43 @@ class _ControlsOverlay extends StatelessWidget {
       ],
     );
   }
+}
+
+class _EpisodePickerButton extends StatelessWidget {
+  const _EpisodePickerButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: 'Episode lainnya',
+    child: Material(
+      color: const Color(0xCC252525),
+      borderRadius: BorderRadius.circular(24),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.video_library_outlined, color: Colors.white, size: 17),
+              SizedBox(width: 6),
+              Text(
+                'Episode lainnya',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

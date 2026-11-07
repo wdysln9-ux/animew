@@ -137,14 +137,39 @@ class _PlayerControlsScreenState extends State<PlayerControlsScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final id in ids)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Icon(
-              controlById(id)?.icon ?? Icons.help_outline,
-              size: 16,
-              color: Colors.white,
+          if (id == 'episodes')
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0xCC252525),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.video_library_outlined, size: 12, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text(
+                        'Episode lainnya',
+                        style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Icon(
+                controlById(id)?.icon ?? Icons.help_outline,
+                size: 16,
+                color: Colors.white,
+              ),
             ),
-          ),
       ],
     );
 
