@@ -49,17 +49,21 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
         if (session == null) return const SizedBox.shrink();
         return LayoutBuilder(
           builder: (context, constraints) {
-            final width = (constraints.maxWidth * 0.62).clamp(190.0, 270.0);
+            final width = (constraints.maxWidth * 0.62)
+                .clamp(190.0, 270.0)
+                .toDouble();
             final cardHeight = width * 9 / 16 + 48;
             final left = (constraints.maxWidth - width - 14 + _dragOffset.dx)
-                .clamp(8.0, constraints.maxWidth - width - 8);
+                .clamp(8.0, constraints.maxWidth - width - 8)
+                .toDouble();
             final top = (constraints.maxHeight - cardHeight - 20 -
                     _dragOffset.dy)
                 .clamp(
                   MediaQuery.paddingOf(context).top + 8,
                   constraints.maxHeight - cardHeight -
                       MediaQuery.paddingOf(context).bottom - 8,
-                );
+                )
+                .toDouble();
             return Positioned(
               left: left,
               top: top,
