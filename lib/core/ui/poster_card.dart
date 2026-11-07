@@ -398,12 +398,49 @@ class _PosterCardState extends State<PosterCard> {
                           right: 6,
                           child: _ScoreTag(widget.scoreBadge!),
                         ),
+                      if (showStatus)
+                        Positioned(
+                          top: 6,
+                          left: 6,
+                          child: _PosterTag(
+                            widget.statusBadge!,
+                            color: widget.statusBadge == 'Selesai'
+                                ? const Color(0xFF438BE8)
+                                : widget.statusBadge == 'Segera'
+                                    ? const Color(0xFFE6A52D)
+                                    : const Color(0xFF20B86B),
+                          ),
+                        ),
+                      if (showViews)
+                        Positioned(
+                          left: 6,
+                          bottom: 6,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
+                              const SizedBox(width: 3),
+                              Text(
+                                _compactPopularity(widget.viewsBadge!),
+                                style: TextStyle(
+                                  fontFamily: AppText.fontFamily,
+                                  fontFamilyFallback: AppText.fontFamilyFallback,
+                                  fontSize: 10.5,
+                                  height: 1,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       if (showRank)
                         Positioned(
                           left: 8,
                           top: 34,
                           child: IgnorePointer(
-                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 28, height: 1, fontWeight: FontWeight.w500, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
+                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 28, height: 1, fontWeight: FontWeight.w400, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
                           ),
                         ),
                       if (widget.dubBadge != null &&
@@ -478,11 +515,7 @@ class _PosterCardState extends State<PosterCard> {
                 // follows the row.
                 Builder(
                   builder: (context) {
-                    final meta = [
-                      if (widget.statusBadge?.isNotEmpty == true) widget.statusBadge!,
-                      if ((widget.viewsBadge ?? 0) > 0) '◉ ${_compactPopularity(widget.viewsBadge!)}',
-                      if (widget.metaLine?.isNotEmpty == true) widget.metaLine!,
-                    ].join(' · ');
+                    final meta = widget.metaLine?.trim() ?? '';
                     final showMeta = (prefs?.posterMetaLine ?? true) && meta.isNotEmpty;
                     return SizedBox(
                       height: _titleBoxHeight + (showMeta ? 12 : 0),
