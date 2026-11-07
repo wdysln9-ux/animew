@@ -786,7 +786,7 @@ class PlaybackPrefs {
   bool get posterAdultBadge =>
       _box.get('posterAdultBadge', defaultValue: false) as bool;
   bool get posterProgressBadge =>
-      _box.get('posterProgressBadge', defaultValue: false) as bool;
+      _box.get('posterProgressBadge', defaultValue: true) as bool;
   bool get posterStatusBadge => _box.get('posterStatusBadge', defaultValue: true) as bool;
   bool get posterViewsBadge => _box.get('posterViewsBadge', defaultValue: true) as bool;
   bool get posterTrendingRank => _box.get('posterTrendingRank', defaultValue: true) as bool;
