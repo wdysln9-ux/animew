@@ -855,18 +855,11 @@ class _CommentThreadConnectorPainter extends CustomPainter {
     const branchY = 16.0;
     const avatarCenterX = 32.0;
 
-    if (isLast && size.height > branchY) {
-      final mask = Paint()
-        ..color = backgroundColor
-        ..strokeWidth = 4
-        ..strokeCap = StrokeCap.square;
-      canvas.drawLine(
-        const Offset(trunkX, branchY + 2),
-        Offset(trunkX, size.height),
-        mask,
-      );
-    }
-
+    // Do not erase the ancestor rail for the full height of the last
+    // reply. A reply can itself contain several nested branches; masking its
+    // whole box disconnects those sibling rails. The parent's rail naturally
+    // ends at the bottom of its complete child subtree.
+    
     final paint = Paint()
       ..color = const Color(0xFF555860)
       ..strokeWidth = 1.4
