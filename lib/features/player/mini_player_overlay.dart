@@ -64,7 +64,10 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                       MediaQuery.paddingOf(context).bottom - 8,
                 )
                 .toDouble();
-            return Positioned(
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                Positioned(
               left: left,
               top: top,
               width: width,
@@ -144,6 +147,8 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                   ),
                 ),
               ),
+                ),
+              ],
             );
           },
         );
