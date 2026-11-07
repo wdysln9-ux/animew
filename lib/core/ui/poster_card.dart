@@ -44,6 +44,7 @@ class PosterCard extends StatefulWidget {
     this.viewsBadge,
     this.rankBadge,
     this.metaLine,
+    this.showViewsBadge = true,
   });
   final String title;
   final String? imageUrl;
@@ -82,6 +83,7 @@ class PosterCard extends StatefulWidget {
   final int? viewsBadge;
   final int? rankBadge;
   final String? metaLine;
+  final bool showViewsBadge;
   final double cellWidth;
 
   /// When false, omit an external title. An inside-image title still follows
@@ -303,7 +305,7 @@ class _PosterCardState extends State<PosterCard> {
         wide && prefs?.posterGenreBadge == true && widget.genres.isNotEmpty;
     final showAdult = prefs?.posterAdultBadge == true && widget.isAdult;
     final showStatus = (prefs?.posterStatusBadge ?? true) && widget.statusBadge != null;
-    final showViews = (prefs?.posterViewsBadge ?? true) && widget.viewsBadge != null;
+    final showViews = widget.showViewsBadge && (prefs?.posterViewsBadge ?? true) && widget.viewsBadge != null;
     final showRank = (prefs?.posterTrendingRank ?? true) && widget.rankBadge != null;
     final hasRightBadges = showGenre || showAdult;
     final bottomBadges = Wrap(
@@ -405,9 +407,9 @@ class _PosterCardState extends State<PosterCard> {
                       if (showRank)
                         Positioned(
                           left: 8,
-                          top: 38,
+                          top: 34,
                           child: IgnorePointer(
-                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 30, height: 1, fontWeight: FontWeight.w700, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
+                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 29, height: 1, fontWeight: FontWeight.w600, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
                           ),
                         ),
                       if (showViews)
@@ -503,7 +505,7 @@ class _PosterCardState extends State<PosterCard> {
                 if ((prefs?.posterMetaLine ?? true) && widget.metaLine?.isNotEmpty == true)
                   Padding(
                     padding: EdgeInsets.zero,
-                    child: Text(widget.metaLine!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary)),
+                    child: Text(widget.metaLine!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(fontSize: 11, color: AppColors.textSecondary)),
                   ),
               ],
             ],
@@ -682,7 +684,7 @@ double posterGridAspect(BuildContext context) => posterCellAspect(
 /// Carried as 0-100 because that is what the catalogues agree on, shown out of
 /// 10 because that is what people read a rating as.
 String _compactPopularity(int value) {
-  if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1).replaceAll('.0', '')}JT';
+  if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1).replaceAll('.0', '')}jt';
   if (value >= 1000) return '${(value / 1000).toStringAsFixed(value >= 100000 ? 0 : 1).replaceAll('.0', '')}rb';
   return '$value';
 }
@@ -706,14 +708,14 @@ class _ScoreTag extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.star_rounded, size: 12, color: score >= 75 ? const Color(0xFF55D879) : score >= 60 ? const Color(0xFFFFC247) : const Color(0xFFFF7168)),
+          Icon(Icons.star_rounded, size: 14, color: score >= 75 ? const Color(0xFF55D879) : score >= 60 ? const Color(0xFFFFC247) : const Color(0xFFFF7168)),
           const SizedBox(width: 2),
           Text(
             _outOfTen,
             style: TextStyle(
               fontFamily: AppText.fontFamily,
               fontFamilyFallback: AppText.fontFamilyFallback,
-              fontSize: 10,
+              fontSize: 11,
               height: 1.1,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.2,
@@ -735,10 +737,10 @@ class _PosterTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color ?? Colors.black.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(13),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth ?? double.infinity),
@@ -749,7 +751,7 @@ class _PosterTag extends StatelessWidget {
           style: TextStyle(
             fontFamily: AppText.fontFamily,
             fontFamilyFallback: AppText.fontFamilyFallback,
-            fontSize: 10,
+            fontSize: 11,
             height: 1.1,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,
