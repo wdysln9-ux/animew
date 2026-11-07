@@ -30,6 +30,8 @@ import '../../core/playback/playback_prefs.dart';
 import 'subtitle_style.dart';
 import 'subtitle_font_service.dart';
 import 'player_lifecycle.dart';
+import 'mini_player_overlay.dart';
+import '../shell/root_shell.dart';
 import '../../core/torrent/torrent_util.dart';
 import '../../core/models/episode.dart';
 import '../../core/models/episode_title.dart';
@@ -558,6 +560,83 @@ class _PlayerScreenState extends State<PlayerScreen> {
       return;
     }
     Navigator.of(context).maybePop();
+  }
+
+  /// Minimize the in-app player without disposing its cubit or native player.
+  /// A second shell route sits above this route; the original player remains
+  /// alive underneath and is revealed again when the mini-player is tapped.
+  void _minimizeToMiniPlayer() {
+    if (!mounted || !_ready || _inPip ||
+        sl<CastController>().state == CastState.connected) {
+      return;
+    }
+    final nav = Navigator.of(context);
+    final episode = _c.currentEpisode;
+    final number = episode.number?.toInt() ?? _c.state.currentIndex + 1;
+    final episodeName = episode.title.trim();
+    final subtitle = episodeName.isEmpty
+        ? 'Episode $number'
+        : 'Episode $number · $episodeName';
+
+    setState(() {
+      _portraitMode = true;
+      _showEpisodeDetails = widget.episodeDetailMode;
+    });
+    SystemChrome.setPreferredOrientations(
+      const [DeviceOrientation.portraitUp],
+    );
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: AppColors.bg,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: AppColors.bg,
+      systemNavigationBarIconBrightness: Brightness.light,
+      systemNavigationBarDividerColor: AppColors.bg,
+    ));
+
+    MiniPlayerState.show(
+      MiniPlayerSession(
+        controller: _c.videoController,
+        title: widget.showTitle ?? 'AnimeW',
+        subtitle: subtitle,
+        onRestore: (fullscreen) {
+          if (!mounted) return;
+          MiniPlayerState.clear();
+          final showDetails = !fullscreen && widget.episodeDetailMode;
+          setState(() {
+            _portraitMode = showDetails;
+            _showEpisodeDetails = showDetails;
+          });
+          SystemChrome.setPreferredOrientations(
+            showDetails
+                ? const [DeviceOrientation.portraitUp]
+                : const [
+                    DeviceOrientation.landscapeLeft,
+                    DeviceOrientation.landscapeRight,
+                  ],
+          );
+          SystemChrome.setEnabledSystemUIMode(
+            showDetails ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
+          );
+          nav.pop();
+        },
+        onClose: () {
+          MiniPlayerState.clear();
+          // First remove the shell hosting the mini-player, then remove the
+          // original player route so PlayerScreen.dispose() stops playback.
+          nav.pop();
+          Future<void>.delayed(const Duration(milliseconds: 320), () {
+            if (nav.mounted && nav.canPop()) nav.pop();
+          });
+        },
+      ),
+    );
+    nav.push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => const RootShell(),
+        settings: const RouteSettings(name: 'animew-mini-player-shell'),
+      ),
+    );
   }
 
   void _toggleOrientation() {
@@ -4467,6 +4546,28 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         child: RoomChatPanel(
                           controller: _room,
                           onClose: () => setState(() => _chatOpen = false),
+                        ),
+                      ),
+                    ),
+
+                  // Floating mini-player action. The player route stays alive
+                  // beneath the app shell, so minimizing never interrupts playback.
+                  if (!_locked && !_inPip && _controlsVisible &&
+                      !sl<AppMode>().isTv &&
+                      sl<CastController>().state != CastState.connected)
+                    Positioned(
+                      top: MediaQuery.paddingOf(context).top + 52,
+                      right: 14,
+                      child: Material(
+                        color: Colors.black.withValues(alpha: 0.58),
+                        shape: const CircleBorder(),
+                        child: IconButton(
+                          tooltip: 'Mini-player',
+                          onPressed: _minimizeToMiniPlayer,
+                          icon: const Icon(
+                            Icons.picture_in_picture_alt_rounded,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
