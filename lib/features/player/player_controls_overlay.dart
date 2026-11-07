@@ -843,7 +843,7 @@ class _ControlsOverlay extends StatelessWidget {
                             n == 0 ? 0 : n * buttonWidth + groupPadding;
                         final wanted =
                             groupWidth(left.length) + groupWidth(right.length) +
-                            (showEpisodePicker ? 158.0 : 0.0);
+                            (showEpisodePicker ? 200.0 : 0.0);
 
                         if (wanted <= constraints.maxWidth) {
                           return Row(

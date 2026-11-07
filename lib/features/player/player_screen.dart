@@ -2959,7 +2959,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final sourceOptions = activeSource == null
         ? <VideoSource>[]
         : sortByQuality(_c.state.sources
-            .where((s) => s.url == activeSource.url && _sourceResolution(s) != null)
+            .where((s) =>
+                _sourceGroupName(s).toLowerCase() ==
+                    _sourceGroupName(activeSource).toLowerCase() &&
+                s.kind == activeSource.kind &&
+                _sourceResolution(s) != null)
             .toList());
     final List<Widget> rows;
     if (_c.state.qualities.isNotEmpty) {
