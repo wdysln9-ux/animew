@@ -10,6 +10,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/app_mode.dart';
+import '../../core/backup/backup_cloud.dart';
+import '../../core/backup/backup_payload.dart';
+import '../../core/backup/backup_service.dart';
 import '../../core/di/injector.dart';
 import '../../core/profiles/profile_avatar_uploader.dart';
 import '../../core/profiles/viewer_profile.dart';
@@ -57,33 +60,55 @@ bool requireLogin(BuildContext context, {String? action}) {
 // Shared dark text field
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _Field extends StatelessWidget {
+class _Field extends StatefulWidget {
   const _Field({
     required this.controller,
     required this.hint,
     this.icon,
     this.obscure = false,
     this.keyboard,
+    this.showVisibilityToggle = false,
   });
   final TextEditingController controller;
   final String hint;
   final IconData? icon;
   final bool obscure;
   final TextInputType? keyboard;
+  final bool showVisibilityToggle;
+
+  @override
+  State<_Field> createState() => _FieldState();
+}
+
+class _FieldState extends State<_Field> {
+  bool _passwordVisible = false;
 
   @override
   Widget build(BuildContext context) {
+    final obscureText = widget.obscure &&
+        (!widget.showVisibilityToggle || !_passwordVisible);
     return TextField(
-      controller: controller,
-      obscureText: obscure,
-      keyboardType: keyboard,
+      controller: widget.controller,
+      obscureText: obscureText,
+      keyboardType: widget.keyboard,
       style: AppText.body.copyWith(color: AppColors.textPrimary),
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: widget.hint,
         hintStyle: AppText.body.copyWith(color: AppColors.textTertiary),
-        prefixIcon: icon == null
+        prefixIcon: widget.icon == null
             ? null
-            : Icon(icon, color: AppColors.textTertiary, size: 20),
+            : Icon(widget.icon, color: AppColors.textTertiary, size: 20),
+        suffixIcon: widget.showVisibilityToggle
+            ? IconButton(
+                tooltip: obscureText ? 'Tampilkan password' : 'Sembunyikan password',
+                onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
+                icon: Icon(
+                  obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: AppColors.textTertiary,
+                  size: 20,
+                ),
+              )
+            : null,
         filled: true,
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
@@ -125,11 +150,27 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit(BuildContext context) async {
-    final ok = await context.read<AuthCubit>().login(
-      _email.text.trim(),
-      _password.text,
-    );
-    if (ok && context.mounted) Navigator.of(context).pop();
+    final auth = context.read<AuthCubit>();
+    final ok = await auth.login(_email.text.trim(), _password.text);
+    if (!ok || !context.mounted) return;
+
+    // Restore the signed-in account's latest cloud backup automatically.
+    // A missing backup or temporary network error must never block login.
+    final userId = auth.state.user?.id;
+    if (userId != null) {
+      try {
+        final payload = await sl<BackupCloud>().download(userId);
+        if (payload != null) {
+          await sl<BackupService>().restore(
+            payload,
+            BackupBundle.values.toSet(),
+          );
+        }
+      } catch (_) {
+        // Keep the successful login even when cloud restore is unavailable.
+      }
+    }
+    if (context.mounted) Navigator.of(context).pop();
   }
 
   /// context.l10n.forgotPassword — ask for the account email and send an Appwrite
@@ -200,6 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
           hint: context.l10n.password,
           icon: Icons.lock_outline,
           obscure: true,
+          showVisibilityToggle: true,
         ),
         Align(
           alignment: AlignmentDirectional.centerEnd,
