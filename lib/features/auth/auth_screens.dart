@@ -141,6 +141,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
+  bool _restoringBackup = false;
 
   @override
   void dispose() {
@@ -154,23 +155,30 @@ class _LoginScreenState extends State<LoginScreen> {
     final ok = await auth.login(_email.text.trim(), _password.text);
     if (!ok || !context.mounted) return;
 
-    // Restore the signed-in account's latest cloud backup automatically.
-    // A missing backup or temporary network error must never block login.
-    final userId = auth.state.user?.id;
-    if (userId != null) {
-      try {
-        final payload = await sl<BackupCloud>().download(userId);
-        if (payload != null) {
-          await sl<BackupService>().restore(
-            payload,
-            BackupBundle.values.toSet(),
-          );
+    setState(() => _restoringBackup = true);
+    try {
+      // Restore the signed-in account's latest cloud backup automatically.
+      // A missing backup or temporary network error must never block login.
+      final userId = auth.state.user?.id;
+      if (userId != null) {
+        try {
+          final payload = await sl<BackupCloud>().download(userId);
+          if (payload != null) {
+            await sl<BackupService>().restore(
+              payload,
+              BackupBundle.values.toSet(),
+            );
+          }
+        } catch (_) {
+          // Keep the successful login even when cloud restore is unavailable.
         }
-      } catch (_) {
-        // Keep the successful login even when cloud restore is unavailable.
+      }
+    } finally {
+      if (context.mounted) {
+        setState(() => _restoringBackup = false);
+        Navigator.of(context).pop();
       }
     }
-    if (context.mounted) Navigator.of(context).pop();
   }
 
   /// context.l10n.forgotPassword — ask for the account email and send an Appwrite
@@ -254,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
         BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) => _SubmitBlock(
             label: context.l10n.logIn,
-            busy: state.busy,
+            busy: state.busy || _restoringBackup,
             error: localizeAuthError(context.l10n, state.error),
             onPressed: () => _submit(context),
           ),
