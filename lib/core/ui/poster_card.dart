@@ -40,6 +40,10 @@ class PosterCard extends StatefulWidget {
     this.genres = const [],
     this.isAdult = false,
     this.progressBadge,
+    this.statusBadge,
+    this.viewsBadge,
+    this.rankBadge,
+    this.metaLine,
   });
   final String title;
   final String? imageUrl;
@@ -74,6 +78,10 @@ class PosterCard extends StatefulWidget {
   final List<String> genres;
   final bool isAdult;
   final String? progressBadge;
+  final String? statusBadge;
+  final int? viewsBadge;
+  final int? rankBadge;
+  final String? metaLine;
   final double cellWidth;
 
   /// When false, omit an external title. An inside-image title still follows
@@ -292,6 +300,9 @@ class _PosterCardState extends State<PosterCard> {
     final showGenre =
         wide && prefs?.posterGenreBadge == true && widget.genres.isNotEmpty;
     final showAdult = prefs?.posterAdultBadge == true && widget.isAdult;
+    final showStatus = (prefs?.posterStatusBadge ?? true) && widget.statusBadge != null;
+    final showViews = (prefs?.posterViewsBadge ?? true) && widget.viewsBadge != null;
+    final showRank = (prefs?.posterTrendingRank ?? true) && widget.rankBadge != null;
     final hasRightBadges = showGenre || showAdult;
     final bottomBadges = Wrap(
       spacing: 4,
@@ -383,6 +394,26 @@ class _PosterCardState extends State<PosterCard> {
                           right: 6,
                           child: _ScoreTag(widget.scoreBadge!),
                         ),
+                      if (showStatus)
+                        Positioned(
+                          top: 6,
+                          left: 6,
+                          child: _PosterTag(widget.statusBadge!, color: widget.statusBadge == 'Selesai' ? const Color(0xFF438BE8) : const Color(0xFF20B86B)),
+                        ),
+                      if (showRank)
+                        Positioned(
+                          left: 8,
+                          top: titleInside ? 44 : 38,
+                          child: IgnorePointer(
+                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 34, height: 1, fontWeight: FontWeight.w900, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
+                          ),
+                        ),
+                      if (showViews)
+                        Positioned(
+                          left: 6,
+                          bottom: 6,
+                          child: _PosterTag('◉ ${_compactPopularity(widget.viewsBadge!)}'),
+                        ),
                       if (widget.dubBadge != null &&
                           (prefs?.posterAudioBadge ?? true))
                         Positioned(
@@ -463,6 +494,11 @@ class _PosterCardState extends State<PosterCard> {
                     inside: false,
                   ),
                 ),
+                if ((prefs?.posterMetaLine ?? true) && widget.metaLine?.isNotEmpty == true)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text(widget.metaLine!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary)),
+                  ),
               ],
             ],
           ),
@@ -637,6 +673,12 @@ double posterGridAspect(BuildContext context) => posterCellAspect(
 ///
 /// Carried as 0-100 because that is what the catalogues agree on, shown out of
 /// 10 because that is what people read a rating as.
+String _compactPopularity(int value) {
+  if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1).replaceAll('.0', '')}m';
+  if (value >= 1000) return '${(value / 1000).toStringAsFixed(value >= 100000 ? 0 : 1).replaceAll('.0', '')}k';
+  return '$value';
+}
+
 class _ScoreTag extends StatelessWidget {
   const _ScoreTag(this.score);
 
@@ -650,7 +692,7 @@ class _ScoreTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 2, 5, 2),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
+        color: (score >= 75 ? const Color(0xFF237B43) : score >= 60 ? const Color(0xFF92701A) : const Color(0xFF963C36)).withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
