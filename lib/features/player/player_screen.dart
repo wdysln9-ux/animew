@@ -2870,10 +2870,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
             : source.container.name);
     final normalized = raw
         .replaceAll(
-          RegExp(r'\\s*[-|•·:]?\\s*(?:2160|1440|1080|720|576|540|480|360|240|144|\\d{3,4})\\s*p\\s*$', caseSensitive: false),
+          RegExp(r'\s*[-|•·:]?\s*(?:2160|1440|1080|720|576|540|480|360|240|144|\d{3,4})\s*p\s*$', caseSensitive: false),
           '',
         )
-        .replaceAll(RegExp(r'\\s*[-|•·:]\\s*$'), '')
+        .replaceAll(RegExp(r'\s*[-|•·:]\s*$'), '')
         .trim();
     return normalized.isEmpty ? raw : normalized;
   }
@@ -2888,7 +2888,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             _SheetRow(
               label: s.quality?.trim().isNotEmpty == true
                   ? s.quality!.trim()
-                  : (RegExp(r'\\d{3,4}\\s*p', caseSensitive: false)
+                  : (RegExp(r'\d{3,4}\s*p', caseSensitive: false)
                           .firstMatch(s.label ?? '')
                           ?.group(0) ??
                       s.container.name),
@@ -2937,7 +2937,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   final qualities = options
                       .map((s) => s.quality?.trim().isNotEmpty == true
                           ? s.quality!.trim()
-                          : (RegExp(r'\\d{3,4}\\s*p', caseSensitive: false)
+                          : (RegExp(r'\d{3,4}\s*p', caseSensitive: false)
                                   .firstMatch(s.label ?? '')
                                   ?.group(0) ??
                               ''))
