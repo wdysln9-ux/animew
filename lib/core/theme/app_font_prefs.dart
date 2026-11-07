@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
 import '../../features/player/subtitle_font_service.dart';
+import '../di/injector.dart';
+import '../playback/playback_prefs.dart' show PlaybackPrefs;
 import '../hive/safe_box.dart';
 import 'app_text.dart';
 
@@ -42,7 +44,7 @@ class AppFontPrefs {
 
   /// Offered in the picker, in the order shown. Nunito first: it is the
   /// default and the one the app is designed around.
-  static const List<AppFont> fonts = [
+  static const List<AppFont> _builtInFonts = [
     AppFont('Nunito', 'Nunito', bundled: true),
     AppFont('Inter', 'Inter', bundled: true),
     AppFont('Noto Sans', 'Noto Sans', bundled: true),
@@ -53,8 +55,20 @@ class AppFontPrefs {
     AppFont('Roboto', 'Roboto'),
   ];
 
+  /// Built-in choices plus fonts imported by the user for the app UI.
+  static List<AppFont> get fonts {
+    final custom = sl.isRegistered<PlaybackPrefs>()
+        ? sl<PlaybackPrefs>().customSubtitleFonts
+        : const <String, String>{};
+    return [
+      ..._builtInFonts,
+      for (final family in custom.keys)
+        AppFont(family, family),
+    ];
+  }
+
   static bool isBundled(String family) =>
-      fonts.any((f) => f.family == family && f.bundled);
+      _builtInFonts.any((f) => f.family == family && f.bundled);
 
   /// Fetch + register [family] if it isn't already usable. False means the
   /// download failed — the caller must NOT save it, or the app restarts into a

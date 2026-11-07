@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../core/ui/settings_widgets.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -7,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/ui/app_toast.dart';
 import '../../core/theme/app_font_prefs.dart';
+import '../../features/player/subtitle_font_service.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../core/di/injector.dart';
 import '../../core/profiles/viewer_profile.dart';
@@ -258,6 +260,39 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
     return true;
   }
 
+  /// Import a local TTF/OTF and make it the active app-wide font.
+  Future<void> _importAppFont() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['ttf', 'otf'],
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty || !mounted) return;
+    final path = result.files.single.path;
+    if (path == null || path.isEmpty) {
+      showAppToast(context, 'File font tidak bisa dibaca.');
+      return;
+    }
+
+    final family = await SubtitleFontService.instance.addCustomFont(path);
+    if (!mounted) return;
+    if (family == null || family.isEmpty) {
+      showAppToast(context, 'Gagal mengimpor font. Pilih file TTF atau OTF yang valid.');
+      return;
+    }
+    final ready = await AppFontPrefs.ensure(family);
+    if (!mounted) return;
+    if (!ready) {
+      showAppToast(context, 'Font berhasil disimpan, tetapi gagal dimuat.');
+      return;
+    }
+    await AppFontPrefs.setFamily(family);
+    if (mounted) {
+      setState(() {});
+      showAppToast(context, 'Font $family berhasil diimpor.');
+    }
+  }
+
   /// Every choice previewed in its OWN face — a list of names all set in the
   /// current font tells you nothing about what you are picking.
   Future<void> _pickFont() async {
@@ -277,6 +312,16 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                 child: Row(
                   children: [Text('App font', style: AppText.headline)],
                 ),
+              ),
+              const Divider(color: AppColors.hairline, height: 1),
+              ListTile(
+                leading: Icon(Icons.file_upload_outlined, color: AppColors.accent),
+                title: const Text('Impor font dari perangkat'),
+                subtitle: const Text('Pilih file .ttf atau .otf'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _importAppFont();
+                },
               ),
               const Divider(color: AppColors.hairline, height: 1),
               for (final f in AppFontPrefs.fonts)
