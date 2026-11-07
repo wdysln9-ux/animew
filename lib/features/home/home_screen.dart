@@ -1078,6 +1078,10 @@ class _HomeViewState extends State<_HomeView>
           qualityBadge: items[i].quality,
           scoreBadge: items[i].score,
           dubBadge: items[i].dubBadge,
+          statusBadge: items[i].status == MediaStatus.ongoing ? 'Tayang' : items[i].status == MediaStatus.completed ? 'Selesai' : null,
+          viewsBadge: items[i].popularity,
+          rankBadge: rawTitle.toLowerCase().contains('trending') ? i + 1 : null,
+          metaLine: [if (items[i].format?.isNotEmpty == true) items[i].format!, if (items[i].totalEpisodes != null && items[i].totalEpisodes! > 0) '${items[i].totalEpisodes} Eps'].join(' · '),
           onTap: () => sourceCatalogue
               ? _openSourceCatalogueDetail(items[i])
               : _openDetail(items[i]),
