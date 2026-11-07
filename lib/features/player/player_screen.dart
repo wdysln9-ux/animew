@@ -2868,7 +2868,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final match = RegExp(
       r'(2160|1440|1080|720|576|540|480|360|240|144)\s*p?',
       caseSensitive: false,
-    ).firstMatch(quality.isNotEmpty ? quality : (source.label ?? ''));
+    ).firstMatch('$quality ${source.label ?? ''}');
     return match == null ? null : '${match.group(1)}p';
   }
 
