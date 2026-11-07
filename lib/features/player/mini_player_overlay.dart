@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-/// Holds the live in-app playback surface while the app shell is on screen.
-/// The PlayerScreen route stays underneath this shell route, so its cubit,
-/// resolver, subscriptions and native player are never disposed on minimize.
+/// Holds the live playback surface while the user browses the app.
 class MiniPlayerSession {
   MiniPlayerSession({
     required this.controller,
@@ -16,7 +14,7 @@ class MiniPlayerSession {
   final VideoController controller;
   final String title;
   final String subtitle;
-  final ValueChanged<bool> onRestore;
+  final VoidCallback onRestore;
   final VoidCallback onClose;
 }
 
@@ -30,7 +28,7 @@ class MiniPlayerState {
   static void clear() => active.value = null;
 }
 
-/// Draggable YouTube-style floating player drawn above the app's tab shell.
+/// YouTube-like floating playback controls, mounted above the root Navigator.
 class MiniPlayerOverlay extends StatefulWidget {
   const MiniPlayerOverlay({super.key});
 
@@ -40,119 +38,207 @@ class MiniPlayerOverlay extends StatefulWidget {
 
 class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
   Offset _dragOffset = Offset.zero;
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<MiniPlayerSession?>(
       valueListenable: MiniPlayerState.active,
       builder: (context, session, _) {
-        if (session == null) return const SizedBox.shrink();
+        if (session == null) {
+          if (_expanded) _expanded = false;
+          return const SizedBox.expand();
+        }
         return LayoutBuilder(
           builder: (context, constraints) {
-            final width = (constraints.maxWidth * 0.62)
-                .clamp(190.0, 270.0)
-                .toDouble();
-            final cardHeight = width * 9 / 16 + 48;
-            final left = (constraints.maxWidth - width - 14 + _dragOffset.dx)
+            final width = _expanded
+                ? (constraints.maxWidth - 20).clamp(220.0, 720.0).toDouble()
+                : (constraints.maxWidth * 0.48).clamp(150.0, 190.0).toDouble();
+            final height = width * 9 / 16;
+            final safeBottom = MediaQuery.paddingOf(context).bottom;
+            final safeTop = MediaQuery.paddingOf(context).top;
+            final left = (constraints.maxWidth - width - 12 + _dragOffset.dx)
                 .clamp(8.0, constraints.maxWidth - width - 8)
                 .toDouble();
-            final top = (constraints.maxHeight - cardHeight - 20 -
+            final top = (constraints.maxHeight - height - safeBottom - 76 -
                     _dragOffset.dy)
                 .clamp(
-                  MediaQuery.paddingOf(context).top + 8,
-                  constraints.maxHeight - cardHeight -
-                      MediaQuery.paddingOf(context).bottom - 8,
+                  safeTop + 8,
+                  (constraints.maxHeight - height - safeBottom - 8)
+                      .clamp(safeTop + 8, double.infinity),
                 )
                 .toDouble();
+
             return Stack(
               fit: StackFit.expand,
               children: [
                 Positioned(
-              left: left,
-              top: top,
-              width: width,
-              child: Material(
-                color: const Color(0xFF171719),
-                elevation: 14,
-                shadowColor: Colors.black.withValues(alpha: 0.55),
-                borderRadius: BorderRadius.circular(13),
-                clipBehavior: Clip.antiAlias,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onPanUpdate: (details) => setState(() {
-                    _dragOffset += Offset(
-                      details.delta.dx,
-                      -details.delta.dy,
-                    );
-                  }),
-                  onTap: () => session.onRestore(false),
-                  onDoubleTap: () => session.onRestore(true),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: Video(
-                          controller: session.controller,
-                          controls: NoVideoControls,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      SizedBox(
-                        height: 48,
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    session.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    session.subtitle,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white60,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              visualDensity: VisualDensity.compact,
+                  left: left,
+                  top: top,
+                  width: width,
+                  height: height,
+                  child: Material(
+                    color: Colors.black,
+                    elevation: 16,
+                    shadowColor: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
+                    clipBehavior: Clip.antiAlias,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onPanUpdate: (details) => setState(() {
+                        _dragOffset += Offset(
+                          details.delta.dx,
+                          -details.delta.dy,
+                        );
+                      }),
+                      onTap: session.onRestore,
+                      onDoubleTap: () => setState(() {
+                        _expanded = !_expanded;
+                        _dragOffset = Offset.zero;
+                      }),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Video(
+                            controller: session.controller,
+                            controls: NoVideoControls,
+                            fit: BoxFit.contain,
+                          ),
+                          Positioned(
+                            top: 2,
+                            right: 2,
+                            child: _MiniControlButton(
+                              icon: Icons.close_rounded,
                               tooltip: 'Tutup pemutar',
                               onPressed: session.onClose,
-                              icon: const Icon(
-                                Icons.close_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
                             ),
-                          ],
-                        ),
+                          ),
+                          Positioned(
+                            left: 2,
+                            bottom: 9,
+                            child: StreamBuilder<bool>(
+                              stream: session.controller.player.stream.playing,
+                              initialData:
+                                  session.controller.player.state.playing,
+                              builder: (context, snapshot) {
+                                final playing = snapshot.data ?? false;
+                                return _MiniControlButton(
+                                  icon: playing
+                                      ? Icons.pause_rounded
+                                      : Icons.play_arrow_rounded,
+                                  tooltip: playing ? 'Jeda' : 'Putar',
+                                  onPressed: () {
+                                    final player = session.controller.player;
+                                    if (player.state.playing) {
+                                      player.pause();
+                                    } else {
+                                      player.play();
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                          Positioned(
+                            left: 42,
+                            right: 9,
+                            bottom: 13,
+                            child: StreamBuilder<Duration>(
+                              stream: session.controller.player.stream.position,
+                              initialData:
+                                  session.controller.player.state.position,
+                              builder: (context, positionSnapshot) {
+                                return StreamBuilder<Duration>(
+                                  stream:
+                                      session.controller.player.stream.duration,
+                                  initialData:
+                                      session.controller.player.state.duration,
+                                  builder: (context, durationSnapshot) {
+                                    final duration =
+                                        durationSnapshot.data ?? Duration.zero;
+                                    final position =
+                                        positionSnapshot.data ?? Duration.zero;
+                                    final maxMs = duration.inMilliseconds;
+                                    final value = maxMs <= 0
+                                        ? 0.0
+                                        : position.inMilliseconds
+                                            .clamp(0, maxMs)
+                                            .toDouble();
+                                    return SliderTheme(
+                                      data: SliderTheme.of(context).copyWith(
+                                        trackHeight: 2,
+                                        thumbShape:
+                                            const RoundSliderThumbShape(
+                                              enabledThumbRadius: 3,
+                                            ),
+                                        overlayShape:
+                                            const RoundSliderOverlayShape(
+                                              overlayRadius: 7,
+                                            ),
+                                        activeTrackColor: Colors.white,
+                                        inactiveTrackColor: Colors.white38,
+                                        thumbColor: Colors.white,
+                                        overlayColor:
+                                            Colors.white.withValues(alpha: 0.15),
+                                      ),
+                                      child: Slider(
+                                        min: 0,
+                                        max: maxMs > 0 ? maxMs.toDouble() : 1,
+                                        value: value.clamp(
+                                          0,
+                                          maxMs > 0 ? maxMs.toDouble() : 1,
+                                        ),
+                                        onChanged: maxMs <= 0
+                                            ? null
+                                            : (next) => session.controller.player
+                                                .seek(Duration(
+                                                  milliseconds: next.round(),
+                                                )),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
                 ),
               ],
             );
           },
         );
       },
+    );
+  }
+}
+
+class _MiniControlButton extends StatelessWidget {
+  const _MiniControlButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.58),
+      shape: const CircleBorder(),
+      child: IconButton(
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints.tightFor(width: 30, height: 30),
+        padding: EdgeInsets.zero,
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white, size: 19),
+      ),
     );
   }
 }

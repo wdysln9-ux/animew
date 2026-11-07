@@ -277,7 +277,6 @@ class _SeekRowState extends State<_SeekRow> {
                                           Duration(milliseconds: v.round()),
                                         );
                                         setState(() => _dragMs = null);
-                                        widget.onInteract();
                                       },
                               ),
                             );

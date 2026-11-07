@@ -41,7 +41,6 @@ import 'dock_icons.dart';
 import 'mode_bar.dart';
 import '../../core/ui/dock_visibility.dart';
 import 'root_shell_tv.dart';
-import '../player/mini_player_overlay.dart';
 
 /// Shared pages for [RootShell] (phone bottom nav) and [RootShellTv] (TV left
 /// rail). TV uses Settings at index 3; phone uses its viewer overview instead.
@@ -229,7 +228,7 @@ class _RootShellState extends State<RootShell>
     // instead of showing the root double-back-to-exit toast.
     final miniPlayer = MiniPlayerState.active.value;
     if (miniPlayer != null) {
-      miniPlayer.onRestore(false);
+      miniPlayer.onRestore();
       return;
     }
     // A sub-page inside the current tab (an open Settings section, an active
@@ -365,7 +364,6 @@ class _RootShellState extends State<RootShell>
               },
             ),
             ),
-            const MiniPlayerOverlay(),
             ],
           ),
           bottomNavigationBar: ValueListenableBuilder<bool>(

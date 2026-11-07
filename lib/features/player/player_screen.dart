@@ -555,6 +555,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// player first. Once the episode details are visible, it navigates back
   /// normally. Standalone player sessions keep their usual back behaviour.
   void _handlePlayerBack() {
+    // Back from the player becomes the in-app minimize action. The playback
+    // route remains alive underneath the shell, so audio/video never stops.
+    if (_ready &&
+        !_inPip &&
+        sl<CastController>().state != CastState.connected) {
+      _minimizeToMiniPlayer();
+      return;
+    }
     if (widget.episodeDetailMode && !_showEpisodeDetails) {
       _toggleOrientation();
       return;
@@ -562,12 +570,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
     Navigator.of(context).maybePop();
   }
 
-  /// Minimize the in-app player without disposing its cubit or native player.
-  /// A second shell route sits above this route; the original player remains
-  /// alive underneath and is revealed again when the mini-player is tapped.
+  /// Minimize playback while keeping its native player and cubit alive.
+  /// A shell route is placed above this player; the mini-player itself is
+  /// mounted by MaterialApp.builder so it stays visible above every pushed page.
   void _minimizeToMiniPlayer() {
-    if (!mounted || !_ready || _inPip ||
-        sl<CastController>().state == CastState.connected) {
+    if (!mounted ||
+        !_ready ||
+        _inPip ||
+        sl<CastController>().state == CastState.connected ||
+        MiniPlayerState.active.value != null) {
       return;
     }
     final nav = Navigator.of(context);
@@ -594,41 +605,48 @@ class _PlayerScreenState extends State<PlayerScreen> {
       systemNavigationBarDividerColor: AppColors.bg,
     ));
 
+    void returnToPlayer() {
+      if (!mounted) return;
+      MiniPlayerState.clear();
+      // Any page opened from the shell is dismissed first, then the shell.
+      nav.popUntil(
+        (route) => route.settings.name == 'animew-mini-player-shell',
+      );
+      if (nav.canPop()) nav.pop();
+      final showDetails = widget.episodeDetailMode;
+      setState(() {
+        _portraitMode = showDetails;
+        _showEpisodeDetails = showDetails;
+      });
+      SystemChrome.setPreferredOrientations(
+        showDetails
+            ? const [DeviceOrientation.portraitUp]
+            : const [
+                DeviceOrientation.landscapeLeft,
+                DeviceOrientation.landscapeRight,
+              ],
+      );
+      SystemChrome.setEnabledSystemUIMode(
+        showDetails ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
+      );
+    }
+
+    void stopPlayback() {
+      MiniPlayerState.clear();
+      nav.popUntil(
+        (route) => route.settings.name == 'animew-mini-player-shell',
+      );
+      if (nav.canPop()) nav.pop(); // shell
+      if (nav.canPop()) nav.pop(); // original PlayerScreen (dispose stops media)
+    }
+
     MiniPlayerState.show(
       MiniPlayerSession(
         controller: _c.videoController,
         title: widget.showTitle ?? 'AnimeW',
         subtitle: subtitle,
-        onRestore: (fullscreen) {
-          if (!mounted) return;
-          MiniPlayerState.clear();
-          final showDetails = !fullscreen && widget.episodeDetailMode;
-          setState(() {
-            _portraitMode = showDetails;
-            _showEpisodeDetails = showDetails;
-          });
-          SystemChrome.setPreferredOrientations(
-            showDetails
-                ? const [DeviceOrientation.portraitUp]
-                : const [
-                    DeviceOrientation.landscapeLeft,
-                    DeviceOrientation.landscapeRight,
-                  ],
-          );
-          SystemChrome.setEnabledSystemUIMode(
-            showDetails ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
-          );
-          nav.pop();
-        },
-        onClose: () {
-          MiniPlayerState.clear();
-          // First remove the shell hosting the mini-player, then remove the
-          // original player route so PlayerScreen.dispose() stops playback.
-          nav.pop();
-          Future<void>.delayed(const Duration(milliseconds: 320), () {
-            if (nav.mounted && nav.canPop()) nav.pop();
-          });
-        },
+        onRestore: returnToPlayer,
+        onClose: stopPlayback,
       ),
     );
     nav.push<void>(
@@ -1777,7 +1795,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (!_hSeeking) return;
     _c.seekTo(_hSeekTarget);
     setState(() => _hSeeking = false);
-    _bumpControls();
+    if (_controlsVisible) _scheduleHide();
   }
 
   // ── Pinch-to-zoom — raw-pointer driven so it never fights the 1-finger
@@ -4546,28 +4564,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         child: RoomChatPanel(
                           controller: _room,
                           onClose: () => setState(() => _chatOpen = false),
-                        ),
-                      ),
-                    ),
-
-                  // Floating mini-player action. The player route stays alive
-                  // beneath the app shell, so minimizing never interrupts playback.
-                  if (!_locked && !_inPip && _controlsVisible &&
-                      !sl<AppMode>().isTv &&
-                      sl<CastController>().state != CastState.connected)
-                    Positioned(
-                      top: MediaQuery.paddingOf(context).top + 52,
-                      right: 14,
-                      child: Material(
-                        color: Colors.black.withValues(alpha: 0.58),
-                        shape: const CircleBorder(),
-                        child: IconButton(
-                          tooltip: 'Mini-player',
-                          onPressed: _minimizeToMiniPlayer,
-                          icon: const Icon(
-                            Icons.picture_in_picture_alt_rounded,
-                            color: Colors.white,
-                          ),
                         ),
                       ),
                     ),

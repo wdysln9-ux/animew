@@ -59,6 +59,7 @@ import 'features/onboarding/onboarding_screen.dart';
 import 'features/profiles/profile_launch_gate.dart';
 import 'features/update/update_dialog.dart';
 import 'features/shell/root_shell.dart';
+import 'features/player/mini_player_overlay.dart';
 import 'features/watch_together/ui/party_bar.dart';
 import 'features/watch_together/watch_together_controller.dart';
 
@@ -789,6 +790,7 @@ class _WatchAppState extends State<WatchApp> with WidgetsBindingObserver {
                           ),
                         ),
                       ),
+                    const Positioned.fill(child: MiniPlayerOverlay()),
                   ],
                 )
               : (child ?? const SizedBox.shrink());
