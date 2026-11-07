@@ -27,11 +27,27 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Install Android build components before Gradle
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "ndk;28.2.13676358" "cmake;3.22.1"
+          df -h /
+
       - name: Show tool versions
         run: |
           flutter --version
           dart --version
-          df -h /
+          sdkmanager --list_installed | grep -E 'ndk;|cmake;' || true
 
       - name: Install dependencies
         run: flutter pub get
