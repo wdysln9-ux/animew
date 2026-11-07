@@ -49,11 +49,14 @@ jobs:
           else
             echo "No persistent signing secrets configured; APK will use runner debug signing."
           fi
-      - name: Reset Gradle compile cache
-        run: rm -rf ~/.gradle/caches/8.14/javaCompile
+      - name: Prepare isolated Gradle environment
+        run: |
+          rm -rf "${RUNNER_TEMP}/animew-gradle-home"
+          mkdir -p "${RUNNER_TEMP}/animew-gradle-home"
       - name: Build arm64 release APK
         env:
-          GRADLE_OPTS: -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false
+          GRADLE_USER_HOME: ${{ runner.temp }}/animew-gradle-home
+          GRADLE_OPTS: -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false
         run: flutter build apk --release --target-platform android-arm64
       - name: Name AnimeW APK
         run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/AnimeW-arm64-v8a.apk
