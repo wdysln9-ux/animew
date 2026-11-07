@@ -1660,9 +1660,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _onHDragUpdate(DragUpdateDetails d) {
     if (!_hSeeking || _pinching) return;
     final w = MediaQuery.of(context).size.width;
-    // Map the full screen width to the whole duration, so a partial swipe can
-    // reach anywhere (e.g. 7s → 20min) — like scrubbing the whole bar.
-    final perPx = _duration.inMilliseconds / w;
+    // Use a deliberately slower scrub rate so small finger movements
+    // don't jump across minutes of playback. A full screen-width drag moves
+    // through 30% of the episode duration, allowing finer positioning.
+    const scrubSensitivity = 0.30;
+    final perPx = (_duration.inMilliseconds / w) * scrubSensitivity;
     final deltaMs = (d.primaryDelta! * perPx).round();
     var t = _hSeekTarget.inMilliseconds + deltaMs;
     t = t.clamp(0, _duration.inMilliseconds);
