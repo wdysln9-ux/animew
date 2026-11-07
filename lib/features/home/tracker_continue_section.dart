@@ -296,12 +296,27 @@ class _TrackerPosterCard extends StatelessWidget {
               padding: EdgeInsets.zero,
               child: Text(
                 [
+                  if (trackerName == 'AniList')
+                    entry.item.isUpcoming
+                        ? 'Segera'
+                        : entry.item.status == MediaStatus.ongoing
+                            ? 'Tayang'
+                            : entry.item.status == MediaStatus.completed
+                                ? 'Selesai'
+                                : null,
+                  if ((entry.item.popularity ?? 0) > 0)
+                    '◉ ${_trackerPopularity(entry.item.popularity!)}',
                   if (entry.item.format?.isNotEmpty == true) entry.item.format!,
-                  if (entry.totalEpisodes != null && entry.totalEpisodes! > 0) '${entry.totalEpisodes} Eps',
-                ].join(' · '),
+                  if (entry.totalEpisodes != null && entry.totalEpisodes! > 0)
+                    '${entry.totalEpisodes} Eps',
+                ].whereType<String>().join(' · '),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppText.caption.copyWith(fontSize: 11.5, color: AppColors.textSecondary),
+                style: AppText.caption.copyWith(
+                  fontSize: 9.5,
+                  height: 1.1,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
         ],

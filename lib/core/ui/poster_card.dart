@@ -476,36 +476,46 @@ class _PosterCardState extends State<PosterCard> {
                 // leftover space and posters came out different heights across
                 // the same row. Pinning the text also pins the gap to whatever
                 // follows the row.
-                SizedBox(
-                  height: _titleBoxHeight,
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: PosterCardTitle(
-                      title: widget.title,
-                      logoItem: widget.logoItem,
-                      width: widget.cellWidth,
-                      maxHeight: _titleBoxHeight,
-                      inside: false,
-                    ),
-                  ),
+                Builder(
+                  builder: (context) {
+                    final meta = [
+                      if (widget.statusBadge?.isNotEmpty == true) widget.statusBadge!,
+                      if ((widget.viewsBadge ?? 0) > 0) '◉ ${_compactPopularity(widget.viewsBadge!)}',
+                      if (widget.metaLine?.isNotEmpty == true) widget.metaLine!,
+                    ].join(' · ');
+                    final showMeta = (prefs?.posterMetaLine ?? true) && meta.isNotEmpty;
+                    return SizedBox(
+                      height: _titleBoxHeight + (showMeta ? 12 : 0),
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PosterCardTitle(
+                              title: widget.title,
+                              logoItem: widget.logoItem,
+                              width: widget.cellWidth,
+                              maxHeight: _titleBoxHeight,
+                              inside: false,
+                            ),
+                            if (showMeta)
+                              Text(
+                                meta,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppText.caption.copyWith(
+                                  fontSize: 9.5,
+                                  height: 1.1,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                if ((prefs?.posterMetaLine ?? true) &&
-                    (widget.metaLine?.isNotEmpty == true ||
-                        widget.statusBadge != null ||
-                        (widget.viewsBadge ?? 0) > 0))
-                  Padding(
-                    padding: EdgeInsets.zero,
-                    child: Text(
-                      [
-                        if (widget.statusBadge?.isNotEmpty == true) widget.statusBadge!,
-                        if ((widget.viewsBadge ?? 0) > 0) '◉ ${_compactPopularity(widget.viewsBadge!)}',
-                        if (widget.metaLine?.isNotEmpty == true) widget.metaLine!,
-                      ].join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary),
-                    ),
-                  ),
               ],
             ],
           ),

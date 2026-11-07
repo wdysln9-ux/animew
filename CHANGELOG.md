@@ -4,6 +4,13 @@ All notable AnimeW changes and bug fixes are recorded here, newest first.
 
 ## 2026-11-07
 
+### Poster card layout follow-up
+- Kept poster metadata directly beneath the title, without leaving a blank second-line gap for one-line titles.
+- Reduced metadata text slightly and kept card height consistent across titles of different lengths.
+- Matched New Episodes card styling and metadata to the other tracker poster rows; only the section's item ordering remains distinct.
+- Applied status, views, format, and episode metadata consistently to every search result card.
+
+
 ### Poster Card and Search
 - Reduced the size and padding of poster information chips for a less oversized look.
 - Fixed poster artwork stretching when a title occupies only one line by reserving a consistent title area.
