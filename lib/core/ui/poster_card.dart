@@ -410,7 +410,7 @@ class _PosterCardState extends State<PosterCard> {
                         ),
                       if (showViews)
                         Positioned(
-                          left: 6,
+                          right: 6,
                           bottom: 6,
                           child: _PosterTag('◉ ${_compactPopularity(widget.viewsBadge!)}'),
                         ),
@@ -719,16 +719,17 @@ class _ScoreTag extends StatelessWidget {
 }
 
 class _PosterTag extends StatelessWidget {
-  const _PosterTag(this.text, {this.maxWidth});
+  const _PosterTag(this.text, {this.maxWidth, this.color});
   final String text;
   final double? maxWidth;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
+        color: color ?? Colors.black.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(4),
       ),
       child: ConstrainedBox(
