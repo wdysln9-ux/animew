@@ -56,7 +56,7 @@ class UpdateService {
 
   final Dio _dio = Dio();
   static const MethodChannel _downloadsChannel =
-      MethodChannel('animew/update_downloads');
+      MethodChannel('zangetsu/update_downloads');
 
   /// Query GitHub for the latest release. Returns an [UpdateInfo] when it is
   /// newer than the installed version (and, when [respectSkip] is true, not the
