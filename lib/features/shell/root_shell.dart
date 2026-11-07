@@ -356,8 +356,9 @@ class _RootShellState extends State<RootShell>
                   ),
                 );
               },
-              ),
-              const MiniPlayerOverlay(),
+            ),
+            ),
+            const MiniPlayerOverlay(),
             ],
           ),
           bottomNavigationBar: ValueListenableBuilder<bool>(
