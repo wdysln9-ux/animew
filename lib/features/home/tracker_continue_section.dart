@@ -192,9 +192,6 @@ class NewEpisodesSection extends StatelessWidget {
         caption: trackerNextSubtitle(items[i]),
         captionColor: AppColors.accent,
         captionBold: true,
-        badge: _WaitingBadge(
-          releasedCount(items[i]) - (items[i].progress ?? 0),
-        ),
         onTap: () => onOpen(items[i]),
         onLongPress: onLongPress == null ? null : () => onLongPress!(items[i]),
       ),
@@ -218,7 +215,6 @@ class _TrackerPosterCard extends StatelessWidget {
     required this.onTap,
     this.onLongPress,
     this.captionBold = false,
-    this.badge,
   });
 
   final TrackerListItem entry;
@@ -228,7 +224,6 @@ class _TrackerPosterCard extends StatelessWidget {
   final bool captionBold;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
-  final Widget? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -261,21 +256,38 @@ class _TrackerPosterCard extends StatelessWidget {
                     scoreBadge: entry.item.score,
                     statusBadge: trackerName == 'AniList' ? (entry.item.isUpcoming ? 'Segera' : entry.item.status == MediaStatus.completed ? 'Selesai' : entry.item.status == MediaStatus.ongoing ? 'Tayang' : null) : null,
                     viewsBadge: entry.item.popularity,
+                    showViewsBadge: false,
                     metaLine: [if (entry.item.format?.isNotEmpty == true) entry.item.format!, if (entry.totalEpisodes != null && entry.totalEpisodes! > 0) '${entry.totalEpisodes} Eps'].join(' · '),
                     showTitle: titleInside,
                     onTap: onTap,
                   ),
                 ),
-                if (badge != null)
-                  Positioned(
-                    top: 38,
-                    left: 6,
-                    child: IgnorePointer(child: badge!),
-                  ),
               ],
             ),
           ),
           const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  caption,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.caption.copyWith(
+                    color: captionColor,
+                    fontWeight: captionBold ? FontWeight.w700 : null,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              if (entry.item.popularity != null && entry.item.popularity! > 0) ...[
+                const SizedBox(width: 6),
+                Icon(Icons.visibility_rounded, size: 13, color: AppColors.textSecondary),
+                const SizedBox(width: 3),
+                Text(_trackerPopularity(entry.item.popularity!), style: AppText.caption.copyWith(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+              ],
+            ],
+          ),
           if (!titleInside)
             PosterCardTitle(
               title: entry.item.title,
@@ -296,7 +308,7 @@ class _TrackerPosterCard extends StatelessWidget {
                 ].join(' · '),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary),
+                style: AppText.caption.copyWith(fontSize: 11, color: AppColors.textSecondary),
               ),
             ),
         ],
@@ -305,42 +317,10 @@ class _TrackerPosterCard extends StatelessWidget {
   }
 }
 
-/// How many episodes are waiting. A count rather than a "NEW" label, so one
-/// glance separates tonight's episode from a backlog worth an evening.
-class _WaitingBadge extends StatelessWidget {
-  const _WaitingBadge(this.count);
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      color: AppColors.accent,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x59000000),
-          blurRadius: 6,
-          offset: Offset(0, 1),
-        ),
-      ],
-    ),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      child: Text(
-        '+$count',
-        style: TextStyle(
-          fontFamily: AppText.fontFamily,
-          fontFamilyFallback: AppText.fontFamilyFallback,
-          fontSize: 10,
-          height: 1.2,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.2,
-          color: Colors.white,
-        ),
-      ),
-    ),
-  );
+String _trackerPopularity(int value) {
+  if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1).replaceAll('.0', '')}jt';
+  if (value >= 1000) return '${(value / 1000).toStringAsFixed(value >= 100000 ? 0 : 1).replaceAll('.0', '')}rb';
+  return '$value';
 }
 
 /// One status bucket of the tracker's library — same poster row as a provider
