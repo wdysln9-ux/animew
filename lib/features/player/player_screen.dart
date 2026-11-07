@@ -2072,7 +2072,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       transitionDuration: const Duration(milliseconds: 240),
       pageBuilder: (dialogContext, _, __) {
         final screenWidth = MediaQuery.of(dialogContext).size.width;
-        final panelWidth = (screenWidth * 0.36).clamp(320.0, 440.0);
+        final panelWidth = (screenWidth * 0.36).clamp(320.0, 440.0).toDouble();
         return Align(
           alignment: Alignment.centerRight,
           child: Material(

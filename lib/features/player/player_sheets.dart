@@ -1835,7 +1835,7 @@ class _QuickSettingRow extends StatelessWidget {
     color: Colors.transparent,
     child: InkWell(
       onTap: onTap,
-      child: Padding(
+      child: Container(
         constraints: const BoxConstraints(minHeight: 56),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Row(
