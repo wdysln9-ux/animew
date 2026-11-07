@@ -105,6 +105,8 @@ PlaybackPrefs? get _posterPrefs {
   }
 }
 
+bool posterMetaLineEnabled() => _posterPrefs?.posterMetaLine ?? true;
+
 /// Only geometry consumers depend on this scope; cards listen to the same
 /// revision themselves so standalone cards and widget tests also update.
 class PosterCardScope extends InheritedNotifier<ValueNotifier<int>> {

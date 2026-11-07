@@ -285,8 +285,19 @@ class _TrackerPosterCard extends StatelessWidget {
               inside: false,
               textStyle: AppText.caption.copyWith(color: AppColors.textPrimary),
             ),
-          if (!titleInside && (PlaybackPrefs.instance?.posterMetaLine ?? true))
-            const SizedBox.shrink(),
+          if (!titleInside && posterMetaLineEnabled())
+            Padding(
+              padding: EdgeInsets.zero,
+              child: Text(
+                [
+                  if (entry.item.format?.isNotEmpty == true) entry.item.format!,
+                  if (entry.totalEpisodes != null && entry.totalEpisodes! > 0) '${entry.totalEpisodes} Eps',
+                ].join(' · '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary),
+              ),
+            ),
         ],
       ),
     );
