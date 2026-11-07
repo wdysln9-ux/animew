@@ -41,6 +41,7 @@ import 'dock_icons.dart';
 import 'mode_bar.dart';
 import '../../core/ui/dock_visibility.dart';
 import 'root_shell_tv.dart';
+import '../player/mini_player_overlay.dart';
 
 /// Shared pages for [RootShell] (phone bottom nav) and [RootShellTv] (TV left
 /// rail). TV uses Settings at index 3; phone uses its viewer overview instead.
