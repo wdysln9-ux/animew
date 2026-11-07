@@ -689,16 +689,30 @@ class _ControlsOverlay extends StatelessWidget {
                   // _AnimatedPlayPause's disc exactly, so the episode arrows
                   // don't twitch every time playback stalls.
                   if (buffering) {
-                    return const SizedBox(
+                    // Keep the loading indicator visible, but make its full
+                    // 58px hit area interactive so users can pause/resume
+                    // immediately instead of waiting for buffering to end.
+                    return SizedBox(
                       width: 58,
                       height: 58,
-                      child: Center(
-                        child: SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
+                      child: Material(
+                        color: Colors.transparent,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () {
+                            c.togglePlay();
+                            onInteract();
+                          },
+                          child: const Center(
+                            child: SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            ),
                           ),
                         ),
                       ),
