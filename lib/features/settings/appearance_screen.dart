@@ -262,13 +262,12 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
 
   /// Import a local TTF/OTF and make it the active app-wide font.
   Future<void> _importAppFont() async {
-    final result = await FilePicker.platform.pickFiles(
+    final picked = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: const ['ttf', 'otf'],
-      allowMultiple: false,
     );
-    if (result == null || result.files.isEmpty || !mounted) return;
-    final path = result.files.single.path;
+    if (picked == null || !mounted) return;
+    final path = picked.path;
     if (path == null || path.isEmpty) {
       showAppToast(context, 'File font tidak bisa dibaca.');
       return;
