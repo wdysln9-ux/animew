@@ -2868,16 +2868,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
         : (source.quality?.trim().isNotEmpty == true
             ? source.quality!.trim()
             : source.container.name);
-    // Remove resolution suffixes so "Rapsodi 360p", "Rapsodi 720p",
-    // and "Rapsodi 1080p" become one provider entry.
-    return raw
+    final normalized = raw
         .replaceAll(
           RegExp(r'\\s*[-|•·:]?\\s*(?:2160|1440|1080|720|576|540|480|360|240|144|\\d{3,4})\\s*p\\s*$', caseSensitive: false),
           '',
         )
         .replaceAll(RegExp(r'\\s*[-|•·:]\\s*$'), '')
-        .trim()
-        .ifEmpty(source.label?.trim() ?? raw);
+        .trim();
+    return normalized.isEmpty ? raw : normalized;
   }
 
   void _openGroupedSourceQualities(String name, List<VideoSource> sources) {
