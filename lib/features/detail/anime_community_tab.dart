@@ -698,14 +698,10 @@ class _Comment extends StatelessWidget {
           children: [
             if (depth > 0)
               Positioned.fill(
-                child: CustomPaint(
-                  painter: _CommentThreadLinePainter(),
-                ),
-              ),
-            if (children.isNotEmpty)
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _CommentThreadRailPainter(x: 15.0 + (17.0 * depth)),
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: _CommentThreadConnectorPainter(isLast: isLast),
+                  ),
                 ),
               ),
             Row(
@@ -764,8 +760,8 @@ class _Comment extends StatelessWidget {
                                   ),
                                 )
                               : ClipRect(
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: double.infinity),
+                                  child: SizedBox(
+                                    width: double.infinity,
                                     child: _TranslatedMarkdown(
                                       text: '${data['comment'] ?? ''}',
                                     ),
@@ -831,29 +827,13 @@ class _Comment extends StatelessWidget {
   }
 }
 
-/// One trunk per comment level, beginning at the parent's avatar center and
-/// continuing through every descendant. Child elbows are painted over it.
-class _CommentThreadRailPainter extends CustomPainter {
-  const _CommentThreadRailPainter({required this.x});
-  final double x;
+/// Connects each reply to its parent. The vertical segment continues
+/// through following siblings, but the final sibling stops at its avatar
+/// center instead of hanging below the last reply.
+class _CommentThreadConnectorPainter extends CustomPainter {
+  const _CommentThreadConnectorPainter({required this.isLast});
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF555860)
-      ..strokeWidth = 1.4
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(x, 15), Offset(x, size.height), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CommentThreadRailPainter oldDelegate) =>
-      oldDelegate.x != x;
-}
-
-/// Draws the elbow across the reply gutter and into the reply avatar center.
-class _CommentThreadLinePainter extends CustomPainter {
-  const _CommentThreadLinePainter();
+  final bool isLast;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -862,18 +842,29 @@ class _CommentThreadLinePainter extends CustomPainter {
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
-    const branchX = 1.0;
+
+    const trunkX = 1.0;
     const branchY = 16.0;
     const avatarCenterX = 32.0;
+
+    // Adjacent non-final replies form one continuous vertical rail.
+    // The final reply ends exactly at its avatar center.
+    canvas.drawLine(
+      Offset(trunkX, 0),
+      Offset(trunkX, isLast ? branchY : size.height),
+      paint,
+    );
+
     final branch = Path()
-      ..moveTo(branchX, branchY - 4)
-      ..quadraticBezierTo(branchX, branchY, branchX + 4, branchY)
+      ..moveTo(trunkX, branchY)
+      ..quadraticBezierTo(trunkX, branchY, trunkX + 4, branchY)
       ..lineTo(avatarCenterX, branchY);
     canvas.drawPath(branch, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _CommentThreadLinePainter oldDelegate) => false;
+  bool shouldRepaint(covariant _CommentThreadConnectorPainter oldDelegate) =>
+      oldDelegate.isLast != isLast;
 }
 
 class _CurrentProfileAvatar extends StatelessWidget {
