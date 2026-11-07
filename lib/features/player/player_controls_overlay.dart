@@ -330,8 +330,8 @@ class _ControlsOverlay extends StatelessWidget {
       case 'more':
         return (Icons.more_horiz_rounded, 'More', () => _showMore(context));
       case 'episodes':
-        if (portraitMode || c.episodes.length <= 1) return null;
-        return (Icons.video_library_outlined, 'Episode lainnya', onEpisodes);
+        if (portraitMode || c.episodes.length <= 1 || onEpisodes == null) return null;
+        return (Icons.video_library_outlined, 'Episode lainnya', onEpisodes!);
       case 'summary':
         return (Icons.subject_rounded, 'Episode summary', onEpisodeSummary);
       case 'comments':
@@ -396,9 +396,9 @@ class _ControlsOverlay extends StatelessWidget {
   List<Widget> _barButtons(BuildContext context, List<String> ids) {
     return [
       for (final id in ids)
-        if (id == 'episodes' && !portraitMode && controller.episodes.length > 1)
+        if (id == 'episodes' && !portraitMode && controller.episodes.length > 1 && onEpisodes != null)
           _EpisodePickerButton(onTap: () {
-            onEpisodes();
+            onEpisodes!();
             onInteract();
           })
         else if (_specFor(context, id) case (final icon, final tip, final tap))
