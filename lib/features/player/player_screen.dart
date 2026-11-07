@@ -412,6 +412,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   int _fitIndex = 0;
   // Horizontal drag-to-seek.
   bool _hSeeking = false;
+  bool _hSeekBlocked = false;
   Duration _hSeekStart = Duration.zero;
   Duration _hSeekTarget = Duration.zero;
   // "Up next" auto-advance card.
@@ -1651,6 +1652,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
   // the target while dragging, and the seek commits on release.
   void _onHDragStart(DragStartDetails d) {
     if (!_swipeSeekEnabled) return;
+    // Keep the outer 40 logical pixels on both sides free for system
+    // back-navigation gestures; horizontal scrubbing only starts in the center.
+    const edgeDeadZone = 40.0;
+    final screenWidth = MediaQuery.of(context).size.width;
+    _hSeekBlocked = d.globalPosition.dx <= edgeDeadZone ||
+        d.globalPosition.dx >= screenWidth - edgeDeadZone;
+    if (_hSeekBlocked) return;
     if (_duration <= Duration.zero) return; // can't scrub without a duration
     _hSeekStart = _c.player.state.position;
     _hSeekTarget = _hSeekStart;
@@ -1658,7 +1666,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onHDragUpdate(DragUpdateDetails d) {
-    if (!_hSeeking || _pinching) return;
+    if (_hSeekBlocked || !_hSeeking || _pinching) return;
     final w = MediaQuery.of(context).size.width;
     // Use a deliberately slower scrub rate so small finger movements
     // don't jump across minutes of playback. A full screen-width drag moves
@@ -1672,6 +1680,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onHDragEnd(DragEndDetails d) {
+    if (_hSeekBlocked) {
+      _hSeekBlocked = false;
+      return;
+    }
     if (!_hSeeking) return;
     _c.seekTo(_hSeekTarget);
     setState(() => _hSeeking = false);
