@@ -216,7 +216,7 @@ double tvPosterGridAspect(BuildContext context) {
   final artHeight = wide ? width * 9 / 16 : width * 1.5;
   final titleHeight = posterTitleInside(context, wide: wide)
       ? 0.0
-      : _kTitleGap + 20;
+      : _kTitleGap + 20 + (_posterPrefs?.posterMetaLine == true ? 12 : 0);
   return width / (artHeight + titleHeight);
 }
 
@@ -642,7 +642,9 @@ double posterCellHeight(
   bool titleInside = false,
 }) {
   final artHeight = wide ? cellWidth * 9 / 16 : cellWidth * 1.5;
-  final titleHeight = titleInside ? 0.0 : _kTitleGap + _titleBoxHeight;
+  final titleHeight = titleInside
+      ? 0.0
+      : _kTitleGap + _titleBoxHeight + (_posterPrefs?.posterMetaLine == true ? 12 : 0);
   final height = artHeight + titleHeight;
   return titleHeight == 0 ? height : height.ceilToDouble();
 }
