@@ -4,13 +4,17 @@ on:
   push:
     branches:
       - main
+      - feat/cinematic-ambient-lighting
+    paths-ignore:
+      - "preview/**"
+      - ".github/workflows/preview-pages.yml"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: animew-apk-${{ github.ref }}
+  group: android-apk-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -20,75 +24,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Free disk space on GitHub runner
-        uses: jlumbroso/free-disk-space@v2
-        with:
-          android: false
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          preinstalled-runtimes: false
-          swap-storage: false
-
-      - name: Check available disk space
-        shell: bash
-        run: |
-          set -euo pipefail
-          df -h /
-          available_gib=$(df -BG --output=avail / | tail -n 1 | tr -dc '0-9')
-          echo "Available disk space: ${available_gib} GiB"
-          if [ "$available_gib" -lt 8 ]; then
-            echo "Not enough free disk space for the Android DEX build (need at least 8 GiB)."
-            exit 1
-          fi
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Install Android build components before Gradle
-        shell: bash
-        run: |
-          set -euo pipefail
-          ANDROID_SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          SDKMANAGER="$(find "$ANDROID_SDK/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort -V | tail -n 1)"
-          if [ -z "$SDKMANAGER" ]; then
-            echo "sdkmanager was not found under $ANDROID_SDK/cmdline-tools"
-            find "$ANDROID_SDK" -maxdepth 4 -type f -name sdkmanager 2>/dev/null || true
-            exit 1
-          fi
-          echo "Using Android SDK: $ANDROID_SDK"
-          echo "Using sdkmanager: $SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "ndk;28.2.13676358" "cmake;3.22.1"
-          df -h /
-
       - name: Show tool versions
-        shell: bash
         run: |
           flutter --version
           dart --version
-          ANDROID_SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          SDKMANAGER="$(find "$ANDROID_SDK/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort -V | tail -n 1)"
-          "$SDKMANAGER" --list_installed | grep -E 'ndk;|cmake;' || true
-
       - name: Install dependencies
         run: flutter pub get
-
       - name: Configure persistent Android signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -103,33 +49,17 @@ jobs:
           else
             echo "No persistent signing secrets configured; APK will use runner debug signing."
           fi
-
       - name: Build arm64 release APK
-        env:
-          BUILD_NAME: 1.0.${{ github.run_number }}
-          BUILD_NUMBER: ${{ github.run_number }}
-        run: |
-          flutter build apk --release --target-platform android-arm64 \
-            --build-name="$BUILD_NAME" \
-            --build-number="$((30000 + BUILD_NUMBER))"
-
-      - name: Name versioned APK
-        env:
-          APK_NAME: AnimeW-v1.0.${{ github.run_number }}-arm64-v8a.apk
-        run: |
-          mv build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/$APK_NAME"
-          echo "APK_PATH=build/app/outputs/flutter-apk/$APK_NAME" >> "$GITHUB_ENV"
-
-      - name: Publish in-app update release
+        run: flutter build apk --release --target-platform android-arm64
+      - name: Name AnimeW APK
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/AnimeW-arm64-v8a.apk
+      - name: Publish AnimeW APK release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: AnimeW 1.0.${{ github.run_number }}
-          body: |
-            Automatic ARM64 build from commit ${{ github.sha }}.
-
-            This pre-release was published after the Android APK build completed successfully.
+          tag_name: animew-build-${{ github.run_number }}
+          name: AnimeW build ${{ github.run_number }}
+          body: Automatic ARM64 APK build from commit ${{ github.sha }}.
           prerelease: true
           make_latest: false
-          files: ${{ env.APK_PATH }}
+          files: build/app/outputs/flutter-apk/AnimeW-arm64-v8a.apk
           fail_on_unmatched_files: true
