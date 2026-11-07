@@ -3747,43 +3747,40 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     Positioned.fill(
                       child: IgnorePointer(
                         child: ClipRect(
-                          child: Opacity(
-                            opacity: 0.52,
-                            child: ImageFiltered(
-                              imageFilter: ImageFilter.blur(
-                                sigmaX: _cinematicBlur, sigmaY: _cinematicBlur,
-                              ),
-                              child: Transform.scale(
-                                scale: _cinematicZoom,
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    Video(
-                                      controller: _c.videoController,
-                                      controls: NoVideoControls,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    if (_cinematicBrightness < 0)
-                                      ColoredBox(color: Colors.black.withValues(
-                                        alpha: -_cinematicBrightness * 0.65,
-                                      ))
-                                    else if (_cinematicBrightness > 0)
-                                      ColoredBox(color: Colors.white.withValues(
-                                        alpha: _cinematicBrightness * 0.35,
-                                      )),
-                                    if (_cinematicVignette > 0)
-                                      DecoratedBox(decoration: BoxDecoration(
-                                        gradient: RadialGradient(
-                                          colors: [
-                                            Colors.transparent,
-                                            Colors.black.withValues(alpha: _cinematicVignette),
-                                          ],
-                                          stops: const [0.35, 1],
-                                          radius: 0.85,
-                                        ),
-                                      )),
-                                  ],
-                                ),
+                          child: ImageFiltered(
+                            imageFilter: ImageFilter.blur(
+                              sigmaX: _cinematicBlur, sigmaY: _cinematicBlur,
+                            ),
+                            child: Transform.scale(
+                              scale: _cinematicZoom,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Video(
+                                    controller: _c.videoController,
+                                    controls: NoVideoControls,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  if (_cinematicBrightness < 0)
+                                    ColoredBox(color: Colors.black.withValues(
+                                      alpha: -_cinematicBrightness * 0.65,
+                                    ))
+                                  else if (_cinematicBrightness > 0)
+                                    ColoredBox(color: Colors.white.withValues(
+                                      alpha: _cinematicBrightness * 0.35,
+                                    )),
+                                  if (_cinematicVignette > 0)
+                                    DecoratedBox(decoration: BoxDecoration(
+                                      gradient: RadialGradient(
+                                        colors: [
+                                          Colors.transparent,
+                                          Colors.black.withValues(alpha: _cinematicVignette),
+                                        ],
+                                        stops: const [0.35, 1],
+                                        radius: 0.85,
+                                      ),
+                                    )),
+                                ],
                               ),
                             ),
                           ),
