@@ -1778,7 +1778,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         ? 'Nonaktif'
         : (subtitleTrack.title?.trim().isNotEmpty == true
             ? subtitleTrack.title!
-            : 'Aktif');
+            : null);
     _sheet<void>(
       _SheetColumn(
         header: 'Setelan',
