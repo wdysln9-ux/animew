@@ -401,12 +401,20 @@ class _ControlsOverlay extends StatelessWidget {
   /// Anything unrecognised is skipped rather than crashing, which is what
   /// makes a layout saved by a newer build safe to load.
   List<Widget> _barButtons(BuildContext context, List<String> ids) {
-    return [
-      for (final id in ids)
-        if (id != 'episodes' &&
-            _specFor(context, id) case (final icon, final tip, final tap))
-          _BarButton(icon: icon, tooltip: tip, onTap: tap),
-    ];
+    final buttons = <Widget>[];
+    for (final id in ids) {
+      if (id == 'episodes') continue;
+      final spec = _specFor(context, id);
+      if (spec == null) continue;
+      buttons.add(
+        _BarButton(
+          icon: spec.$1,
+          tooltip: spec.$2,
+          onTap: spec.$3,
+        ),
+      );
+    }
+    return buttons;
   }
 
   @override
