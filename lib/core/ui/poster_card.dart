@@ -398,21 +398,28 @@ class _PosterCardState extends State<PosterCard> {
                         Positioned(
                           top: 6,
                           left: 6,
-                          child: _PosterTag(widget.statusBadge!, color: widget.statusBadge == 'Selesai' ? const Color(0xFF438BE8) : const Color(0xFF20B86B)),
+                          child: _PosterTag(widget.statusBadge!, color: widget.statusBadge == 'Selesai' ? const Color(0xFF438BE8) : widget.statusBadge == 'Segera' ? const Color(0xFFE6A52D) : const Color(0xFF20B86B)),
                         ),
                       if (showRank)
                         Positioned(
                           left: 8,
-                          top: titleInside ? 44 : 38,
+                          top: 38,
                           child: IgnorePointer(
-                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 34, height: 1, fontWeight: FontWeight.w900, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
+                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 30, height: 1, fontWeight: FontWeight.w700, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
                           ),
                         ),
                       if (showViews)
                         Positioned(
-                          right: 6,
+                          left: 6,
                           bottom: 6,
-                          child: _PosterTag('◉ ${_compactPopularity(widget.viewsBadge!)}'),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.visibility_rounded, size: 13, color: Colors.white),
+                              const SizedBox(width: 3),
+                              Text(_compactPopularity(widget.viewsBadge!), style: TextStyle(fontFamily: AppText.fontFamily, fontFamilyFallback: AppText.fontFamilyFallback, fontSize: 10, height: 1, fontWeight: FontWeight.w700, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)])),
+                            ],
+                          ),
                         ),
                       if (widget.dubBadge != null &&
                           (prefs?.posterAudioBadge ?? true))
@@ -484,19 +491,16 @@ class _PosterCardState extends State<PosterCard> {
                 // leftover space and posters came out different heights across
                 // the same row. Pinning the text also pins the gap to whatever
                 // follows the row.
-                SizedBox(
-                  height: _titleBoxHeight,
-                  child: PosterCardTitle(
-                    title: widget.title,
-                    logoItem: widget.logoItem,
-                    width: widget.cellWidth,
-                    maxHeight: _titleBoxHeight,
-                    inside: false,
-                  ),
+                PosterCardTitle(
+                  title: widget.title,
+                  logoItem: widget.logoItem,
+                  width: widget.cellWidth,
+                  maxHeight: _titleBoxHeight,
+                  inside: false,
                 ),
                 if ((prefs?.posterMetaLine ?? true) && widget.metaLine?.isNotEmpty == true)
                   Padding(
-                    padding: const EdgeInsets.only(top: 1),
+                    padding: EdgeInsets.zero,
                     child: Text(widget.metaLine!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary)),
                   ),
               ],
@@ -676,8 +680,8 @@ double posterGridAspect(BuildContext context) => posterCellAspect(
 /// Carried as 0-100 because that is what the catalogues agree on, shown out of
 /// 10 because that is what people read a rating as.
 String _compactPopularity(int value) {
-  if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1).replaceAll('.0', '')}m';
-  if (value >= 1000) return '${(value / 1000).toStringAsFixed(value >= 100000 ? 0 : 1).replaceAll('.0', '')}k';
+  if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1).replaceAll('.0', '')}JT';
+  if (value >= 1000) return '${(value / 1000).toStringAsFixed(value >= 100000 ? 0 : 1).replaceAll('.0', '')}rb';
   return '$value';
 }
 
@@ -694,24 +698,24 @@ class _ScoreTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 2, 5, 2),
       decoration: BoxDecoration(
-        color: (score >= 75 ? const Color(0xFF237B43) : score >= 60 ? const Color(0xFF92701A) : const Color(0xFF963C36)).withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(4),
+        color: Colors.black.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star_rounded, size: 10, color: Color(0xFFFFC53D)),
+          Icon(Icons.star_rounded, size: 12, color: score >= 75 ? const Color(0xFF55D879) : score >= 60 ? const Color(0xFFFFC247) : const Color(0xFFFF7168)),
           const SizedBox(width: 2),
           Text(
             _outOfTen,
             style: TextStyle(
               fontFamily: AppText.fontFamily,
               fontFamilyFallback: AppText.fontFamilyFallback,
-              fontSize: 9,
+              fontSize: 10,
               height: 1.1,
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.3,
-              color: Colors.white,
+              letterSpacing: 0.2,
+              color: score >= 75 ? const Color(0xFF55D879) : score >= 60 ? const Color(0xFFFFC247) : const Color(0xFFFF7168),
             ),
           ),
         ],
@@ -729,10 +733,10 @@ class _PosterTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: color ?? Colors.black.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth ?? double.infinity),
@@ -743,10 +747,10 @@ class _PosterTag extends StatelessWidget {
           style: TextStyle(
             fontFamily: AppText.fontFamily,
             fontFamilyFallback: AppText.fontFamilyFallback,
-            fontSize: 9,
+            fontSize: 10,
             height: 1.1,
             fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
+            letterSpacing: 0.3,
             color: Colors.white,
           ),
         ),

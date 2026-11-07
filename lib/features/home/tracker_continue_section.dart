@@ -257,10 +257,8 @@ class _TrackerPosterCard extends StatelessWidget {
                     wideImageUrl: entry.item.banner,
                     genres: entry.item.genres,
                     isAdult: entry.item.isAdult,
-                    progressBadge: trackerName == 'AniList' && entry.progress != null
-                        ? trackerProgressSubtitle(entry)
-                        : null,
-                    statusBadge: trackerName == 'AniList' ? (entry.status == WatchStatus.completed ? 'Selesai' : entry.status == WatchStatus.watching ? 'Tayang' : null) : null,
+                    scoreBadge: entry.item.score,
+                    statusBadge: trackerName == 'AniList' ? (entry.item.isUpcoming ? 'Segera' : entry.status == WatchStatus.completed ? 'Selesai' : entry.status == WatchStatus.watching ? 'Tayang' : null) : null,
                     viewsBadge: entry.item.popularity,
                     metaLine: [if (entry.item.format?.isNotEmpty == true) entry.item.format!, if (entry.totalEpisodes != null && entry.totalEpisodes! > 0) '${entry.totalEpisodes} Eps'].join(' · '),
                     showTitle: titleInside,
@@ -269,23 +267,14 @@ class _TrackerPosterCard extends StatelessWidget {
                 ),
                 if (badge != null)
                   Positioned(
-                    top: 6,
-                    right: 6,
+                    top: 38,
+                    left: 6,
                     child: IgnorePointer(child: badge!),
                   ),
               ],
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            caption,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.caption.copyWith(
-              color: captionColor,
-              fontWeight: captionBold ? FontWeight.w700 : null,
-            ),
-          ),
           if (!titleInside)
             PosterCardTitle(
               title: entry.item.title,
@@ -296,6 +285,8 @@ class _TrackerPosterCard extends StatelessWidget {
               inside: false,
               textStyle: AppText.caption.copyWith(color: AppColors.textPrimary),
             ),
+          if (!titleInside && (PlaybackPrefs.instance?.posterMetaLine ?? true))
+            const SizedBox.shrink(),
         ],
       ),
     );
@@ -391,7 +382,8 @@ class TrackerListSection extends StatelessWidget {
           isAdult: e.item.isAdult,
           // Episode progress belongs only on the AniList Continue / New Episodes rows.
           progressBadge: null,
-          statusBadge: trackerName == 'AniList' ? (e.status == WatchStatus.completed ? 'Selesai' : e.status == WatchStatus.watching ? 'Tayang' : null) : null,
+          scoreBadge: e.score,
+        statusBadge: trackerName == 'AniList' ? (e.isUpcoming ? 'Segera' : e.status == WatchStatus.completed ? 'Selesai' : e.status == WatchStatus.watching ? 'Tayang' : null) : null,
           viewsBadge: e.item.popularity,
           metaLine: [if (e.item.format?.isNotEmpty == true) e.item.format!, if (e.totalEpisodes != null && e.totalEpisodes! > 0) '${e.totalEpisodes} Eps'].join(' · '),
           onTap: () => onOpen(e),

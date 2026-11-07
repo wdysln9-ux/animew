@@ -113,6 +113,10 @@ class MediaItem extends Equatable {
   @JsonKey(includeFromJson: false, includeToJson: false)
   final int? popularity;
 
+  /// True when AniList reports that the title has not started airing yet.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final bool isUpcoming;
+
   /// Metadata format and total episode count for the poster's secondary line.
   @JsonKey(includeFromJson: false, includeToJson: false)
   final String? format;
@@ -147,6 +151,7 @@ class MediaItem extends Equatable {
     this.status,
     this.score,
     this.popularity,
+    this.isUpcoming = false,
     this.format,
     this.totalEpisodes,
     this.isAdult = false,
@@ -195,6 +200,7 @@ class MediaItem extends Equatable {
     status: status,
     score: score,
     popularity: popularity,
+    isUpcoming: isUpcoming,
     format: format,
     totalEpisodes: totalEpisodes,
     isAdult: isAdult,
@@ -224,6 +230,7 @@ class MediaItem extends Equatable {
     status,
     score,
     popularity,
+    isUpcoming,
     format,
     totalEpisodes,
     isAdult,

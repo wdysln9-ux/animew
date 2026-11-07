@@ -506,6 +506,7 @@ class AniListCatalogue implements AnimeCatalogue {
       // Already 0-100 here; the other three scale theirs to match.
       score: m['averageScore'] as int?,
       popularity: m['popularity'] as int?,
+      isUpcoming: m['status'] == 'NOT_YET_RELEASED',
       format: _prettyFormat(m['format'] as String?),
       totalEpisodes: m['episodes'] as int?,
       status: _status(m['status'] as String?),
