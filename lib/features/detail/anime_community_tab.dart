@@ -714,6 +714,7 @@ class _Comment extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (depth > 0) const SizedBox(width: 17),
               Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
