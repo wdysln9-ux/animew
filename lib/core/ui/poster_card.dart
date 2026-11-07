@@ -409,7 +409,7 @@ class _PosterCardState extends State<PosterCard> {
                           left: 8,
                           top: 34,
                           child: IgnorePointer(
-                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 29, height: 1, fontWeight: FontWeight.w600, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
+                            child: Text('#${widget.rankBadge}', style: TextStyle(fontSize: 28, height: 1, fontWeight: FontWeight.w500, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.75), blurRadius: 5)])),
                           ),
                         ),
                       if (showViews)
@@ -419,9 +419,9 @@ class _PosterCardState extends State<PosterCard> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.visibility_rounded, size: 13, color: Colors.white),
+                              const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
                               const SizedBox(width: 3),
-                              Text(_compactPopularity(widget.viewsBadge!), style: TextStyle(fontFamily: AppText.fontFamily, fontFamilyFallback: AppText.fontFamilyFallback, fontSize: 10, height: 1, fontWeight: FontWeight.w700, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)])),
+                              Text(_compactPopularity(widget.viewsBadge!), style: TextStyle(fontFamily: AppText.fontFamily, fontFamilyFallback: AppText.fontFamilyFallback, fontSize: 11.5, height: 1, fontWeight: FontWeight.w700, color: Colors.white, shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)])),
                             ],
                           ),
                         ),
@@ -598,6 +598,22 @@ class _PosterCardTitleState extends State<PosterCardTitle> {
   }
 
   @override
+  double _measuredTitleHeight(BuildContext context) {
+    final style = widget.textStyle ??
+        AppText.caption.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: widget.inside ? FontWeight.w700 : null,
+        );
+    final painter = TextPainter(
+      text: TextSpan(text: widget.title, style: style),
+      maxLines: widget.maxLines,
+      textDirection: Directionality.of(context),
+      ellipsis: '…',
+    )..layout(maxWidth: widget.width);
+    return painter.height.clamp(1.0, widget.maxHeight);
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (_posterPrefs?.posterTitleStyle == PosterTitleStyle.artwork &&
         _logoUrl != null) {
@@ -605,7 +621,7 @@ class _PosterCardTitleState extends State<PosterCardTitle> {
         imageUrl: _logoUrl!,
         cacheManager: AppImageCache.manager,
         width: widget.width,
-        height: widget.maxHeight,
+        height: _measuredTitleHeight(context),
         fit: BoxFit.contain,
         alignment: Alignment.centerLeft,
         fadeInDuration: const Duration(milliseconds: 180),
@@ -737,10 +753,10 @@ class _PosterTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: color ?? Colors.black.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(15),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth ?? double.infinity),
@@ -751,7 +767,7 @@ class _PosterTag extends StatelessWidget {
           style: TextStyle(
             fontFamily: AppText.fontFamily,
             fontFamilyFallback: AppText.fontFamilyFallback,
-            fontSize: 11,
+            fontSize: 11.5,
             height: 1.1,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,
