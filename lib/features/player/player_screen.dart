@@ -1772,6 +1772,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         children: [
           _SheetRow(
             label: 'Kualitas video',
+            active: false,
             subtitle: _c.state.qualities.isNotEmpty || _c.mediaVideoTracks.length > 1
                 ? (_c.state.activeQuality?.quality ??
                     _c.state.active?.quality ??
@@ -1784,6 +1785,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
           _SheetRow(
             label: 'Kecepatan pemutaran',
+            active: false,
             subtitle: '${_c.player.state.rate}x',
             onTap: () {
               Navigator.pop(context);
@@ -1792,6 +1794,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
           _SheetRow(
             label: 'Subtitle',
+            active: false,
             subtitle: 'Pilih atau atur subtitle',
             onTap: () {
               Navigator.pop(context);
@@ -1800,6 +1803,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
           _SheetRow(
             label: 'Screenshot',
+            active: false,
             onTap: () {
               Navigator.pop(context);
               _captureScreenshot();
@@ -1807,6 +1811,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
           _SheetRow(
             label: 'Selengkapnya',
+            active: false,
             onTap: () {
               Navigator.pop(context);
               _openPlaybackSettings();
