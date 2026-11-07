@@ -425,7 +425,7 @@ class _PosterCardState extends State<PosterCard> {
                                 style: TextStyle(
                                   fontFamily: AppText.fontFamily,
                                   fontFamilyFallback: AppText.fontFamilyFallback,
-                                  fontSize: 10.5,
+                                  fontSize: 10,
                                   height: 1,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,
@@ -538,7 +538,7 @@ class _PosterCardState extends State<PosterCard> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppText.caption.copyWith(
-                                  fontSize: 9.5,
+                                  fontSize: 10.5,
                                   height: 1.1,
                                   color: AppColors.textSecondary,
                                 ),
@@ -765,14 +765,14 @@ class _ScoreTag extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.star_rounded, size: 14, color: score >= 75 ? const Color(0xFF55D879) : score >= 60 ? const Color(0xFFFFC247) : const Color(0xFFFF7168)),
+          Icon(Icons.star_rounded, size: 12, color: score >= 75 ? const Color(0xFF55D879) : score >= 60 ? const Color(0xFFFFC247) : const Color(0xFFFF7168)),
           const SizedBox(width: 2),
           Text(
             _outOfTen,
             style: TextStyle(
               fontFamily: AppText.fontFamily,
               fontFamilyFallback: AppText.fontFamilyFallback,
-              fontSize: 11,
+              fontSize: 10,
               height: 1.1,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.2,
@@ -808,7 +808,7 @@ class _PosterTag extends StatelessWidget {
           style: TextStyle(
             fontFamily: AppText.fontFamily,
             fontFamilyFallback: AppText.fontFamilyFallback,
-            fontSize: 10.5,
+            fontSize: 10,
             height: 1.05,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,

@@ -192,7 +192,7 @@ class NewEpisodesSection extends StatelessWidget {
         caption: trackerNextSubtitle(items[i]),
         captionColor: AppColors.accent,
         captionBold: true,
-        showCaption: false,
+        showCaption: true,
         onTap: () => onOpen(items[i]),
         onLongPress: onLongPress == null ? null : () => onLongPress!(items[i]),
       ),
@@ -302,7 +302,7 @@ class _TrackerPosterCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppText.caption.copyWith(
-                  fontSize: 9.5,
+                  fontSize: 10.5,
                   height: 1.1,
                   color: AppColors.textSecondary,
                 ),

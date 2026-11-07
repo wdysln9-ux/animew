@@ -865,7 +865,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get trackerCaughtUp => 'Sudah tertinggal';
+  String get trackerCaughtUp => 'Tertangkap';
 
   @override
   String get homeRowNewEpisodes => 'Episode Baru';
