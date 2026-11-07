@@ -4659,7 +4659,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
       // In episode-detail mode, the first system Back while fullscreen must
       // return to the inline episode page instead of popping the player route.
       // Once details are visible, preserve the configured close behaviour.
-      canPop: (!widget.episodeDetailMode || _showEpisodeDetails) &&
+      canPop: !_ready &&
+          (!widget.episodeDetailMode || _showEpisodeDetails) &&
           sl<PlaybackPrefs>().closeConfirmation == 'direct',
       onPopInvokedWithResult: (didPop, _) {
         AppLogger.instance.log(
@@ -4668,6 +4669,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
           'deadEnd=$_handlingDeadEnd',
         );
         if (didPop) return;
+        // Once playback is ready, system Back always minimizes to the floating
+        // player instead of revealing a close-confirmation dialog.
+        if (_ready &&
+            !_inPip &&
+            sl<CastController>().state != CastState.connected) {
+          _handlePlayerBack();
+          return;
+        }
         if (widget.episodeDetailMode && !_showEpisodeDetails) {
           _handlePlayerBack();
           return;

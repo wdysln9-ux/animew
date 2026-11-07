@@ -52,7 +52,7 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
         return LayoutBuilder(
           builder: (context, constraints) {
             final width = _expanded
-                ? (constraints.maxWidth - 20).clamp(220.0, 720.0).toDouble()
+                ? (constraints.maxWidth - 20).clamp(180.0, constraints.maxWidth - 20).toDouble()
                 : (constraints.maxWidth * 0.48).clamp(150.0, 190.0).toDouble();
             final height = width * 9 / 16;
             final safeBottom = MediaQuery.paddingOf(context).bottom;
@@ -184,10 +184,12 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                                       child: Slider(
                                         min: 0,
                                         max: maxMs > 0 ? maxMs.toDouble() : 1,
-                                        value: value.clamp(
-                                          0,
-                                          maxMs > 0 ? maxMs.toDouble() : 1,
-                                        ),
+                                        value: value
+                                            .clamp(
+                                              0,
+                                              maxMs > 0 ? maxMs.toDouble() : 1,
+                                            )
+                                            .toDouble(),
                                         onChanged: maxMs <= 0
                                             ? null
                                             : (next) => session.controller.player
