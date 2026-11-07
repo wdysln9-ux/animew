@@ -21,6 +21,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Free disk space on GitHub runner
+        uses: jlumbroso/free-disk-space@v2
+        with:
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          preinstalled-runtimes: false
+          swap-storage: false
+
+      - name: Check available disk space
+        shell: bash
+        run: |
+          set -euo pipefail
+          df -h /
+          available_gib=$(df -BG --output=avail / | tail -n 1 | tr -dc '0-9')
+          echo "Available disk space: ${available_gib} GiB"
+          if [ "$available_gib" -lt 8 ]; then
+            echo "Not enough free disk space for the Android DEX build (need at least 8 GiB)."
+            exit 1
+          fi
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
