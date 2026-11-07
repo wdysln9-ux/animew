@@ -138,6 +138,7 @@ class TrackerContinueSection extends StatelessWidget {
       itemCount: items.length,
       itemBuilder: (c, i) => _TrackerPosterCard(
         entry: items[i],
+        trackerName: trackerName,
         caption: trackerContinueCaption(c, items[i]),
         captionColor: AppColors.textSecondary,
         onTap: () => onOpen(items[i]),
@@ -186,6 +187,7 @@ class NewEpisodesSection extends StatelessWidget {
       itemCount: items.length,
       itemBuilder: (c, i) => _TrackerPosterCard(
         entry: items[i],
+        trackerName: trackerName,
         caption: trackerNextSubtitle(items[i]),
         captionColor: AppColors.accent,
         captionBold: true,
@@ -209,6 +211,7 @@ class NewEpisodesSection extends StatelessWidget {
 class _TrackerPosterCard extends StatelessWidget {
   const _TrackerPosterCard({
     required this.entry,
+    required this.trackerName,
     required this.caption,
     required this.captionColor,
     required this.onTap,
@@ -218,6 +221,7 @@ class _TrackerPosterCard extends StatelessWidget {
   });
 
   final TrackerListItem entry;
+  final String trackerName;
   final String caption;
   final Color captionColor;
   final bool captionBold;
