@@ -2863,10 +2863,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
         : 'Ukuran tidak diketahui';
     return Text(label, style: AppText.caption.copyWith(color: AppColors.textSecondary));
   }
+  String? _sourceResolution(VideoSource source) {
+    final quality = source.quality?.trim() ?? '';
+    final match = RegExp(
+      r'(2160|1440|1080|720|576|540|480|360|240|144)\\s*p?',
+      caseSensitive: false,
+    ).firstMatch(quality.isNotEmpty ? quality : (source.label ?? ''));
+    return match == null ? null : '${match.group(1)}p';
+  }
+
   void _openQualitySheet() {
-    // Prefer adaptive HLS-master variants when present (Auto + variants);
-    // otherwise fall back to the distinct per-source qualities (e.g. AllAnime
-    // mp4/clock sources that each carry a resolution but no HLS master).
+    final sourceOptions = sortByQuality(
+      _c.state.sources.where((s) => _sourceResolution(s) != null).toList(),
+    );
     final List<Widget> rows;
     if (_c.state.qualities.isNotEmpty) {
       rows = [
@@ -2892,9 +2901,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
       ];
     } else if (_c.mediaVideoTracks.length > 1) {
-      // No HLS ladder, but mpv found renditions inside the stream itself —
-      // this is how a DASH (.mpd) source gets a quality list, since it has no
-      // #EXT-X-STREAM-INF lines for us to parse.
       rows = [
         for (final t in _c.mediaVideoTracks)
           _SheetRow(
@@ -2907,11 +2913,26 @@ class _PlayerScreenState extends State<PlayerScreen> {
             },
           ),
       ];
+    } else if (sourceOptions.isNotEmpty) {
+      rows = [
+        for (final source in sourceOptions)
+          _SheetRow(
+            label: _sourceResolution(source)!,
+            subtitle: _sourceGroupName(source),
+            subtitleWidget: _RemoteFileSizeLabel(
+              url: source.url,
+              headers: source.headers,
+            ),
+            active: source.url == _c.state.active?.url,
+            onTap: () async {
+              Navigator.pop(context);
+              await _c.selectSource(source);
+              await _maybeRecast();
+              _bumpControls();
+            },
+          ),
+      ];
     } else {
-      // Neither an HLS ladder nor renditions inside the stream: this file has
-      // exactly one video track, so there is no quality to switch. The other
-      // resolved sources are separate files on separate servers — they belong
-      // in the Sources sheet, not here.
       return;
     }
     if (rows.isEmpty) return;
@@ -2988,40 +3009,23 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 final displayName = kind != AudioKind.unknown
                     ? '${kind.name.toUpperCase()} • $name'
                     : name;
-                if (options.length > 1) {
-                  final active = options.any((s) => s == _c.state.active);
-                  final qualities = options
-                      .map((s) => s.quality?.trim().isNotEmpty == true
-                          ? s.quality!.trim()
-                          : (RegExp(r'\d{3,4}\s*p', caseSensitive: false)
-                                  .firstMatch(s.label ?? '')
-                                  ?.group(0) ??
-                              ''))
-                      .where((q) => q.isNotEmpty)
-                      .toSet()
-                      .toList();
-                  return _SheetRow(
-                    label: displayName,
-                    subtitle: qualities.isEmpty
-                        ? '${options.length} pilihan'
-                        : qualities.join(' · '),
-                    active: active,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _openGroupedSourceQualities(displayName, options);
-                    },
-                  );
-                }
-                final s = options.first;
+                final active = options.firstWhere(
+                  (s) => s.url == _c.state.active?.url,
+                  orElse: () => sortByQuality(options).first,
+                );
                 return _SheetRow(
-                  label: s.label?.isNotEmpty == true
-                      ? _sourceLabelWithQuality(s.label!, s.quality)
-                      : displayName,
-                  subtitleWidget: _RemoteFileSizeLabel(url: s.url, headers: s.headers),
-                  active: s == _c.state.active,
+                  label: displayName,
+                  subtitle: options.length > 1
+                      ? '${options.length} pilihan server'
+                      : null,
+                  subtitleWidget: _RemoteFileSizeLabel(
+                    url: active.url,
+                    headers: active.headers,
+                  ),
+                  active: options.any((s) => s.url == _c.state.active?.url),
                   onTap: () async {
                     Navigator.pop(context);
-                    await _c.selectSource(s);
+                    await _c.selectSource(active);
                     await _maybeRecast();
                     _bumpControls();
                   },
