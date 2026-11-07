@@ -1824,12 +1824,14 @@ class _QuickSettingRow extends StatelessWidget {
     required this.onTap,
     this.value,
     this.showChevron = true,
+    this.enabled = true,
   });
 
   final IconData icon;
   final String label;
   final String? value;
   final bool showChevron;
+  final bool enabled;
   final VoidCallback onTap;
 
   @override
@@ -1848,7 +1850,7 @@ class _QuickSettingRow extends StatelessWidget {
               child: Text(
                 label,
                 style: AppText.body.copyWith(
-                  color: AppColors.textPrimary,
+                  color: enabled ? AppColors.textPrimary : AppColors.textSecondary,
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                 ),

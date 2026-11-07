@@ -1806,6 +1806,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             label: 'Subtitle',
             value: hasSoftSubs ? (subtitleTrack.id == 'no' ? null : subtitleValue) : null,
             showChevron: hasSoftSubs,
+            enabled: hasSoftSubs,
             onTap: () {
               Navigator.pop(context);
               if (!hasSoftSubs) {
@@ -3105,8 +3106,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 return _SheetRow(
                   label: displayName,
                   subtitle: [
-                    if (options.length > 1)
-                      options.map(_sourceResolution).whereType<String>().toSet().join(' • '),
+                    options.map(_sourceResolution).whereType<String>().toSet().join(' • '),
                     if (options.any((s) => s.subtitles.isNotEmpty)) 'Softsubs',
                   ].where((s) => s.isNotEmpty).join(' • '),
                   subtitleWidget: _RemoteFileSizeLabel(
