@@ -549,6 +549,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// Locked either way rather than following the sensor: a phone resting flat
   /// shouldn't flip the video mid-episode, and this still works for people who
   /// keep system auto-rotate switched off.
+  /// The top-left Back button exits the inline episode page's fullscreen
+  /// player first. Once the episode details are visible, it navigates back
+  /// normally. Standalone player sessions keep their usual back behaviour.
+  void _handlePlayerBack() {
+    if (widget.episodeDetailMode && !_showEpisodeDetails) {
+      _toggleOrientation();
+      return;
+    }
+    Navigator.of(context).maybePop();
+  }
+
   void _toggleOrientation() {
     setState(() {
       _portraitMode = !_portraitMode;
@@ -4256,7 +4267,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           onRotate: _toggleOrientation,
                           portraitMode: _portraitMode,
                           episodeDetailMode: widget.episodeDetailMode,
-                          onBack: () => Navigator.of(context).maybePop(),
+                          onBack: _handlePlayerBack,
                           onSpeed: _openSpeedSheet,
                           onAudioSubs: _openAudioSubsSheet,
                           onQuality: _openQualitySheet,
