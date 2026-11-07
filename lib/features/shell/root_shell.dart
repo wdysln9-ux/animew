@@ -41,6 +41,7 @@ import 'dock_icons.dart';
 import 'mode_bar.dart';
 import '../../core/ui/dock_visibility.dart';
 import 'root_shell_tv.dart';
+import '../player/mini_player_overlay.dart';
 
 /// Shared pages for [RootShell] (phone bottom nav) and [RootShellTv] (TV left
 /// rail). TV uses Settings at index 3; phone uses its viewer overview instead.
@@ -311,7 +312,10 @@ class _RootShellState extends State<RootShell>
           // Content runs under the floating dock (screens keep their own bottom
           // padding so the last row scrolls clear of it).
           extendBody: true,
-          body: NotificationListener<ScrollNotification>(
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              NotificationListener<ScrollNotification>(
             // One place, so no screen has to know the dock exists. Returns
             // false throughout — it reads the scroll, never eats it.
             onNotification: (notification) => DockScrollCollapse.onNotification(
@@ -352,7 +356,9 @@ class _RootShellState extends State<RootShell>
                   ),
                 );
               },
-            ),
+              ),
+              const MiniPlayerOverlay(),
+            ],
           ),
           bottomNavigationBar: ValueListenableBuilder<bool>(
             valueListenable: dockHiddenBySection,
