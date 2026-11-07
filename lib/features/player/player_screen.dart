@@ -1763,23 +1763,74 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// Playback is paused on the way in: the video is hidden behind the route,
   /// and audio carrying on under a settings list reads as a bug. It resumes
   /// on return only if it was actually playing when you left.
-  Future<void> _openSettings() async {
+  /// YouTube-style quick settings shown from the player gear button.
+  void _openSettings() {
+    _bumpControls();
+    _sheet<void>(
+      _SheetColumn(
+        header: 'Setelan',
+        children: [
+          _SheetRow(
+            label: 'Kualitas video',
+            subtitle: _c.state.qualities.isNotEmpty || _c.mediaVideoTracks.length > 1
+                ? (_c.state.activeQuality?.quality ??
+                    _c.state.active?.quality ??
+                    'Otomatis')
+                : (_c.state.active?.quality ?? 'Saat ini'),
+            onTap: () {
+              Navigator.pop(context);
+              _openQualitySheet();
+            },
+          ),
+          _SheetRow(
+            label: 'Kecepatan pemutaran',
+            subtitle: '${_c.player.state.rate}x',
+            onTap: () {
+              Navigator.pop(context);
+              _openSpeedSheet();
+            },
+          ),
+          _SheetRow(
+            label: 'Subtitle',
+            subtitle: _c.state.subtitle?.label ?? 'Pilih subtitle',
+            onTap: () {
+              Navigator.pop(context);
+              _openAudioSubsSheet();
+            },
+          ),
+          _SheetRow(
+            label: 'Screenshot',
+            onTap: () {
+              Navigator.pop(context);
+              _captureScreenshot();
+            },
+          ),
+          _SheetRow(
+            label: 'Selengkapnya',
+            onTap: () {
+              Navigator.pop(context);
+              _openPlaybackSettings();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Opens the actual Playback settings page directly, then restores the
+  /// current player orientation and resumes only if it was playing before.
+  Future<void> _openPlaybackSettings() async {
     final wasPlaying = _c.player.state.playing;
     if (wasPlaying) _c.togglePlay();
-    // Settings is built for portrait, but the player pins landscape and hides
-    // the system bars — leaving that in place renders it sideways with no
-    // status bar. Hand both back for the trip, then take them again on return.
     await SystemChrome.setPreferredOrientations(const [
       DeviceOrientation.portraitUp,
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     if (!mounted) return;
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const PlaybackSettingsScreen()),
+    );
     if (!mounted) return;
-    // Back to whichever orientation you were watching in — not landscape by
-    // default, or a portrait session would end up sideways after a settings trip.
     await SystemChrome.setPreferredOrientations(_orientationLock);
     SystemChrome.setEnabledSystemUIMode(
       _showEpisodeDetails ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
