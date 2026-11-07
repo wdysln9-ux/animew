@@ -693,18 +693,28 @@ class _Comment extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.only(left: depth == 0 ? 0 : 3, bottom: depth == 0 ? 2 : 0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
           if (depth > 0)
-            SizedBox(
-              width: 17,
-              child: CustomPaint(
-                painter: _CommentThreadConnectorPainter(),
-                child: const SizedBox.expand(),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: const _CommentThreadConnectorPainter(),
+                ),
               ),
             ),
-          Expanded(
+          if (children.isNotEmpty)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _CommentThreadRailPainter(x: 15.0 + (17.0 * depth)),
+                ),
+              ),
+            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -815,6 +825,8 @@ class _Comment extends StatelessWidget {
                   ),
               ],
             ),
+              ),
+            ],
           ),
         ],
       ),
