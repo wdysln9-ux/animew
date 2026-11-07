@@ -454,6 +454,10 @@ class PlayerCubit extends Cubit<PlayerState> {
     _toastTimer = Timer(duration, () => toast.value = null);
   }
 
+  /// Show a short status message from player UI actions.
+  void showStatus(String message, {Duration duration = const Duration(seconds: 2)}) =>
+      _toast(message, duration: duration);
+
   /// One-shot mpv tuning, started on first access and awaited before every
   /// [_open]. Must complete BEFORE `player.open` or its demuxer options (e.g.
   /// the HLS fake-extension relaxation) don't apply to the file being opened.
@@ -3512,6 +3516,11 @@ class PlayerCubit extends Cubit<PlayerState> {
     );
     if (iv == null) return;
     _autoSkipped.add(iv.start.inMilliseconds);
+    if (isEndingSkip(iv.type)) {
+      _toast('Ending dilewati');
+    } else if (!isRecapSkip(iv.type)) {
+      _toast('Opening dilewati');
+    }
     seekTo(iv.end);
   }
 
@@ -3588,7 +3597,7 @@ class PlayerCubit extends Cubit<PlayerState> {
         await Gal.requestAccess();
         await Gal.putImageBytes(bytes, name: name);
       }
-      _toast('Saved to gallery');
+      _toast('Disimpan ke gallery');
       return true;
     } catch (_) {
       _toast('Screenshot failed');

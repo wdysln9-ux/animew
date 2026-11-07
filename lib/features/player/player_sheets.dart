@@ -1836,18 +1836,19 @@ class _QuickSettingRow extends StatelessWidget {
     child: InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        constraints: const BoxConstraints(minHeight: 56),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: AppColors.textPrimary),
-            const SizedBox(width: 18),
+            Icon(icon, size: 24, color: AppColors.textPrimary),
+            const SizedBox(width: 16),
             Expanded(
               child: Text(
                 label,
                 style: AppText.body.copyWith(
                   color: AppColors.textPrimary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

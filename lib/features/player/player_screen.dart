@@ -2027,6 +2027,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
           // it has always had — no reason to reword what already works.
           label: isRecapSkip(iv.type) ? context.l10n.skipRecap : context.l10n.skip,
           onTap: () {
+            if (isEndingSkip(iv.type)) {
+              _c.showStatus('Ending dilewati');
+            } else if (!isRecapSkip(iv.type)) {
+              _c.showStatus('Opening dilewati');
+            }
             _c.seekTo(iv.end);
             _bumpControls();
           },
@@ -2059,47 +2064,70 @@ class _PlayerScreenState extends State<PlayerScreen> {
         ? number.toInt().toString()
         : number.toString();
     _bumpControls();
-    showModalBottomSheet<void>(
+    showGeneralDialog<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0E0F11),
-      useSafeArea: true,
-      builder: (sheetContext) => FractionallySizedBox(
-        heightFactor: 0.88,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 14, 10, 10),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Komentar utas episode',
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+      barrierDismissible: true,
+      barrierLabel: 'Tutup komentar episode',
+      barrierColor: Colors.black45,
+      transitionDuration: const Duration(milliseconds: 240),
+      pageBuilder: (dialogContext, _, __) {
+        final screenWidth = MediaQuery.of(dialogContext).size.width;
+        final panelWidth = (screenWidth * 0.36).clamp(320.0, 440.0);
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            color: const Color(0xFF0E0F11),
+            elevation: 20,
+            child: SafeArea(
+              left: false,
+              child: SizedBox(
+                width: panelWidth,
+                height: double.infinity,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 10, 8, 8),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Komentar utas episode',
+                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Tutup',
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            icon: const Icon(Icons.close_rounded, color: Colors.white),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Tutup',
-                    onPressed: () => Navigator.of(sheetContext).pop(),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1, color: Color(0xFF292A2D)),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
-                child: EpisodeThreadsSection(
-                  showTitle: widget.showTitle!,
-                  malId: widget.malId,
-                  episodeNumber: episodeNumber,
+                    const Divider(height: 1, color: Color(0xFF292A2D)),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+                        child: EpisodeThreadsSection(
+                          showTitle: widget.showTitle!,
+                          malId: widget.malId,
+                          episodeNumber: episodeNumber,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final slide = Tween<Offset>(
+          begin: const Offset(0.16, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+        return SlideTransition(position: slide, child: child);
+      },
     );
   }
 

@@ -404,7 +404,11 @@ class _ControlsOverlay extends StatelessWidget {
     return [
       for (final id in ids)
         if (id == 'episodes' && !portraitMode && controller.episodes.length > 1 && onEpisodes != null)
-          _EpisodePickerButton(onTap: () {
+          _EpisodePickerButton(
+            thumbnail: (controller.state.currentIndex + 1 < controller.episodes.length)
+                ? controller.episodes[controller.state.currentIndex + 1].thumbnail
+                : null,
+            onTap: () {
             onEpisodes!();
             onInteract();
           })
@@ -860,40 +864,65 @@ class _ControlsOverlay extends StatelessWidget {
 }
 
 class _EpisodePickerButton extends StatelessWidget {
-  const _EpisodePickerButton({required this.onTap});
+  const _EpisodePickerButton({required this.onTap, this.thumbnail});
 
   final VoidCallback onTap;
+  final String? thumbnail;
 
   @override
   Widget build(BuildContext context) => Tooltip(
     message: 'Episode lainnya',
     child: Material(
-      // Same translucent surface family as the player's other controls,
-      // while keeping YouTube's compact rounded-chip silhouette.
       color: const Color(0x66000000),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(9),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(9),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-          child: const Row(
+          padding: const EdgeInsets.fromLTRB(11, 6, 6, 6),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.video_library_outlined, color: Colors.white, size: 17),
-              SizedBox(width: 7),
-              Text(
+              const Text(
                 'Episode lainnya',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
+              ),
+              const SizedBox(width: 9),
+              Container(
+                width: 54,
+                height: 31,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: thumbnail != null && thumbnail!.trim().isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: thumbnail!,
+                        fit: BoxFit.cover,
+                        memCacheWidth: 180,
+                        placeholder: (_, __) => const ColoredBox(
+                          color: Color(0xFF333333),
+                          child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 18),
+                        ),
+                        errorWidget: (_, __, ___) => const ColoredBox(
+                          color: Color(0xFF333333),
+                          child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 18),
+                        ),
+                      )
+                    : const ColoredBox(
+                        color: Color(0xFF333333),
+                        child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 18),
+                      ),
               ),
             ],
           ),
