@@ -1805,7 +1805,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             icon: Icons.subtitles_outlined,
             label: 'Subtitle',
             value: hasSoftSubs ? (subtitleTrack.id == 'no' ? null : subtitleValue) : null,
-            showChevron: hasSoftSubs,
+            showChevron: false,
             enabled: hasSoftSubs,
             onTap: () {
               Navigator.pop(context);
