@@ -330,8 +330,9 @@ class _ControlsOverlay extends StatelessWidget {
       case 'more':
         return (Icons.more_vert_rounded, 'More', () => _showMore(context));
       case 'episodes':
-        if (onEpisodes == null) return null;
-        return (Icons.video_library_outlined, 'Episodes', onEpisodes!);
+        // Episodes has its own YouTube-style floating pill in the lower-right,
+        // not a member of the configurable control bar.
+        return null;
       case 'summary':
         return (Icons.subject_rounded, 'Episode summary', onEpisodeSummary);
       case 'comments':
@@ -719,6 +720,71 @@ class _ControlsOverlay extends StatelessWidget {
             ],
           ),
         ),
+
+        // Separate episode picker, styled like YouTube's "More videos"
+        // chip. It is intentionally available only in fullscreen landscape.
+        if (!portraitMode && onEpisodes != null)
+          Positioned(
+            right: 44,
+            bottom: 88,
+            child: SafeArea(
+              top: false,
+              child: IgnorePointer(
+                ignoring: !visible,
+                child: AnimatedSlide(
+                  offset: visible ? Offset.zero : const Offset(0, 0.18),
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  child: AnimatedOpacity(
+                    opacity: visible ? 1 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Material(
+                      color: const Color(0xCC252525),
+                      borderRadius: BorderRadius.circular(24),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: () {
+                          onEpisodes!();
+                          onInteract();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.video_library_outlined,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                context.l10n.episodes,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
         // Bottom: seek row + buttons. Rises into place as it fades in — the
         // motion reads as instant even when the tap resolves a beat later.
