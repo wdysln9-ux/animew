@@ -164,6 +164,11 @@ PreferredProvider? _preferFromName(String? name) => switch (name) {
   _ => null,
 };
 
+String _thousands(int value) => value.toString().replaceAllMapped(
+  RegExp(r'\\B(?=(\\d{3})+(?!\\d))'),
+  (match) => ',',
+);
+
 String _sourceLabel(
   String sourceId, {
   String? url,
@@ -2249,6 +2254,9 @@ class _DetailViewState extends State<_DetailView>
 
     // ── Status label (used by the meta line and Details tab) ────────────────
     final statusStr = statusLabel(detail.status);
+    final formatStr = detail.format?.trim().isNotEmpty == true
+        ? detail.format!.trim()
+        : null;
 
     // ── Netflix-style meta line: "2010 · 10 Seasons · Completed" ────────────
     // Join only what we actually HAVE with " · " (no faked rating/HD/CC).
@@ -2332,8 +2340,8 @@ class _DetailViewState extends State<_DetailView>
                 coverHeaders: coverHeaders,
                 hasCover: hasCover,
                 posterUrl: detail.cover ?? item.cover,
-                sourceLabel: detail.malId != null ? 'MAL' : sourceName,
-                animeId: detail.malId?.toString() ?? detail.id,
+                sourceLabel: sourceName,
+                animeId: detail.id,
                 tint: ThemeController.adaptiveColour ? _tint : null,
                 trailerId: _trailerId,
                 // Pause the trailer once the hero has scrolled past (reuses
