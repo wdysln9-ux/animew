@@ -304,13 +304,19 @@ class AniListCatalogue implements AnimeCatalogue {
           'genre_in:[${f.genres.map((g) => '"$g"').join(',')}]',
         if (f.tags.isNotEmpty)
           'tag_in:[${f.tags.map((t) => '"$t"').join(',')}]',
-        if (years.isNotEmpty)
+        if (years.length == 1)
+          'seasonYear:${years.single}'
+        else if (years.length > 1)
           'seasonYear_in:[${years.join(',')}]'
         else if (f.year != null)
           'seasonYear:${f.year}',
-        if (kind == ZKind.anime) 'startDate_greater:${((f.minYear < 1980 ? 1980 : f.minYear) - 1) * 10000 + 1231}',
-        if (kind == ZKind.anime) 'startDate_lesser:${(f.maxYear > DateTime.now().year ? DateTime.now().year : f.maxYear) + 1}0101',
-        if (seasons.isNotEmpty)
+        if (kind == ZKind.anime && (f.minYear > 1980 || f.maxYear < DateTime.now().year))
+          'startDate_greater:${((f.minYear < 1980 ? 1980 : f.minYear) - 1) * 10000 + 1231}',
+        if (kind == ZKind.anime && (f.minYear > 1980 || f.maxYear < DateTime.now().year))
+          'startDate_lesser:${(f.maxYear > DateTime.now().year ? DateTime.now().year : f.maxYear) + 1}0101',
+        if (seasons.length == 1)
+          'season:${seasons.single.name.toUpperCase()}'
+        else if (seasons.length > 1)
           'season_in:[${seasons.map((v) => v.name.toUpperCase()).join(',')}]'
         else if (f.season != null)
           'season:${f.season!.name.toUpperCase()}',
