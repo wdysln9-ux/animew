@@ -337,15 +337,6 @@ class AniListCatalogue implements AnimeCatalogue {
         'media($args){ $_listFields } } }';
     var items = _items(await _gql(full, vars), kind);
 
-    // AniList genre_in is an OR filter. Enforce the requested AND semantics
-    // locally so every selected genre must be present on a returned title.
-    if (f != null && f.genres.length > 1) {
-      final required = f.genres.map((v) => v.toLowerCase()).toSet();
-      items = items.where((item) {
-        final actual = item.genres.map((v) => v.toLowerCase()).toSet();
-        return actual.containsAll(required);
-      }).toList(growable: false);
-    }
     return items;
   }
 
