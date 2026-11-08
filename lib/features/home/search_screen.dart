@@ -865,15 +865,18 @@ class _SearchViewState extends State<_SearchView>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _searchBar(),
-            const SizedBox(height: 12),
-            // Source line — what's being searched, one line of text, tap to
-            // open the source picker. Shown idle too, so scope is always known.
-            // Library scope queries the metadata catalogue, not a source, so
-            // this (and the picker it opens) is Sources-only.
-            if (widget.scope == SearchScope.sources) _sourceLine(),
-            // Control row — ecosystem tabs (or a result count once scoped to a
-            // single source) on the left, sort + filter actions on the right.
-            _controlRow(modeSources),
+            const SizedBox(height: 4),
+            // Source scope needs its scope selector and control row. Metadata
+            // search has no controls in this row (its filter action is beside
+            // the search field), so don't reserve an empty 40px band above
+            // the selected-filter chips. Keep the adult toggle when enabled.
+            if (widget.scope == SearchScope.sources) ...[
+              _sourceLine(),
+              _controlRow(modeSources),
+            ] else if (sl<PlaybackPrefs>().adultMetadata &&
+                (!sl.isRegistered<ViewerProfileStore>() ||
+                    sl<ViewerProfileStore>().adultMetadataAllowed))
+              _controlRow(modeSources),
             // What the catalogue is currently narrowed to, spelled out.
             // Arriving here from a genre or tag chip, the results are already
             // filtered before you have typed anything — without this the
