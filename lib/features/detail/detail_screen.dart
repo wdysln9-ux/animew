@@ -1912,10 +1912,7 @@ class _DetailViewState extends State<_DetailView> {
       body: SafeArea(
             child: Stack(
           children: [
-          // Adaptive colour: poster-tinted wash behind the scroll view, only
-          // while the setting is on. The NestedScrollView's own background is
-          // transparent, so the tint shows through the body; the pinned bars
-          // paint that same tint themselves so content never shows through.
+          // Adaptive colour stays behind the single scrolling detail page.
           if (ThemeController.adaptiveColour) PosterTintLayer(notifier: _tint),
           Material(
             type: MaterialType.transparency,
@@ -2145,7 +2142,7 @@ class _DetailViewState extends State<_DetailView> {
       episodesBySeason[1] = eps;
     }
 
-    // ── Status label (used by the meta line and Details tab) ────────────────
+    // ── Status label and detail metadata ───────────────────────────────────
     final statusStr = statusLabel(detail.status);
     final formatStr = detail.format?.trim().isNotEmpty == true
         ? detail.format!.trim()
@@ -2181,8 +2178,7 @@ class _DetailViewState extends State<_DetailView> {
       currentSeason,
     );
 
-    // Keep a compact Genres fallback on the main page; cast and creator
-    // information remain available in their dedicated tabs.
+    // Detail sections are rendered sequentially below in the same scroll view.
 
     // Friendly provider name + its origin repo, so the user can tell which repo
     // a source came from. JS providers live in the registry; CloudStream sources
@@ -2501,7 +2497,8 @@ class _DetailViewState extends State<_DetailView> {
                 PersonPage.route(ref, sourceId: widget.item.sourceId),
               ),
             ),
-          ),          SliverToBoxAdapter(
+          ),
+          SliverToBoxAdapter(
             child: _RelationsTab(
               loading: state.extrasLoading,
               relations: state.relations.isNotEmpty
