@@ -118,7 +118,6 @@ import '../player/player_screen.dart';
 import '../player/tv_playback_launch.dart';
 import '../reader/manga_reader_screen.dart';
 import '../reader/novel_reader_screen.dart';
-import '../trailer/trailer_screen.dart';
 import 'cubit/detail_cubit.dart';
 import 'anime_community_tab.dart';
 import 'wrong_title_sheet.dart';
@@ -1558,13 +1557,6 @@ class _DetailViewState extends State<_DetailView>
       case ProviderType.movie:
         return; // unreachable — _openPlayer only calls this for reading types
     }
-  }
-
-  /// Push the in-app trailer player for a resolved YouTube id.
-  void _openTrailer(String videoId) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => TrailerScreen(videoId: videoId)));
   }
 
   /// Netflix-style download label for the FIRST episode of the current season,
