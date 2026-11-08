@@ -98,7 +98,7 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
                     width: 184,
                     child: GestureDetector(
                       onTap: () => launchUrl(
-                        Uri.parse('https://www.youtube.com/watch?v=\${video.youtubeId}'),
+                        Uri.parse('https://www.youtube.com/watch?v=${video.youtubeId}'),
                         mode: LaunchMode.externalApplication,
                       ),
                       child: Column(
@@ -313,7 +313,7 @@ class _MalThemeSectionState extends State<_MalThemeSection> {
                 children: [
                   Text('Lagu Tema', style: AppText.headline.copyWith(fontSize: 17)),
                   const SizedBox(width: 8),
-                  Text('\${songs.length}', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+                  Text('${songs.length}', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
                   const Spacer(),
                   Icon(_expanded ? Icons.expand_less : Icons.chevron_right, color: AppColors.textSecondary),
                 ],
