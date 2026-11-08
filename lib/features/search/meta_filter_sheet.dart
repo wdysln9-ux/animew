@@ -324,14 +324,14 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
   );
 
   Widget _chips(List<_ChipData> data, ColorScheme cs) => Wrap(
-    spacing: 6, runSpacing: 6,
+    spacing: 4, runSpacing: 4,
     children: data.map((d) => ChoiceChip(
       label: Text(d.label, maxLines: 1, overflow: TextOverflow.ellipsis),
       selected: d.selected,
       onSelected: (_) => d.onTap(),
       showCheckmark: false,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: const VisualDensity(horizontal: -1, vertical: 0),
+      visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
       selectedColor: AppColors.accent,
       backgroundColor: Colors.transparent,
       side: BorderSide(
@@ -340,8 +340,8 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
             : cs.outline.withValues(alpha: .24),
       ),
       labelStyle: TextStyle(
-        fontSize: 12.5,
-        height: 1.15,
+        fontSize: 11,
+        height: 1.1,
         color: d.selected
             ? Colors.white
             : d.action
@@ -349,8 +349,9 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                 : cs.onSurface.withValues(alpha: .58),
         fontWeight: d.action ? FontWeight.w600 : FontWeight.normal,
       ),
+      labelPadding: EdgeInsets.zero,
       shape: const StadiumBorder(),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
     )).toList(),
   );
 
