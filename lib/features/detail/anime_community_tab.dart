@@ -13,10 +13,11 @@ import '../../core/profiles/viewer_profile_avatar.dart';
 import '../auth/auth_cubit.dart';
 
 class AnimeCommunityTab extends StatefulWidget {
-  const AnimeCommunityTab({super.key, required this.title, required this.anilistId, required this.malId, required this.reviews});
+  const AnimeCommunityTab({super.key, required this.title, required this.anilistId, required this.malId, required this.reviews, this.inline = false});
   final String title;
   final int? anilistId, malId;
   final bool reviews;
+  final bool inline;
   @override
   State<AnimeCommunityTab> createState() => _AnimeCommunityTabState();
 }
@@ -38,18 +39,33 @@ class _AnimeCommunityTabState extends State<AnimeCommunityTab> {
   Widget build(BuildContext context) => FutureBuilder<List<Map<String, dynamic>>>(
     future: future,
     builder: (context, s) {
-      if (s.connectionState != ConnectionState.done) return const Center(child: CircularProgressIndicator());
+      if (s.connectionState != ConnectionState.done) return const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator()));
       final rows = s.data ?? [];
-      if (rows.isEmpty) return Center(child: Text(mediaId == null ? 'Anime tidak ditemukan di AniList.' : widget.reviews ? 'Belum ada ulasan.' : 'Belum ada utas.'));
+      if (rows.isEmpty) return Padding(padding: const EdgeInsets.all(18), child: Center(child: Text(mediaId == null ? 'Anime tidak ditemukan di AniList.' : widget.reviews ? 'Belum ada ulasan.' : 'Belum ada utas.')));
+      final list = ListView.separated(
+        shrinkWrap: widget.inline,
+        physics: widget.inline ? const NeverScrollableScrollPhysics() : null,
+        padding: const EdgeInsets.all(14), itemCount: rows.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, i) => widget.reviews
+          ? _ReviewCard(data: rows[i], anime: widget.title)
+          : _ThreadCard(data: rows[i], anime: widget.title),
+      );
+      if (widget.inline) return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+            child: Text(widget.reviews ? 'ULASAN' : 'UTAS',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 11,
+                fontWeight: FontWeight.w700, letterSpacing: .6)),
+          ),
+          list,
+        ],
+      );
       return RefreshIndicator(
         onRefresh: () async { setState(() => future = load()); await future; },
-        child: ListView.separated(
-          padding: const EdgeInsets.all(14), itemCount: rows.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, i) => widget.reviews
-            ? _ReviewCard(data: rows[i], anime: widget.title)
-            : _ThreadCard(data: rows[i], anime: widget.title),
-        ),
+        child: list,
       );
     },
   );
