@@ -170,19 +170,30 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     Text('${f.maxYear}', style: theme.textTheme.titleMedium),
                   ]),
                   RangeSlider(
-                    min: 1960, max: now.toDouble(), divisions: now - 1960,
+                    min: 1980, max: now.toDouble(), divisions: now - 1980,
                     values: RangeValues(f.minYear.toDouble(), f.maxYear.toDouble()),
                     onChanged: (v) => setState(() => f = f.copyWith(
                       minYear: v.start.round(), maxYear: v.end.round())),
                   ),
-                  const SizedBox(height: 14),
+                  _heading('Jumlah Episode', theme),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Text('${f.minEpisodes}', style: theme.textTheme.titleMedium?.copyWith(fontSize: 13)),
+                    Text('${f.maxEpisodes}', style: theme.textTheme.titleMedium?.copyWith(fontSize: 13)),
+                  ]),
+                  RangeSlider(
+                    min: 0, max: 200, divisions: 200,
+                    values: RangeValues(f.minEpisodes.toDouble(), f.maxEpisodes.toDouble()),
+                    onChanged: (v) => setState(() => f = f.copyWith(
+                      minEpisodes: v.start.round(), maxEpisodes: v.end.round())),
+                  ),
+                  const SizedBox(height: 10),
                   _heading('Tahun', theme),
-                  _chips(visibleYears.map((y) => _ChipData('$y', f.years.contains(y),
-                    () => _toggle<int>(f.years, y, (xs) => f = f.copyWith(years: xs)))).toList(), cs),
-                  if (!showAllYears)
-                    _moreButton('Tampilkan Semua Tahun', years.where((y) => y >= 1980 && y <= 2011).length, () => setState(() => showAllYears = true), cs),
-                  if (showAllYears)
-                    _moreButton('Sembunyikan Tahun Lama', 0, () => setState(() => showAllYears = false), cs),
+                  _chips([
+                    ...visibleYears.map((y) => _ChipData('$y', f.years.contains(y),
+                      () => _toggle<int>(f.years, y, (xs) => f = f.copyWith(years: xs)))),
+                    _ChipData(showAllYears ? 'Lebih Sedikit' : 'Tampilkan Semua (+${years.length - visibleYears.length})', false,
+                      () => setState(() => showAllYears = !showAllYears)),
+                  ], cs),
                   if (isAniList) ...[
                     const SizedBox(height: 22),
                     _heading('Musim', theme),
@@ -206,27 +217,27 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                         final all = snap.data!;
                         final visible = showAllTags ? all : all.take(11).toList();
                         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          _chips(visible.map((t) => _ChipData(t, f.tags.contains(t),
-                            () => _toggle<String>(f.tags, t, (xs) => f = f.copyWith(tags: xs)))).toList(), cs),
-                          if (all.length > 11)
-                            _moreButton(showAllTags ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Semua', showAllTags ? 0 : all.length - 11,
-                              () => setState(() => showAllTags = !showAllTags), cs),
+                          _chips([
+                            ...visible.map((t) => _ChipData(t, f.tags.contains(t),
+                              () => _toggle<String>(f.tags, t, (xs) => f = f.copyWith(tags: xs)))),
+                            if (all.length > 11) _ChipData(showAllTags ? 'Lebih Sedikit' : 'Tampilkan Semua (+${all.length - 11})', false,
+                              () => setState(() => showAllTags = !showAllTags)),
+                          ], cs),
                         ]);
                       },
                     ),
                   ],
-                  const SizedBox(height: 22),
-                  _heading('Jumlah Episode', theme),
-                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text('${f.minEpisodes}', style: theme.textTheme.titleMedium),
-                    Text('${f.maxEpisodes}', style: theme.textTheme.titleMedium),
-                  ]),
-                  RangeSlider(
-                    min: 0, max: 200, divisions: 200,
-                    values: RangeValues(f.minEpisodes.toDouble(), f.maxEpisodes.toDouble()),
-                    onChanged: (v) => setState(() => f = f.copyWith(
-                      minEpisodes: v.start.round(), maxEpisodes: v.end.round())),
-                  ),
+                  if (widget.onHideMyAnimeChanged != null) ...[
+                    const SizedBox(height: 18),
+                    const Divider(),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: const Text('Hide My Anime', style: TextStyle(fontSize: 14)),
+                      value: hideMyAnime,
+                      onChanged: (v) { setState(() => hideMyAnime = v); widget.onHideMyAnimeChanged?.call(v); },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -256,14 +267,14 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
   }
 
   List<MetaFormat> _formats() {
-    if (widget.kind == ZKind.anime) return const [MetaFormat.tv, MetaFormat.movie, MetaFormat.ova, MetaFormat.special];
+    if (widget.kind == ZKind.anime) return const [MetaFormat.tv, MetaFormat.movie, MetaFormat.ona, MetaFormat.ova, MetaFormat.special];
     if (widget.kind == ZKind.manga) return const [MetaFormat.manga];
     if (widget.kind == ZKind.novel) return const [MetaFormat.novel];
     return const [MetaFormat.tv, MetaFormat.movie];
   }
 
   String _formatLabel(MetaFormat v) => switch (v) {
-    MetaFormat.tv => 'TV', MetaFormat.movie => 'Movie', MetaFormat.ova => 'OVA',
+    MetaFormat.tv => 'TV', MetaFormat.movie => 'Movie', MetaFormat.ona => 'ONA', MetaFormat.ova => 'OVA',
     MetaFormat.special => 'Special', MetaFormat.manga => 'Manga',
     MetaFormat.novel => 'Novel', MetaFormat.oneShot => 'One Shot',
   };
@@ -277,23 +288,25 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
   };
 
   Widget _heading(String title, ThemeData theme) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+    padding: const EdgeInsets.only(bottom: 7),
+    child: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontSize: 15, fontWeight: FontWeight.w600)),
   );
 
   Widget _chips(List<_ChipData> data, ColorScheme cs) => Wrap(
-    spacing: 9, runSpacing: 9,
+    spacing: 6, runSpacing: 6,
     children: data.map((d) => ChoiceChip(
-      label: Text(d.label),
+      label: Text(d.label, maxLines: 1, overflow: TextOverflow.ellipsis),
       selected: d.selected,
       onSelected: (_) => d.onTap(),
       showCheckmark: false,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
       selectedColor: cs.primary,
       backgroundColor: Colors.transparent,
-      side: BorderSide(color: d.selected ? cs.primary : cs.outline.withValues(alpha: .55)),
-      labelStyle: TextStyle(color: d.selected ? cs.onPrimary : cs.onSurfaceVariant),
+      side: BorderSide(color: d.selected ? cs.primary : cs.outline.withValues(alpha: .24)),
+      labelStyle: TextStyle(fontSize: 12.5, height: 1.05, color: d.selected ? cs.onPrimary : cs.onSurface.withValues(alpha: .58)),
       shape: const StadiumBorder(),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
     )).toList(),
   );
 
