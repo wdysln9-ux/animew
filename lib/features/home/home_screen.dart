@@ -269,6 +269,14 @@ class _HomeViewState extends State<_HomeView>
     await HomeCataloguePrefs.setSourceSelected(showSourceCatalogue);
   }
 
+  String _contentModeLabel(ModeChoice choice) {
+    if (choice.mode == ContentMode.anime) {
+      return choice.kind == StreamKind.movie ? 'Movie/TV' : 'Anime';
+    }
+    if (choice.mode == ContentMode.manga) return 'Manga/Manhwa';
+    return 'Novel';
+  }
+
   Future<void> _openContentModePicker() async {
     final currentMode = sl<ContentModeCubit>().state;
     final currentKind = ZModePrefs.streamKind;
@@ -294,7 +302,7 @@ class _HomeViewState extends State<_HomeView>
                         ? AppColors.accent
                         : AppColors.textSecondary,
                   ),
-                  title: Text(choice.label(sheet)),
+                  title: Text(_contentModeLabel(choice)),
                   trailing: choice.mode == currentMode &&
                           (choice.mode != ContentMode.anime ||
                               choice.kind == currentKind)
@@ -338,8 +346,8 @@ class _HomeViewState extends State<_HomeView>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  selected.label(context),
-                  style: AppText.title.copyWith(
+                  _contentModeLabel(selected),
+                  style: AppText.button.copyWith(
                     color: edgeBanner ? Colors.white : AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
