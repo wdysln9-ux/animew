@@ -1386,7 +1386,7 @@ class _SearchViewState extends State<_SearchView>
     ];
     if (chips.isEmpty) return const SizedBox.shrink();
     return SizedBox(
-      height: 40,
+      height: 46,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),

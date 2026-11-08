@@ -75,46 +75,56 @@ query ($id: Int, $search: String) {
       englishTitle: englishTitle,
     );
     if (resolvedId == null || resolvedId <= 0) {
-      throw StateError('MAL ID untuk anime ini belum ditemukan.');
+      final trailer = await _fetchAniListTrailer(anilistId);
+      if (trailer != null) {
+        return AnimeExtras(
+          malId: 0,
+          videos: [trailer],
+          themeError: 'ID MyAnimeList belum tersedia untuk lagu tema.',
+        );
+      }
+      throw StateError('Data tambahan anime belum bisa ditemukan.');
     }
     if (forceRefresh) _cache.remove(resolvedId);
     final existing = _cache[resolvedId];
     if (existing != null) return existing;
     final request = () async {
       final primary = await _fetch(resolvedId);
-      if (!primary.isEmpty) return primary;
-
-      // AniList can still carry a YouTube trailer even when Jikan's video
-      // endpoint has no entry for this MAL id.
       final aniTrailer = await _fetchAniListTrailer(anilistId);
-      if (aniTrailer != null) {
-        return AnimeExtras(
-          malId: primary.malId,
-          videos: [aniTrailer],
-          openings: primary.openings,
-          endings: primary.endings,
-          videoError: primary.videoError,
-          themeError: primary.themeError,
-        );
+      final videos = <AnimeExtraVideo>[...primary.videos];
+      if (aniTrailer != null &&
+          !videos.any((video) => video.youtubeId == aniTrailer.youtubeId)) {
+        videos.add(aniTrailer);
       }
 
-      // A stale/source-provided MAL id must not block a title lookup. Try the
-      // catalogue identity first, then Jikan's exact-title index.
-      var fallbackId = await _resolveMalId(
-        anilistId: anilistId,
-        title: title,
-        englishTitle: englishTitle,
-      );
-      if (fallbackId == null || fallbackId == resolvedId) {
-        fallbackId = await _searchJikanId(
-          englishTitle?.trim().isNotEmpty == true ? englishTitle!.trim() : title,
+      if (primary.isEmpty && aniTrailer == null) {
+        // A stale/source-provided MAL id must not block a title lookup.
+        var fallbackId = await _resolveMalId(
+          anilistId: anilistId,
+          title: title,
+          englishTitle: englishTitle,
         );
+        if (fallbackId == null || fallbackId == resolvedId) {
+          fallbackId = await _searchJikanId(
+            englishTitle?.trim().isNotEmpty == true
+                ? englishTitle!.trim()
+                : title,
+          );
+        }
+        if (fallbackId != null && fallbackId > 0 && fallbackId != resolvedId) {
+          final fallback = await _fetch(fallbackId);
+          if (!fallback.isEmpty) return fallback;
+        }
       }
-      if (fallbackId == null || fallbackId <= 0 || fallbackId == resolvedId) {
-        return primary;
-      }
-      final fallback = await _fetch(fallbackId);
-      return fallback.isEmpty ? primary : fallback;
+
+      return AnimeExtras(
+        malId: primary.malId,
+        videos: List.unmodifiable(videos),
+        openings: primary.openings,
+        endings: primary.endings,
+        videoError: primary.videoError,
+        themeError: primary.themeError,
+      );
     }();
     _cache[resolvedId] = request;
     try {

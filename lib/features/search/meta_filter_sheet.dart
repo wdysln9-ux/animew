@@ -174,8 +174,8 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
                       rangeThumbShape: const RoundRangeSliderThumbShape(
-                        enabledThumbRadius: 7,
-                        disabledThumbRadius: 7,
+                        enabledThumbRadius: 6,
+                        disabledThumbRadius: 6,
                         elevation: 0,
                         pressedElevation: 0,
                       ),
@@ -331,7 +331,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       onSelected: (_) => d.onTap(),
       showCheckmark: false,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: const VisualDensity(horizontal: -2, vertical: -1),
+      visualDensity: const VisualDensity(horizontal: -1, vertical: 0),
       selectedColor: AppColors.accent,
       backgroundColor: Colors.transparent,
       side: BorderSide(
@@ -341,7 +341,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       ),
       labelStyle: TextStyle(
         fontSize: 12.5,
-        height: 1.05,
+        height: 1.15,
         color: d.selected
             ? Colors.white
             : d.action
@@ -350,7 +350,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
         fontWeight: d.action ? FontWeight.w600 : FontWeight.normal,
       ),
       shape: const StadiumBorder(),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
     )).toList(),
   );
 

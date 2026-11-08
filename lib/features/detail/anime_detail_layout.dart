@@ -109,12 +109,12 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppColors.bg.withValues(alpha: 0.28),
-                          AppColors.bg.withValues(alpha: 0.04),
-                          AppColors.bg.withValues(alpha: 0.68),
+                          AppColors.bg.withValues(alpha: 0.38),
+                          AppColors.bg.withValues(alpha: 0.12),
+                          AppColors.bg.withValues(alpha: 0.76),
                           AppColors.bg,
                         ],
-                        stops: [0.0, 0.34, 0.76, 1.0],
+                        stops: [0.0, 0.30, 0.70, 1.0],
                       ),
                     ),
                   ),
@@ -159,13 +159,13 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 12,
+                bottom: 8,
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
                     child: SizedBox(
-                      width: 148,
-                      height: 216,
+                      width: 144,
+                      height: 210,
                       child: _image(poster, width: 480),
                     ),
                   ),
@@ -620,8 +620,8 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     final recommendations = widget.relations.where(_isRecommended).toList();
     final tabs = <String>[
       if (widget.seasons.isNotEmpty) 'Semua Musim',
-      if (related.isNotEmpty) 'Terkait',
-      if (recommendations.isNotEmpty) 'Rekomendasi',
+      if (widget.seasons.isNotEmpty || related.isNotEmpty) 'Terkait',
+      if (widget.seasons.isNotEmpty || recommendations.isNotEmpty) 'Rekomendasi',
     ];
     if (tabs.isEmpty) return const SizedBox.shrink();
     if (_selected >= tabs.length) _selected = 0;
@@ -695,6 +695,22 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                       ),
                     ));
                   }
+                }
+                if (cards.isEmpty) {
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: Text(
+                        selectedTab == 'Terkait'
+                            ? 'Belum ada anime terkait.'
+                            : selectedTab == 'Rekomendasi'
+                                ? 'Belum ada rekomendasi.'
+                                : 'Belum ada musim lain.',
+                        style: AppText.caption.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ),
+                  );
                 }
                 return ListView.separated(
                   scrollDirection: Axis.horizontal,
