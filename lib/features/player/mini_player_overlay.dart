@@ -66,10 +66,31 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
         if (session == null) {
           _expanded = false;
           _positionReady = false;
-          return const SizedBox.expand();
         }
 
-        return LayoutBuilder(
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 320),
+          reverseDuration: const Duration(milliseconds: 280),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) {
+            final curved = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+              reverseCurve: Curves.easeInCubic,
+            );
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.92, end: 1).animate(curved),
+                child: child,
+              ),
+            );
+          },
+          child: session == null
+              ? const SizedBox.expand(key: ValueKey<String>('mini-player-empty'))
+              : LayoutBuilder(
+          key: const ValueKey<String>('mini-player-active'),
           builder: (context, constraints) {
             final screenWidth = constraints.maxWidth;
             final screenHeight = constraints.maxHeight;
@@ -255,6 +276,7 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
               ],
             );
           },
+        ),
         );
       },
     );
