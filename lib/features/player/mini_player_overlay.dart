@@ -45,6 +45,7 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
   double? _left;
   double? _top;
   bool _expanded = false;
+  bool _dragging = false;
 
   static const _snapDuration = Duration(milliseconds: 280);
   static const _snapCurve = Curves.easeOutCubic;
@@ -94,7 +95,7 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
               fit: StackFit.expand,
               children: [
                 AnimatedPositioned(
-                  duration: _snapDuration,
+                  duration: _dragging ? Duration.zero : _snapDuration,
                   curve: _snapCurve,
                   left: _expanded ? (screenWidth - width) / 2 : left,
                   top: top,
@@ -118,6 +119,7 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                     clipBehavior: Clip.antiAlias,
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
+                      onPanStart: (_) => setState(() => _dragging = true),
                       onPanUpdate: (details) {
                         setState(() {
                           if (!_expanded) {
@@ -137,7 +139,10 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                             ? minTop
                             : maxTop;
                         if (_expanded) {
-                          setState(() => _top = snapTop);
+                          setState(() {
+                            _dragging = false;
+                            _top = snapTop;
+                          });
                           return;
                         }
                         final currentLeft = _left ?? left;
@@ -145,6 +150,7 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                             ? minLeft
                             : maxLeft;
                         setState(() {
+                          _dragging = false;
                           _left = snapLeft;
                           _top = snapTop;
                         });
