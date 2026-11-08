@@ -2267,29 +2267,12 @@ class _DetailViewState extends State<_DetailView>
     if ((detail.year ?? '').isNotEmpty) {
       metaParts.add(_yearWithSeason(detail.year!, detail.startDate));
     }
-    // A film has no episode count to fill the middle slot, so its run time
-    // takes it — there it IS the thing worth knowing before pressing play.
-    if (!isReading && eps.length <= 1 && (detail.durationMins ?? 0) > 0) {
-      metaParts.add('${detail.durationMins}m');
+    if (detail.score != null) {
+      metaParts.add('★ ${(detail.score! / 10).toStringAsFixed(2)}');
     }
-    if (hasMultipleSeasons) {
-      metaParts.add(context.l10n.seasonCount(seasonSet.length));
-    } else if (eps.isNotEmpty) {
-      metaParts.add(
-        isReading
-            ? context.l10n.chapterCount(eps.length)
-            : context.l10n.episodeCount(eps.length),
-      );
+    if (detail.popularity != null) {
+      metaParts.add('◉ ${_thousands(detail.popularity!)}');
     }
-    if (statusStr.isNotEmpty) metaParts.add(statusStr);
-    final rawFormat = detail.format?.trim();
-    final formatStr = switch (rawFormat?.toLowerCase()) {
-      'tv' => 'TV',
-      'ona' => 'ONA',
-      'ova' => 'OVA',
-      _ => rawFormat,
-    };
-    if (formatStr != null && formatStr.isNotEmpty) metaParts.add(formatStr);
     final metaLine = metaParts.join('  ·  ');
 
     // ── Download button label: "Download S{season}:E{n}" when we can derive
@@ -2426,14 +2409,21 @@ class _DetailViewState extends State<_DetailView>
                         // What the source claims it serves — "4K", "HD",
                         // "CAM". Only CloudStream reports one, so it is
                         // usually absent.
-                        if ((item.quality ?? '').trim().isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          _MetaBadge(item.quality!.trim().toUpperCase()),
-                        ],
-                        if (detail.isAdult) ...[
-                          const SizedBox(width: 8),
-                          const _MetaBadge('18+'),
-                        ],
+
+                      ],
+                    ),
+                  ],
+                  if (formatStr != null || statusStr.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        if (formatStr != null)
+                          _MetaBadge(formatStr),
+                        if (statusStr.isNotEmpty)
+                          _MetaBadge(statusStr),
                       ],
                     ),
                   ],
@@ -2452,61 +2442,103 @@ class _DetailViewState extends State<_DetailView>
         // side padding (it's normally a top-level sliver child), and a
         // shared wrapper would double that indent.
         SliverToBoxAdapter(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
-                child: _PlayButton(
-                  loading: state.episodesLoading,
-                  label: buttonLabel,
-                  icon: isReading
-                      ? Icons.menu_book_rounded
-                      : Icons.play_arrow_rounded,
-                  onPressed: eps.isNotEmpty
-                      ? () => _openPlayer(eps, resumeIdx, detail, category)
-                      : null,
-                ),
-              ),
-              // Reading downloads are out of scope for this plan.
-              if (!isReading)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                  child: _DownloadButton(
-                    // Gated exactly like Play above: with no episodes there is
-                    // nothing to download, and leaving it live on a title no
-                    // source matched just moves the dead end one tap later.
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _PlayButton(
                     loading: state.episodesLoading,
-                    label: downloadLabel,
+                    label: buttonLabel,
+                    icon: isReading ? Icons.menu_book_rounded : Icons.play_arrow_rounded,
+                    onPressed: eps.isNotEmpty
+                        ? () => _openPlayer(eps, resumeIdx, detail, category)
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _DownloadButton(
+                    loading: state.episodesLoading,
+                    label: isReading ? downloadLabel : 'Auto Resolve Sumber',
+                    icon: isReading ? Icons.file_download_outlined : Icons.travel_explore_rounded,
                     onPressed: eps.isEmpty
                         ? null
-                        : () => _openDownloadSheet(
+                        : isReading
+                            ? () => _openDownloadSheet(
+                                detail: detail,
+                                category: category,
+                                episodesBySeason: episodesBySeason,
+                                initialSeason: currentSeason,
+                              )
+                            : () => _sweepForEpisode(eps[resumeIdx]),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface2,
+                    border: Border.all(color: Colors.white24),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: PopupMenuButton<String>(
+                    tooltip: 'Lainnya',
+                    icon: const Icon(Icons.more_horiz_rounded, color: AppColors.textPrimary),
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'save':
+                          unawaited(_openListSheet(detail));
+                        case 'download':
+                          unawaited(_openDownloadSheet(
                             detail: detail,
                             category: category,
                             episodesBySeason: episodesBySeason,
                             initialSeason: currentSeason,
-                          ),
+                          ));
+                        case 'notify':
+                          unawaited(_toggleSubscribe(detail));
+                        case 'tracking':
+                          unawaited(_openTrackingSheet(detail));
+                        case 'share':
+                          _share(detail, sourceName);
+                        case 'web':
+                          unawaited(_openSourceSite());
+                        case 'epub':
+                          showEpubExportSheet(
+                            context,
+                            sourceId: detail.sourceId.isNotEmpty ? detail.sourceId : item.sourceId,
+                            showTitle: detail.title,
+                            chapters: eps,
+                          );
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'save',
+                        child: Text(_inMyList ? 'Ubah status daftar' : 'Simpan anime'),
+                      ),
+                      PopupMenuItem(
+                        value: 'download',
+                        child: Text(isReading ? 'Unduh bab' : 'Unduh episode'),
+                      ),
+                      if (Platform.isAndroid)
+                        PopupMenuItem(
+                          value: 'notify',
+                          child: Text(_subscribed ? 'Matikan notifikasi' : 'Aktifkan notifikasi'),
+                        ),
+                      if (_trackingAvailable(detail))
+                        const PopupMenuItem(value: 'tracking', child: Text('Sinkronkan progres')),
+                      const PopupMenuItem(value: 'share', child: Text('Bagikan')),
+                      const PopupMenuItem(value: 'web', child: Text('Buka halaman sumber')),
+                      if (detail.type == ProviderType.novel)
+                        const PopupMenuItem(value: 'epub', child: Text('Ekspor EPUB')),
+                    ],
                   ),
                 ),
-              // Z Mode: matched source + "Wrong title?", kept with the
-              // actions it controls instead of under the synopsis.
-              // The first frame may be built from the tapped catalogue card,
-              // which has no synonyms/native title. Don't start a canonical
-              // source search until full metadata arrives: resolve() shares
-              // in-flight work by title id, so an early search would make the
-              // later alias-aware lookup reuse the incomplete one.
-              if (sourceMetadataReady && ZmodeIds.isZ(widget.item.url))
-                MatchLine(
-                  canonical: ZmodeIds.parseShow(widget.item.url)!,
-                  title: detail.title,
-                  altTitle: detail.englishTitle,
-                  malId: detail.malId,
-                  metadataAliases: [
-                    if (detail.englishTitle != null) detail.englishTitle!,
-                    if (detail.nativeTitle != null) detail.nativeTitle!,
-                    ...detail.synonyms,
-                  ],
-                ),
-            ],
+              ],
+            ),
           ),
         ),
 
@@ -2530,18 +2562,24 @@ class _DetailViewState extends State<_DetailView>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (detail.genres.isNotEmpty)
-                    _InteractiveCreditLine(
-                      label: context.l10n.genres,
-                      values: detail.genres.take(4).toList(),
-                      onTap: (genre) {
-                        Navigator.of(context).push(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 7,
+                      children: detail.genres.map((genre) => ActionChip(
+                        label: Text(genre, style: AppText.caption.copyWith(color: AppColors.accent)),
+                        visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
+                        padding: const EdgeInsets.symmetric(horizontal: 7),
+                        backgroundColor: Colors.transparent,
+                        side: BorderSide(color: AppColors.accent.withValues(alpha: 0.75)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (_) => SearchScreen(
                               initialFilters: MetaFilters(genres: [genre]),
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      )).toList(),
                     ),
                   if (detail.studios.isNotEmpty)
                     _InteractiveCreditLine(
@@ -2592,94 +2630,7 @@ class _DetailViewState extends State<_DetailView>
             ),
           ),
 
-        // ── 6. Icon-over-label action row (My List / Trailer / Share / Web) ─
-        // "Trailer" is a CloudStream-style result action (recloudstream's
-        // result fragment exposes a Trailer button); it opens the fullscreen
-        // TrailerScreen and only appears once a trailer id has resolved.
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _IconAction(
-                  icon: _inMyList ? Icons.check_rounded : Icons.add_rounded,
-                  active: _inMyList,
-                  filledActive: true,
-                  // Reading-aware: a manga on your list is "Reading", not
-                  // "Watching". Display only — the stored status is still
-                  // WatchStatus.watching, so My List and the trackers are
-                  // untouched, and reading:false returns the plain label
-                  // unchanged for anime.
-                  label: _status == null
-                      ? context.l10n.myList
-                      : shortLabelFor(_status!, reading: isReading),
-                  tooltip: _inMyList
-                      ? context.l10n.changeStatus
-                      : context.l10n.addToMyList,
-                  onTap: () => _openListSheet(detail),
-                ),
-                if (Platform.isAndroid &&
-                    (_subscribed || (!state.episodesLoading && eps.isNotEmpty)))
-                  _IconAction(
-                    icon: _subscribed
-                        ? Icons.notifications_active_rounded
-                        : Icons.notifications_none_rounded,
-                    active: _subscribed,
-                    label: context.l10n.notify,
-                    tooltip: _subscribed
-                        ? context.l10n.stopAlerts
-                        : (isReading
-                              ? context.l10n.notifyOnNewChapters
-                              : context.l10n.notifyOnNewEpisodes),
-                    onTap: () => _toggleSubscribe(detail),
-                  ),
-                if (_trackingAvailable(detail))
-                  _IconAction(
-                    icon: _tracked
-                        ? Icons.published_with_changes_rounded
-                        : Icons.sync_rounded,
-                    active: _tracked,
-                    label: context.l10n.tracking,
-                    tooltip: _tracked
-                        ? context.l10n.trackedEditStatusScoreProgress
-                        : context.l10n.syncStatusScoreProgress,
-                    onTap: () => _openTrackingSheet(detail),
-                  ),
-                _IconAction(
-                  icon: Icons.ios_share_rounded,
-                  label: context.l10n.share,
-                  tooltip: context.l10n.share,
-                  onTap: () => _share(detail, sourceName),
-                ),
-                _IconAction(
-                  icon: Icons.public_rounded,
-                  label: context.l10n.web,
-                  tooltip: context.l10n.openSourceSite,
-                  onTap: _openSourceSite,
-                ),
-                // Novel only — a manga chapter is images, not text, and
-                // there's nothing to put in an EPUB.
-                if (detail.type == ProviderType.novel)
-                  _IconAction(
-                    icon: Icons.output,
-                    label: context.l10n.epub,
-                    tooltip: context.l10n.exportAsEpub,
-                    onTap: () => showEpubExportSheet(
-                      context,
-                      sourceId: detail.sourceId.isNotEmpty
-                          ? detail.sourceId
-                          : item.sourceId,
-                      showTitle: detail.title,
-                      chapters: eps,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-
-        // ── 7. Pinned tab bar ───────────────────────────────────────────────
+        // ── 6. Pinned tab bar ───────────────────────────────────────────────
         SliverPersistentHeader(
           pinned: true,
           delegate: _TabBarDelegate(
