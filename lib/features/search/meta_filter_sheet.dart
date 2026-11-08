@@ -170,6 +170,18 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                         () => _toggle<MetaStatus>(f.statuses, v, (xs) => f = f.copyWith(statuses: xs)))).toList(), cs),
                   ],
                   const SizedBox(height: 22),
+                  _heading('Tahun Rilis', theme),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Text('${f.minYear}', style: theme.textTheme.titleMedium),
+                    Text('${f.maxYear}', style: theme.textTheme.titleMedium),
+                  ]),
+                  RangeSlider(
+                    min: 1960, max: now.toDouble(), divisions: now - 1960,
+                    values: RangeValues(f.minYear.toDouble(), f.maxYear.toDouble()),
+                    onChanged: (v) => setState(() => f = f.copyWith(
+                      minYear: v.start.round(), maxYear: v.end.round())),
+                  ),
+                  const SizedBox(height: 14),
                   _heading('Tahun', theme),
                   _chips(visibleYears.map((y) => _ChipData('$y', f.years.contains(y),
                     () => _toggle<int>(f.years, y, (xs) => f = f.copyWith(years: xs)))).toList(), cs),
