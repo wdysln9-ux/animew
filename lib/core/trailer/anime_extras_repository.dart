@@ -20,12 +20,16 @@ class AnimeExtras {
     this.videos = const [],
     this.openings = const [],
     this.endings = const [],
+    this.videoError,
+    this.themeError,
   });
 
   final int malId;
   final List<AnimeExtraVideo> videos;
   final List<String> openings;
   final List<String> endings;
+  final String? videoError;
+  final String? themeError;
 
   bool get isEmpty => videos.isEmpty && openings.isEmpty && endings.isEmpty;
 }
@@ -122,12 +126,25 @@ query ($id: Int, $search: String) {
   }
 
   Future<AnimeExtras> _fetch(int malId) async {
-    // Jikan applies a strict request rate limit. Keep the two endpoints
-    // sequential and retry a transient 429/5xx once instead of silently hiding
-    // both sections.
-    final videosResponse = await _getWithRetry('$_jikan/anime/$malId/videos');
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-    final themesResponse = await _getWithRetry('$_jikan/anime/$malId/themes');
+    dynamic videosResponse;
+    dynamic themesResponse;
+    String? videoError;
+    String? themeError;
+
+    try {
+      videosResponse = await _getWithRetry('$_jikan/anime/$malId/videos');
+    } catch (error) {
+      videoError = error.toString();
+    }
+
+    // Respect Jikan's request pacing even when the first endpoint failed.
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+
+    try {
+      themesResponse = await _getWithRetry('$_jikan/anime/$malId/themes');
+    } catch (error) {
+      themeError = error.toString();
+    }
 
     final videosRoot = _map(videosResponse);
     final videoData = _map(videosRoot?['data']);
@@ -162,13 +179,14 @@ query ($id: Int, $search: String) {
         .where((value) => value.isNotEmpty)
         .toList(growable: false);
 
-    final result = AnimeExtras(
+    return AnimeExtras(
       malId: malId,
       videos: List.unmodifiable(videos),
       openings: readSongs('openings'),
       endings: readSongs('endings'),
+      videoError: videoError,
+      themeError: themeError,
     );
-    return result;
   }
 
   Future<dynamic> _getWithRetry(String url) async {
