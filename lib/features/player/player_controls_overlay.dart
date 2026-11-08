@@ -689,20 +689,9 @@ class _ControlsOverlay extends StatelessWidget {
                   // _AnimatedPlayPause's disc exactly, so the episode arrows
                   // don't twitch every time playback stalls.
                   if (buffering) {
-                    return StreamBuilder<bool>(
-                      stream: c.player.stream.playing,
-                      builder: (context, playingSnap) {
-                        final isPlaying = playingSnap.data ?? c.player.state.playing;
-                        if (!isPlaying) {
-                          return _AnimatedPlayPause(
-                            playing: false,
-                            onTap: () {
-                              c.togglePlay();
-                              onInteract();
-                            },
-                          );
-                        }
-                        return SizedBox(
+                    // Keep the loading indicator in place until buffering ends,
+                    // even if the user taps it to pause during the load.
+                    return SizedBox(
                       width: 58,
                       height: 58,
                       child: Material(
@@ -714,20 +703,18 @@ class _ControlsOverlay extends StatelessWidget {
                             c.togglePlay();
                             onInteract();
                           },
-                          child: const Center(
+                          child: Center(
                             child: SizedBox(
                               width: 32,
                               height: 32,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppColors.accent,
                                 strokeWidth: 3,
                               ),
                             ),
                           ),
                         ),
                       ),
-                        );
-                      },
                     );
                   }
                   return StreamBuilder<bool>(
