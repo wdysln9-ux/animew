@@ -316,10 +316,25 @@ class _HomeViewState extends State<_HomeView>
       ),
     );
     if (!mounted || picked == null) return;
+
+    final home = sl<HomeCubit>();
+    final previousMode = sl<ContentModeCubit>().state;
+    final previousKind = ZModePrefs.streamKind;
+
     if (picked.mode == ContentMode.anime) {
       await ZModePrefs.setStreamKind(picked.kind);
     }
     await sl<ContentModeCubit>().setMode(picked.mode);
+
+    // The metadata browse kind is derived from both ContentMode and
+    // StreamKind. Changing either must refresh the Home composition; merely
+    // updating the selector leaves the previous Anime/Movie rows on screen.
+    if (previousMode != picked.mode) {
+      await home.load(reset: true);
+    } else if (picked.mode == ContentMode.anime &&
+        previousKind != picked.kind) {
+      await home.loadForStreamKindChange();
+    }
   }
 
   Widget _modeSwitcherButton({required bool edgeBanner}) {
