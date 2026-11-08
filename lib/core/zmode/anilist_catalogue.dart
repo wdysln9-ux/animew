@@ -308,8 +308,8 @@ class AniListCatalogue implements AnimeCatalogue {
           'seasonYear_in:[${years.join(',')}]'
         else if (f.year != null)
           'seasonYear:${f.year}',
-        if (kind == ZKind.anime) 'startDate_greater:${(f.minYear < 1980 ? 1980 : f.minYear) * 10000 + 101}',
-        if (kind == ZKind.anime) 'startDate_lesser:${(f.maxYear > DateTime.now().year ? DateTime.now().year : f.maxYear) * 10000 + 1231}',
+        if (kind == ZKind.anime) 'startDate_greater:${((f.minYear < 1980 ? 1980 : f.minYear) - 1) * 10000 + 1231}',
+        if (kind == ZKind.anime) 'startDate_lesser:${(f.maxYear > DateTime.now().year ? DateTime.now().year : f.maxYear) + 1}0101',
         if (seasons.isNotEmpty)
           'season_in:[${seasons.map((v) => v.name.toUpperCase()).join(',')}]'
         else if (f.season != null)
