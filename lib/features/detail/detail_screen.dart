@@ -60,7 +60,7 @@ import '../../core/models/media_detail.dart';
 import 'chapter_meta.dart';
 import '../../core/tv/tv_episode_range_chips.dart';
 import 'episode_filter.dart';
-undefinedimport '../../core/models/media_item.dart';
+import '../../core/models/media_item.dart';
 import '../../core/models/media_extras.dart';
 import '../../core/models/person.dart';
 import '../home/search_screen.dart';
@@ -123,6 +123,7 @@ import 'anime_community_tab.dart';
 import 'wrong_title_sheet.dart';
 import '../../l10n/l10n.dart';
 
+part 'detail_hero.dart';
 part 'anime_detail_layout.dart';
 part 'detail_info.dart';
 part 'detail_episodes.dart';
