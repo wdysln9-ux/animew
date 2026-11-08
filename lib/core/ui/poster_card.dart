@@ -42,6 +42,7 @@ class PosterCard extends StatefulWidget {
     this.progressBadge,
     this.statusBadge,
     this.viewsBadge,
+    this.seriesBadge,
     this.latestEpisodeBadge,
     this.rankBadge,
     this.metaLine,
@@ -82,6 +83,8 @@ class PosterCard extends StatefulWidget {
   final String? progressBadge;
   final String? statusBadge;
   final int? viewsBadge;
+  /// Season number label, shown beside the views count on franchise cards.
+  final String? seriesBadge;
   /// Latest aired episode, displayed as its own badge above the views count.
   final int? latestEpisodeBadge;
   final int? rankBadge;
@@ -414,7 +417,7 @@ class _PosterCardState extends State<PosterCard> {
                                     : const Color(0xFF20B86B),
                           ),
                         ),
-                      if (widget.latestEpisodeBadge != null || showViews)
+                      if (widget.latestEpisodeBadge != null || showViews || widget.seriesBadge != null)
                         Positioned(
                           left: 6,
                           bottom: 6,
@@ -430,6 +433,22 @@ class _PosterCardState extends State<PosterCard> {
                                 const SizedBox(width: 3),
                                 Text(
                                   _compactPopularity(widget.viewsBadge!),
+                                  style: TextStyle(
+                                    fontFamily: AppText.fontFamily,
+                                    fontFamilyFallback: AppText.fontFamilyFallback,
+                                    fontSize: 10,
+                                    height: 1,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                    shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)],
+                                  ),
+                                ),
+                              ],
+                              if (widget.seriesBadge != null) ...[
+                                if (showViews || widget.latestEpisodeBadge != null)
+                                  const SizedBox(width: 7),
+                                Text(
+                                  widget.seriesBadge!,
                                   style: TextStyle(
                                     fontFamily: AppText.fontFamily,
                                     fontFamilyFallback: AppText.fontFamilyFallback,
