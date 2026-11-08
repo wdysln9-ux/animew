@@ -395,9 +395,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _megaFlash = false; // brief "+Ns" flash shown right after a MegaSkip tap
   Timer? _megaFlashTimer;
   bool _dragIsBrightness = false; // left half = brightness, right half = volume
-  bool _minimizeSwipeTracking = false;
-  double _minimizeSwipeDistance = 0;
-  double _minimizeSwipeProgress = 0;
   double _dragValue = 0; // running 0..1 value during a vertical drag
   int _lastHudPct = -1; // last HUD %, to haptic-tick when crossing a landmark
   // HUD shown while adjusting (Netflix-style brightness/volume indicator).
@@ -633,7 +630,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
       setState(() {
         _portraitMode = showDetails;
         _showEpisodeDetails = showDetails;
-        _minimizeSwipeProgress = 0;
       });
       SystemChrome.setPreferredOrientations(
         showDetails
@@ -1734,15 +1730,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   // volume (MX/Netflix-style). Each drag seeds from the current value, then
   // tracks finger movement; a swipe across ~70% of the height covers 0→100%.
   Future<void> _onVDragStart(DragStartDetails d) async {
-    // In the inline episode layout, pulling down from the video area's top
-    // edge minimizes playback. Other vertical swipes keep brightness/volume.
-    if (widget.episodeDetailMode && _showEpisodeDetails && d.localPosition.dy <= 88) {
-      _minimizeSwipeTracking = true;
-      _minimizeSwipeDistance = 0;
-      _minimizeSwipeProgress = 0;
-      return;
-    }
-    _minimizeSwipeTracking = false;
+    // Vertical gestures are reserved for brightness / volume. Minimizing is
+    // available through the explicit player action and system Back only.
     if (!_gesturesEnabled) return;
     _lastHudPct = -1; // fresh swipe → don't tick on the first sample
     _dragIsBrightness =
@@ -1768,17 +1757,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onVDragUpdate(DragUpdateDetails d) {
-    if (_minimizeSwipeTracking) {
-      _minimizeSwipeDistance = math.max(
-        0,
-        _minimizeSwipeDistance + d.delta.dy,
-      );
-      final progress = (_minimizeSwipeDistance /
-              (MediaQuery.sizeOf(context).height * 0.42))
-          .clamp(0.0, 1.0);
-      if (mounted) setState(() => _minimizeSwipeProgress = progress);
-      return;
-    }
     if (!_gesturesEnabled || _pinching) return; // ignore once a pinch begins
     final h = MediaQuery.of(context).size.height;
     // Drag up (negative delta) increases the value.
@@ -1815,18 +1793,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onVDragEnd(DragEndDetails d) {
-    if (_minimizeSwipeTracking) {
-      final shouldMinimize = _minimizeSwipeDistance >= 76;
-      _minimizeSwipeTracking = false;
-      _minimizeSwipeDistance = 0;
-      if (shouldMinimize) {
-        _minimizeSwipeProgress = 1;
-        _minimizeToMiniPlayer();
-      } else if (mounted) {
-        setState(() => _minimizeSwipeProgress = 0);
-      }
-      return;
-    }
     if (!_gesturesEnabled) return;
     _hudTimer?.cancel();
     _hudTimer = Timer(const Duration(milliseconds: 500), () {
@@ -4698,7 +4664,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           return Stack(
                             fit: StackFit.expand,
                             children: [
-                              Positioned.fill(
+                              Positioned(
+                                top: videoHeight,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
                                 child: Visibility(
                                   visible: _showEpisodeDetails,
                                   maintainState: true,
@@ -4706,7 +4676,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   maintainSize: true,
                                   child: Column(
                                     children: [
-                                      SizedBox(height: videoHeight),
                                       SizedBox(
                                         height: 3,
                                         child: StreamBuilder<Duration>(
@@ -4796,19 +4765,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         }
         _handleCloseRequest();
       },
-      child: Transform.scale(
-        alignment: Alignment.topCenter,
-        scale: 1 - (_minimizeSwipeProgress * 0.22),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(_minimizeSwipeProgress * 20),
-          ),
-          clipBehavior: _minimizeSwipeProgress > 0 ? Clip.antiAlias : Clip.none,
-          child: scaffold,
-        ),
-      ),
+      child: scaffold,
     );
   }
 }
