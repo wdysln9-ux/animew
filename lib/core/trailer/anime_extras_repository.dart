@@ -82,21 +82,39 @@ query ($id: Int, $search: String) {
     if (existing != null) return existing;
     final request = () async {
       final primary = await _fetch(resolvedId);
-      if (!primary.isEmpty || anilistId == null) return primary;
+      if (!primary.isEmpty) return primary;
 
-      // A stale/source-provided MAL id must not block the catalogue identity
-      // from finding the correct entry. Resolve by AniList id, then title.
-      final fallbackId = await _resolveMalId(
+      // AniList can still carry a YouTube trailer even when Jikan's video
+      // endpoint has no entry for this MAL id.
+      final aniTrailer = await _fetchAniListTrailer(anilistId);
+      if (aniTrailer != null) {
+        return AnimeExtras(
+          malId: primary.malId,
+          videos: [aniTrailer],
+          openings: primary.openings,
+          endings: primary.endings,
+          videoError: primary.videoError,
+          themeError: primary.themeError,
+        );
+      }
+
+      // A stale/source-provided MAL id must not block a title lookup. Try the
+      // catalogue identity first, then Jikan's exact-title index.
+      var fallbackId = await _resolveMalId(
         anilistId: anilistId,
         title: title,
         englishTitle: englishTitle,
       );
+      if (fallbackId == null || fallbackId == resolvedId) {
+        fallbackId = await _searchJikanId(
+          englishTitle?.trim().isNotEmpty == true ? englishTitle!.trim() : title,
+        );
+      }
       if (fallbackId == null || fallbackId <= 0 || fallbackId == resolvedId) {
         return primary;
       }
       final fallback = await _fetch(fallbackId);
-      if (!fallback.isEmpty) return fallback;
-      return primary;
+      return fallback.isEmpty ? primary : fallback;
     }();
     _cache[resolvedId] = request;
     try {
@@ -104,6 +122,41 @@ query ($id: Int, $search: String) {
     } catch (_) {
       _cache.remove(resolvedId);
       rethrow;
+    }
+  }
+
+  Future<AnimeExtraVideo?> _fetchAniListTrailer(int? anilistId) async {
+    if (anilistId == null || anilistId <= 0) return null;
+    const query = r'''
+query ($id: Int) {
+  Media(id: $id, type: ANIME) {
+    trailer { id site thumbnail }
+  }
+}
+''';
+    try {
+      final response = await _dio.post<dynamic>(
+        _aniList,
+        data: {
+          'query': query,
+          'variables': {'id': anilistId},
+        },
+      );
+      final root = _map(response.data);
+      final media = _map(_map(root?['data'])?['Media']);
+      final trailer = _map(media?['trailer']);
+      final site = trailer?['site']?.toString().toLowerCase();
+      final id = trailer?['id']?.toString();
+      if (site != 'youtube' || id == null || id.isEmpty) return null;
+      return AnimeExtraVideo(
+        title: 'Trailer',
+        youtubeId: id,
+        imageUrl: trailer?['thumbnail']?.toString().isNotEmpty == true
+            ? trailer!['thumbnail'].toString()
+            : 'https://img.youtube.com/vi/$id/hqdefault.jpg',
+      );
+    } catch (_) {
+      return null;
     }
   }
 
