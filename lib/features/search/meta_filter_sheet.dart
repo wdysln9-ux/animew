@@ -171,7 +171,10 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                   ]),
                   RangeSlider(
                     min: 1980, max: now.toDouble(), divisions: now - 1980,
-                    values: RangeValues(f.minYear.toDouble(), f.maxYear.toDouble()),
+                    values: RangeValues(
+                      f.minYear.clamp(1980, now).toDouble(),
+                      f.maxYear.clamp(1980, now).toDouble(),
+                    ),
                     onChanged: (v) => setState(() => f = f.copyWith(
                       minYear: v.start.round(), maxYear: v.end.round())),
                   ),
