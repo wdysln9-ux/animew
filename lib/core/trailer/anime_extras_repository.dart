@@ -93,35 +93,43 @@ query ($id: Int, $search: String) {
     required String title,
     String? englishTitle,
   }) {
+    final preferredTitle = (englishTitle?.trim().isNotEmpty == true
+            ? englishTitle
+            : title)
+        .trim();
     final key = anilistId != null
-        ? 'anilist:$anilistId'
-        : 'title:${(englishTitle?.trim().isNotEmpty == true ? englishTitle : title).toLowerCase()}';
+        ? 'anilist:$anilistId:$preferredTitle'
+        : 'title:' + preferredTitle.toLowerCase();
+
     return _idCache.putIfAbsent(key, () async {
-      final search = (englishTitle?.trim().isNotEmpty == true
-              ? englishTitle
-              : title)
-          ?.trim();
-      try {
+      Future<int?> lookup({int? id, String? search}) async {
         final response = await _dio.post<dynamic>(
           _aniList,
           data: {
             'query': _query,
-            'variables': {
-              'id': anilistId,
-              'search': anilistId == null ? search : null,
-            },
+            'variables': {'id': id, 'search': search},
           },
         );
         final root = _map(response.data);
         final media = _map(_map(root?['data'])?['Media']);
         final value = media?['idMal'];
-        final id = value is int ? value : int.tryParse(value?.toString() ?? '');
-        if (id == null) _idCache.remove(key);
-        return id;
-      } catch (_) {
-        _idCache.remove(key);
-        rethrow;
+        return value is int ? value : int.tryParse(value?.toString() ?? '');
       }
+
+      int? resolved;
+      if (anilistId != null) {
+        try {
+          resolved = await lookup(id: anilistId);
+        } catch (_) {
+          // The title search below is an independent fallback, not a reason
+          // to hide all supplementary metadata for this anime.
+        }
+      }
+      if (resolved == null && preferredTitle.isNotEmpty) {
+        resolved = await lookup(search: preferredTitle);
+      }
+      if (resolved == null) _idCache.remove(key);
+      return resolved;
     });
   }
 
@@ -168,7 +176,7 @@ query ($id: Int, $search: String) {
             ? entry!['title'].toString().trim()
             : 'Trailer / PV',
         youtubeId: id,
-        imageUrl: image,
+        imageUrl: image ?? 'https://img.youtube.com/vi/$id/hqdefault.jpg',
       ));
     }
 
