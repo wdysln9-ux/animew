@@ -1785,7 +1785,6 @@ class _EpisodeRow extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }
