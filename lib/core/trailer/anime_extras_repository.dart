@@ -80,7 +80,24 @@ query ($id: Int, $search: String) {
     if (forceRefresh) _cache.remove(resolvedId);
     final existing = _cache[resolvedId];
     if (existing != null) return existing;
-    final request = _fetch(resolvedId);
+    final request = () async {
+      final primary = await _fetch(resolvedId);
+      if (!primary.isEmpty || anilistId == null) return primary;
+
+      // A stale/source-provided MAL id must not block the catalogue identity
+      // from finding the correct entry. Resolve by AniList id, then title.
+      final fallbackId = await _resolveMalId(
+        anilistId: anilistId,
+        title: title,
+        englishTitle: englishTitle,
+      );
+      if (fallbackId == null || fallbackId <= 0 || fallbackId == resolvedId) {
+        return primary;
+      }
+      final fallback = await _fetch(fallbackId);
+      if (!fallback.isEmpty) return fallback;
+      return primary;
+    }();
     _cache[resolvedId] = request;
     try {
       return await request;
