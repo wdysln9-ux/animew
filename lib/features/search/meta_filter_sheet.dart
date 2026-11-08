@@ -102,10 +102,8 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final now = DateTime.now().year;
-    final years = [for (var y = now; y >= 1960; y--) y];
-    final visibleYears = showAllYears
-        ? years.where((y) => y >= 1980 && y <= 2011).toList()
-        : years.where((y) => y >= 2012 || y < 1980).toList();
+    final years = [for (var y = now; y >= 1980; y--) y];
+    final visibleYears = showAllYears ? years : years.where((y) => y >= 2012).toList();
     final formats = _formats();
     final sortLabels = <MetaSort, String>{
       MetaSort.popularity: 'Popularitas',
@@ -122,7 +120,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       expand: false,
       builder: (context, scroll) => Container(
         decoration: BoxDecoration(
-          color: cs.surface,
+          color: theme.scaffoldBackgroundColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
         ),
         child: Column(
@@ -132,7 +130,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
               decoration: BoxDecoration(color: cs.onSurface.withValues(alpha: .22),
                 borderRadius: BorderRadius.circular(8))),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 22, 18, 14),
+              padding: const EdgeInsets.fromLTRB(18, 14, 14, 10),
               child: Row(children: [
                 Expanded(child: Text('Filter', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700))),
                 TextButton(onPressed: _reset, child: const Text('Atur Ulang')),
@@ -141,21 +139,17 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
             Expanded(
               child: ListView(
                 controller: scroll,
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
                 children: [
-                  if (widget.onHideMyAnimeChanged != null)
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Hide My Anime'),
-                      value: hideMyAnime,
-                      onChanged: (v) { setState(() => hideMyAnime = v); widget.onHideMyAnimeChanged?.call(v); },
+                  Row(children: [
+                    Expanded(child: _heading('Urutkan', theme)),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 8)),
+                      onPressed: () => setState(() => f = f.copyWith(sortAscending: !f.sortAscending)),
+                      icon: Icon(f.sortAscending ? Icons.north : Icons.south, color: cs.primary, size: 17),
+                      label: Text(f.sortAscending ? 'Naik' : 'Turun', style: const TextStyle(fontSize: 13)),
                     ),
-                  _heading('Urutkan', theme),
-                  Align(alignment: Alignment.centerRight, child: TextButton.icon(
-                    onPressed: () => setState(() => f = f.copyWith(sortAscending: !f.sortAscending)),
-                    icon: Icon(f.sortAscending ? Icons.north : Icons.south, color: cs.primary),
-                    label: Text(f.sortAscending ? 'Naik' : 'Turun'),
-                  )),
+                  ]),
                   _chips(sortLabels.keys.map((v) => _ChipData(sortLabels[v]!, f.sort == v,
                     () => setState(() => f = f.copyWith(sort: v)))).toList(), cs),
                   const SizedBox(height: 22),
