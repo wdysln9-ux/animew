@@ -108,10 +108,25 @@ jobs:
         env:
           BUILD_NAME: 1.0.${{ github.run_number }}
           BUILD_NUMBER: ${{ github.run_number }}
+        shell: bash
         run: |
-          flutter build apk --release --target-platform android-arm64 \
-            --build-name="$BUILD_NAME" \
-            --build-number="$((30000 + BUILD_NUMBER))"
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            echo "ARM64 APK build attempt $attempt/3"
+            if flutter build apk --release --target-platform android-arm64 \
+              --build-name="$BUILD_NAME" \
+              --build-number="$((30000 + BUILD_NUMBER))"; then
+              exit 0
+            fi
+
+            if [ "$attempt" -lt 3 ]; then
+              echo "Build failed. Waiting 25 seconds before retrying (transient dependency/network errors may recover)..."
+              sleep 25
+            fi
+          done
+
+          echo "ARM64 APK build failed after 3 attempts."
+          exit 1
 
       - name: Name versioned APK
         env:
