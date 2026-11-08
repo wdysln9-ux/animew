@@ -397,6 +397,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _dragIsBrightness = false; // left half = brightness, right half = volume
   bool _minimizeSwipeTracking = false;
   double _minimizeSwipeDistance = 0;
+  double _minimizeSwipeProgress = 0;
   double _dragValue = 0; // running 0..1 value during a vertical drag
   int _lastHudPct = -1; // last HUD %, to haptic-tick when crossing a landmark
   // HUD shown while adjusting (Netflix-style brightness/volume indicator).
@@ -586,6 +587,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       return;
     }
     final nav = Navigator.of(context);
+    final playerRoute = ModalRoute.of(context);
     final episode = _c.currentEpisode;
     final number = episode.number?.toInt() ?? _c.state.currentIndex + 1;
     final episodeName = episode.title.trim();
@@ -612,7 +614,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     void returnToPlayer() {
       if (!mounted) return;
       MiniPlayerState.clear();
-      // Any page opened from the shell is dismissed first, then the shell.
+      // Remove only the mini-player shell. The original player route stays
+      // mounted and its state (including the source and episode) is preserved.
       nav.popUntil(
         (route) => route.settings.name == 'animew-mini-player-shell',
       );
@@ -637,11 +640,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
     void stopPlayback() {
       MiniPlayerState.clear();
-      nav.popUntil(
-        (route) => route.settings.name == 'animew-mini-player-shell',
+      // Remove the hidden player route without popping the shell or any page
+      // the viewer has opened on top of it (Search, Profile, etc.).
+      if (playerRoute != null && nav.mounted) {
+        nav.removeRoute(playerRoute);
+      }
+      SystemChrome.setPreferredOrientations(
+        const [DeviceOrientation.portraitUp],
       );
-      if (nav.canPop()) nav.pop(); // shell
-      if (nav.canPop()) nav.pop(); // original PlayerScreen (dispose stops media)
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
 
     MiniPlayerState.show(
@@ -1698,6 +1705,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (widget.episodeDetailMode && _showEpisodeDetails && d.localPosition.dy <= 88) {
       _minimizeSwipeTracking = true;
       _minimizeSwipeDistance = 0;
+      _minimizeSwipeProgress = 0;
       return;
     }
     _minimizeSwipeTracking = false;
@@ -1727,7 +1735,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _onVDragUpdate(DragUpdateDetails d) {
     if (_minimizeSwipeTracking) {
-      _minimizeSwipeDistance += d.delta.dy;
+      _minimizeSwipeDistance = math.max(
+        0,
+        _minimizeSwipeDistance + d.delta.dy,
+      );
+      final progress = (_minimizeSwipeDistance /
+              (MediaQuery.sizeOf(context).height * 0.42))
+          .clamp(0.0, 1.0);
+      if (mounted) setState(() => _minimizeSwipeProgress = progress);
       return;
     }
     if (!_gesturesEnabled || _pinching) return; // ignore once a pinch begins
@@ -1770,7 +1785,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
       final shouldMinimize = _minimizeSwipeDistance >= 76;
       _minimizeSwipeTracking = false;
       _minimizeSwipeDistance = 0;
-      if (shouldMinimize) _minimizeToMiniPlayer();
+      if (shouldMinimize) {
+        _minimizeSwipeProgress = 1;
+        _minimizeToMiniPlayer();
+      } else if (mounted) {
+        setState(() => _minimizeSwipeProgress = 0);
+      }
       return;
     }
     if (!_gesturesEnabled) return;
@@ -4713,7 +4733,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
         }
         _handleCloseRequest();
       },
-      child: scaffold,
+      child: Transform.scale(
+        alignment: Alignment.topCenter,
+        scale: 1 - (_minimizeSwipeProgress * 0.22),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_minimizeSwipeProgress * 20),
+          ),
+          clipBehavior: _minimizeSwipeProgress > 0 ? Clip.antiAlias : Clip.none,
+          child: scaffold,
+        ),
+      ),
     );
   }
 }
