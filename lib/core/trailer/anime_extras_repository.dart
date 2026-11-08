@@ -95,10 +95,9 @@ query ($id: Int, $search: String) {
     required String title,
     String? englishTitle,
   }) {
-    final preferredTitle = (englishTitle?.trim().isNotEmpty == true
-            ? englishTitle
-            : title)
-        .trim();
+    final preferredTitle = englishTitle?.trim().isNotEmpty == true
+        ? englishTitle!.trim()
+        : title.trim();
     final key = anilistId != null
         ? 'anilist:$anilistId:$preferredTitle'
         : 'title:' + preferredTitle.toLowerCase();
