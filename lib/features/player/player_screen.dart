@@ -395,6 +395,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _megaFlash = false; // brief "+Ns" flash shown right after a MegaSkip tap
   Timer? _megaFlashTimer;
   bool _dragIsBrightness = false; // left half = brightness, right half = volume
+  bool _minimizeSwipeTracking = false;
+  double _minimizeSwipeDistance = 0;
   double _dragValue = 0; // running 0..1 value during a vertical drag
   int _lastHudPct = -1; // last HUD %, to haptic-tick when crossing a landmark
   // HUD shown while adjusting (Netflix-style brightness/volume indicator).
@@ -535,6 +537,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   final ScrollController _episodeCardsScroll = ScrollController();
+  // Keep the inline episode metadata scroll position when switching layouts.
+  final ScrollController _episodeDetailScroll = ScrollController();
   int _lastEpisodeCardsIndex = -1;
 
   /// The orientation this player holds right now. Single source of truth: the
@@ -1474,6 +1478,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void dispose() {
     _episodeCardsScroll.dispose();
+    _episodeDetailScroll.dispose();
     AppLogger.instance.log(
       '[player-route] dispose ready=$_ready '
       'loading=${_ready ? _c.state.loadingSources : 'uninitialized'} '
@@ -1688,6 +1693,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
   // volume (MX/Netflix-style). Each drag seeds from the current value, then
   // tracks finger movement; a swipe across ~70% of the height covers 0→100%.
   Future<void> _onVDragStart(DragStartDetails d) async {
+    // In the inline episode layout, pulling down from the video area's top
+    // edge minimizes playback. Other vertical swipes keep brightness/volume.
+    if (widget.episodeDetailMode && _showEpisodeDetails && d.localPosition.dy <= 88) {
+      _minimizeSwipeTracking = true;
+      _minimizeSwipeDistance = 0;
+      return;
+    }
+    _minimizeSwipeTracking = false;
     if (!_gesturesEnabled) return;
     _lastHudPct = -1; // fresh swipe → don't tick on the first sample
     _dragIsBrightness =
@@ -1713,6 +1726,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onVDragUpdate(DragUpdateDetails d) {
+    if (_minimizeSwipeTracking) {
+      _minimizeSwipeDistance += d.delta.dy;
+      return;
+    }
     if (!_gesturesEnabled || _pinching) return; // ignore once a pinch begins
     final h = MediaQuery.of(context).size.height;
     // Drag up (negative delta) increases the value.
@@ -1749,6 +1766,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onVDragEnd(DragEndDetails d) {
+    if (_minimizeSwipeTracking) {
+      final shouldMinimize = _minimizeSwipeDistance >= 76;
+      _minimizeSwipeTracking = false;
+      _minimizeSwipeDistance = 0;
+      if (shouldMinimize) _minimizeToMiniPlayer();
+      return;
+    }
     if (!_gesturesEnabled) return;
     _hudTimer?.cancel();
     _hudTimer = Timer(const Duration(milliseconds: 500), () {
@@ -3356,6 +3380,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     return ColoredBox(
       color: AppColors.bg,
       child: SingleChildScrollView(
+        controller: _episodeDetailScroll,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3807,11 +3832,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
             // Inside the PiP window: render ONLY the video — no overlay, no
             // gestures, no controls. The same controller keeps the texture live.
             if (_inPip) {
-              return Center(
-                child: Video(
-                  controller: _c.videoController,
-                  controls: NoVideoControls,
-                  fit: BoxFit.contain,
+              // Fill the system PiP viewport; avoid the default centered
+              // letterboxed surface leaving empty/washed-out side regions.
+              return SizedBox.expand(
+                child: ColoredBox(
+                  color: Colors.black,
+                  child: Video(
+                    controller: _c.videoController,
+                    controls: NoVideoControls,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               );
             }
