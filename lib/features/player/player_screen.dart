@@ -557,16 +557,25 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// player first. Once the episode details are visible, it navigates back
   /// normally. Standalone player sessions keep their usual back behaviour.
   void _handlePlayerBack() {
-    // Back from the player becomes the in-app minimize action. The playback
-    // route remains alive underneath the shell, so audio/video never stops.
+    // Inline playback belongs to the anime detail route. Back first leaves
+    // fullscreen, then closes this player route so the exact anime page,
+    // selected source, and scroll position remain underneath.
+    if (widget.episodeDetailMode) {
+      if (!_showEpisodeDetails) {
+        _toggleOrientation();
+        return;
+      }
+      // Called from PopScope after a vetoed system Back too; pop directly to
+      // avoid asking the same PopScope to approve the same action again.
+      Navigator.of(context).pop();
+      return;
+    }
+
+    // Standalone playback keeps its existing floating mini-player behaviour.
     if (_ready &&
         !_inPip &&
         sl<CastController>().state != CastState.connected) {
       _minimizeToMiniPlayer();
-      return;
-    }
-    if (widget.episodeDetailMode && !_showEpisodeDetails) {
-      _toggleOrientation();
       return;
     }
     Navigator.of(context).maybePop();
@@ -639,9 +648,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 DeviceOrientation.landscapeRight,
               ],
       );
-      SystemChrome.setEnabledSystemUIMode(
-        showDetails ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
-      );
+      if (showDetails) {
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      } else {
+        _setFullscreenSystemUi();
+      }
       // Restore the user's auto-PiP preference only while the full player
       // route is active again.
       if (_pipSupported) {
@@ -698,14 +709,29 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
+  /// Keep landscape playback immersive at the bottom while leaving the top
+  /// system bar transparent and visible, so Android can lay out the notch.
+  /// This is used only in fullscreen; portrait styling stays unchanged.
+  void _setFullscreenSystemUi() {
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: const [SystemUiOverlay.top],
+    );
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ));
+  }
+
   void _toggleOrientation() {
     setState(() {
       _portraitMode = !_portraitMode;
       if (widget.episodeDetailMode) _showEpisodeDetails = _portraitMode;
     });
     SystemChrome.setPreferredOrientations(_orientationLock);
-    // System bars belong only to the portrait episode-details layout.
-    // Landscape playback must stay fully immersive, including navigation.
+    // Do not alter portrait system bars. Only fullscreen exposes the
+    // transparent top overlay so the display cutout is not blacked out.
     if (_portraitMode) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
@@ -716,7 +742,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         systemNavigationBarDividerColor: AppColors.bg,
       ));
     } else {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      _setFullscreenSystemUi();
     }
     _bumpControls();
   }
@@ -779,9 +805,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     } else {
       _turnLandscapeWhenCovered();
     }
-    SystemChrome.setEnabledSystemUIMode(
-      _showEpisodeDetails ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
-    );
+    if (_showEpisodeDetails) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    } else {
+      _setFullscreenSystemUi();
+    }
     if (_showEpisodeDetails) {
       SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
         // A slightly raised dark tone makes the camera cutout visible instead
@@ -2021,9 +2049,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
     if (!mounted) return;
     await SystemChrome.setPreferredOrientations(_orientationLock);
-    SystemChrome.setEnabledSystemUIMode(
-      _showEpisodeDetails ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
-    );
+    if (_showEpisodeDetails) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    } else {
+      _setFullscreenSystemUi();
+    }
     if (!mounted) return;
     if (wasPlaying && !_c.player.state.playing) _c.togglePlay();
     _bumpControls();
