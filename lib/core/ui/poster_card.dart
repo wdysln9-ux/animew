@@ -42,6 +42,7 @@ class PosterCard extends StatefulWidget {
     this.progressBadge,
     this.statusBadge,
     this.viewsBadge,
+    this.latestEpisodeBadge,
     this.rankBadge,
     this.metaLine,
     this.showViewsBadge = true,
@@ -81,6 +82,8 @@ class PosterCard extends StatefulWidget {
   final String? progressBadge;
   final String? statusBadge;
   final int? viewsBadge;
+  /// Latest aired episode, shown immediately before the views count.
+  final int? latestEpisodeBadge;
   final int? rankBadge;
   final String? metaLine;
   final bool showViewsBadge;
@@ -411,13 +414,29 @@ class _PosterCardState extends State<PosterCard> {
                                     : const Color(0xFF20B86B),
                           ),
                         ),
-                      if (showViews)
+                      if (showViews || (showStatus && widget.latestEpisodeBadge != null))
                         Positioned(
                           left: 6,
                           bottom: 6,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              if (showStatus && widget.latestEpisodeBadge != null) ...[
+                                Text(
+                                  'Ep ${widget.latestEpisodeBadge}',
+                                  style: TextStyle(
+                                    fontFamily: AppText.fontFamily,
+                                    fontFamilyFallback: AppText.fontFamilyFallback,
+                                    fontSize: 10,
+                                    height: 1,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                    shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)],
+                                  ),
+                                ),
+                                if (showViews) const SizedBox(width: 7),
+                              ],
+                              if (showViews) ...[
                               const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
                               const SizedBox(width: 3),
                               Text(
@@ -432,6 +451,7 @@ class _PosterCardState extends State<PosterCard> {
                                   shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)],
                                 ),
                               ),
+                              ],
                             ],
                           ),
                         ),
