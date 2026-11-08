@@ -256,6 +256,22 @@ class AniListCatalogue implements AnimeCatalogue {
     }
   }
 
+  /// Complete AniList tag vocabulary used by the search filter.
+  Future<List<String>> tagCollection() async {
+    try {
+      final data = await _gql('{ MediaTagCollection { name isAdult } }', const {});
+      final raw = data?['MediaTagCollection'];
+      if (raw is! List) return const [];
+      return [
+        for (final tag in raw)
+          if (tag is Map && tag['name'] is String && tag['isAdult'] != true)
+            tag['name'] as String,
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
   @override
   bool get supportsFilters => true;
 
