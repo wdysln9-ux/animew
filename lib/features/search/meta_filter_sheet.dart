@@ -1,21 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text.dart';
 import '../../core/zmode/metadata_filters.dart';
+import '../../core/zmode/metadata_repository.dart';
 import '../../core/zmode/zmode_ids.dart';
-import '../../l10n/l10n.dart';
+import '../../core/di/injector.dart';
 import 'meta_filter_dialog_tv.dart';
 
-/// Filter sheet for the metadata catalogue.
-///
-/// A half-height list rather than a full-height wall of chips: seven filters
-/// as chips ran past two screens, so nothing below Genres was ever seen. Each
-/// row shows its current value and opens a small picker, which keeps the whole
-/// set visible at once and leaves the results behind it in view.
-///
-/// Adult content is deliberately NOT here — it is a privacy setting, not a
-/// search refinement, and lives in Settings → Privacy.
 Future<MetaFilters?> showMetaFilterSheet(
   BuildContext context,
   ZKind kind,
@@ -27,17 +17,16 @@ Future<MetaFilters?> showMetaFilterSheet(
   context: context,
   backgroundColor: Colors.transparent,
   isScrollControlled: true,
-  builder: (_) =>
-      _MetaFilterSheet(
-        kind: kind,
-        initial: current,
-        showStatus: showStatus,
-        hideMyAnime: hideMyAnime,
-        onHideMyAnimeChanged: onHideMyAnimeChanged,
-      ),
+  useSafeArea: true,
+  builder: (_) => _MetaFilterSheet(
+    kind: kind,
+    initial: current,
+    showStatus: showStatus,
+    hideMyAnime: hideMyAnime,
+    onHideMyAnimeChanged: onHideMyAnimeChanged,
+  ),
 );
 
-/// D-pad-friendly dialog variant for TV search.
 Future<MetaFilters?> showMetaFilterDialog(
   BuildContext context,
   ZKind kind,
@@ -65,504 +54,260 @@ class _MetaFilterSheet extends StatefulWidget {
 }
 
 class _MetaFilterSheetState extends State<_MetaFilterSheet> {
-  late MetaFilters _f = widget.initial;
-  late bool _hideMyAnime = widget.hideMyAnime;
+  late MetaFilters f = widget.initial;
+  late bool hideMyAnime = widget.hideMyAnime;
+  bool showAllYears = false;
+  bool showAllTags = false;
+  late Future<List<String>> genresFuture;
+  late Future<List<String>> tagsFuture;
 
-  bool get _isVideo => widget.kind == ZKind.movie || widget.kind == ZKind.tv;
+  bool get isAniList => widget.kind == ZKind.anime ||
+      widget.kind == ZKind.manga || widget.kind == ZKind.novel;
+  int get count =>
+      f.genres.length + f.tags.length + f.years.length +
+      f.seasons.length + f.formats.length + f.statuses.length +
+      (f.minEpisodes > 0 || f.maxEpisodes < 200 ? 1 : 0) +
+      (f.sort != MetaSort.popularity ? 1 : 0);
 
-  /// Sort is excluded unless moved off its default: every search is sorted, so
-  /// counting it would say "1 filter" on an untouched sheet.
-  int get _count =>
-      (_f.genres.isNotEmpty ? 1 : 0) +
-      (_f.year != null ? 1 : 0) +
-      (_f.season != null ? 1 : 0) +
-      (_f.format != null ? 1 : 0) +
-      (widget.showStatus && _f.status != null ? 1 : 0) +
-      (_f.minScore != null ? 1 : 0) +
-      (_f.sort != MetaSort.trending ? 1 : 0);
+  @override
+  void initState() {
+    super.initState();
+    genresFuture = _loadGenres();
+    tagsFuture = _loadTags();
+  }
+
+  Future<List<String>> _loadGenres() async {
+    if (!isAniList || !sl.isRegistered<MetadataRepository>()) {
+      return metaGenresFor(widget.kind, adult: f.adult);
+    }
+    try {
+      final values = await sl<MetadataRepository>().filterGenres();
+      return values.where((v) => f.adult || v.toLowerCase() != 'hentai').toList();
+    } catch (_) {
+      return metaGenresFor(widget.kind, adult: f.adult);
+    }
+  }
+
+  Future<List<String>> _loadTags() async {
+    if (!isAniList || !sl.isRegistered<MetadataRepository>()) return const [];
+    try {
+      return await sl<MetadataRepository>().filterTags();
+    } catch (_) {
+      return const [];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final now = DateTime.now().year;
+    final years = [for (var y = now; y >= 1960; y--) y];
+    final visibleYears = showAllYears
+        ? years.where((y) => y <= 2011).toList()
+        : years.where((y) => y >= 2012).toList();
+    final formats = _formats();
+    final sortLabels = <MetaSort, String>{
+      MetaSort.popularity: 'Popularitas',
+      MetaSort.score: 'Rating',
+      MetaSort.newest: 'Terbaru',
+      MetaSort.trending: 'Trending',
+      MetaSort.title: 'Judul',
+    };
+
     return DraggableScrollableSheet(
-      initialChildSize: 0.5,
-      minChildSize: 0.32,
-      maxChildSize: 0.92,
+      initialChildSize: .78,
+      minChildSize: .48,
+      maxChildSize: .96,
       expand: false,
-      builder: (context, scroll) => DecoratedBox(
-        decoration: const BoxDecoration(
-          color: AppColors.defaultBg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      builder: (context, scroll) => Container(
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
         ),
         child: Column(
           children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.surface2,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const SizedBox(height: 12),
+            Container(width: 42, height: 5,
+              decoration: BoxDecoration(color: cs.onSurface.withValues(alpha: .22),
+                borderRadius: BorderRadius.circular(8))),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 14, 12, 6),
-              child: Row(
-                children: [
-                  Expanded(child: Text(l10n.filters, style: AppText.barTitle)),
-                  // Only when there IS something to reset — a permanently
-                  // visible one reads as an action you forgot to take.
-                  if (_count > 0)
-                    TextButton(
-                      onPressed: () => setState(
-                        () => _f = const MetaFilters(sort: MetaSort.trending),
-                      ),
-                      child: Text(l10n.reset),
-                    ),
-                ],
-              ),
+              padding: const EdgeInsets.fromLTRB(24, 22, 18, 14),
+              child: Row(children: [
+                Expanded(child: Text('Filter', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700))),
+                TextButton(onPressed: _reset, child: const Text('Atur Ulang')),
+              ]),
             ),
             Expanded(
               child: ListView(
                 controller: scroll,
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 children: [
                   if (widget.onHideMyAnimeChanged != null)
                     SwitchListTile.adaptive(
-                      key: const ValueKey('meta-filter-hide-my-anime'),
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Hide My Anime'),
-                      subtitle: const Text(
-                        'Sembunyikan anime yang sudah ada di daftar AniList kamu',
-                      ),
-                      value: _hideMyAnime,
-                      activeTrackColor: AppColors.accent,
-                      onChanged: (value) {
-                        setState(() => _hideMyAnime = value);
-                        widget.onHideMyAnimeChanged?.call(value);
+                      value: hideMyAnime,
+                      onChanged: (v) { setState(() => hideMyAnime = v); widget.onHideMyAnimeChanged?.call(v); },
+                    ),
+                  _heading('Urutkan', theme),
+                  Align(alignment: Alignment.centerRight, child: TextButton.icon(
+                    onPressed: () => setState(() => sortDescending = !sortDescending),
+                    icon: Icon(sortDescending ? Icons.south : Icons.north, color: cs.primary),
+                    label: Text(sortDescending ? 'Turun' : 'Naik'),
+                  )),
+                  _chips(sortLabels.keys.map((v) => _ChipData(sortLabels[v]!, f.sort == v,
+                    () => setState(() => f = f.copyWith(sort: v)))).toList(), cs),
+                  const SizedBox(height: 22),
+                  _heading('Tipe', theme),
+                  _chips(formats.map((v) => _ChipData(_formatLabel(v), f.formats.contains(v),
+                    () => _toggle<MetaFormat>(f.formats, v, (xs) => f = f.copyWith(formats: xs)))).toList(), cs),
+                  if (widget.showStatus) ...[
+                    const SizedBox(height: 22),
+                    _heading('Status', theme),
+                    _chips(MetaStatus.values.where((v) => v != MetaStatus.cancelled).map((v) =>
+                      _ChipData(_statusLabel(v), f.statuses.contains(v),
+                        () => _toggle<MetaStatus>(f.statuses, v, (xs) => f = f.copyWith(statuses: xs)))).toList(), cs),
+                  ],
+                  const SizedBox(height: 22),
+                  _heading('Tahun', theme),
+                  _chips(visibleYears.map((y) => _ChipData('$y', f.years.contains(y),
+                    () => _toggle<int>(f.years, y, (xs) => f = f.copyWith(years: xs)))).toList(), cs),
+                  if (!showAllYears)
+                    _moreButton('Tampilkan Semua Tahun', years.where((y) => y <= 2011).length, () => setState(() => showAllYears = true), cs),
+                  if (showAllYears)
+                    _moreButton('Sembunyikan Tahun Lama', 0, () => setState(() => showAllYears = false), cs),
+                  if (isAniList) ...[
+                    const SizedBox(height: 22),
+                    _heading('Musim', theme),
+                    _chips(MetaSeason.values.map((v) => _ChipData(_seasonLabel(v), f.seasons.contains(v),
+                      () => _toggle<MetaSeason>(f.seasons, v, (xs) => f = f.copyWith(seasons: xs)))).toList(), cs),
+                    const SizedBox(height: 22),
+                    _heading('Genre', theme),
+                    FutureBuilder<List<String>>(
+                      future: genresFuture,
+                      builder: (context, snap) => snap.hasData
+                        ? _chips(snap.data!.map((g) => _ChipData(g, f.genres.contains(g),
+                            () => _toggle<String>(f.genres, g, (xs) => f = f.copyWith(genres: xs)))).toList(), cs)
+                        : const Padding(padding: EdgeInsets.all(12), child: LinearProgressIndicator()),
+                    ),
+                    const SizedBox(height: 22),
+                    _heading('Tags', theme),
+                    FutureBuilder<List<String>>(
+                      future: tagsFuture,
+                      builder: (context, snap) {
+                        if (!snap.hasData) return const LinearProgressIndicator();
+                        final all = snap.data!;
+                        final visible = showAllTags ? all : all.take(11).toList();
+                        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          _chips(visible.map((t) => _ChipData(t, f.tags.contains(t),
+                            () => _toggle<String>(f.tags, t, (xs) => f = f.copyWith(tags: xs)))).toList(), cs),
+                          if (all.length > 11)
+                            _moreButton(showAllTags ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Semua', showAllTags ? 0 : all.length - 11,
+                              () => setState(() => showAllTags = !showAllTags), cs),
+                        ]);
                       },
                     ),
-                  // Two per row: these are short label/value pairs, and one
-                  // per line pushed half of them below the fold of a half
-                  // sheet — the thing the list format was meant to fix.
-                  _pair(
-                    _cell(
-                      l10n.sortBy,
-                      _sortLabel(context, _f.sort),
-                      true,
-                      () => _pick<MetaSort>(
-                        l10n.sortBy,
-                        MetaSort.values,
-                        _f.sort,
-                        (v) => _sortLabel(context, v),
-                        (v) => setState(() => _f = _f.copyWith(sort: v)),
-                      ),
-                    ),
-                    _cell(
-                      l10n.year,
-                      _f.year?.toString() ?? l10n.any,
-                      _f.year != null,
-                      () => _pick<int>(
-                        l10n.year,
-                        [
-                          for (
-                            var y = DateTime.now().year;
-                            y > DateTime.now().year - 25;
-                            y--
-                          )
-                            y,
-                        ],
-                        _f.year,
-                        (y) => '$y',
-                        (v) => setState(
-                          () => _f = _f.year == v
-                              ? _f.copyWith(clearYear: true)
-                              : _f.copyWith(year: v),
-                        ),
-                      ),
-                    ),
-                  ),
-                  _pair(
-                    widget.showStatus
-                        ? _cell(
-                            l10n.status,
-                            _f.status == null
-                                ? l10n.any
-                                : _statusLabel(_f.status!),
-                            _f.status != null,
-                            () => _pick<MetaStatus>(
-                              l10n.status,
-                              MetaStatus.values,
-                              _f.status,
-                              _statusLabel,
-                              (v) => setState(
-                                () => _f = _f.status == v
-                                    ? _f.copyWith(clearStatus: true)
-                                    : _f.copyWith(status: v),
-                              ),
-                            ),
-                          )
-                        : null,
-                    _cell(
-                      l10n.minimumScore,
-                      _f.minScore == null ? l10n.any : '${_f.minScore}+',
-                      _f.minScore != null,
-                      () => _pick<int>(
-                        l10n.minimumScore,
-                        const [50, 60, 70, 80, 90],
-                        _f.minScore,
-                        (v) => '$v+',
-                        (v) => setState(
-                          () => _f = _f.minScore == v
-                              ? _f.copyWith(clearScore: true)
-                              : _f.copyWith(minScore: v),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Season is an anime idea; TMDB has no equivalent, so it
-                  // would be a control that silently does nothing there.
-                  _pair(
-                    !_isVideo
-                        ? _cell(
-                            l10n.season,
-                            _f.season == null
-                                ? l10n.any
-                                : _seasonLabel(_f.season!),
-                            _f.season != null,
-                            () => _pick<MetaSeason>(
-                              l10n.season,
-                              MetaSeason.values,
-                              _f.season,
-                              _seasonLabel,
-                              (v) => setState(
-                                () => _f = _f.season == v
-                                    ? _f.copyWith(clearSeason: true)
-                                    : _f.copyWith(season: v),
-                              ),
-                            ),
-                          )
-                        : null,
-                    _formats().isEmpty
-                        ? null
-                        : _cell(
-                            l10n.format,
-                            _f.format == null
-                                ? l10n.any
-                                : _formatLabel(_f.format!),
-                            _f.format != null,
-                            () => _pick<MetaFormat>(
-                              l10n.format,
-                              _formats(),
-                              _f.format,
-                              _formatLabel,
-                              (v) => setState(
-                                () => _f = _f.format == v
-                                    ? _f.copyWith(clearFormat: true)
-                                    : _f.copyWith(format: v),
-                              ),
-                            ),
-                          ),
-                  ),
-                  // Genres is the multi-select and its value is the longest,
-                  // so it takes the full width rather than being truncated
-                  // into half of one.
-                  _cell(
-                    l10n.genres,
-                    _f.genres.isEmpty ? l10n.any : _f.genres.join(', '),
-                    _f.genres.isNotEmpty,
-                    _pickGenres,
+                  ],
+                  const SizedBox(height: 22),
+                  _heading('Jumlah Episode', theme),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Text('${f.minEpisodes}', style: theme.textTheme.titleMedium),
+                    Text('${f.maxEpisodes}', style: theme.textTheme.titleMedium),
+                  ]),
+                  RangeSlider(
+                    min: 0, max: 200, divisions: 200,
+                    values: RangeValues(f.minEpisodes.toDouble(), f.maxEpisodes.toDouble()),
+                    onChanged: (v) => setState(() => f = f.copyWith(
+                      minEpisodes: v.start.round(), maxEpisodes: v.end.round())),
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 6, 20, 14),
-              child: SizedBox(
-                width: double.infinity,
-                height: 48,
+            SafeArea(top: false, child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+              child: SizedBox(width: double.infinity, height: 50,
                 child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(_f),
-                  child: Text(
-                    _count == 0 ? l10n.apply : '${l10n.apply} ($_count)',
-                    style: AppText.button.copyWith(color: Colors.white),
-                  ),
+                  onPressed: () => Navigator.of(context).pop(f),
+                  child: Text(count == 0 ? 'Simpan' : 'Simpan ($count)'),
                 ),
               ),
-            ),
+            )),
           ],
         ),
       ),
     );
   }
 
-  /// Two cells side by side. A null cell leaves its half empty rather than
-  /// letting the other stretch, so the grid stays aligned when a filter does
-  /// not apply to this kind.
-  Widget _pair(Widget? a, Widget? b) {
-    if (a == null && b == null) return const SizedBox.shrink();
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: a ?? const SizedBox.shrink()),
-        const SizedBox(width: 10),
-        Expanded(child: b ?? const SizedBox.shrink()),
-      ],
-    );
+  bool sortDescending = true;
+
+  void _reset() => setState(() {
+    f = const MetaFilters();
+    sortDescending = true;
+  });
+
+  void _toggle<T>(List<T> current, T value, void Function(List<T>) update) {
+    final next = [...current];
+    next.contains(value) ? next.remove(value) : next.add(value);
+    setState(() => update(next));
   }
 
-  /// One filter as a tappable box: label above, current value below. The value
-  /// is the point — it makes the selection readable at a glance, which a grid
-  /// of chips cannot do once there are seven filters.
-  Widget _cell(String title, String value, bool on, VoidCallback onTap) =>
-      Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Material(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: on
-                      ? AppColors.accent.withValues(alpha: 0.55)
-                      : Colors.transparent,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title.toUpperCase(),
-                    style: AppText.overline.copyWith(fontSize: 10),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          value,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppText.body.copyWith(
-                            fontSize: 14,
-                            color: on
-                                ? AppColors.accent
-                                : AppColors.textPrimary,
-                            fontWeight: on ? FontWeight.w700 : FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        Icons.expand_more_rounded,
-                        size: 18,
-                        color: AppColors.textSecondary,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-
-  /// Single-value picker. Tapping the current value clears it, so every filter
-  /// can be undone without hunting for an "Any" entry.
-  Future<void> _pick<T>(
-    String title,
-    List<T> values,
-    T? current,
-    String Function(T) label,
-    void Function(T) onPicked,
-  ) async {
-    final v = await showModalBottomSheet<T>(
-      context: context,
-      backgroundColor: AppColors.bg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheet) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(title, style: AppText.barTitle),
-            ),
-            const SizedBox(height: 6),
-            for (final v in values)
-              ListTile(
-                title: Text(label(v), style: AppText.body),
-                trailing: v == current
-                    ? Icon(Icons.check_rounded, color: AppColors.accent)
-                    : null,
-                onTap: () => Navigator.of(sheet).pop(v),
-              ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
-    if (v == null || !mounted) return;
-    onPicked(v);
-  }
-
-  /// Genres are the one multi-select, so they get chips of their own rather
-  /// than a single-value list.
-  Future<void> _pickGenres() async {
-    final picked = await showModalBottomSheet<List<String>>(
-      context: context,
-      backgroundColor: AppColors.bg,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheet) {
-        var sel = [..._f.genres];
-        return StatefulBuilder(
-          builder: (sheet2, setSheet) => SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(context.l10n.genres, style: AppText.barTitle),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      // Follows the 18+ switch rather than Settings: the
-                      // toggle sits right beside this sheet, and offering the
-                      // adult genre while it is off would select a genre the
-                      // query then filters out — an empty grid and no reason
-                      // given. Turn 18+ on and it appears here.
-                      for (final g in metaGenresFor(
-                        widget.kind,
-                        adult: _f.adult,
-                      ))
-                        GestureDetector(
-                          onTap: () => setSheet(() {
-                            sel.contains(g) ? sel.remove(g) : sel.add(g);
-                          }),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: sel.contains(g)
-                                  ? AppColors.accent.withValues(alpha: 0.16)
-                                  : AppColors.surface,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: sel.contains(g)
-                                    ? AppColors.accent
-                                    : Colors.transparent,
-                              ),
-                            ),
-                            child: Text(
-                              g,
-                              style: AppText.caption.copyWith(
-                                color: sel.contains(g)
-                                    ? AppColors.accent
-                                    : AppColors.textPrimary,
-                                fontWeight: sel.contains(g)
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () => Navigator.of(sheet2).pop(sel),
-                      child: Text(
-                        context.l10n.done,
-                        style: AppText.button.copyWith(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-    if (picked == null || !mounted) return;
-    setState(() => _f = _f.copyWith(genres: picked));
-  }
-
-  /// Formats worth offering. Manga and novel already pin their format by kind,
-  /// so a picker there would contradict the query and return nothing.
   List<MetaFormat> _formats() {
-    if (_isVideo) return const [MetaFormat.tv, MetaFormat.movie];
-    if (widget.kind == ZKind.anime) {
-      return const [
-        MetaFormat.tv,
-        MetaFormat.movie,
-        MetaFormat.ova,
-        MetaFormat.special,
-      ];
-    }
-    return const [];
+    if (widget.kind == ZKind.anime) return const [MetaFormat.tv, MetaFormat.movie, MetaFormat.ova, MetaFormat.special];
+    if (widget.kind == ZKind.manga) return const [MetaFormat.manga];
+    if (widget.kind == ZKind.novel) return const [MetaFormat.novel];
+    return const [MetaFormat.tv, MetaFormat.movie];
   }
 
-  static String _sortLabel(BuildContext c, MetaSort s) => switch (s) {
-    MetaSort.popularity => c.l10n.sortPopularity,
-    MetaSort.score => c.l10n.sortScore,
-    MetaSort.trending => c.l10n.sortTrending,
-    MetaSort.newest => c.l10n.sortNewest,
-    MetaSort.title => c.l10n.sortTitle,
+  String _formatLabel(MetaFormat v) => switch (v) {
+    MetaFormat.tv => 'TV', MetaFormat.movie => 'Movie', MetaFormat.ova => 'OVA',
+    MetaFormat.special => 'Special', MetaFormat.manga => 'Manga',
+    MetaFormat.novel => 'Novel', MetaFormat.oneShot => 'One Shot',
+  };
+  String _statusLabel(MetaStatus v) => switch (v) {
+    MetaStatus.releasing => 'Tayang', MetaStatus.finished => 'Selesai',
+    MetaStatus.notYetReleased => 'Segera', MetaStatus.cancelled => 'Dibatalkan',
+  };
+  String _seasonLabel(MetaSeason v) => switch (v) {
+    MetaSeason.winter => 'Winter', MetaSeason.spring => 'Spring',
+    MetaSeason.summer => 'Summer', MetaSeason.fall => 'Fall',
   };
 
-  static String _seasonLabel(MetaSeason s) => switch (s) {
-    MetaSeason.winter => 'Winter',
-    MetaSeason.spring => 'Spring',
-    MetaSeason.summer => 'Summer',
-    MetaSeason.fall => 'Fall',
-  };
+  Widget _heading(String title, ThemeData theme) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+  );
 
-  static String _formatLabel(MetaFormat f) => switch (f) {
-    MetaFormat.tv => 'TV',
-    MetaFormat.movie => 'Movie',
-    MetaFormat.ova => 'OVA',
-    MetaFormat.special => 'Special',
-    MetaFormat.manga => 'Manga',
-    MetaFormat.novel => 'Novel',
-    MetaFormat.oneShot => 'One shot',
-  };
+  Widget _chips(List<_ChipData> data, ColorScheme cs) => Wrap(
+    spacing: 9, runSpacing: 9,
+    children: data.map((d) => ChoiceChip(
+      label: Text(d.label),
+      selected: d.selected,
+      onSelected: (_) => d.onTap(),
+      showCheckmark: false,
+      selectedColor: cs.primary,
+      backgroundColor: Colors.transparent,
+      side: BorderSide(color: d.selected ? cs.primary : cs.outline.withValues(alpha: .55)),
+      labelStyle: TextStyle(color: d.selected ? cs.onPrimary : cs.onSurfaceVariant),
+      shape: const StadiumBorder(),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    )).toList(),
+  );
 
-  static String _statusLabel(MetaStatus s) => switch (s) {
-    MetaStatus.releasing => 'Airing',
-    MetaStatus.finished => 'Finished',
-    MetaStatus.notYetReleased => 'Upcoming',
-    MetaStatus.cancelled => 'Cancelled',
-  };
+  Widget _moreButton(String label, int count, VoidCallback onTap, ColorScheme cs) => Padding(
+    padding: const EdgeInsets.only(top: 10),
+    child: OutlinedButton.icon(
+      onPressed: onTap,
+      icon: const Icon(Icons.expand_more),
+      label: Text(count > 0 ? '$label (+$count)' : label),
+      style: OutlinedButton.styleFrom(foregroundColor: cs.primary, side: BorderSide(color: cs.primary)),
+    ),
+  );
+}
+
+class _ChipData {
+  const _ChipData(this.label, this.selected, this.onTap);
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 }
