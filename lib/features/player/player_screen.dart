@@ -565,9 +565,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
         _toggleOrientation();
         return;
       }
-      // Called from PopScope after a vetoed system Back too; pop directly to
-      // avoid asking the same PopScope to approve the same action again.
-      Navigator.of(context).pop();
+      // Once back in portrait, minimize to the floating mini-player
+      // instead of disposing this route. The player/cubit must stay mounted
+      // so playback continues while the user returns to browsing.
+      if (_ready &&
+          !_inPip &&
+          sl<CastController>().state != CastState.connected) {
+        _minimizeToMiniPlayer();
+      } else {
+        Navigator.of(context).maybePop();
+      }
       return;
     }
 
