@@ -134,6 +134,7 @@ part 'detail_episodes.dart';
 part 'detail_sheets.dart';
 part 'detail_tabs.dart';
 part 'detail_skeleton.dart';
+part 'detail_mal_sections.dart';
 
 part 'detail_screen_tv.dart';
 
@@ -2545,6 +2546,42 @@ class _DetailViewState extends State<_DetailView>
                       ),
                     ),
                 ],
+              ),
+            ),
+          ),
+
+        // ── Supplementary anime metadata: MAL videos/themes + AniList cast/seasons.
+        if (!isReading)
+          SliverToBoxAdapter(
+            child: _MalTrailerSection(malId: detail.malId ?? item.malId),
+          ),
+        if (!isReading)
+          SliverToBoxAdapter(
+            child: _CharacterRail(
+              cast: state.cast.isNotEmpty
+                  ? state.cast
+                  : [for (final name in detail.cast) CastMember(name: name)],
+              onOpenPerson: (ref) => Navigator.of(
+                context,
+              ).push(PersonPage.route(ref, sourceId: widget.item.sourceId)),
+            ),
+          ),
+        if (!isReading)
+          SliverToBoxAdapter(
+            child: _MalThemeSection(malId: detail.malId ?? item.malId),
+          ),
+        if (!isReading && state.seasons.isNotEmpty)
+          SliverToBoxAdapter(
+            child: _SeasonRail(
+              seasons: state.seasons,
+              onOpen: (season) => _openRelation(
+                MediaRelation(
+                  title: season.title,
+                  cover: season.cover,
+                  relation: 'Season ${season.number}',
+                  malId: season.malId,
+                  anilistId: season.anilistId,
+                ),
               ),
             ),
           ),
