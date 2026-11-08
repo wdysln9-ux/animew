@@ -2490,6 +2490,7 @@ class _DetailViewState extends State<_DetailView>
                       switch (value) {
                         case 'save':
                           unawaited(_openListSheet(detail));
+                          break;
                         case 'download':
                           unawaited(_openDownloadSheet(
                             detail: detail,
@@ -2497,14 +2498,19 @@ class _DetailViewState extends State<_DetailView>
                             episodesBySeason: episodesBySeason,
                             initialSeason: currentSeason,
                           ));
+                          break;
                         case 'notify':
                           unawaited(_toggleSubscribe(detail));
+                          break;
                         case 'tracking':
                           unawaited(_openTrackingSheet(detail));
+                          break;
                         case 'share':
                           _share(detail, sourceName);
+                          break;
                         case 'web':
                           unawaited(_openSourceSite());
+                          break;
                         case 'epub':
                           showEpubExportSheet(
                             context,
@@ -2512,6 +2518,7 @@ class _DetailViewState extends State<_DetailView>
                             showTitle: detail.title,
                             chapters: eps,
                           );
+                          break;
                       }
                     },
                     itemBuilder: (_) => [
