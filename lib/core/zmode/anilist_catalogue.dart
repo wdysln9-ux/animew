@@ -272,30 +272,41 @@ class AniListCatalogue implements AnimeCatalogue {
     int page = 1,
   }) async {
     final f = filters;
+    final years = f == null ? const <int>[] : f.years;
+    final seasons = f == null ? const <MetaSeason>[] : f.seasons;
+    final formats = f == null ? const <MetaFormat>[] : f.formats;
+    final statuses = f == null ? const <MetaStatus>[] : f.statuses;
+    final legacyFormat = f != null && formats.isEmpty ? _alFormat(f.format) : null;
+    final legacyStatus = f != null && statuses.isEmpty ? _alStatus(f.status) : null;
     final args = <String>[
-      if (q.trim().isNotEmpty) 'search:\$q',
+      if (q.trim().isNotEmpty) 'search:\\$q',
       'type:${_type(kind)}',
       if (_format(kind).isNotEmpty) _format(kind).replaceFirst(',', ''),
       if (f == null) 'isAdult:false',
       if (f != null) ...[
         if (f.genres.isNotEmpty)
           'genre_in:[${f.genres.map((g) => '"$g"').join(',')}]',
-        // AniList's own, finer than a genre. Nothing else has them, which is
-        // why a tag chip is only offered while AniList is answering.
         if (f.tags.isNotEmpty)
           'tag_in:[${f.tags.map((t) => '"$t"').join(',')}]',
-        if (f.year != null) 'seasonYear:${f.year}',
-        if (f.season != null) 'season:${f.season!.name.toUpperCase()}',
-        // Manga and novel already pin the format by kind (`format_in:[NOVEL]`
-        // / `format_not_in:[NOVEL]`), so only anime may set it here — two
-        // format clauses would contradict each other and return nothing.
-        if (kind == ZKind.anime && _alFormat(f.format) != null)
-          'format:${_alFormat(f.format)}',
-        if (_alStatus(f.status) != null) 'status:${_alStatus(f.status)}',
+        if (years.isNotEmpty)
+          'seasonYear_in:[${years.join(',')}]'
+        else if (f.year != null)
+          'seasonYear:${f.year}',
+        if (seasons.isNotEmpty)
+          'season_in:[${seasons.map((v) => v.name.toUpperCase()).join(',')}]'
+        else if (f.season != null)
+          'season:${f.season!.name.toUpperCase()}',
+        if (kind == ZKind.anime && formats.isNotEmpty)
+          'format_in:[${formats.map(_alFormat).whereType<String>().join(',')}]'
+        else if (kind == ZKind.anime && legacyFormat != null)
+          'format:$legacyFormat',
+        if (statuses.isNotEmpty)
+          'status_in:[${statuses.map(_alStatus).whereType<String>().join(',')}]'
+        else if (legacyStatus != null)
+          'status:$legacyStatus',
+        if (f.minEpisodes > 0) 'episodes_greater:${f.minEpisodes - 1}',
+        if (f.maxEpisodes < 200) 'episodes_lesser:${f.maxEpisodes + 1}',
         if (f.minScore != null) 'averageScore_greater:${f.minScore! - 1}',
-        // Omitted entirely when adult is on, so the results include both —
-        // `isAdult:true` would return ONLY adult titles, which is not what a
-        // "show adult content" switch means.
         if (!f.adult) 'isAdult:false',
         'sort:${_alSort(f.sort)}',
       ],
@@ -306,9 +317,20 @@ class AniListCatalogue implements AnimeCatalogue {
     if (q.trim().isNotEmpty) vars['q'] = q;
 
     final full =
-        'query$decl{ Page(page:$page,perPage:\$n){ '
+        'query$decl{ Page(page:$page,perPage:\\$n){ '
         'media($args){ $_listFields } } }';
-    return _items(await _gql(full, vars), kind);
+    var items = _items(await _gql(full, vars), kind);
+
+    // AniList genre_in is an OR filter. Enforce the requested AND semantics
+    // locally so every selected genre must be present on a returned title.
+    if (f != null && f.genres.length > 1) {
+      final required = f.genres.map((v) => v.toLowerCase()).toSet();
+      items = items.where((item) {
+        final actual = item.genres.map((v) => v.toLowerCase()).toSet();
+        return actual.containsAll(required);
+      }).toList(growable: false);
+    }
+    return items;
   }
 
   static String? _alFormat(MetaFormat? f) => switch (f) {
