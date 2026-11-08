@@ -690,7 +690,8 @@ class _SearchViewState extends State<_SearchView>
         (f.format != null ? 1 : 0) +
         (f.status != null ? 1 : 0) +
         (f.minScore != null ? 1 : 0) +
-        (f.sort != MetaSort.popularity ? 1 : 0);
+        (f.adult ? 1 : 0) +
+        (f.sort != MetaSort.popularity || f.sortAscending ? 1 : 0);
   }
 
   /// Re-runs with whatever is set. Same event the extension sheets fire, so an
@@ -1371,6 +1372,7 @@ class _SearchViewState extends State<_SearchView>
         ('Episode: ${f.minEpisodes}–${f.maxEpisodes}',
           f.copyWith(minEpisodes: 0, maxEpisodes: 200)),
       if (f.minScore != null) ('Skor ${f.minScore}+', f.copyWith(clearScore: true)),
+      if (f.adult) ('NSFW', f.copyWith(adult: false)),
       if (f.sort != MetaSort.popularity)
         (switch (f.sort) {
           MetaSort.popularity => 'Popularitas',
