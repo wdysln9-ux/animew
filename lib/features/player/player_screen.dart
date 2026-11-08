@@ -695,8 +695,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     nav.push<void>(
       PageRouteBuilder<void>(
         settings: const RouteSettings(name: 'animew-mini-player-shell'),
-        transitionDuration: const Duration(milliseconds: 300),
-        reverseTransitionDuration: const Duration(milliseconds: 260),
+        transitionDuration: const Duration(milliseconds: 380),
+        reverseTransitionDuration: const Duration(milliseconds: 320),
         pageBuilder: (_, __, ___) => const RootShell(),
         transitionsBuilder: (_, animation, secondaryAnimation, child) {
           final curved = CurvedAnimation(
@@ -706,9 +706,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
           );
           return FadeTransition(
             opacity: curved,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
-              child: child,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.025),
+                end: Offset.zero,
+              ).animate(curved),
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.985, end: 1).animate(curved),
+                child: child,
+              ),
             ),
           );
         },
