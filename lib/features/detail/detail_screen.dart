@@ -2187,7 +2187,9 @@ class _DetailViewState extends State<_DetailView> {
     final sourceName = _sourceLabel(
       item.sourceId,
       url: item.url,
-      prefer: widget.prefer ?? _preferFromName(item.savedFrom),
+      prefer: item.type == ProviderType.anime
+          ? PreferredProvider.mal
+          : (widget.prefer ?? _preferFromName(item.savedFrom)),
       savedFrom: item.savedFrom,
     );
 
