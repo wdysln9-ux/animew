@@ -104,6 +104,7 @@ import '../../core/repository/source_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/trailer/trailer_service.dart';
+import '../../core/trailer/anime_extras_repository.dart';
 import '../../core/tv/tv_back_button.dart';
 import '../../core/tv/tv_focusable.dart';
 import '../../core/tv/tv_list_focusable.dart';
@@ -2176,6 +2177,9 @@ class _DetailViewState extends State<_DetailView>
         detail.type == ProviderType.novel || detail.type == ProviderType.manga;
     // Kick the (cached, once-per-malId) filler lookup for the "Filler" badge.
     _ensureFiller(detail.malId ?? item.malId);
+    // Resolve the hero trailer when the actual detail is available. This was
+    // previously defined but never invoked, leaving the hero permanently static.
+    if (!isReading) _resolveTrailer(detail);
     // Kick the (once-per-detail) tracker-progress lookup for grey-out.
     _maybeFetchTrackerProgress(detail);
 
@@ -2333,7 +2337,9 @@ class _DetailViewState extends State<_DetailView>
             ),
           ),
           flexibleSpace: FlexibleSpaceBar(
-            collapseMode: CollapseMode.parallax,
+            // Keep the backdrop pinned to the top edge while the header collapses.
+            // Parallax made it look like a moving camera/overlay during scroll.
+            collapseMode: CollapseMode.pin,
             background: RepaintBoundary(
               child: _Hero(
                 coverUrl: coverUrl,
@@ -2608,7 +2614,12 @@ class _DetailViewState extends State<_DetailView>
         // ── Supplementary anime metadata: MAL videos/themes + AniList cast/seasons.
         if (!isReading)
           SliverToBoxAdapter(
-            child: _MalTrailerSection(malId: detail.malId ?? item.malId),
+            child: _MalTrailerSection(
+              malId: detail.malId ?? item.malId,
+              anilistId: item.anilistId,
+              title: detail.title,
+              englishTitle: detail.englishTitle,
+            ),
           ),
         if (!isReading)
           SliverToBoxAdapter(
@@ -2623,7 +2634,12 @@ class _DetailViewState extends State<_DetailView>
           ),
         if (!isReading)
           SliverToBoxAdapter(
-            child: _MalThemeSection(malId: detail.malId ?? item.malId),
+            child: _MalThemeSection(
+              malId: detail.malId ?? item.malId,
+              anilistId: item.anilistId,
+              title: detail.title,
+              englishTitle: detail.englishTitle,
+            ),
           ),
         if (!isReading && state.seasons.isNotEmpty)
           SliverToBoxAdapter(
