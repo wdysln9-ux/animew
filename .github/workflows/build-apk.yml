@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Publish the APK as an in-app update release after final approval
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -121,6 +127,7 @@ jobs:
           echo "APK_PATH=build/app/outputs/flutter-apk/$APK_NAME" >> "$GITHUB_ENV"
 
       - name: Publish in-app update release
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
