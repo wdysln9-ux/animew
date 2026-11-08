@@ -88,97 +88,95 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     final topInset = MediaQuery.paddingOf(context).top;
 
     return ClipRect(
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned.fill(child: _image(coverUrl)),
-          const Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0x66000000),
-                      Color(0x00000000),
-                      Color(0xE6000000),
-                    ],
-                    stops: [0.0, 0.42, 1.0],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: topInset + 8,
-            left: 8,
-            child: _AnimeDetailCircleAction(
-              icon: Icons.arrow_back_rounded,
-              label: 'Kembali',
-              onTap: () => Navigator.of(context).maybePop(),
-            ),
-          ),
-          if (sourceLabel.isNotEmpty || animeId.isNotEmpty)
-            Positioned(
-              top: topInset + 14,
-              right: 14,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: const Color(0xB8000000),
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 11,
-                    vertical: 7,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (sourceLabel.isNotEmpty)
-                        Text(
-                          sourceLabel,
-                          style: AppText.caption.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      if (sourceLabel.isNotEmpty && animeId.isNotEmpty)
-                        const SizedBox(width: 7),
-                      if (animeId.isNotEmpty)
-                        Text(
-                          '#$animeId',
-                          style: AppText.caption.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          if (progress < 0.82)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 12 - shrinkOffset * 0.18,
-              child: Opacity(
-                opacity: (1 - progress * 1.2).clamp(0.0, 1.0),
-                child: Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: SizedBox(
-                      width: 154,
-                      height: 224,
-                      child: _image(poster, width: 480),
+      child: OverflowBox(
+        alignment: Alignment.topCenter,
+        minHeight: maxHeight,
+        maxHeight: maxHeight,
+        child: SizedBox(
+          width: MediaQuery.sizeOf(context).width,
+          height: maxHeight,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // The artwork is laid out at its original hero dimensions and
+              // clipped by the collapsing sliver. Its scale/crop never changes
+              // while scrolling, so it cannot look like a camera zoom.
+              Positioned.fill(child: _image(coverUrl)),
+              const Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0x66000000),
+                          Color(0x00000000),
+                          Color(0xE6000000),
+                        ],
+                        stops: [0.0, 0.42, 1.0],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+              Positioned(
+                top: topInset + 8,
+                left: 8,
+                child: _AnimeDetailCircleAction(
+                  icon: Icons.arrow_back_rounded,
+                  label: 'Kembali',
+                  onTap: () => Navigator.of(context).maybePop(),
+                ),
+              ),
+              if (sourceLabel.isNotEmpty || animeId.isNotEmpty)
+                Positioned(
+                  top: topInset + 14,
+                  right: 14,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: const Color(0xB8000000),
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (sourceLabel.isNotEmpty)
+                            Text(sourceLabel, style: AppText.caption.copyWith(
+                              color: Colors.white, fontWeight: FontWeight.w700)),
+                          if (sourceLabel.isNotEmpty && animeId.isNotEmpty)
+                            const SizedBox(width: 7),
+                          if (animeId.isNotEmpty)
+                            Text('#$animeId', style: AppText.caption.copyWith(
+                              color: Colors.white, fontWeight: FontWeight.w700)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 12,
+                child: Opacity(
+                  opacity: (1 - progress * 1.2).clamp(0.0, 1.0),
+                  child: Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: SizedBox(
+                        width: 154,
+                        height: 224,
+                        child: _image(poster, width: 480),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
