@@ -89,6 +89,7 @@ import '../history/history_screen.dart';
 import '../player/player_screen.dart';
 import '../schedule/schedule_screen.dart';
 import '../shell/dock_icons.dart';
+import '../shell/mode_bar.dart' show ModeChoice, modeChoices;
 import '../../core/zmode/source_matcher.dart';
 import '../../core/zmode/metadata_repository.dart';
 import '../../core/zmode/playback_resolver.dart';
@@ -266,6 +267,95 @@ class _HomeViewState extends State<_HomeView>
     final showSourceCatalogue = selection == HomeCatalogueSelection.source;
     if (showSourceCatalogue == _sourceCatalogueSelected) return;
     await HomeCataloguePrefs.setSourceSelected(showSourceCatalogue);
+  }
+
+  Future<void> _openContentModePicker() async {
+    final currentMode = sl<ContentModeCubit>().state;
+    final currentKind = ZModePrefs.streamKind;
+    final picked = await showModalBottomSheet<ModeChoice>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (sheet) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final choice in modeChoices)
+                ListTile(
+                  leading: Icon(
+                    choice.icon,
+                    color: choice.mode == currentMode &&
+                            (choice.mode != ContentMode.anime ||
+                                choice.kind == currentKind)
+                        ? AppColors.accent
+                        : AppColors.textSecondary,
+                  ),
+                  title: Text(choice.label(sheet)),
+                  trailing: choice.mode == currentMode &&
+                          (choice.mode != ContentMode.anime ||
+                              choice.kind == currentKind)
+                      ? Icon(Icons.check_rounded, color: AppColors.accent)
+                      : null,
+                  onTap: () => Navigator.of(sheet).pop(choice),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || picked == null) return;
+    if (picked.mode == ContentMode.anime) {
+      await ZModePrefs.setStreamKind(picked.kind);
+    }
+    await sl<ContentModeCubit>().setMode(picked.mode);
+  }
+
+  Widget _modeSwitcherButton({required bool edgeBanner}) {
+    return BlocBuilder<ContentModeCubit, ContentMode>(
+      bloc: sl<ContentModeCubit>(),
+      builder: (context, mode) => ValueListenableBuilder<int>(
+        valueListenable: ZModePrefs.revision,
+        builder: (context, _, _) {
+          final kind = ZModePrefs.streamKind;
+          final selected = modeChoices.firstWhere(
+            (choice) =>
+                choice.mode == mode &&
+                (mode != ContentMode.anime || choice.kind == kind),
+          );
+          return TextButton(
+            onPressed: _openContentModePicker,
+            style: TextButton.styleFrom(
+              foregroundColor: edgeBanner ? Colors.white : AppColors.textPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              minimumSize: const Size(0, 44),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  selected.label(context),
+                  style: AppText.title.copyWith(
+                    color: edgeBanner ? Colors.white : AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 21,
+                  color: edgeBanner ? Colors.white : AppColors.textSecondary,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _selectHomeCatalogueSource(String sourceId) {
@@ -796,32 +886,9 @@ class _HomeViewState extends State<_HomeView>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final splitEdgeHeader = edgeBanner && constraints.maxWidth < 520;
-          final brand = edgeBanner
-              ? IconButton(
-                  tooltip: 'Zangetsu',
-                  onPressed: () => _openHomeCataloguePicker(),
-                  icon: Image.asset(
-                    'assets/icon/logo_mark.png',
-                    width: 36,
-                    height: 36,
-                    fit: BoxFit.contain,
-                  ),
-                )
-              : GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _openHomeCataloguePicker(),
-                  child: Padding(
-                    // Only the padding is new: 22px of artwork is under the
-                    // 48px minimum tap target, and vertical padding alone
-                    // cannot shift a left-aligned image.
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Image.asset(
-                      'assets/icon/wordmark.png',
-                      height: 22,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                );
+          // The old Zangetsu logo shortcut opened metadata providers.
+          // Home now uses this slot as the global content-mode selector.
+          final brand = _modeSwitcherButton(edgeBanner: edgeBanner);
           final actions = [
             _headerDownloadButton(edgeBanner: edgeBanner),
             _notificationBell(context, edgeBanner: edgeBanner),
