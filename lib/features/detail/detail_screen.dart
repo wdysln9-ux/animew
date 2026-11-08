@@ -2327,7 +2327,8 @@ class _DetailViewState extends State<_DetailView>
             child: Row(
               children: [
                 Expanded(
-                  child: _PlayButton(
+                  child: AnimeDetailActionButton(
+                    primary: true,
                     loading: state.episodesLoading,
                     label: buttonLabel,
                     icon: isReading ? Icons.menu_book_rounded : Icons.play_arrow_rounded,
@@ -2338,7 +2339,7 @@ class _DetailViewState extends State<_DetailView>
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _DownloadButton(
+                  child: AnimeDetailActionButton(
                     loading: state.episodesLoading,
                     label: isReading ? downloadLabel : 'Auto Resolve Sumber',
                     icon: isReading ? Icons.file_download_outlined : Icons.travel_explore_rounded,
@@ -2356,8 +2357,8 @@ class _DetailViewState extends State<_DetailView>
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  width: 52,
-                  height: 52,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: AppColors.surface2,
                     border: Border.all(color: Colors.white24),
