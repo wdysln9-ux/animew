@@ -440,10 +440,8 @@ class _DetailView extends StatefulWidget {
   State<_DetailView> createState() => _DetailViewState();
 }
 
-class _DetailViewState extends State<_DetailView>
-    with SingleTickerProviderStateMixin {
+class _DetailViewState extends State<_DetailView> {
   static const double _expandedHeight = 438;
-  bool _showAppBarTitle = false;
 
   // The episode url we've already kicked a background source-prefetch for, so we
   // don't re-fire it on every rebuild (see _maybePrefetch).
@@ -476,22 +474,7 @@ class _DetailViewState extends State<_DetailView>
   // you scrolled deeper into the episode list. NestedScrollView.controller drives
   // the OUTER viewport only, so its offset stays past the threshold once the hero
   // has collapsed — the title stays visible no matter how far the body scrolls.
-  late final ScrollController _scrollController = ScrollController()
-    ..addListener(_onScroll);
-
-  late final TabController _tabController = TabController(
-    length: (widget.item.type == ProviderType.novel || widget.item.type == ProviderType.manga) ? 4 : 6,
-    vsync: this,
-  );
-  // Keep the Back guard in sync only when the selected tab changes, rather
-  // than rebuilding the entire detail page on every animation frame.
-  final ValueNotifier<int> _backTabIndex = ValueNotifier(0);
-
-  void _syncBackTabIndex() {
-    if (_backTabIndex.value != _tabController.index) {
-      _backTabIndex.value = _tabController.index;
-    }
-  }
+  late final ScrollController _scrollController = ScrollController();
 
   // ── My List (status-organised library) ────────────────────────────────────
   final MyListStore _myList = sl<MyListStore>();
@@ -509,7 +492,6 @@ class _DetailViewState extends State<_DetailView>
   void initState() {
     super.initState();
     _tint.addListener(_onTintChanged);
-    _tabController.addListener(_syncBackTabIndex);
     // Discord Rich Presence: "Looking at <title>" while this detail is open.
     if (sl.isRegistered<DiscordRpc>()) {
       sl<DiscordRpc>().setBrowsing(
@@ -533,11 +515,8 @@ class _DetailViewState extends State<_DetailView>
     // Back to generic "Browsing" when leaving the detail.
     if (sl.isRegistered<DiscordRpc>()) sl<DiscordRpc>().setBrowsing();
     _scrollController.dispose();
-    _tabController.removeListener(_syncBackTabIndex);
-    _backTabIndex.dispose();
     _tint.removeListener(_onTintChanged);
     _tint.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -579,36 +558,6 @@ class _DetailViewState extends State<_DetailView>
     final c = ZmodeIds.parseShow(widget.item.url);
     if (c == null) return null;
     return sl<MatchStore>().bestFor(c);
-  }
-
-  // ── Scroll-driven app-bar title fade. PRESERVED EFFECT — reads the outer
-  // NestedScrollView offset (Sozo Read's pattern). The title fades in as the
-  // hero scrolls past and STAYS in while the body scrolls. ──────────────────
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    final shouldShow =
-        _scrollController.offset >= (_expandedHeight - 1);
-    if (shouldShow != _showAppBarTitle) {
-      setState(() => _showAppBarTitle = shouldShow);
-    }
-  }
-
-  /// Switch to [index] AND collapse the header so the tab's content is actually
-  /// in view — otherwise tapping "… more"/"Read more" silently changes a tab
-  /// that's still below the fold (feels like nothing happened). Animates both
-  /// for a smooth transition into the Cast / Details tab.
-  void _revealTab(int index) {
-    _tabController.animateTo(index);
-    if (_scrollController.hasClients) {
-      final target = _scrollController.position.maxScrollExtent;
-      if (_scrollController.offset < target - 1) {
-        _scrollController.animateTo(
-          target,
-          duration: const Duration(milliseconds: 380),
-          curve: Curves.easeOutCubic,
-        );
-      }
-    }
   }
 
   // ── The 5-icon action row wiring ──────────────────────────────────────────
@@ -1968,16 +1917,7 @@ class _DetailViewState extends State<_DetailView>
     if (sl<AppMode>().isTv) return DetailScreenTv(item: widget.item);
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: ValueListenableBuilder<int>(
-        valueListenable: _backTabIndex,
-        builder: (context, tabIndex, _) => PopScope(
-          canPop: tabIndex == 0,
-          onPopInvokedWithResult: (didPop, _) {
-            if (!didPop && tabIndex != 0) {
-              _tabController.animateTo(0);
-            }
-          },
-          child: SafeArea(
+      body: SafeArea(
             child: Stack(
           children: [
           // Adaptive colour: poster-tinted wash behind the scroll view, only
@@ -2089,8 +2029,6 @@ class _DetailViewState extends State<_DetailView>
             ],
           ),
         ),
-      ),
-      ),
     );
   }
 
@@ -2561,6 +2499,48 @@ class _DetailViewState extends State<_DetailView>
           ),
           ),
         ),
+        if (!isReading) ...[
+          SliverToBoxAdapter(
+            child: _CastTab(
+              cast: state.cast.isNotEmpty
+                  ? state.cast
+                  : [for (final name in detail.cast) CastMember(name: name)],
+              onOpenPerson: (ref) => Navigator.of(context).push(
+                PersonPage.route(ref, sourceId: widget.item.sourceId),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: _DetailsTab(
+              sourceName: sourceName,
+              statusStr: statusStr,
+              genres: detail.genres,
+              studios: detail.studios,
+              episodeCount: eps.length,
+              year: detail.year,
+              detail: detail,
+              description: cleanSynopsis(detail.description),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: AnimeCommunityTab(
+              title: detail.title,
+              anilistId: item.anilistId,
+              malId: detail.malId ?? item.malId,
+              reviews: true,
+              inline: true,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: AnimeCommunityTab(
+              title: detail.title,
+              anilistId: item.anilistId,
+              malId: detail.malId ?? item.malId,
+              reviews: false,
+              inline: true,
+            ),
+          ),
+        ],
       ],
     );
   }
