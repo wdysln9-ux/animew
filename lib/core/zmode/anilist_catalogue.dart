@@ -83,7 +83,7 @@ class AniListCatalogue implements AnimeCatalogue {
       'id idMal title{romaji english native} coverImage{large} bannerImage '
       // One int, for the poster's score badge. The rest of the detail fields
       // stay out for the reason above; this one is a number, not a payload.
-      'averageScore popularity format episodes status genres '
+      'averageScore popularity format episodes status genres seasonYear '
       // Tiny integer used for the latest-episode poster label on airing anime.
       'nextAiringEpisode{episode}';
 
