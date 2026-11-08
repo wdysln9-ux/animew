@@ -481,6 +481,15 @@ class _DetailViewState extends State<_DetailView>
     length: (widget.item.type == ProviderType.novel || widget.item.type == ProviderType.manga) ? 4 : 6,
     vsync: this,
   );
+  // Keep the Back guard in sync only when the selected tab changes, rather
+  // than rebuilding the entire detail page on every animation frame.
+  final ValueNotifier<int> _backTabIndex = ValueNotifier(0);
+
+  void _syncBackTabIndex() {
+    if (_backTabIndex.value != _tabController.index) {
+      _backTabIndex.value = _tabController.index;
+    }
+  }
 
   // ── My List (status-organised library) ────────────────────────────────────
   final MyListStore _myList = sl<MyListStore>();
@@ -524,6 +533,7 @@ class _DetailViewState extends State<_DetailView>
   void initState() {
     super.initState();
     _tint.addListener(_onTintChanged);
+    _tabController.addListener(_syncBackTabIndex);
     // Discord Rich Presence: "Looking at <title>" while this detail is open.
     if (sl.isRegistered<DiscordRpc>()) {
       sl<DiscordRpc>().setBrowsing(
@@ -547,6 +557,8 @@ class _DetailViewState extends State<_DetailView>
     // Back to generic "Browsing" when leaving the detail.
     if (sl.isRegistered<DiscordRpc>()) sl<DiscordRpc>().setBrowsing();
     _scrollController.dispose();
+    _tabController.removeListener(_syncBackTabIndex);
+    _backTabIndex.dispose();
     _tint.removeListener(_onTintChanged);
     _tint.dispose();
     _tabController.dispose();
@@ -1987,12 +1999,12 @@ class _DetailViewState extends State<_DetailView>
     if (sl<AppMode>().isTv) return DetailScreenTv(item: widget.item);
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: AnimatedBuilder(
-        animation: _tabController,
-        builder: (context, _) => PopScope(
-          canPop: _tabController.index == 0,
+      body: ValueListenableBuilder<int>(
+        valueListenable: _backTabIndex,
+        builder: (context, tabIndex, _) => PopScope(
+          canPop: tabIndex == 0,
           onPopInvokedWithResult: (didPop, _) {
-            if (!didPop && _tabController.index != 0) {
+            if (!didPop && tabIndex != 0) {
               _tabController.animateTo(0);
             }
           },
