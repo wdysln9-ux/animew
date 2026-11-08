@@ -333,65 +333,42 @@ class _RelationsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (relations.isEmpty && seasons.isEmpty) {
       if (loading) return const _CardGridSkeleton();
-      return _emptyTab(
-        Icons.account_tree_outlined,
-        context.l10n.noRelatedTitles,
-      );
+      return _emptyTab(Icons.account_tree_outlined, context.l10n.noRelatedTitles);
     }
     final related = _related;
     final recommendations = _recommendations;
-    return CustomScrollView(
-      slivers: [
+    Widget grid(List<MediaRelation> rows, int offset) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        gridDelegate: _grid(context),
+        itemCount: rows.length,
+        itemBuilder: (_, i) => _card(context, rows[i], offset + i),
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         if (seasons.isNotEmpty) ...[
           _header(context, 'Season'),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            sliver: SliverGrid(
-              gridDelegate: _grid(context),
-              delegate: SliverChildBuilderDelegate(
-                (_, i) => _card(context, _asRelation(context, seasons[i]), i),
-                childCount: seasons.length,
-              ),
-            ),
-          ),
+          grid([for (final s in seasons) _asRelation(context, s)], 0),
         ],
         if (related.isNotEmpty) ...[
           _header(context, context.l10n.relations),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            sliver: SliverGrid(
-              gridDelegate: _grid(context),
-              delegate: SliverChildBuilderDelegate(
-                (_, i) => _card(context, related[i], seasons.length + i),
-                childCount: related.length,
-              ),
-            ),
-          ),
+          grid(related, seasons.length),
         ],
         if (recommendations.isNotEmpty) ...[
           _header(context, 'Rekomendasi'),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-            sliver: SliverGrid(
-              gridDelegate: _grid(context),
-              delegate: SliverChildBuilderDelegate(
-                (_, i) => _card(
-                  context,
-                  recommendations[i],
-                  seasons.length + related.length + i,
-                ),
-                childCount: recommendations.length,
-              ),
-            ),
-          ),
-        ] else if (related.isNotEmpty || seasons.isNotEmpty)
-          const SliverToBoxAdapter(child: SizedBox(height: 40)),
+          grid(recommendations, seasons.length + related.length),
+        ],
+        const SizedBox(height: 32),
       ],
     );
   }
 
-  Widget _header(BuildContext context, String text) => SliverToBoxAdapter(
-    child: Padding(
+  Widget _header(BuildContext context, String text) => Padding(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
       child: Text(
         text.toUpperCase(),
@@ -402,8 +379,7 @@ class _RelationsTab extends StatelessWidget {
           letterSpacing: 0.6,
         ),
       ),
-    ),
-  );
+    );
 
   Widget _card(BuildContext context, MediaRelation r, int i) {
     {
