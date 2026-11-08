@@ -2419,7 +2419,8 @@ class _DetailViewState extends State<_DetailView> {
           SliverToBoxAdapter(
             child: AnimeDetailSeasonRail(
               seasons: state.seasons,
-              onOpen: (season) => _openRelation(
+              relations: state.relations.isNotEmpty ? state.relations : detail.relations,
+              onOpenSeason: (season) => _openRelation(
                 MediaRelation(
                   title: season.title,
                   cover: season.cover,
@@ -2428,6 +2429,7 @@ class _DetailViewState extends State<_DetailView> {
                   anilistId: season.anilistId,
                 ),
               ),
+              onOpenRelation: _openRelation,
             ),
           ),
 
