@@ -80,7 +80,9 @@ class _RootShellState extends State<RootShell>
   ///
   /// Starts wherever the user chose to land; [NavPrefs.startTab] falls back to
   /// the leftmost tab, so an untouched install still opens on Home.
-  late DockTab _tab = _navPrefs.startTab;
+  late DockTab _tab = MiniPlayerState.active.value?.pageBuilder != null
+      ? DockTab.home
+      : _navPrefs.startTab;
 
   /// Falls back to an unregistered instance rather than throwing.
   ///
@@ -115,12 +117,17 @@ class _RootShellState extends State<RootShell>
     );
     _switch = CurvedAnimation(parent: _switchCtrl, curve: Curves.easeOutCubic);
     _navPrefs.addListener(_onTabsChanged);
+    MiniPlayerState.active.addListener(_onMiniPlayerChanged);
     if (sl.isRegistered<ViewerProfileStore>()) {
       sl<ViewerProfileStore>().active.addListener(_onProfileChanged);
       sl<ViewerProfileStore>().contextRevision.addListener(
         _onProfileContextChanged,
       );
     }
+  }
+
+  void _onMiniPlayerChanged() {
+    if (mounted) setState(() {});
   }
 
   void _onProfileChanged() {
@@ -184,6 +191,7 @@ class _RootShellState extends State<RootShell>
   @override
   void dispose() {
     _navPrefs.removeListener(_onTabsChanged);
+    MiniPlayerState.active.removeListener(_onMiniPlayerChanged);
     if (sl.isRegistered<ViewerProfileStore>()) {
       sl<ViewerProfileStore>().active.removeListener(_onProfileChanged);
       sl<ViewerProfileStore>().contextRevision.removeListener(
@@ -264,14 +272,18 @@ class _RootShellState extends State<RootShell>
   ///
   /// Search is no longer a phone dock tab (it's a Home header icon now), so
   /// this never places `shared[1]`. TV keeps its Settings rail destination.
-  List<Widget> _pagesFor(List<DockTab> tabs, String profileId) {
+  List<Widget> _pagesFor(
+    List<DockTab> tabs,
+    String profileId,
+    BuildContext context,
+  ) {
     final shared = buildShellPages(null, homeIsActive: _tab == DockTab.home);
     return [
       for (final t in tabs)
         KeyedSubtree(
           key: ValueKey('$profileId:${t.name}'),
           child: switch (t) {
-            DockTab.home => shared[0],
+            DockTab.home => MiniPlayerState.active.value?.pageBuilder?.call(context) ?? shared[0],
             DockTab.myList => shared[2],
             DockTab.profile => const ViewerProfileHomeScreen(),
             // Both normally get pushed with a back button; as tabs they own the
@@ -353,6 +365,7 @@ class _RootShellState extends State<RootShell>
                         sl.isRegistered<ViewerProfileStore>()
                             ? sl<ViewerProfileStore>().activeId
                             : 'default',
+                        context,
                       ),
                     ),
                   ),
