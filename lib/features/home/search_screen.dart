@@ -865,7 +865,9 @@ class _SearchViewState extends State<_SearchView>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _searchBar(),
-            const SizedBox(height: 4),
+            SizedBox(
+              height: widget.scope == SearchScope.sources ? 12 : 4,
+            ),
             // Source scope needs its scope selector and control row. Metadata
             // search has no controls in this row (its filter action is beside
             // the search field), so don't reserve an empty 40px band above
