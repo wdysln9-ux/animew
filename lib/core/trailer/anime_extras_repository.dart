@@ -72,7 +72,16 @@ query ($id: Int, $search: String) {
     if (resolvedId == null || resolvedId <= 0) {
       throw StateError('MAL ID untuk anime ini belum ditemukan.');
     }
-    return _cache.putIfAbsent(resolvedId, () => _fetch(resolvedId));
+    final existing = _cache[resolvedId];
+    if (existing != null) return existing;
+    final request = _fetch(resolvedId);
+    _cache[resolvedId] = request;
+    try {
+      return await request;
+    } catch (_) {
+      _cache.remove(resolvedId);
+      rethrow;
+    }
   }
 
   Future<int?> _resolveMalId({
@@ -102,7 +111,9 @@ query ($id: Int, $search: String) {
         final root = _map(response.data);
         final media = _map(_map(root?['data'])?['Media']);
         final value = media?['idMal'];
-        return value is int ? value : int.tryParse(value?.toString() ?? '');
+        final id = value is int ? value : int.tryParse(value?.toString() ?? '');
+        if (id == null) _idCache.remove(key);
+        return id;
       } catch (_) {
         _idCache.remove(key);
         rethrow;
