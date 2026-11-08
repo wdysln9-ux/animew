@@ -82,7 +82,8 @@ class MetaFilters {
       status == null &&
       minScore == null &&
       !adult &&
-      sort == MetaSort.popularity;
+      sort == MetaSort.popularity &&
+      !sortAscending;
 
   bool get isNotEmpty => !isEmpty;
 
