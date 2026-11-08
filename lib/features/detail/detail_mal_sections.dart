@@ -77,6 +77,17 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
         );
       }
       final videos = snapshot.data?.videos ?? const <AnimeExtraVideo>[];
+      if (videos.isEmpty && snapshot.data?.videoError != null) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+          child: Row(
+            children: [
+              const Expanded(child: Text('Trailer belum bisa dimuat.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
+              TextButton(onPressed: () => setState(_load), child: const Text('Coba lagi')),
+            ],
+          ),
+        );
+      }
       if (videos.isEmpty) return const SizedBox.shrink();
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 22, 0, 0),
@@ -299,6 +310,17 @@ class _MalThemeSectionState extends State<_MalThemeSection> {
         for (final song in data.openings) ('Opening', song),
         for (final song in data.endings) ('Ending', song),
       ];
+      if (songs.isEmpty && data.themeError != null) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+          child: Row(
+            children: [
+              const Expanded(child: Text('Lagu tema belum bisa dimuat.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
+              TextButton(onPressed: () => setState(_load), child: const Text('Coba lagi')),
+            ],
+          ),
+        );
+      }
       if (songs.isEmpty) return const SizedBox.shrink();
       final visible = _expanded ? songs : songs.take(3).toList();
       return Padding(
