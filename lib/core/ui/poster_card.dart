@@ -414,33 +414,33 @@ class _PosterCardState extends State<PosterCard> {
                                     : const Color(0xFF20B86B),
                           ),
                         ),
-                      if (widget.latestEpisodeBadge != null)
-                        Positioned(
-                          left: 6,
-                          bottom: showViews ? 27 : 6,
-                          child: _EpisodeTag(widget.latestEpisodeBadge!),
-                        ),
-                      if (showViews)
+                      if (widget.latestEpisodeBadge != null || showViews)
                         Positioned(
                           left: 6,
                           bottom: 6,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
-                              const SizedBox(width: 3),
-                              Text(
-                                _compactPopularity(widget.viewsBadge!),
-                                style: TextStyle(
-                                  fontFamily: AppText.fontFamily,
-                                  fontFamilyFallback: AppText.fontFamilyFallback,
-                                  fontSize: 10,
-                                  height: 1,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                  shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)],
+                              if (widget.latestEpisodeBadge != null)
+                                _EpisodeTag(widget.latestEpisodeBadge!),
+                              if (widget.latestEpisodeBadge != null && showViews)
+                                const SizedBox(width: 6),
+                              if (showViews) ...[
+                                const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
+                                const SizedBox(width: 3),
+                                Text(
+                                  _compactPopularity(widget.viewsBadge!),
+                                  style: TextStyle(
+                                    fontFamily: AppText.fontFamily,
+                                    fontFamilyFallback: AppText.fontFamilyFallback,
+                                    fontSize: 10,
+                                    height: 1,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                    shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
                           ),
                         ),
