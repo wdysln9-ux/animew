@@ -152,9 +152,9 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     ),
                   _heading('Urutkan', theme),
                   Align(alignment: Alignment.centerRight, child: TextButton.icon(
-                    onPressed: () => setState(() => sortDescending = !sortDescending),
-                    icon: Icon(sortDescending ? Icons.south : Icons.north, color: cs.primary),
-                    label: Text(sortDescending ? 'Turun' : 'Naik'),
+                    onPressed: () => setState(() => f = f.copyWith(sortAscending: !f.sortAscending)),
+                    icon: Icon(f.sortAscending ? Icons.north : Icons.south, color: cs.primary),
+                    label: Text(f.sortAscending ? 'Naik' : 'Turun'),
                   )),
                   _chips(sortLabels.keys.map((v) => _ChipData(sortLabels[v]!, f.sort == v,
                     () => setState(() => f = f.copyWith(sort: v)))).toList(), cs),
@@ -239,11 +239,8 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
     );
   }
 
-  bool sortDescending = true;
-
   void _reset() => setState(() {
     f = const MetaFilters();
-    sortDescending = true;
   });
 
   void _toggle<T>(List<T> current, T value, void Function(List<T>) update) {
