@@ -308,8 +308,8 @@ class AniListCatalogue implements AnimeCatalogue {
           'seasonYear_in:[${years.join(',')}]'
         else if (f.year != null)
           'seasonYear:${f.year}',
-        if (f.minYear > 1960) 'seasonYear_greater:${f.minYear - 1}',
-        if (f.maxYear < 2026) 'seasonYear_lesser:${f.maxYear + 1}',
+        if (kind == ZKind.anime) 'startDate_greater:${(f.minYear < 1980 ? 1980 : f.minYear) * 10000 + 101}',
+        if (kind == ZKind.anime) 'startDate_lesser:${(f.maxYear > DateTime.now().year ? DateTime.now().year : f.maxYear) * 10000 + 1231}',
         if (seasons.isNotEmpty)
           'season_in:[${seasons.map((v) => v.name.toUpperCase()).join(',')}]'
         else if (f.season != null)
@@ -346,6 +346,7 @@ class AniListCatalogue implements AnimeCatalogue {
     null => null,
     MetaFormat.tv => 'TV',
     MetaFormat.movie => 'MOVIE',
+    MetaFormat.ona => 'ONA',
     MetaFormat.ova => 'OVA',
     MetaFormat.special => 'SPECIAL',
     MetaFormat.manga => 'MANGA',
