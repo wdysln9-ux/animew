@@ -82,7 +82,7 @@ class PosterCard extends StatefulWidget {
   final String? progressBadge;
   final String? statusBadge;
   final int? viewsBadge;
-  /// Latest aired episode, shown immediately before the views count.
+  /// Latest aired episode, displayed as its own badge above the views count.
   final int? latestEpisodeBadge;
   final int? rankBadge;
   final String? metaLine;
@@ -414,29 +414,19 @@ class _PosterCardState extends State<PosterCard> {
                                     : const Color(0xFF20B86B),
                           ),
                         ),
-                      if (showViews || widget.latestEpisodeBadge != null)
+                      if (widget.latestEpisodeBadge != null)
+                        Positioned(
+                          left: 6,
+                          bottom: showViews ? 27 : 6,
+                          child: _EpisodeTag(widget.latestEpisodeBadge!),
+                        ),
+                      if (showViews)
                         Positioned(
                           left: 6,
                           bottom: 6,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (widget.latestEpisodeBadge != null) ...[
-                                Text(
-                                  'Ep ${widget.latestEpisodeBadge}',
-                                  style: TextStyle(
-                                    fontFamily: AppText.fontFamily,
-                                    fontFamilyFallback: AppText.fontFamilyFallback,
-                                    fontSize: 10,
-                                    height: 1,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                    shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)],
-                                  ),
-                                ),
-                                if (showViews) const SizedBox(width: 7),
-                              ],
-                              if (showViews) ...[
                               const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
                               const SizedBox(width: 3),
                               Text(
@@ -451,7 +441,6 @@ class _PosterCardState extends State<PosterCard> {
                                   shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)],
                                 ),
                               ),
-                              ],
                             ],
                           ),
                         ),
@@ -764,6 +753,34 @@ String _compactPopularity(int value) {
   if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1).replaceAll('.0', '')}jt';
   if (value >= 1000) return '${(value / 1000).toStringAsFixed(value >= 100000 ? 0 : 1).replaceAll('.0', '')}rb';
   return '$value';
+}
+
+class _EpisodeTag extends StatelessWidget {
+  const _EpisodeTag(this.episode);
+
+  final int episode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(6, 3, 6, 3),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        'Ep $episode',
+        style: TextStyle(
+          fontFamily: AppText.fontFamily,
+          fontFamilyFallback: AppText.fontFamilyFallback,
+          fontSize: 10,
+          height: 1.1,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
 }
 
 class _ScoreTag extends StatelessWidget {
