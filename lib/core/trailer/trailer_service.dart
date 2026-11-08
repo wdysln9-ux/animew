@@ -13,6 +13,35 @@ import '../models/provider_info.dart';
 ///
 /// Best-effort and cheap: every lookup is wrapped so any network/parse failure
 /// resolves to `null` rather than throwing — the caller just hides the button.
+/// One trailer/PV returned by Jikan for a MAL anime id.
+class MalAnimeVideo {
+  const MalAnimeVideo({
+    required this.title,
+    required this.youtubeId,
+    this.imageUrl,
+    this.url,
+  });
+
+  final String title;
+  final String youtubeId;
+  final String? imageUrl;
+  final String? url;
+}
+
+/// Supplementary MAL data. Empty lists mean Jikan had no data or was
+/// temporarily unavailable; neither condition blocks the AniList detail page.
+class MalAnimeExtras {
+  const MalAnimeExtras({
+    this.videos = const [],
+    this.openings = const [],
+    this.endings = const [],
+  });
+
+  final List<MalAnimeVideo> videos;
+  final List<String> openings;
+  final List<String> endings;
+}
+
 class TrailerService {
   TrailerService(this._dio);
   final Dio _dio;
@@ -114,36 +143,7 @@ class TrailerService {
     }
   }
 
-  /// One trailer/PV returned by Jikan for a MAL anime id.
-class MalAnimeVideo {
-  const MalAnimeVideo({
-    required this.title,
-    required this.youtubeId,
-    this.imageUrl,
-    this.url,
-  });
-
-  final String title;
-  final String youtubeId;
-  final String? imageUrl;
-  final String? url;
-}
-
-/// Supplementary MAL data. Empty lists mean Jikan had no data or was
-/// temporarily unavailable; neither condition blocks the AniList detail page.
-class MalAnimeExtras {
-  const MalAnimeExtras({
-    this.videos = const [],
-    this.openings = const [],
-    this.endings = const [],
-  });
-
-  final List<MalAnimeVideo> videos;
-  final List<String> openings;
-  final List<String> endings;
-}
-
-// ── Anime: AniList GraphQL ────────────────────────────────────────────────
+  // ── Anime: AniList GraphQL ────────────────────────────────────────────────
 
   Future<String?> _anilistTrailer({
     required String title,
