@@ -586,6 +586,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
         MiniPlayerState.active.value != null) {
       return;
     }
+    // The native Activity must not auto-enter system PiP while the app's
+    // own floating mini-player is visible; otherwise Android captures the
+    // shell/home screen behind it instead of the video surface.
+    if (_pipSupported) {
+      _pipChannel.invokeMethod('setAutoPip', false);
+    }
     final nav = Navigator.of(context);
     final playerRoute = ModalRoute.of(context);
     final episode = _c.currentEpisode;
@@ -640,6 +646,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
       SystemChrome.setEnabledSystemUIMode(
         showDetails ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
       );
+      // Restore the user's auto-PiP preference only while the full player
+      // route is active again.
+      if (_pipSupported) {
+        _pipChannel.invokeMethod(
+          'setAutoPip',
+          sl<PlaybackPrefs>().autoPip,
+        );
+      }
     }
 
     void stopPlayback() {
