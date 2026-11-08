@@ -83,7 +83,6 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    final progress = (shrinkOffset / maxHeight).clamp(0.0, 1.0);
     final poster = posterUrl?.isNotEmpty == true ? posterUrl! : coverUrl;
     final topInset = MediaQuery.paddingOf(context).top;
 
@@ -110,11 +109,12 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Color(0x66000000),
-                          Color(0x00000000),
-                          Color(0xE6000000),
+                          AppColors.bg.withValues(alpha: 0.28),
+                          AppColors.bg.withValues(alpha: 0.04),
+                          AppColors.bg.withValues(alpha: 0.68),
+                          AppColors.bg,
                         ],
-                        stops: [0.0, 0.42, 1.0],
+                        stops: [0.0, 0.34, 0.76, 1.0],
                       ),
                     ),
                   ),
@@ -160,16 +160,13 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                 left: 0,
                 right: 0,
                 bottom: 12,
-                child: Opacity(
-                  opacity: (1 - progress * 1.2).clamp(0.0, 1.0),
-                  child: Center(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: SizedBox(
-                        width: 154,
-                        height: 224,
-                        child: _image(poster, width: 480),
-                      ),
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: SizedBox(
+                      width: 148,
+                      height: 216,
+                      child: _image(poster, width: 480),
                     ),
                   ),
                 ),
@@ -593,43 +590,118 @@ class AnimeDetailCharacterRail extends StatelessWidget {
   }
 }
 
-class AnimeDetailSeasonRail extends StatelessWidget {
-  const AnimeDetailSeasonRail({required this.seasons, required this.onOpen});
+class AnimeDetailSeasonRail extends StatefulWidget {
+  const AnimeDetailSeasonRail({
+    required this.seasons,
+    required this.relations,
+    required this.onOpenSeason,
+    required this.onOpenRelation,
+  });
   final List<SeasonEntry> seasons;
-  final ValueChanged<SeasonEntry> onOpen;
+  final List<MediaRelation> relations;
+  final ValueChanged<SeasonEntry> onOpenSeason;
+  final ValueChanged<MediaRelation> onOpenRelation;
+
+  @override
+  State<AnimeDetailSeasonRail> createState() => _AnimeDetailSeasonRailState();
+}
+
+class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
+  int _selected = 0;
+
+  bool _isRecommended(MediaRelation relation) {
+    final value = relation.relation?.trim().toLowerCase().replaceAll('_', ' ');
+    return value == 'recommended' || value == 'recommendation';
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (seasons.isEmpty) return const SizedBox.shrink();
+    final related = widget.relations.where((r) => !_isRecommended(r)).toList();
+    final recommendations = widget.relations.where(_isRecommended).toList();
+    final tabs = <String>[
+      if (widget.seasons.isNotEmpty) 'Semua Musim',
+      if (related.isNotEmpty) 'Terkait',
+      if (recommendations.isNotEmpty) 'Rekomendasi',
+    ];
+    if (tabs.isEmpty) return const SizedBox.shrink();
+    if (_selected >= tabs.length) _selected = 0;
+
     final width = posterRowWidth(context);
     final height = posterRowHeight(context);
+    final selectedTab = tabs[_selected];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 22, 0, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Semua Musim', style: AppText.headline.copyWith(fontSize: 17)),
-          const SizedBox(height: 11),
           SizedBox(
-            height: height,
+            height: 34,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.only(right: 16),
-              itemCount: seasons.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemCount: tabs.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 16),
               itemBuilder: (context, index) {
-                final season = seasons[index];
-                return SizedBox(
-                  width: width,
-                  child: PosterCard(
-                    title: season.title,
-                    imageUrl: season.cover,
-                    cellWidth: width,
-                    seriesBadge: 'Seri ' + season.number.toString(),
-                    viewsBadge: season.popularity,
-                    metaLine: season.episodes == null ? null : 'TV · ' + season.episodes.toString() + ' eps',
-                    onTap: () => onOpen(season),
+                final selected = index == _selected;
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => setState(() => _selected = index),
+                  child: Center(
+                    child: Text(
+                      tabs[index],
+                      style: AppText.headline.copyWith(
+                        fontSize: 16,
+                        color: selected ? AppColors.textPrimary : AppColors.textSecondary,
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
                   ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 11),
+          SizedBox(
+            height: height,
+            child: Builder(
+              builder: (context) {
+                final cards = <Widget>[];
+                if (selectedTab == 'Semua Musim') {
+                  for (final season in widget.seasons) {
+                    cards.add(SizedBox(
+                      width: width,
+                      child: PosterCard(
+                        title: season.title,
+                        imageUrl: season.cover,
+                        cellWidth: width,
+                        seriesBadge: 'Seri ${season.number}',
+                        viewsBadge: season.popularity,
+                        metaLine: season.episodes == null ? null : 'TV · ${season.episodes} eps',
+                        onTap: () => widget.onOpenSeason(season),
+                      ),
+                    ));
+                  }
+                } else {
+                  final rows = selectedTab == 'Terkait' ? related : recommendations;
+                  for (final relation in rows) {
+                    cards.add(SizedBox(
+                      width: width,
+                      child: PosterCard(
+                        title: relation.title,
+                        imageUrl: relation.cover,
+                        cellWidth: width,
+                        seriesBadge: relation.relation,
+                        onTap: () => widget.onOpenRelation(relation),
+                      ),
+                    ));
+                  }
+                }
+                return ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.only(right: 16),
+                  itemCount: cards.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
+                  itemBuilder: (_, index) => cards[index],
                 );
               },
             ),
