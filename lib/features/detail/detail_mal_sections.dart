@@ -82,7 +82,7 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
                                         errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2),
                                       )
                                     else
-                                      const ColoredBox(color: AppColors.surface2),
+                                      ColoredBox(color: AppColors.surface2),
                                     Center(
                                       child: Container(
                                         width: 42,
@@ -158,11 +158,11 @@ class _CharacterRail extends StatelessWidget {
                             width: 72,
                             height: 72,
                             child: member.photo == null
-                                ? const ColoredBox(color: AppColors.surface2, child: Icon(Icons.person, color: AppColors.textSecondary))
+                                ? ColoredBox(color: AppColors.surface2, child: Icon(Icons.person, color: AppColors.textSecondary))
                                 : CachedNetworkImage(
                                     imageUrl: member.photo!,
                                     fit: BoxFit.cover,
-                                    errorWidget: (_, _, _) => const ColoredBox(color: AppColors.surface2, child: Icon(Icons.person, color: AppColors.textSecondary)),
+                                    errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2, child: Icon(Icons.person, color: AppColors.textSecondary)),
                                   ),
                           ),
                         ),
