@@ -242,6 +242,12 @@ class _RootShellState extends State<RootShell>
     // Both PopScopes share this route, so Flutter fires ours too; bail so we
     // don't flash the exit toast over a normal in-tab back-out.
     if (shellBackIntercepted.value) return;
+    // Back from any root tab returns to Home first. Home itself keeps its
+    // existing double-Back-to-exit behaviour.
+    if (_tab != DockTab.home) {
+      _onTabSelected(DockTab.home);
+      return;
+    }
     final now = DateTime.now();
     if (_lastBackPress != null &&
         now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
