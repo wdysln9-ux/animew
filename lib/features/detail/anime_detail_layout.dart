@@ -101,7 +101,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               // clipped by the collapsing sliver. Its scale/crop never changes
               // while scrolling, so it cannot look like a camera zoom.
               Positioned.fill(child: _image(coverUrl)),
-              const Positioned.fill(
+              Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
