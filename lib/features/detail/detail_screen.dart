@@ -1987,8 +1987,17 @@ class _DetailViewState extends State<_DetailView>
     if (sl<AppMode>().isTv) return DetailScreenTv(item: widget.item);
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: SafeArea(
-        child: Stack(
+      body: AnimatedBuilder(
+        animation: _tabController,
+        builder: (context, _) => PopScope(
+          canPop: _tabController.index == 0,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop && _tabController.index != 0) {
+              _tabController.animateTo(0);
+            }
+          },
+          child: SafeArea(
+            child: Stack(
           children: [
           // Adaptive colour: poster-tinted wash behind the scroll view, only
           // while the setting is on. The NestedScrollView's own background is
@@ -2096,8 +2105,10 @@ class _DetailViewState extends State<_DetailView>
               },
             ),
           ),
-          ],
+            ],
+          ),
         ),
+      ),
       ),
     );
   }
