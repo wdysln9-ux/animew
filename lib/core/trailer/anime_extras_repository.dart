@@ -129,7 +129,14 @@ query ($id: Int, $search: String) {
         }
       }
       if (resolved == null && preferredTitle.isNotEmpty) {
-        resolved = await lookup(search: preferredTitle);
+        try {
+          resolved = await lookup(search: preferredTitle);
+        } catch (_) {
+          // Continue to Jikan's own title index below.
+        }
+      }
+      if (resolved == null && preferredTitle.isNotEmpty) {
+        resolved = await _searchJikanId(preferredTitle);
       }
       if (resolved == null) _idCache.remove(key);
       return resolved;
@@ -140,7 +147,36 @@ query ($id: Int, $search: String) {
     });
   }
 
+  Future<int?> _searchJikanId(String title) async {
+    final response = await _dio.get<dynamic>(
+      '$_jikan/anime',
+      queryParameters: {'q': title, 'limit': 10},
+    );
+    final root = _map(response.data);
+    final entries = _list(root?['data']) ?? const [];
+    String normalize(String value) =>
+        value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final wanted = normalize(title);
+
+    for (final raw in entries) {
+      final entry = _map(raw);
+      if (entry == null) continue;
+      final candidates = <String>[
+        entry['title']?.toString() ?? '',
+        entry['title_english']?.toString() ?? '',
+        entry['title_japanese']?.toString() ?? '',
+        ...(_list(entry['title_synonyms']) ?? const []).map((e) => e.toString()),
+      ];
+      if (candidates.any((candidate) => normalize(candidate) == wanted)) {
+        final id = entry['mal_id'];
+        return id is int ? id : int.tryParse(id?.toString() ?? '');
+      }
+    }
+    return null;
+  }
+
   Future<AnimeExtras> _fetch(int malId) async {
+    await Future<void>.delayed(const Duration(milliseconds: 500));
     dynamic videosResponse;
     dynamic themesResponse;
     String? videoError;
