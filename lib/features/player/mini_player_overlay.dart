@@ -3,6 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/ui/dock_visibility.dart';
+
 /// Holds the live playback surface while the user browses the app.
 class MiniPlayerSession {
   MiniPlayerSession({
@@ -72,9 +75,10 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
             final minLeft = 8.0;
             final maxLeft = math.max(minLeft, screenWidth - width - 8);
             final minTop = safe.top + 8;
+            final bottomClearance = math.max(safe.bottom, kDockClearance);
             final maxTop = math.max(
               minTop,
-              screenHeight - height - safe.bottom - 8,
+              screenHeight - height - bottomClearance - 8,
             );
 
             final left = _left == null
@@ -115,26 +119,31 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onPanUpdate: (details) {
-                        if (_expanded) return;
                         setState(() {
-                          _left = (left + details.delta.dx)
-                              .clamp(minLeft, maxLeft)
-                              .toDouble();
+                          if (!_expanded) {
+                            _left = (left + details.delta.dx)
+                                .clamp(minLeft, maxLeft)
+                                .toDouble();
+                          }
                           _top = (top + details.delta.dy)
                               .clamp(minTop, maxTop)
                               .toDouble();
                         });
                       },
                       onPanEnd: (_) {
-                        if (_expanded) return;
-                        final currentLeft = _left ?? left;
                         final currentTop = _top ?? top;
+                        final snapTop = currentTop + height / 2 <
+                                (minTop + maxTop) / 2
+                            ? minTop
+                            : maxTop;
+                        if (_expanded) {
+                          setState(() => _top = snapTop);
+                          return;
+                        }
+                        final currentLeft = _left ?? left;
                         final snapLeft = currentLeft + width / 2 < screenWidth / 2
                             ? minLeft
                             : maxLeft;
-                        final snapTop = currentTop + height / 2 < screenHeight / 2
-                            ? minTop
-                            : maxTop;
                         setState(() {
                           _left = snapLeft;
                           _top = snapTop;
@@ -149,6 +158,7 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                             _top = top;
                           } else {
                             _left = (screenWidth - width) / 2;
+                            _top = top.clamp(minTop, maxTop).toDouble();
                           }
                         });
                       },
@@ -199,9 +209,9 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                             ),
                           ),
                           Positioned(
-                            left: 8,
-                            right: 8,
-                            bottom: 5,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
                             child: _MiniProgressBar(session: session),
                           ),
                         ],
@@ -257,7 +267,7 @@ class _MiniProgressBar extends StatelessWidget {
                 onHorizontalDragUpdate: (details) =>
                     seek(details.localPosition, constraints.maxWidth),
                 child: SizedBox(
-                  height: 18,
+                  height: 3,
                   child: Align(
                     alignment: Alignment.bottomCenter,
                     child: SizedBox(
@@ -271,7 +281,7 @@ class _MiniProgressBar extends StatelessWidget {
                             FractionallySizedBox(
                               alignment: Alignment.centerLeft,
                               widthFactor: progress,
-                              child: const ColoredBox(color: Colors.white),
+                              child: ColoredBox(color: AppColors.accent),
                             ),
                           ],
                         ),
