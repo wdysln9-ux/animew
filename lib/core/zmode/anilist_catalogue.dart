@@ -308,6 +308,8 @@ class AniListCatalogue implements AnimeCatalogue {
           'seasonYear_in:[${years.join(',')}]'
         else if (f.year != null)
           'seasonYear:${f.year}',
+        if (f.minYear > 1960) 'seasonYear_greater:${f.minYear - 1}',
+        if (f.maxYear < 2026) 'seasonYear_lesser:${f.maxYear + 1}',
         if (seasons.isNotEmpty)
           'season_in:[${seasons.map((v) => v.name.toUpperCase()).join(',')}]'
         else if (f.season != null)
