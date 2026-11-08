@@ -230,6 +230,65 @@ class TrailerService {
     return null;
   }
 
+  // ── MyAnimeList extras for AniList-backed detail pages ───────────────────
+
+  final Map<int, Future<MalAnimeExtras>> _malExtrasCache = {};
+
+  /// Trailer/PV and OP/ED data keyed by the MAL id already attached to the
+  /// AniList Media object. This is deliberately supplementary: callers keep
+  /// AniList as the catalogue/filter source and simply omit these sections
+  /// when a title has no MAL id or Jikan has no matching data.
+  Future<MalAnimeExtras> malAnimeExtras(int malId) {
+    return _malExtrasCache.putIfAbsent(malId, () async {
+      try {
+        final answers = await Future.wait([
+          _dio.get<dynamic>('https://api.jikan.moe/v4/anime/$malId/videos'),
+          _dio.get<dynamic>('https://api.jikan.moe/v4/anime/$malId/themes'),
+        ]);
+        final videosRoot = _asMap(answers[0].data);
+        final videosData = _asMap(videosRoot?['data']);
+        final themesRoot = _asMap(answers[1].data);
+        final themesData = _asMap(themesRoot?['data']);
+        final videos = <MalAnimeVideo>[];
+        final promo = _asList(videosData?['promo']) ?? const [];
+        for (final raw in promo) {
+          final entry = _asMap(raw);
+          final trailer = _asMap(entry?['trailer']);
+          if (entry == null || trailer == null) continue;
+          final youtubeId = trailer['youtube_id']?.toString();
+          if (youtubeId == null || youtubeId.isEmpty) continue;
+          final images = _asMap(trailer['images']);
+          final jpg = _asMap(images?['maximum_image_url']) ??
+              _asMap(images?['large_image_url']) ??
+              _asMap(images?['image_url']);
+          videos.add(MalAnimeVideo(
+            title: entry['title']?.toString().trim().isNotEmpty == true
+                ? entry['title'].toString().trim()
+                : 'Trailer',
+            youtubeId: youtubeId,
+            imageUrl: jpg?['url']?.toString(),
+            url: trailer['url']?.toString(),
+          ));
+        }
+        final openings = (_asList(themesData?['openings']) ?? const [])
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList(growable: false);
+        final endings = (_asList(themesData?['endings']) ?? const [])
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList(growable: false);
+        return MalAnimeExtras(
+          videos: List.unmodifiable(videos),
+          openings: openings,
+          endings: endings,
+        );
+      } catch (_) {
+        return const MalAnimeExtras();
+      }
+    });
+  }
+
   // ── tiny JSON helpers (defensive against dynamic shapes) ──────────────────
 
   static Map<String, dynamic>? _asMap(dynamic v) => v is Map<String, dynamic>
