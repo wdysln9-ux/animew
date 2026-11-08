@@ -441,7 +441,7 @@ class _DetailView extends StatefulWidget {
 
 class _DetailViewState extends State<_DetailView>
     with SingleTickerProviderStateMixin {
-  static const double _expandedHeight = 320;
+  static const double _expandedHeight = 438;
   bool _showAppBarTitle = false;
 
   // The episode url we've already kicked a background source-prefetch for, so we
@@ -2352,6 +2352,9 @@ class _DetailViewState extends State<_DetailView>
                 coverUrl: coverUrl,
                 coverHeaders: coverHeaders,
                 hasCover: hasCover,
+                posterUrl: detail.cover ?? item.cover,
+                sourceLabel: sourceName,
+                animeId: detail.id,
                 tint: ThemeController.adaptiveColour ? _tint : null,
                 trailerId: _trailerId,
                 // Pause the trailer once the hero has scrolled past (reuses
@@ -2371,7 +2374,7 @@ class _DetailViewState extends State<_DetailView>
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Tapping the title opens the full search pre-filled with it
                   // (current source + all sources, per Search's own scope toggle).
@@ -2384,7 +2387,8 @@ class _DetailViewState extends State<_DetailView>
                     ),
                     child: Text(
                       detail.title,
-                      style: AppText.largeTitle.copyWith(fontSize: 28),
+                      style: AppText.largeTitle.copyWith(fontSize: 24),
+                      textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -2396,10 +2400,11 @@ class _DetailViewState extends State<_DetailView>
                     Text(
                       detail.englishTitle!.trim(),
                       style: AppText.body.copyWith(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: AppColors.textSecondary,
                       ),
                       maxLines: 2,
+                      textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -2410,6 +2415,7 @@ class _DetailViewState extends State<_DetailView>
                         Flexible(
                           child: Text(
                             metaLine,
+                            textAlign: TextAlign.center,
                             style: AppText.body.copyWith(
                               color: AppColors.textSecondary,
                             ),
