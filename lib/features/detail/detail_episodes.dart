@@ -1589,14 +1589,19 @@ class _EpisodeRow extends StatelessWidget {
         ? '$epNum. $titleText'
         : context.l10n.episodeLabel(epNum);
 
-    return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      splashColor: AppColors.accentSoft,
-      highlightColor: AppColors.surface,
-      child: Padding(
-        // Generous vertical spacing between episodes (whitespace, no dividers).
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+      child: Material(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          borderRadius: BorderRadius.circular(12),
+          splashColor: AppColors.accentSoft,
+          highlightColor: AppColors.surface,
+          child: Padding(
+            padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1776,6 +1781,9 @@ class _EpisodeRow extends StatelessWidget {
               ],
             ),
           ],
+        ),
+            ),
+          ),
         ),
       ),
     );
