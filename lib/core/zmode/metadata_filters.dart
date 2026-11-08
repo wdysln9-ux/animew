@@ -12,6 +12,12 @@ class MetaFilters {
   const MetaFilters({
     this.genres = const [],
     this.tags = const [],
+    this.years = const [],
+    this.seasons = const [],
+    this.formats = const [],
+    this.statuses = const [],
+    this.minEpisodes = 0,
+    this.maxEpisodes = 200,
     this.year,
     this.season,
     this.format,
@@ -29,6 +35,14 @@ class MetaFilters {
   /// AniList's alone. Nothing else exposes them, so a tag chip is only
   /// offered while AniList is the one answering.
   final List<String> tags;
+  /// Multi-select AniList filters. Legacy scalar fields remain for TMDB and
+  /// older saved filter payloads.
+  final List<int> years;
+  final List<MetaSeason> seasons;
+  final List<MetaFormat> formats;
+  final List<MetaStatus> statuses;
+  final int minEpisodes;
+  final int maxEpisodes;
   final int? year;
   final MetaSeason? season;
   final MetaFormat? format;
@@ -49,6 +63,12 @@ class MetaFilters {
   bool get isEmpty =>
       genres.isEmpty &&
       tags.isEmpty &&
+      years.isEmpty &&
+      seasons.isEmpty &&
+      formats.isEmpty &&
+      statuses.isEmpty &&
+      minEpisodes == 0 &&
+      maxEpisodes == 200 &&
       year == null &&
       season == null &&
       format == null &&
@@ -69,6 +89,12 @@ class MetaFilters {
   bool get narrowsCatalogue =>
       genres.isNotEmpty ||
       tags.isNotEmpty ||
+      years.isNotEmpty ||
+      seasons.isNotEmpty ||
+      formats.isNotEmpty ||
+      statuses.isNotEmpty ||
+      minEpisodes > 0 ||
+      maxEpisodes < 200 ||
       year != null ||
       season != null ||
       format != null ||
@@ -79,6 +105,12 @@ class MetaFilters {
   MetaFilters copyWith({
     List<String>? genres,
     List<String>? tags,
+    List<int>? years,
+    List<MetaSeason>? seasons,
+    List<MetaFormat>? formats,
+    List<MetaStatus>? statuses,
+    int? minEpisodes,
+    int? maxEpisodes,
     int? year,
     MetaSeason? season,
     MetaFormat? format,
@@ -94,6 +126,12 @@ class MetaFilters {
   }) => MetaFilters(
     genres: genres ?? this.genres,
     tags: tags ?? this.tags,
+    years: years ?? this.years,
+    seasons: seasons ?? this.seasons,
+    formats: formats ?? this.formats,
+    statuses: statuses ?? this.statuses,
+    minEpisodes: minEpisodes ?? this.minEpisodes,
+    maxEpisodes: maxEpisodes ?? this.maxEpisodes,
     year: clearYear ? null : (year ?? this.year),
     season: clearSeason ? null : (season ?? this.season),
     format: clearFormat ? null : (format ?? this.format),
@@ -109,6 +147,12 @@ class MetaFilters {
   String toJson() => jsonEncode({
     if (genres.isNotEmpty) 'g': genres,
     if (tags.isNotEmpty) 't': tags,
+    if (years.isNotEmpty) 'ys': years,
+    if (seasons.isNotEmpty) 'ss': seasons.map((v) => v.name).toList(),
+    if (formats.isNotEmpty) 'fs': formats.map((v) => v.name).toList(),
+    if (statuses.isNotEmpty) 'sts': statuses.map((v) => v.name).toList(),
+    if (minEpisodes > 0) 'emin': minEpisodes,
+    if (maxEpisodes < 200) 'emax': maxEpisodes,
     if (year != null) 'y': year,
     if (season != null) 's': season!.name,
     if (format != null) 'f': format!.name,
@@ -127,6 +171,12 @@ class MetaFilters {
       return MetaFilters(
         genres: [...?(m['g'] as List?)?.cast<String>()],
         tags: [...?(m['t'] as List?)?.cast<String>()],
+        years: [...?(m['ys'] as List?)?.cast<int>()],
+        seasons: [for (final v in (m['ss'] as List? ?? [])) ...MetaSeason.values.where((e) => e.name == v)],
+        formats: [for (final v in (m['fs'] as List? ?? [])) ...MetaFormat.values.where((e) => e.name == v)],
+        statuses: [for (final v in (m['sts'] as List? ?? [])) ...MetaStatus.values.where((e) => e.name == v)],
+        minEpisodes: m['emin'] as int? ?? 0,
+        maxEpisodes: m['emax'] as int? ?? 200,
         year: m['y'] as int?,
         season: pick(MetaSeason.values, m['s'] as String?),
         format: pick(MetaFormat.values, m['f'] as String?),
