@@ -91,8 +91,8 @@ class _CastTab extends StatelessWidget {
         for (final m in cast)
           if (!staff.contains(m)) m,
       ];
-      return ListView(
-        padding: const EdgeInsets.only(bottom: 40),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _castSection(context.l10n.characters, people),
           _castSection(context.l10n.creators, staff),
@@ -131,8 +131,8 @@ class _CastTab extends StatelessWidget {
     bool nested = true,
   }) {
     return GridView.builder(
-      shrinkWrap: nested,
-      physics: nested ? const NeverScrollableScrollPhysics() : null,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: padding,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
@@ -520,6 +520,8 @@ class _DetailsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final desc = description ?? '';
     return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
       children: [
         if (sourceName.isNotEmpty)
