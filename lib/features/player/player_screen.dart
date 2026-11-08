@@ -709,18 +709,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
-  /// Keep landscape playback immersive at the bottom while leaving the top
-  /// system bar transparent and visible, so Android can lay out the notch.
-  /// This is used only in fullscreen; portrait styling stays unchanged.
+  /// Hide both system bars in fullscreen. Android's immersive-sticky mode
+  /// reveals them temporarily as an overlay on swipe, without resizing the
+  /// Flutter surface or cutting off the video. The display cutout is enabled
+  /// natively with SHORT_EDGES in MainActivity.
   void _setFullscreenSystemUi() {
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: const [SystemUiOverlay.top],
-    );
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
       statusBarBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
     ));
   }
 
