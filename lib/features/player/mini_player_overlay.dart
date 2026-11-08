@@ -125,36 +125,41 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                       onPanUpdate: (details) {
                         setState(() {
                           if (!_expanded) {
+                            // Let the card travel slightly beyond either
+                            // horizontal edge; release will spring it back.
                             _left = (left + details.delta.dx)
-                                .clamp(minLeft, maxLeft)
+                                .clamp(minLeft - width * 0.28,
+                                    maxLeft + width * 0.28)
                                 .toDouble();
                           }
                           _top = (top + details.delta.dy)
-                              .clamp(minTop, maxTop)
+                              .clamp(minTop - height * 0.18,
+                                  maxTop + height * 0.18)
                               .toDouble();
                         });
                       },
                       onPanEnd: (_) {
                         final currentTop = _top ?? top;
-                        final snapTop = currentTop + height / 2 <
-                                (minTop + maxTop) / 2
-                            ? minTop
-                            : maxTop;
+                        final safeTop = currentTop
+                            .clamp(minTop, maxTop)
+                            .toDouble();
                         if (_expanded) {
                           setState(() {
                             _dragging = false;
-                            _top = snapTop;
+                            _top = safeTop;
                           });
                           return;
                         }
                         final currentLeft = _left ?? left;
+                        // Snap to the nearest side, not to a corner. This
+                        // allows a stable mid-height position along either edge.
                         final snapLeft = currentLeft + width / 2 < screenWidth / 2
                             ? minLeft
                             : maxLeft;
                         setState(() {
                           _dragging = false;
                           _left = snapLeft;
-                          _top = snapTop;
+                          _top = safeTop;
                         });
                       },
                       onTap: session.onRestore,
