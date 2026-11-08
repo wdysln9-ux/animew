@@ -380,10 +380,10 @@ class _EpisodesTabState extends State<_EpisodesTab> {
     // One scrollable (slivers): the header + chips scroll with the list so the
     // tab can never overflow when the NestedScrollView hands it a tiny height
     // during a layout pass (the Column+Expanded version did).
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: _EpisodesHeader(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _EpisodesHeader(
             hasMultipleSeasons: widget.hasMultipleSeasons,
             seasons: widget.seasonSet.toList()..sort(),
             currentSeason: widget.currentSeason,
@@ -405,13 +405,11 @@ class _EpisodesTabState extends State<_EpisodesTab> {
                 ? () => _openBulkDownload(eps)
                 : null,
           ),
-        ),
         // Only when the tracker says the show is still airing. Sits under the
         // header so it reads as part of the episode list rather than another
         // thing competing with the hero.
         if (widget.nextAiringEpisode != null && widget.nextAiringAt != null)
-          SliverToBoxAdapter(
-            child: Padding(
+          Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
               child: RichText(
                 maxLines: 1,
@@ -438,12 +436,10 @@ class _EpisodesTabState extends State<_EpisodesTab> {
                 ),
               ),
             ),
-          ),
         // Only when a title actually has more than one group — a single
         // scanlator needs no picker, and most titles have exactly one.
         if (groups.length > 1)
-          SliverToBoxAdapter(
-            child: _RangeChips(
+          _RangeChips(
               count: groups.length + 1,
               selected: _scanlator == null
                   ? 0
@@ -455,10 +451,8 @@ class _EpisodesTabState extends State<_EpisodesTab> {
                 _highlightEpId = null;
               }),
             ),
-          ),
         if (showRanges)
-          SliverToBoxAdapter(
-            child: _RangeChips(
+          _RangeChips(
               count: _rangeCount,
               selected: rangeIndex,
               labelFor: (i) =>
@@ -468,12 +462,11 @@ class _EpisodesTabState extends State<_EpisodesTab> {
                 _highlightEpId = null;
               }),
             ),
-          ),
         if (_grid)
           _buildGrid(store, visible, slice.start, total)
         else
           _buildList(store, visible, slice.start, total),
-        const SliverToBoxAdapter(child: SizedBox(height: 48)),
+        const SizedBox(height: 48),
       ],
     );
   }
@@ -683,7 +676,10 @@ class _EpisodesTabState extends State<_EpisodesTab> {
     int offset,
     int total,
   ) {
-    return SliverList.builder(
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       itemCount: visible.length,
       itemBuilder: (context, i) {
         final ep = visible[i];
@@ -749,9 +745,11 @@ class _EpisodesTabState extends State<_EpisodesTab> {
     int offset,
     int total,
   ) {
-    return SliverPadding(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-      sliver: SliverGrid.builder(
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 5,
           crossAxisSpacing: 10,
