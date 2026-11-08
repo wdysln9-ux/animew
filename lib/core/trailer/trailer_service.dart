@@ -114,7 +114,36 @@ class TrailerService {
     }
   }
 
-  // ── Anime: AniList GraphQL ────────────────────────────────────────────────
+  /// One trailer/PV returned by Jikan for a MAL anime id.
+class MalAnimeVideo {
+  const MalAnimeVideo({
+    required this.title,
+    required this.youtubeId,
+    this.imageUrl,
+    this.url,
+  });
+
+  final String title;
+  final String youtubeId;
+  final String? imageUrl;
+  final String? url;
+}
+
+/// Supplementary MAL data. Empty lists mean Jikan had no data or was
+/// temporarily unavailable; neither condition blocks the AniList detail page.
+class MalAnimeExtras {
+  const MalAnimeExtras({
+    this.videos = const [],
+    this.openings = const [],
+    this.endings = const [],
+  });
+
+  final List<MalAnimeVideo> videos;
+  final List<String> openings;
+  final List<String> endings;
+}
+
+// ── Anime: AniList GraphQL ────────────────────────────────────────────────
 
   Future<String?> _anilistTrailer({
     required String title,
@@ -258,15 +287,17 @@ class TrailerService {
           final youtubeId = trailer['youtube_id']?.toString();
           if (youtubeId == null || youtubeId.isEmpty) continue;
           final images = _asMap(trailer['images']);
-          final jpg = _asMap(images?['maximum_image_url']) ??
-              _asMap(images?['large_image_url']) ??
-              _asMap(images?['image_url']);
+          final jpg = _asMap(images?['jpg']);
+          final imageUrl = (jpg?['maximum_image_url'] ??
+                  jpg?['large_image_url'] ??
+                  jpg?['image_url'])
+              ?.toString();
           videos.add(MalAnimeVideo(
             title: entry['title']?.toString().trim().isNotEmpty == true
                 ? entry['title'].toString().trim()
                 : 'Trailer',
             youtubeId: youtubeId,
-            imageUrl: jpg?['url']?.toString(),
+            imageUrl: imageUrl,
             url: trailer['url']?.toString(),
           ));
         }
