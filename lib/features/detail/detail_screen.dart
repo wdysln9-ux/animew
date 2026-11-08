@@ -2265,9 +2265,10 @@ class _DetailViewState extends State<_DetailView>
       savedFrom: item.savedFrom,
     );
 
-    return NestedScrollView(
+    return CustomScrollView(
       controller: _scrollController,
-      headerSliverBuilder: (context, _) => [
+      slivers: [
+
         // ── 1. Hero: backdrop + overlapping poster + status/total ──────────
         AnimeDetailHeroSliver(
           coverUrl: coverUrl,
@@ -2277,13 +2278,7 @@ class _DetailViewState extends State<_DetailView>
           animeId: detail.id,
           maxHeight: _expandedHeight,
         ),
-        AnimeDetailPinnedToolbar(
-          title: detail.title,
-          visible: _showAppBarTitle,
-          backgroundColor: ThemeController.adaptiveColour
-              ? (_tint.value ?? AppColors.bg)
-              : AppColors.bg,
-        ),
+,
 
         // ── New independent title and metadata block.
         SliverToBoxAdapter(
@@ -2503,66 +2498,11 @@ class _DetailViewState extends State<_DetailView>
             ),
           ),
 
-        // ── 6. Pinned tab bar ───────────────────────────────────────────────
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: _TabBarDelegate(
-            TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              // Hug the left edge: the first tab starts flush with the 16px
-              // content gutter (title/synopsis), and labelPadding(right: 24)
-              // spaces the tabs apart while keeping them left-anchored —
-              // never centered/spread (matches Sozo Read).
-              padding: const EdgeInsetsDirectional.only(start: 16),
-              labelPadding: const EdgeInsetsDirectional.only(end: 24),
-              labelColor: AppColors.accent,
-              unselectedLabelColor: AppColors.textSecondary,
-              indicatorSize: TabBarIndicatorSize.label,
-              indicator: UnderlineTabIndicator(
-                borderSide: BorderSide(color: AppColors.accent, width: 2.5),
-                // Bottom inset lifts the line toward the label. A Tab is 46
-                // high for 15px text, so the indicator otherwise draws at the
-                // bottom of that box with a visible gap under the word.
-                // Raising the line rather than shortening the tab keeps the
-                // tap target at its full height.
-                insets: EdgeInsetsDirectional.only(start: 2, end: 2, bottom: 8),
-              ),
-              // Remove the full-width underline divider under the bar.
-              dividerColor: Colors.transparent,
-              dividerHeight: 0,
-              splashFactory: NoSplash.splashFactory,
-              overlayColor: WidgetStateProperty.all(Colors.transparent),
-              labelStyle: AppText.headline.copyWith(fontSize: 15),
-              unselectedLabelStyle: AppText.headline.copyWith(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
-              tabs: [
-                Tab(
-                  text: isReading
-                      ? context.l10n.chapters
-                      : context.l10n.episodes,
-                ),
-                Tab(
-                  text: isReading ? context.l10n.characters : context.l10n.cast,
-                ),
-                const Tab(text: 'Terkait'),
-                Tab(text: context.l10n.details),
-                if (!isReading) const Tab(text: 'Ulasan'),
-                if (!isReading) const Tab(text: 'Utas'),
-              ],
-            ),
-            tint: ThemeController.adaptiveColour ? _tint : null,
-          ),
-        ),
-      ],
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          // ── Episodes ──────────────────────────────────────────────────────
-          _EpisodesTab(
+
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: _EpisodesTab(
             loading: state.episodesLoading,
             eps: eps,
             seasonEps: seasonEps,
@@ -2614,49 +2554,9 @@ class _DetailViewState extends State<_DetailView>
             onSwitchSource: ZmodeIds.isZ(item.url) ? _switchSource : null,
             isReading: isReading,
           ),
-          // ── Cast ────────────────────────────────────────────────────────────
-          _CastTab(
-            loading: state.extrasLoading,
-            cast: state.cast.isNotEmpty
-                ? state.cast
-                : [for (final n in detail.cast) CastMember(name: n)],
-            onOpenPerson: (ref) => Navigator.of(
-              context,
-            ).push(PersonPage.route(ref, sourceId: widget.item.sourceId)),
           ),
-          // ── Relations ─────────────────────────────────────────────────────────
-          _RelationsTab(
-            loading: state.extrasLoading,
-            relations: state.relations,
-            seasons: state.seasons,
-            onOpen: _openRelation,
-          ),
-          // ── Details ──────────────────────────────────────────────────────────
-          _DetailsTab(
-            sourceName: sourceName,
-            statusStr: statusStr,
-            reading: isReading,
-            genres: detail.genres,
-            studios: detail.studios,
-            episodeCount: eps.length,
-            year: detail.year,
-            description: cleanSynopsis(detail.description),
-            detail: detail,
-          ),
-          if (!isReading) AnimeCommunityTab(
-            title: detail.title,
-            anilistId: item.anilistId,
-            malId: detail.malId ?? item.malId,
-            reviews: true,
-          ),
-          if (!isReading) AnimeCommunityTab(
-            title: detail.title,
-            anilistId: item.anilistId,
-            malId: detail.malId ?? item.malId,
-            reviews: false,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
