@@ -19,6 +19,7 @@ class SeasonEntry {
     this.malId,
     this.cover,
     this.episodes,
+    this.popularity,
     this.isCurrent = false,
   });
 
@@ -31,6 +32,7 @@ class SeasonEntry {
   final int? malId;
   final String? cover;
   final int? episodes;
+  final int? popularity;
 
   /// The title the viewer is looking at right now.
   final bool isCurrent;
@@ -81,6 +83,7 @@ class SeasonChain {
     int? currentMalId,
     String? currentCover,
     int? currentEpisodes,
+    int? currentPopularity,
   }) async {
     final hit = _cache[anilistId];
     if (hit != null) return hit;
@@ -102,6 +105,7 @@ class SeasonChain {
         title: currentTitle,
         cover: currentCover,
         episodes: currentEpisodes,
+        popularity: currentPopularity,
       ),
       ...after,
     ];
@@ -134,7 +138,7 @@ class SeasonChain {
   /// back to position numbering. Mixing the two would put a real "Season 2"
   /// next to a guessed one and there would be no way to tell which was which.
   Future<List<SeasonEntry>> _numbered(
-    List<({int id, int? idMal, String title, String? cover, int? episodes})>
+    List<({int id, int? idMal, String title, String? cover, int? episodes, int? popularity})>
         ordered,
     int currentAnilistId,
   ) async {
@@ -149,6 +153,7 @@ class SeasonChain {
       malId: e.idMal,
       cover: e.cover,
       episodes: e.episodes,
+      popularity: e.popularity,
       isCurrent: current,
     );
 
@@ -204,7 +209,7 @@ class SeasonChain {
     var id = startId;
     while (out.length < maxSeasons) {
       final List<({String relation, int id, int? idMal, String? format,
-          String title, String? cover, int? episodes})> neighbours;
+          String title, String? cover, int? episodes, int? popularity})> neighbours;
       try {
         neighbours = await _api.seasonNeighbours(id);
       } catch (e) {
@@ -223,6 +228,7 @@ class SeasonChain {
         title: next.title,
         cover: next.cover,
         episodes: next.episodes,
+        popularity: next.popularity,
       ));
       id = next.id;
     }
