@@ -123,6 +123,10 @@ class MediaItem extends Equatable {
   @JsonKey(includeFromJson: false, includeToJson: false)
   final int? totalEpisodes;
 
+  /// Most recently aired episode number, when the catalogue reports it.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final int? latestEpisode;
+
   /// True only when a catalogue explicitly marks this listing adult.
   final bool isAdult;
 
@@ -154,6 +158,7 @@ class MediaItem extends Equatable {
     this.isUpcoming = false,
     this.format,
     this.totalEpisodes,
+    this.latestEpisode,
     this.isAdult = false,
   });
 
@@ -203,6 +208,7 @@ class MediaItem extends Equatable {
     isUpcoming: isUpcoming,
     format: format,
     totalEpisodes: totalEpisodes,
+    latestEpisode: latestEpisode,
     isAdult: isAdult,
   );
 
@@ -233,6 +239,7 @@ class MediaItem extends Equatable {
     isUpcoming,
     format,
     totalEpisodes,
+    latestEpisode,
     isAdult,
   ];
 }
