@@ -64,6 +64,7 @@ class MetadataEnrichment {
         currentMalId: malId,
         currentCover: d.cover,
         currentEpisodes: media.episodes,
+        currentPopularity: d.popularity,
       );
     } catch (_) {
       return const [];
