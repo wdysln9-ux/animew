@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -28,7 +30,7 @@ class MiniPlayerState {
   static void clear() => active.value = null;
 }
 
-/// YouTube-like floating playback controls, mounted above the root Navigator.
+/// Floating video surface mounted above the root Navigator.
 class MiniPlayerOverlay extends StatefulWidget {
   const MiniPlayerOverlay({super.key});
 
@@ -37,8 +39,12 @@ class MiniPlayerOverlay extends StatefulWidget {
 }
 
 class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
-  Offset _dragOffset = Offset.zero;
+  double? _left;
+  double? _top;
   bool _expanded = false;
+
+  static const _snapDuration = Duration(milliseconds: 280);
+  static const _snapCurve = Curves.easeOutCubic;
 
   @override
   Widget build(BuildContext context) {
@@ -46,76 +52,120 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
       valueListenable: MiniPlayerState.active,
       builder: (context, session, _) {
         if (session == null) {
-          if (_expanded) _expanded = false;
+          if (_expanded || _left != null || _top != null) {
+            _expanded = false;
+            _left = null;
+            _top = null;
+          }
           return const SizedBox.expand();
         }
+
         return LayoutBuilder(
           builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final screenHeight = constraints.maxHeight;
+            final safe = MediaQuery.paddingOf(context);
             final width = _expanded
-                ? (constraints.maxWidth - 20).clamp(180.0, constraints.maxWidth - 20).toDouble()
-                : (constraints.maxWidth * 0.48).clamp(150.0, 190.0).toDouble();
+                ? math.max(180.0, screenWidth - 20)
+                : (screenWidth * 0.48).clamp(150.0, 190.0).toDouble();
             final height = width * 9 / 16;
-            final safeBottom = MediaQuery.paddingOf(context).bottom;
-            final safeTop = MediaQuery.paddingOf(context).top;
-            final left = (constraints.maxWidth - width - 12 + _dragOffset.dx)
-                .clamp(8.0, constraints.maxWidth - width - 8)
-                .toDouble();
-            final top = (constraints.maxHeight - height - safeBottom - 76 -
-                    _dragOffset.dy)
-                .clamp(
-                  safeTop + 8,
-                  (constraints.maxHeight - height - safeBottom - 8)
-                      .clamp(safeTop + 8, double.infinity),
-                )
-                .toDouble();
+            final minLeft = 8.0;
+            final maxLeft = math.max(minLeft, screenWidth - width - 8);
+            final minTop = safe.top + 8;
+            final maxTop = math.max(
+              minTop,
+              screenHeight - height - safe.bottom - 8,
+            );
+
+            final left = _left == null
+                ? maxLeft
+                : _left!.clamp(minLeft, maxLeft).toDouble();
+            final top = _top == null
+                ? (screenHeight - height - safe.bottom - 76)
+                    .clamp(minTop, maxTop)
+                    .toDouble()
+                : _top!.clamp(minTop, maxTop).toDouble();
 
             return Stack(
               fit: StackFit.expand,
               children: [
-                Positioned(
-                  left: left,
+                AnimatedPositioned(
+                  duration: _snapDuration,
+                  curve: _snapCurve,
+                  left: _expanded ? (screenWidth - width) / 2 : left,
                   top: top,
                   width: width,
                   height: height,
-                  child: Material(
-                    color: Colors.black,
-                    elevation: 16,
-                    shadowColor: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(12),
+                  child: AnimatedContainer(
+                    duration: _snapDuration,
+                    curve: _snapCurve,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(_expanded ? 14 : 11),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x66000000),
+                          blurRadius: 18,
+                          spreadRadius: 1,
+                          offset: Offset(0, 5),
+                        ),
+                      ],
+                    ),
                     clipBehavior: Clip.antiAlias,
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onPanUpdate: (details) => setState(() {
-                        _dragOffset += Offset(
-                          details.delta.dx,
-                          -details.delta.dy,
-                        );
-                      }),
+                      onPanUpdate: (details) {
+                        if (_expanded) return;
+                        setState(() {
+                          _left = (left + details.delta.dx)
+                              .clamp(minLeft, maxLeft)
+                              .toDouble();
+                          _top = (top + details.delta.dy)
+                              .clamp(minTop, maxTop)
+                              .toDouble();
+                        });
+                      },
+                      onPanEnd: (_) {
+                        if (_expanded) return;
+                        final currentLeft = _left ?? left;
+                        final currentTop = _top ?? top;
+                        final snapLeft = currentLeft + width / 2 < screenWidth / 2
+                            ? minLeft
+                            : maxLeft;
+                        final snapTop = currentTop + height / 2 < screenHeight / 2
+                            ? minTop
+                            : maxTop;
+                        setState(() {
+                          _left = snapLeft;
+                          _top = snapTop;
+                        });
+                      },
                       onTap: session.onRestore,
-                      onDoubleTap: () => setState(() {
-                        _expanded = !_expanded;
-                        _dragOffset = Offset.zero;
-                      }),
+                      onDoubleTap: () {
+                        setState(() {
+                          _expanded = !_expanded;
+                          if (!_expanded) {
+                            _left = left;
+                            _top = top;
+                          } else {
+                            _left = (screenWidth - width) / 2;
+                          }
+                        });
+                      },
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          Video(
-                            controller: session.controller,
-                            controls: NoVideoControls,
-                            fit: BoxFit.contain,
-                          ),
-                          Positioned(
-                            top: 2,
-                            right: 2,
-                            child: _MiniControlButton(
-                              icon: Icons.close_rounded,
-                              tooltip: 'Tutup pemutar',
-                              onPressed: session.onClose,
+                          const ColoredBox(color: Colors.black),
+                          Positioned.fill(
+                            child: Video(
+                              controller: session.controller,
+                              controls: NoVideoControls,
+                              fit: BoxFit.cover,
                             ),
                           ),
                           Positioned(
-                            left: 2,
-                            bottom: 9,
+                            top: 3,
+                            left: 3,
                             child: StreamBuilder<bool>(
                               stream: session.controller.player.stream.playing,
                               initialData:
@@ -140,68 +190,19 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                             ),
                           ),
                           Positioned(
-                            left: 42,
-                            right: 9,
-                            bottom: 13,
-                            child: StreamBuilder<Duration>(
-                              stream: session.controller.player.stream.position,
-                              initialData:
-                                  session.controller.player.state.position,
-                              builder: (context, positionSnapshot) {
-                                return StreamBuilder<Duration>(
-                                  stream:
-                                      session.controller.player.stream.duration,
-                                  initialData:
-                                      session.controller.player.state.duration,
-                                  builder: (context, durationSnapshot) {
-                                    final duration =
-                                        durationSnapshot.data ?? Duration.zero;
-                                    final position =
-                                        positionSnapshot.data ?? Duration.zero;
-                                    final maxMs = duration.inMilliseconds;
-                                    final value = maxMs <= 0
-                                        ? 0.0
-                                        : position.inMilliseconds
-                                            .clamp(0, maxMs)
-                                            .toDouble();
-                                    return SliderTheme(
-                                      data: SliderTheme.of(context).copyWith(
-                                        trackHeight: 2,
-                                        thumbShape:
-                                            const RoundSliderThumbShape(
-                                              enabledThumbRadius: 3,
-                                            ),
-                                        overlayShape:
-                                            const RoundSliderOverlayShape(
-                                              overlayRadius: 7,
-                                            ),
-                                        activeTrackColor: Colors.white,
-                                        inactiveTrackColor: Colors.white38,
-                                        thumbColor: Colors.white,
-                                        overlayColor:
-                                            Colors.white.withValues(alpha: 0.15),
-                                      ),
-                                      child: Slider(
-                                        min: 0,
-                                        max: maxMs > 0 ? maxMs.toDouble() : 1,
-                                        value: value
-                                            .clamp(
-                                              0,
-                                              maxMs > 0 ? maxMs.toDouble() : 1,
-                                            )
-                                            .toDouble(),
-                                        onChanged: maxMs <= 0
-                                            ? null
-                                            : (next) => session.controller.player
-                                                .seek(Duration(
-                                                  milliseconds: next.round(),
-                                                )),
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
+                            top: 3,
+                            right: 3,
+                            child: _MiniControlButton(
+                              icon: Icons.close_rounded,
+                              tooltip: 'Tutup pemutar',
+                              onPressed: session.onClose,
                             ),
+                          ),
+                          Positioned(
+                            left: 8,
+                            right: 8,
+                            bottom: 5,
+                            child: _MiniProgressBar(session: session),
                           ),
                         ],
                       ),
@@ -209,6 +210,76 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                   ),
                 ),
               ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _MiniProgressBar extends StatelessWidget {
+  const _MiniProgressBar({required this.session});
+
+  final MiniPlayerSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<Duration>(
+      stream: session.controller.player.stream.position,
+      initialData: session.controller.player.state.position,
+      builder: (context, positionSnapshot) {
+        return StreamBuilder<Duration>(
+          stream: session.controller.player.stream.duration,
+          initialData: session.controller.player.state.duration,
+          builder: (context, durationSnapshot) {
+            final duration =
+                durationSnapshot.data ?? Duration.zero;
+            final position =
+                positionSnapshot.data ?? Duration.zero;
+            final total = duration.inMilliseconds;
+            final progress = total <= 0
+                ? 0.0
+                : (position.inMilliseconds / total).clamp(0.0, 1.0);
+            void seek(Offset local, double width) {
+              if (total <= 0 || width <= 0) return;
+              final fraction = (local.dx / width).clamp(0.0, 1.0);
+              session.controller.player.seek(Duration(
+                milliseconds: (fraction * total).round(),
+              ));
+            }
+
+            return LayoutBuilder(
+              builder: (context, constraints) => GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapDown: (details) =>
+                    seek(details.localPosition, constraints.maxWidth),
+                onHorizontalDragUpdate: (details) =>
+                    seek(details.localPosition, constraints.maxWidth),
+                child: SizedBox(
+                  height: 18,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SizedBox(
+                      height: 3,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            const ColoredBox(color: Color(0x99FFFFFF)),
+                            FractionallySizedBox(
+                              alignment: Alignment.centerLeft,
+                              widthFactor: progress,
+                              child: const ColoredBox(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             );
           },
         );
@@ -230,16 +301,18 @@ class _MiniControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black.withValues(alpha: 0.58),
-      shape: const CircleBorder(),
-      child: IconButton(
-        visualDensity: VisualDensity.compact,
-        constraints: const BoxConstraints.tightFor(width: 30, height: 30),
-        padding: EdgeInsets.zero,
-        tooltip: tooltip,
-        onPressed: onPressed,
-        icon: Icon(icon, color: Colors.white, size: 19),
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onPressed,
+        child: SizedBox(
+          width: 34,
+          height: 34,
+          child: Center(
+            child: Icon(icon, color: Colors.white, size: 22),
+          ),
+        ),
       ),
     );
   }
