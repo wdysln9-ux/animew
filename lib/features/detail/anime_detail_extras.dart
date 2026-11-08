@@ -85,7 +85,7 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
           child: Row(
             children: [
               const Expanded(child: Text('Trailer belum bisa dimuat.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
-              TextButton(onPressed: () => setState(_load), child: const Text('Coba lagi')),
+              TextButton(onPressed: () => setState(() => _load(retry: true)), child: const Text('Coba lagi')),
             ],
           ),
         );
@@ -252,7 +252,7 @@ class _MalThemeSectionState extends State<_MalThemeSection> {
           child: Row(
             children: [
               const Expanded(child: Text('Lagu tema belum bisa dimuat.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
-              TextButton(onPressed: () => setState(_load), child: const Text('Coba lagi')),
+              TextButton(onPressed: () => setState(() => _load(retry: true)), child: const Text('Coba lagi')),
             ],
           ),
         );
