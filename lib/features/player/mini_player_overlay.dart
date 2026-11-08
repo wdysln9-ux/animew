@@ -86,12 +86,22 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
 
             final left = _left == null
                 ? maxLeft
-                : _left!.clamp(minLeft, maxLeft).toDouble();
+                : _left!
+                    .clamp(
+                      _dragging ? minLeft - width * 0.28 : minLeft,
+                      _dragging ? maxLeft + width * 0.28 : maxLeft,
+                    )
+                    .toDouble();
             final top = _top == null
                 ? (screenHeight - height - safe.bottom - 76)
                     .clamp(minTop, maxTop)
                     .toDouble()
-                : _top!.clamp(minTop, maxTop).toDouble();
+                : _top!
+                    .clamp(
+                      _dragging ? minTop - height * 0.18 : minTop,
+                      _dragging ? maxTop + height * 0.18 : maxTop,
+                    )
+                    .toDouble();
 
             return Stack(
               fit: StackFit.expand,
