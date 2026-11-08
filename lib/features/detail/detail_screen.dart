@@ -412,7 +412,9 @@ class DetailScreen extends StatelessWidget {
         // An explicit preference (opened from a tracker) wins; otherwise a
         // saved title is READ from wherever it was saved, so the page and its
         // label agree instead of one naming AniList over MAL's data.
-        prefer: prefer ?? _preferFromName(item.savedFrom),
+        prefer: item.type == ProviderType.anime
+            ? PreferredProvider.mal
+            : (prefer ?? _preferFromName(item.savedFrom)),
       )..load(),
       child: _DetailView(item: item, prefer: prefer, autoScrollToResume: autoScrollToResume, targetEpisodeId: targetEpisodeId),
     );
@@ -420,11 +422,7 @@ class DetailScreen extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _DetailView — StatefulWidget for the scroll-driven app-bar title fade and the
-// four-tab layout (Episodes / Cast / Relations / Details). The scroll position
-// and TabController are pure UI state and stay widget-level; everything
-// data-related (detail / category / season / desc-expand) lives in DetailCubit
-// and is consumed via BlocBuilder below.
+// _DetailView — one continuous, single-scroll anime detail page.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _DetailView extends StatefulWidget {
@@ -468,12 +466,6 @@ class _DetailViewState extends State<_DetailView> {
     });
   }
 
-  // Outer scroll position (the hero/header viewport). We listen to THIS instead
-  // of a NotificationListener: the listener also fires for the inner TabBarView
-  // lists (whose pixels start at 0), which flipped the title back OFF as soon as
-  // you scrolled deeper into the episode list. NestedScrollView.controller drives
-  // the OUTER viewport only, so its offset stays past the threshold once the hero
-  // has collapsed — the title stays visible no matter how far the body scrolls.
   late final ScrollController _scrollController = ScrollController();
 
   // ── My List (status-organised library) ────────────────────────────────────
@@ -2509,7 +2501,17 @@ class _DetailViewState extends State<_DetailView> {
                 PersonPage.route(ref, sourceId: widget.item.sourceId),
               ),
             ),
+          ),          SliverToBoxAdapter(
+            child: _RelationsTab(
+              loading: state.extrasLoading,
+              relations: state.relations.isNotEmpty
+                  ? state.relations
+                  : detail.relations,
+              seasons: state.seasons,
+              onOpen: _openRelation,
+            ),
           ),
+
           SliverToBoxAdapter(
             child: _DetailsTab(
               sourceName: sourceName,
