@@ -44,13 +44,19 @@ class MiniPlayerOverlay extends StatefulWidget {
 }
 
 class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
-  double? _left;
-  double? _top;
+  final ValueNotifier<Offset> _position = ValueNotifier(Offset.zero);
+  bool _positionReady = false;
   bool _expanded = false;
   bool _dragging = false;
 
-  static const _snapDuration = Duration(milliseconds: 280);
+  static const _snapDuration = Duration(milliseconds: 220);
   static const _snapCurve = Curves.easeOutCubic;
+
+  @override
+  void dispose() {
+    _position.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,11 +64,8 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
       valueListenable: MiniPlayerState.active,
       builder: (context, session, _) {
         if (session == null) {
-          if (_expanded || _left != null || _top != null) {
-            _expanded = false;
-            _left = null;
-            _top = null;
-          }
+          _expanded = false;
+          _positionReady = false;
           return const SizedBox.expand();
         }
 
@@ -84,35 +87,23 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
               screenHeight - height - bottomClearance - 8,
             );
 
-            final left = _left == null
-                ? maxLeft
-                : _left!
-                    .clamp(
-                      _dragging ? minLeft - width * 0.28 : minLeft,
-                      _dragging ? maxLeft + width * 0.28 : maxLeft,
-                    )
-                    .toDouble();
-            final top = _top == null
-                ? (screenHeight - height - safe.bottom - 76)
-                    .clamp(minTop, maxTop)
-                    .toDouble()
-                : _top!
-                    .clamp(
-                      _dragging ? minTop - height * 0.18 : minTop,
-                      _dragging ? maxTop + height * 0.18 : maxTop,
-                    )
-                    .toDouble();
+            final initialTop = (screenHeight - height - safe.bottom - 76)
+                .clamp(minTop, maxTop)
+                .toDouble();
+            if (!_positionReady) {
+              _position.value = Offset(maxLeft, initialTop);
+              _positionReady = true;
+            }
+            final compactWidth = (screenWidth * 0.48)
+                .clamp(150.0, 190.0)
+                .toDouble();
+            final compactMaxLeft = math.max(8.0, screenWidth - compactWidth - 8);
 
             return Stack(
               fit: StackFit.expand,
               children: [
-                AnimatedPositioned(
-                  duration: _dragging ? Duration.zero : _snapDuration,
-                  curve: _snapCurve,
-                  left: _expanded ? (screenWidth - width) / 2 : left,
-                  top: top,
-                  width: width,
-                  height: height,
+                ValueListenableBuilder<Offset>(
+                  valueListenable: _position,
                   child: AnimatedContainer(
                     duration: _snapDuration,
                     curve: _snapCurve,
@@ -133,55 +124,55 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                       behavior: HitTestBehavior.opaque,
                       onPanStart: (_) => setState(() => _dragging = true),
                       onPanUpdate: (details) {
-                        setState(() {
-                          if (!_expanded) {
-                            // Let the card travel slightly beyond either
-                            // horizontal edge; release will spring it back.
-                            _left = (left + details.delta.dx)
-                                .clamp(minLeft - width * 0.28,
-                                    maxLeft + width * 0.28)
-                                .toDouble();
-                          }
-                          _top = (top + details.delta.dy)
-                              .clamp(minTop - height * 0.18,
-                                  maxTop + height * 0.18)
-                              .toDouble();
-                        });
+                        // Only the tiny positioning layer listens to this
+                        // notifier. The video texture and its controls remain
+                        // mounted and are NOT rebuilt on every finger sample.
+                        final current = _position.value;
+                        _position.value = Offset(
+                          _expanded
+                              ? current.dx
+                              : (current.dx + details.delta.dx).clamp(
+                                  minLeft - width * 0.28,
+                                  maxLeft + width * 0.28,
+                                ).toDouble(),
+                          (current.dy + details.delta.dy).clamp(
+                            minTop - height * 0.18,
+                            maxTop + height * 0.18,
+                          ).toDouble(),
+                        );
                       },
                       onPanEnd: (_) {
-                        final currentTop = _top ?? top;
-                        final safeTop = currentTop
-                            .clamp(minTop, maxTop)
-                            .toDouble();
+                        final current = _position.value;
+                        final safeTop = current.dy.clamp(minTop, maxTop).toDouble();
                         if (_expanded) {
-                          setState(() {
-                            _dragging = false;
-                            _top = safeTop;
-                          });
+                          _position.value = Offset(current.dx, safeTop);
+                          setState(() => _dragging = false);
                           return;
                         }
-                        final currentLeft = _left ?? left;
-                        // Snap to the nearest side, not to a corner. This
-                        // allows a stable mid-height position along either edge.
-                        final snapLeft = currentLeft + width / 2 < screenWidth / 2
+                        // Snap horizontally to the nearest side, at any
+                        // vertical position. Only the card position animates.
+                        final snapLeft = current.dx + width / 2 < screenWidth / 2
                             ? minLeft
                             : maxLeft;
-                        setState(() {
-                          _dragging = false;
-                          _left = snapLeft;
-                          _top = safeTop;
-                        });
+                        _position.value = Offset(snapLeft, safeTop);
+                        setState(() => _dragging = false);
                       },
                       onTap: session.onRestore,
                       onDoubleTap: () {
+                        final current = _position.value;
                         setState(() {
-                          _expanded = !_expanded;
                           if (!_expanded) {
-                            _left = left;
-                            _top = top;
+                            _expanded = true;
+                            _position.value = Offset(
+                              (screenWidth - width) / 2,
+                              current.dy.clamp(minTop, maxTop).toDouble(),
+                            );
                           } else {
-                            _left = (screenWidth - width) / 2;
-                            _top = top.clamp(minTop, maxTop).toDouble();
+                            _expanded = false;
+                            _position.value = Offset(
+                              current.dx.clamp(8.0, compactMaxLeft).toDouble(),
+                              current.dy.clamp(minTop, maxTop).toDouble(),
+                            );
                           }
                         });
                       },
@@ -241,6 +232,25 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                       ),
                     ),
                   ),
+                  builder: (context, position, child) {
+                    final safeLeft = position.dx.clamp(
+                      _dragging ? minLeft - width * 0.28 : minLeft,
+                      _dragging ? maxLeft + width * 0.28 : maxLeft,
+                    ).toDouble();
+                    final safeTop = position.dy.clamp(
+                      _dragging ? minTop - height * 0.18 : minTop,
+                      _dragging ? maxTop + height * 0.18 : maxTop,
+                    ).toDouble();
+                    return AnimatedPositioned(
+                      duration: _dragging ? Duration.zero : _snapDuration,
+                      curve: _snapCurve,
+                      left: _expanded ? (screenWidth - width) / 2 : safeLeft,
+                      top: safeTop,
+                      width: width,
+                      height: height,
+                      child: child!,
+                    );
+                  },
                 ),
               ],
             );
@@ -282,17 +292,18 @@ class _MiniProgressBar extends StatelessWidget {
               ));
             }
 
-            return LayoutBuilder(
-              builder: (context, constraints) => GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapDown: (details) =>
-                    seek(details.localPosition, constraints.maxWidth),
-                onHorizontalDragUpdate: (details) =>
-                    seek(details.localPosition, constraints.maxWidth),
-                child: SizedBox(
-                  height: 3,
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
+            return StreamBuilder<bool>(
+              stream: session.controller.player.stream.buffering,
+              initialData: session.controller.player.state.buffering,
+              builder: (context, bufferingSnapshot) {
+                final buffering = bufferingSnapshot.data ?? false;
+                return LayoutBuilder(
+                  builder: (context, constraints) => GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapDown: (details) =>
+                        seek(details.localPosition, constraints.maxWidth),
+                    onHorizontalDragUpdate: (details) =>
+                        seek(details.localPosition, constraints.maxWidth),
                     child: SizedBox(
                       height: 3,
                       child: ClipRRect(
@@ -300,7 +311,16 @@ class _MiniProgressBar extends StatelessWidget {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            const ColoredBox(color: Color(0x99FFFFFF)),
+                            // No pale full-width remainder track. During
+                            // buffering, show a moving accent loading bar.
+                            if (buffering)
+                              LinearProgressIndicator(
+                                minHeight: 3,
+                                backgroundColor: Colors.transparent,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.accent.withValues(alpha: 0.65),
+                                ),
+                              ),
                             FractionallySizedBox(
                               alignment: Alignment.centerLeft,
                               widthFactor: progress,
@@ -311,8 +331,8 @@ class _MiniProgressBar extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             );
           },
         );
