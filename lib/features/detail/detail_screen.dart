@@ -130,6 +130,7 @@ import 'wrong_title_sheet.dart';
 import '../../l10n/l10n.dart';
 
 part 'detail_hero.dart';
+part 'anime_detail_layout.dart';
 part 'detail_info.dart';
 part 'detail_episodes.dart';
 part 'detail_sheets.dart';
@@ -2310,55 +2311,20 @@ class _DetailViewState extends State<_DetailView>
       controller: _scrollController,
       headerSliverBuilder: (context, _) => [
         // ── 1. Hero: backdrop + overlapping poster + status/total ──────────
-        SliverAppBar(
-          expandedHeight: _expandedHeight,
-          pinned: true,
-          // Opaque while adaptive colour is on, painted in the same wash as the
-          // body, so the pinned bar hides scrolled content instead of letting
-          // it show through (a transparent bar read as an unfinished page).
-          // Flat theme bg otherwise, exactly as before.
+        AnimeDetailHeroSliver(
+          coverUrl: coverUrl,
+          posterUrl: detail.cover ?? item.cover,
+          coverHeaders: coverHeaders,
+          sourceLabel: sourceName,
+          animeId: detail.id,
+          maxHeight: _expandedHeight,
+        ),
+        AnimeDetailPinnedToolbar(
+          title: detail.title,
+          visible: _showAppBarTitle,
           backgroundColor: ThemeController.adaptiveColour
               ? (_tint.value ?? AppColors.bg)
               : AppColors.bg,
-          surfaceTintColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          centerTitle: false,
-          titleSpacing: 0,
-          // PRESERVED EFFECT: title fades in once the hero scrolls past.
-          title: AnimatedOpacity(
-            opacity: _showAppBarTitle ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            child: Text(
-              detail.title,
-              style: AppText.headline,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          flexibleSpace: FlexibleSpaceBar(
-            // Keep the backdrop pinned to the top edge while the header collapses.
-            // Parallax made it look like a moving camera/overlay during scroll.
-            collapseMode: CollapseMode.pin,
-            background: RepaintBoundary(
-              child: _Hero(
-                coverUrl: coverUrl,
-                coverHeaders: coverHeaders,
-                hasCover: hasCover,
-                posterUrl: detail.cover ?? item.cover,
-                sourceLabel: sourceName,
-                animeId: detail.id,
-                tint: ThemeController.adaptiveColour ? _tint : null,
-                trailerId: _trailerId,
-                // Pause the trailer once the hero has scrolled past (reuses
-                // the same signal that fades in the app-bar title).
-                collapsed: _showAppBarTitle,
-                onTapFullscreen: _trailerId != null
-                    ? () => _openTrailer(_trailerId!)
-                    : null,
-              ),
-            ),
-          ),
         ),
 
         // ── 2. Title + meta line (Netflix header) ──────────────────────────
