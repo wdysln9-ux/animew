@@ -624,6 +624,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       setState(() {
         _portraitMode = showDetails;
         _showEpisodeDetails = showDetails;
+        _minimizeSwipeProgress = 0;
       });
       SystemChrome.setPreferredOrientations(
         showDetails
@@ -661,9 +662,25 @@ class _PlayerScreenState extends State<PlayerScreen> {
       ),
     );
     nav.push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => const RootShell(),
+      PageRouteBuilder<void>(
         settings: const RouteSettings(name: 'animew-mini-player-shell'),
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 260),
+        pageBuilder: (_, __, ___) => const RootShell(),
+        transitionsBuilder: (_, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
+              child: child,
+            ),
+          );
+        },
       ),
     );
   }
