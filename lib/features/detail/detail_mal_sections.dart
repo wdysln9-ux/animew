@@ -114,10 +114,10 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
                                     CachedNetworkImage(
                                       imageUrl: video.imageUrl!,
                                       fit: BoxFit.cover,
-                                      errorWidget: (_, _, _) => const ColoredBox(color: AppColors.surface2),
+                                      errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2),
                                     )
                                   else
-                                    const ColoredBox(color: AppColors.surface2),
+                                    ColoredBox(color: AppColors.surface2),
                                   Center(
                                     child: Container(
                                       width: 42,
