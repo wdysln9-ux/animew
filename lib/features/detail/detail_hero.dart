@@ -11,6 +11,9 @@ class _Hero extends StatelessWidget {
     required this.coverUrl,
     required this.coverHeaders,
     required this.hasCover,
+    this.posterUrl,
+    this.sourceLabel,
+    this.animeId,
     this.trailerId,
     this.collapsed = false,
     this.onTapFullscreen,
@@ -20,6 +23,9 @@ class _Hero extends StatelessWidget {
   final String coverUrl;
   final Map<String, String>? coverHeaders;
   final bool hasCover;
+  final String? posterUrl;
+  final String? sourceLabel;
+  final String? animeId;
 
   /// Resolved YouTube id, or null while still loading / when none exists.
   final String? trailerId;
@@ -71,23 +77,14 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final id = trailerId;
     final t = tint;
+    final poster = (posterUrl?.isNotEmpty == true) ? posterUrl! : coverUrl;
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Backdrop: autoplaying trailer once an id resolves, else the cover
-        // image. The cover image always sits underneath as placeholder/fallback
-        // so there's never a blank/black flash.
-        (id != null && id.isNotEmpty)
-            ? _HeroTrailer(
-                videoId: id,
-                collapsed: collapsed,
-                onTapFullscreen: onTapFullscreen,
-                placeholder: _coverBackdrop(),
-              )
-            : _coverBackdrop(),
-        // Gradients render OVER the video for title readability.
+        // The reference uses the same key art enlarged as a sharp backdrop.
+        // Keep it crisp; only a dark scrim is applied for text contrast.
+        _coverBackdrop(),
         const IgnorePointer(
           child: DecoratedBox(
             decoration: BoxDecoration(gradient: AppColors.topScrim),
@@ -103,30 +100,83 @@ class _Hero extends StatelessWidget {
           IgnorePointer(
             child: ValueListenableBuilder<Color?>(
               valueListenable: t,
-              builder: (context, c, _) => TweenAnimationBuilder<Color?>(
-                tween: ColorTween(end: c ?? AppColors.bg),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.easeOut,
-                builder: (context, page, _) {
-                  final bg = page ?? AppColors.bg;
-                  return DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [bg, bg.withValues(alpha: 0)],
-                        stops: const [0.0, 0.65],
-                      ),
-                    ),
-                  );
-                },
+              builder: (context, c, _) => DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      c ?? AppColors.bg,
+                      (c ?? AppColors.bg).withValues(alpha: 0),
+                    ],
+                    stops: const [0.0, 0.72],
+                  ),
+                ),
               ),
             ),
           ),
+        if (sourceLabel?.isNotEmpty == true || animeId?.isNotEmpty == true)
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 14,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.62),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (sourceLabel?.isNotEmpty == true)
+                    Text(
+                      sourceLabel!,
+                      style: AppText.caption.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  if (sourceLabel?.isNotEmpty == true && animeId?.isNotEmpty == true)
+                    const SizedBox(width: 7),
+                  if (animeId?.isNotEmpty == true)
+                    Text(
+                      '#${animeId!}',
+                      style: AppText.caption.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 12,
+          child: Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SizedBox(
+                width: 154,
+                height: 224,
+                child: poster == coverUrl
+                    ? _coverBackdrop()
+                    : CachedNetworkImage(
+                        imageUrl: poster,
+                        httpHeaders: coverHeaders,
+                        fit: BoxFit.cover,
+                        memCacheWidth: 480,
+                        placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
+                        errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2),
+                      ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
-  }
-}
+  }}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // _HeroTrailer — the autoplaying, muted, looping trailer that becomes the hero
