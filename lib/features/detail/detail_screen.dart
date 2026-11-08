@@ -2295,84 +2295,20 @@ class _DetailViewState extends State<_DetailView>
               : AppColors.bg,
         ),
 
-        // ── 2. Title + meta line (Netflix header) ──────────────────────────
+        // ── New independent title and metadata block.
         SliverToBoxAdapter(
-          child: RepaintBoundary(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Tapping the title opens the full search pre-filled with it
-                  // (current source + all sources, per Search's own scope toggle).
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) =>
-                            SearchScreen(initialQuery: detail.title),
-                      ),
-                    ),
-                    child: Text(
-                      detail.title,
-                      style: AppText.largeTitle.copyWith(fontSize: 24),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (detail.englishTitle != null &&
-                      detail.englishTitle!.trim().isNotEmpty &&
-                      detail.englishTitle!.trim() != detail.title.trim()) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      detail.englishTitle!.trim(),
-                      style: AppText.body.copyWith(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                      maxLines: 2,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  if (metaLine.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            metaLine,
-                            textAlign: TextAlign.center,
-                            style: AppText.body.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        // What the source claims it serves — "4K", "HD",
-                        // "CAM". Only CloudStream reports one, so it is
-                        // usually absent.
-
-                      ],
-                    ),
-                  ],
-                  if (formatStr != null || statusStr.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: [
-                        if (formatStr != null)
-                          _MetaBadge(formatStr),
-                        if (statusStr.isNotEmpty)
-                          _MetaBadge(statusStr),
-                      ],
-                    ),
-                  ],
-                ],
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SearchScreen(initialQuery: detail.title),
               ),
+            ),
+            child: AnimeDetailTitleBlock(
+              title: detail.title,
+              englishTitle: detail.englishTitle,
+              metaLine: metaLine,
+              format: formatStr,
+              status: statusStr,
             ),
           ),
         ),
