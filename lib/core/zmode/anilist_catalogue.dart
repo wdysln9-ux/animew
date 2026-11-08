@@ -492,6 +492,8 @@ class AniListCatalogue implements AnimeCatalogue {
   static MediaItem _item(Map<String, dynamic> m, ZKind kind) {
     final c = _canonical(m, kind);
     final t = m['title'] as Map? ?? const {};
+    final nextAiringEpisode =
+        (m['nextAiringEpisode'] as Map?)?['episode'] as int?;
     return MediaItem(
       id: c.id,
       title: aniListTitle(t, titleLanguagePref) ?? '',
@@ -511,8 +513,8 @@ class AniListCatalogue implements AnimeCatalogue {
       isUpcoming: m['status'] == 'NOT_YET_RELEASED',
       format: _prettyFormat(m['format'] as String?),
       totalEpisodes: m['episodes'] as int?,
-      latestEpisode: m['status'] == 'RELEASING'
-          ? (((m['nextAiringEpisode'] as Map?)?['episode'] as int?) ?? 1) - 1
+      latestEpisode: m['status'] == 'RELEASING' && nextAiringEpisode != null
+          ? nextAiringEpisode - 1
           : null,
       status: _status(m['status'] as String?),
       isAdult: m['isAdult'] == true,
