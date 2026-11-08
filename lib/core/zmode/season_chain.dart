@@ -144,7 +144,7 @@ class SeasonChain {
   ) async {
     SeasonEntry entry(
       int n,
-      ({int id, int? idMal, String title, String? cover, int? episodes}) e,
+      ({int id, int? idMal, String title, String? cover, int? episodes, int? popularity}) e,
       bool current,
     ) => SeasonEntry(
       number: n,
@@ -199,9 +199,9 @@ class SeasonChain {
 
   /// Follows [relation] from [startId] until it runs out, loops, or hits the
   /// cap. Returns nearest-first.
-  Future<List<({int id, int? idMal, String title, String? cover, int? episodes})>>
+  Future<List<({int id, int? idMal, String title, String? cover, int? episodes, int? popularity})>>
       _walk(int startId, String relation) async {
-    final out = <({int id, int? idMal, String title, String? cover, int? episodes})>[];
+    final out = <({int id, int? idMal, String title, String? cover, int? episodes, int? popularity})>[];
     // A franchise CAN link back on itself (a sequel whose prequel is a
     // different entry than the one you came from). Without this the walk
     // would loop until the cap every time.
