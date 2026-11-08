@@ -171,8 +171,18 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     Text('${f.minYear}', style: theme.textTheme.titleMedium),
                     Text('${f.maxYear}', style: theme.textTheme.titleMedium),
                   ]),
-                  RangeSlider(
-                    min: 1980, max: now.toDouble(), divisions: now - 1980,
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      rangeThumbShape: const RoundRangeSliderThumbShape(
+                        enabledThumbRadius: 7,
+                        disabledThumbRadius: 7,
+                        elevation: 0,
+                        pressedElevation: 0,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 13),
+                    ),
+                    child: RangeSlider(
+                    min: 1980, max: now.toDouble(),
                     values: RangeValues(
                       f.minYear.clamp(1980, now).toDouble(),
                       f.maxYear.clamp(1980, now).toDouble(),
@@ -180,18 +190,30 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     activeColor: AppColors.accent,
                     onChanged: (v) => setState(() => f = f.copyWith(
                       minYear: v.start.round(), maxYear: v.end.round())),
+                    ),
                   ),
                   _heading('Jumlah Episode', theme),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                     Text('${f.minEpisodes}', style: theme.textTheme.titleMedium?.copyWith(fontSize: 13)),
                     Text('${f.maxEpisodes}', style: theme.textTheme.titleMedium?.copyWith(fontSize: 13)),
                   ]),
-                  RangeSlider(
-                    min: 0, max: 200, divisions: 200,
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      rangeThumbShape: const RoundRangeSliderThumbShape(
+                        enabledThumbRadius: 7,
+                        disabledThumbRadius: 7,
+                        elevation: 0,
+                        pressedElevation: 0,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 13),
+                    ),
+                    child: RangeSlider(
+                    min: 0, max: 200,
                     values: RangeValues(f.minEpisodes.toDouble(), f.maxEpisodes.toDouble()),
                     activeColor: AppColors.accent,
                     onChanged: (v) => setState(() => f = f.copyWith(
                       minEpisodes: v.start.round(), maxEpisodes: v.end.round())),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _heading('Tahun', theme),
@@ -309,7 +331,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       onSelected: (_) => d.onTap(),
       showCheckmark: false,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
+      visualDensity: const VisualDensity(horizontal: -2, vertical: -1),
       selectedColor: AppColors.accent,
       backgroundColor: Colors.transparent,
       side: BorderSide(
@@ -328,7 +350,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
         fontWeight: d.action ? FontWeight.w600 : FontWeight.normal,
       ),
       shape: const StadiumBorder(),
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
     )).toList(),
   );
 
