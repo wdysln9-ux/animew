@@ -324,7 +324,7 @@ class AniListCatalogue implements AnimeCatalogue {
         if (f.maxEpisodes < 200) 'episodes_lesser:${f.maxEpisodes + 1}',
         if (f.minScore != null) 'averageScore_greater:${f.minScore! - 1}',
         if (!f.adult) 'isAdult:false',
-        'sort:${_alSort(f.sort)}',
+        'sort:${_alSort(f.sort, ascending: f.sortAscending)}',
       ],
     ].where((a) => a.isNotEmpty).join(',');
 
@@ -359,12 +359,16 @@ class AniListCatalogue implements AnimeCatalogue {
     MetaStatus.cancelled => 'CANCELLED',
   };
 
-  static String _alSort(MetaSort s) => switch (s) {
-    MetaSort.popularity => 'POPULARITY_DESC',
-    MetaSort.score => 'SCORE_DESC',
-    MetaSort.trending => 'TRENDING_DESC',
-    MetaSort.newest => 'START_DATE_DESC',
-    MetaSort.title => 'TITLE_ROMAJI',
+  static String _alSort(MetaSort s, {bool ascending = false}) => switch ((s, ascending)) {
+    (MetaSort.popularity, false) => 'POPULARITY_DESC',
+    (MetaSort.popularity, true) => 'POPULARITY',
+    (MetaSort.score, false) => 'SCORE_DESC',
+    (MetaSort.score, true) => 'SCORE',
+    (MetaSort.trending, false) => 'TRENDING_DESC',
+    (MetaSort.trending, true) => 'TRENDING',
+    (MetaSort.newest, false) => 'START_DATE_DESC',
+    (MetaSort.newest, true) => 'START_DATE',
+    (MetaSort.title, _) => 'TITLE_ROMAJI',
   };
 
   Future<MediaDetail> detail(ZCanonical c) async {
