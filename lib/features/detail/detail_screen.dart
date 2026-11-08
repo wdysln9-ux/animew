@@ -590,7 +590,7 @@ class _DetailViewState extends State<_DetailView>
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     final shouldShow =
-        _scrollController.offset > (_expandedHeight - kToolbarHeight - 24);
+        _scrollController.offset >= (_expandedHeight - 1);
     if (shouldShow != _showAppBarTitle) {
       setState(() => _showAppBarTitle = shouldShow);
     }
