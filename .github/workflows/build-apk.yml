@@ -89,48 +89,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # The upstream media-kit Gradle task downloads all four Android ABIs
-      # unconditionally, even though this workflow builds ARM64 only. That
-      # makes unrelated x86 downloads capable of failing the ARM64 build.
-      # Pre-fetch and verify the required ARM64 artifact with network retries,
-      # then limit the upstream task to that ABI.
-      - name: Prepare ARM64 libmpv dependency
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="v1.2.6"
-          FILE="default-arm64-v8a.jar"
-          SHA256="1f6b8f971be63bb4bd4d5fd64b1eed1be75ada591168ba13b5647fbf845c2414"
-          DEST="build/media_kit_libs_android_video/v1.2.6/$FILE"
-          mkdir -p "$(dirname "$DEST")"
-
-          curl --fail --location --show-error \
-            --retry 12 --retry-all-errors --retry-delay 5 --retry-max-time 600 \
-            "https://github.com/Predidit/libmpv-android-video-build/releases/download/$VERSION/$FILE" \
-            --output "$DEST"
-
-          echo "$SHA256  $DEST" | sha256sum --check -
-
-          PLUGIN_GRADLE="$(find "$HOME/.pub-cache/git" -path '*/libs/android/media_kit_libs_android_video/android/build.gradle' -print -quit)"
-          if [ -z "$PLUGIN_GRADLE" ]; then
-            echo "Could not locate media-kit Android video Gradle script."
-            exit 1
-          fi
-
-          python3 - "$PLUGIN_GRADLE" <<'PY'
-          import pathlib
-          import sys
-
-          path = pathlib.Path(sys.argv[1])
-          source = path.read_text()
-          old = "filesToDownload.each { fileInfo ->"
-          new = 'filesToDownload.findAll { it.destination.name == "default-arm64-v8a.jar" }.each { fileInfo ->'
-          if old not in source:
-              raise SystemExit("Unexpected media-kit Gradle script; refusing to patch.")
-          path.write_text(source.replace(old, new, 1))
-          print(f"Configured ARM64-only libmpv download in {path}")
-          PY
-
       - name: Configure persistent Android signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
