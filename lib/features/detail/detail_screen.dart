@@ -2479,7 +2479,7 @@ class _DetailViewState extends State<_DetailView>
           ),
         if (!isReading)
           SliverToBoxAdapter(
-            child: _CharacterRail(
+            child: AnimeDetailCharacterRail(
               cast: state.cast.isNotEmpty
                   ? state.cast
                   : [for (final name in detail.cast) CastMember(name: name)],
@@ -2499,7 +2499,7 @@ class _DetailViewState extends State<_DetailView>
           ),
         if (!isReading && state.seasons.isNotEmpty)
           SliverToBoxAdapter(
-            child: _SeasonRail(
+            child: AnimeDetailSeasonRail(
               seasons: state.seasons,
               onOpen: (season) => _openRelation(
                 MediaRelation(
