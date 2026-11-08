@@ -32,17 +32,19 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.malId != widget.malId ||
         oldWidget.anilistId != widget.anilistId ||
-        oldWidget.title != widget.title) {
+        oldWidget.title != widget.title ||
+        oldWidget.englishTitle != widget.englishTitle) {
       _load();
     }
   }
 
-  void _load() {
+  void _load({bool retry = false}) {
     _future = AnimeExtrasRepository.instance.load(
       malId: widget.malId,
       anilistId: widget.anilistId,
       title: widget.title,
       englishTitle: widget.englishTitle,
+      forceRefresh: retry,
     );
   }
 
@@ -69,7 +71,7 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
             children: [
               const Expanded(child: Text('Trailer belum bisa dimuat.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
               TextButton(
-                onPressed: () => setState(_load),
+                onPressed: () => setState(() => _load(retry: true)),
                 child: const Text('Coba lagi'),
               ),
             ],
