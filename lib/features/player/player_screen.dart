@@ -597,7 +597,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
     setState(() {
       _portraitMode = true;
-      _showEpisodeDetails = widget.episodeDetailMode;
+      // The minimized shell renders the episode detail content in its Home tab.
+      // Keep this route's player surface mounted but avoid attaching the same
+      // detail ScrollController to two scroll views.
+      _showEpisodeDetails = false;
     });
     SystemChrome.setPreferredOrientations(
       const [DeviceOrientation.portraitUp],
@@ -659,6 +662,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
         subtitle: subtitle,
         onRestore: returnToPlayer,
         onClose: stopPlayback,
+        pageBuilder: widget.episodeDetailMode
+            ? (_) => _buildEpisodeDetailsPanel()
+            : null,
       ),
     );
     nav.push<void>(
