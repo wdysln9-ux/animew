@@ -23,6 +23,7 @@ class MetaFilters {
     this.format,
     this.status,
     this.sort = MetaSort.popularity,
+    this.sortAscending = false,
     this.minScore,
     this.adult = false,
   });
@@ -48,6 +49,7 @@ class MetaFilters {
   final MetaFormat? format;
   final MetaStatus? status;
   final MetaSort sort;
+  final bool sortAscending;
 
   /// 0-100. AniList compares on `averageScore`; TMDB on `vote_average`, which
   /// is out of 10, so it is divided on the way out.
@@ -116,6 +118,7 @@ class MetaFilters {
     MetaFormat? format,
     MetaStatus? status,
     MetaSort? sort,
+    bool? sortAscending,
     int? minScore,
     bool? adult,
     bool clearYear = false,
@@ -137,6 +140,7 @@ class MetaFilters {
     format: clearFormat ? null : (format ?? this.format),
     status: clearStatus ? null : (status ?? this.status),
     sort: sort ?? this.sort,
+    sortAscending: sortAscending ?? this.sortAscending,
     minScore: clearScore ? null : (minScore ?? this.minScore),
     adult: adult ?? this.adult,
   );
@@ -160,6 +164,7 @@ class MetaFilters {
     if (minScore != null) 'ms': minScore,
     if (adult) 'a': true,
     'so': sort.name,
+    if (sortAscending) 'sa': true,
   });
 
   static MetaFilters? fromJson(String? raw) {
@@ -184,6 +189,7 @@ class MetaFilters {
         minScore: m['ms'] as int?,
         adult: m['a'] == true,
         sort: pick(MetaSort.values, m['so'] as String?) ?? MetaSort.popularity,
+        sortAscending: m['sa'] == true,
       );
     } catch (_) {
       // A malformed string means an unfiltered search, never a crash.
