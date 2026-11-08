@@ -165,7 +165,7 @@ PreferredProvider? _preferFromName(String? name) => switch (name) {
 };
 
 String _thousands(int value) => value.toString().replaceAllMapped(
-  RegExp(r'\\B(?=(\\d{3})+(?!\\d))'),
+  RegExp(r'\B(?=(\d{3})+(?!\d))'),
   (match) => ',',
 );
 
