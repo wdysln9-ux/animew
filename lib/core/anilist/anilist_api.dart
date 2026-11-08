@@ -381,12 +381,12 @@ class AniListApi {
   /// season 1 from season 3 means asking again per hop; keeping the selection
   /// this small is what makes that affordable.
   Future<List<({String relation, int id, int? idMal, String? format,
-      String title, String? cover, int? episodes})>> seasonNeighbours(
+      String title, String? cover, int? episodes, int? popularity})>> seasonNeighbours(
     int anilistId,
   ) async {
     final d = await _gql(
       'query(\$id:Int){ Media(id:\$id,type:ANIME){ relations{ edges{ '
-      'relationType node{ id idMal format episodes '
+      'relationType node{ id idMal format episodes popularity '
       'title{romaji english native} coverImage{large} } } } } }',
       {'id': anilistId},
     );
@@ -394,7 +394,7 @@ class AniListApi {
     final list = (edges is Map) ? edges['edges'] : null;
     if (list is! List) return const [];
     final out = <({String relation, int id, int? idMal, String? format,
-        String title, String? cover, int? episodes})>[];
+        String title, String? cover, int? episodes, int? popularity})>[];
     for (final e in list) {
       if (e is! Map) continue;
       final node = e['node'];
@@ -412,6 +412,7 @@ class AniListApi {
             ? node['coverImage']['large'] as String?
             : null,
         episodes: (node['episodes'] as num?)?.toInt(),
+        popularity: (node['popularity'] as num?)?.toInt(),
       ));
     }
     return out;
