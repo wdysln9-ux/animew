@@ -2274,11 +2274,10 @@ class _DetailViewState extends State<_DetailView>
           coverUrl: coverUrl,
           posterUrl: detail.cover ?? item.cover,
           coverHeaders: coverHeaders,
-          sourceLabel: sourceName,
-          animeId: detail.id,
+          sourceLabel: (detail.malId ?? item.malId) != null ? 'MAL' : sourceName,
+          animeId: (detail.malId ?? item.malId)?.toString() ?? detail.id,
           maxHeight: _expandedHeight,
         ),
-,
 
         // ── New independent title and metadata block.
         SliverToBoxAdapter(
@@ -2326,18 +2325,18 @@ class _DetailViewState extends State<_DetailView>
                 Expanded(
                   child: AnimeDetailActionButton(
                     loading: state.episodesLoading,
-                    label: isReading ? downloadLabel : 'Auto Resolve Sumber',
-                    icon: isReading ? Icons.file_download_outlined : Icons.travel_explore_rounded,
-                    onPressed: eps.isEmpty
-                        ? null
-                        : isReading
-                            ? () => _openDownloadSheet(
+                    label: isReading ? downloadLabel : 'Simpan',
+                    icon: isReading ? Icons.file_download_outlined : Icons.bookmark_border_rounded,
+                    onPressed: isReading
+                        ? (eps.isEmpty
+                            ? null
+                            : () => _openDownloadSheet(
                                 detail: detail,
                                 category: category,
                                 episodesBySeason: episodesBySeason,
                                 initialSeason: currentSeason,
-                              )
-                            : () => _sweepForEpisode(eps[resumeIdx]),
+                              ))
+                        : () => unawaited(_openListSheet(detail)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -2356,6 +2355,9 @@ class _DetailViewState extends State<_DetailView>
                       switch (value) {
                         case 'save':
                           unawaited(_openListSheet(detail));
+                          break;
+                        case 'resolve':
+                          if (eps.isNotEmpty) _sweepForEpisode(eps[resumeIdx]);
                           break;
                         case 'download':
                           unawaited(_openDownloadSheet(
@@ -2388,6 +2390,8 @@ class _DetailViewState extends State<_DetailView>
                       }
                     },
                     itemBuilder: (_) => [
+                      if (!isReading)
+                        const PopupMenuItem(value: 'resolve', child: Text('Auto Resolve Sumber')),
                       PopupMenuItem(
                         value: 'save',
                         child: Text(_inMyList ? 'Ubah status daftar' : 'Simpan anime'),
@@ -2414,13 +2418,6 @@ class _DetailViewState extends State<_DetailView>
             ),
           ),
         ),
-
-        if ((cleanSynopsis(detail.description) ?? '').isNotEmpty)
-          SliverToBoxAdapter(
-            child: AnimeDetailSynopsisSection(
-              text: cleanSynopsis(detail.description) ?? '',
-            ),
-          ),
 
         if (detail.genres.isNotEmpty || detail.studios.isNotEmpty)
           SliverToBoxAdapter(
@@ -2449,6 +2446,14 @@ class _DetailViewState extends State<_DetailView>
                     ),
                   ),
               ],
+            ),
+          ),
+
+
+        if ((cleanSynopsis(detail.description) ?? '').isNotEmpty)
+          SliverToBoxAdapter(
+            child: AnimeDetailSynopsisSection(
+              text: cleanSynopsis(detail.description) ?? '',
             ),
           ),
 
