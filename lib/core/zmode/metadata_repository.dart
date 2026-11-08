@@ -567,6 +567,8 @@ class MetadataRepository implements CatalogueRepository {
 
   /// Search and/or browse with filters. An empty [query] plus filters is a
   /// browse; both are the same request to the providers that support it.
+  Future<List<String>> filterTags() => _al.tagCollection();
+
   Future<List<MediaItem>> searchFiltered(
     String query, {
     MetaFilters? filters,
