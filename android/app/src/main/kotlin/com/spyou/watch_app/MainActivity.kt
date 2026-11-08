@@ -4,6 +4,7 @@ import android.app.PictureInPictureParams
 import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Intent
+import android.content.res.Configuration
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
@@ -218,15 +219,12 @@ class MainActivity : AppCompatActivity(), FlutterEngineConfigurator {
         // The manifest meta-data is unchanged; we just have to read it ourselves.
         switchLaunchThemeForNormalTheme()
         super.onCreate(savedInstanceState)
-        // Let landscape immersive playback draw through the display cutout.
-        // This has no layout effect in normal portrait/edge-to-edge screens;
-        // SHORT_EDGES is only used by Android when a window opts into that area.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            window.attributes = window.attributes.apply {
-                layoutInDisplayCutoutMode =
-                    android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
-        }
+        // Portrait keeps the existing short-edge policy. In landscape, a
+        // phone's top-edge notch becomes a long-edge cutout; SHORT_EDGES then
+        // leaves that strip black. Use ALWAYS only while landscape playback is
+        // active so the video can extend into that cutout without changing the
+        // portrait app layout.
+        updateDisplayCutoutMode(resources.configuration.orientation)
         reconcileIconAliases()
         setContentView(R.layout.activity_main)
         // Survives configuration changes / process death: re-attaching a second
@@ -243,6 +241,25 @@ class MainActivity : AppCompatActivity(), FlutterEngineConfigurator {
                     .add(R.id.flutter_container, it, TAG_FLUTTER)
                     .commit()
             }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        updateDisplayCutoutMode(newConfig.orientation)
+    }
+
+    private fun updateDisplayCutoutMode(orientation: Int) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
+        val mode = if (orientation == Configuration.ORIENTATION_LANDSCAPE &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        ) {
+            android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        } else {
+            android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+        window.attributes = window.attributes.apply {
+            layoutInDisplayCutoutMode = mode
+        }
     }
 
     /** Mirrors FlutterActivity's own launch->normal theme swap, reading the same

@@ -1347,7 +1347,7 @@ class _SearchViewState extends State<_SearchView>
       if (f.years.isNotEmpty)
         ('Tahun: ${f.years.join(', ')}', f.copyWith(years: const [])),
       if (f.minYear > 1980 || f.maxYear < 2026)
-        ('${f.maxYear}–${f.minYear}', f.copyWith(minYear: 1980, maxYear: 2026)),
+        ('${f.minYear}–${f.maxYear}', f.copyWith(minYear: 1980, maxYear: 2026)),
       for (final season in f.seasons)
         (switch (season) {
           MetaSeason.winter => 'Winter',
