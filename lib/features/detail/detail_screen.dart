@@ -505,37 +505,11 @@ class _DetailViewState extends State<_DetailView>
   late WatchStatus? _status = _listStatus.statusOf(widget.item);
   late bool _inMyList = _status != null || _myList.contains(widget.item);
 
-  // ── Trailer (metadata-API lookup) ─────────────────────────────────────────
-  // Resolved lazily once per detail load and cached so the hero player doesn't
-  // refetch on every rebuild. Yields a YouTube id or null; once it resolves the
-  // hero swaps its static cover backdrop for an autoplaying, muted, looping
-  // player (Netflix-style).
-  Future<String?>? _trailerFuture;
-  String? _trailerId;
-
   /// Poster-tinted background colour for the adaptive wash (null → normal
   /// theme background). Extraction runs once per hero-art URL.
   final ValueNotifier<Color?> _tint = ValueNotifier(null);
   String? _tintUrl;
 
-  /// Kick off (once) the YouTube-id lookup for the resolved detail. When it
-  /// completes with a non-null id, store it in [_trailerId] and rebuild so the
-  /// hero can mount the trailer player.
-  void _resolveTrailer(MediaDetail detail) {
-    if (_trailerFuture != null) return;
-    _trailerFuture =
-        sl<TrailerService>().youtubeId(
-          title: detail.title,
-          englishTitle: detail.englishTitle,
-          type: detail.type,
-          year: detail.year,
-        )..then((id) {
-          if (!mounted) return;
-          if (id != null && id.isNotEmpty && id != _trailerId) {
-            setState(() => _trailerId = id);
-          }
-        });
-  }
 
   @override
   void initState() {
@@ -2178,9 +2152,6 @@ class _DetailViewState extends State<_DetailView>
         detail.type == ProviderType.novel || detail.type == ProviderType.manga;
     // Kick the (cached, once-per-malId) filler lookup for the "Filler" badge.
     _ensureFiller(detail.malId ?? item.malId);
-    // Resolve the hero trailer when the actual detail is available. This was
-    // previously defined but never invoked, leaving the hero permanently static.
-    if (!isReading) _resolveTrailer(detail);
     // Kick the (once-per-detail) tracker-progress lookup for grey-out.
     _maybeFetchTrackerProgress(detail);
 
