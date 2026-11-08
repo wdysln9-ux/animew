@@ -414,14 +414,14 @@ class _PosterCardState extends State<PosterCard> {
                                     : const Color(0xFF20B86B),
                           ),
                         ),
-                      if (showViews || (showStatus && widget.latestEpisodeBadge != null))
+                      if (showViews || widget.latestEpisodeBadge != null)
                         Positioned(
                           left: 6,
                           bottom: 6,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (showStatus && widget.latestEpisodeBadge != null) ...[
+                              if (widget.latestEpisodeBadge != null) ...[
                                 Text(
                                   'Ep ${widget.latestEpisodeBadge}',
                                   style: TextStyle(
