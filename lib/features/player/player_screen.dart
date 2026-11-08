@@ -676,9 +676,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
         subtitle: subtitle,
         onRestore: returnToPlayer,
         onClose: stopPlayback,
-        pageBuilder: widget.episodeDetailMode
-            ? (_) => _buildEpisodeDetailsPanel()
-            : null,
       ),
     );
     nav.push<void>(
@@ -4701,15 +4698,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           return Stack(
                             fit: StackFit.expand,
                             children: [
-                              Positioned(
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: _showEpisodeDetails
-                                    ? videoHeight
-                                    : constraints.maxHeight,
-                                child: playerStack,
-                              ),
                               Positioned.fill(
                                 child: Visibility(
                                   visible: _showEpisodeDetails,
@@ -4744,6 +4732,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   ),
                                 ),
                               ),
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                height: _showEpisodeDetails
+                                    ? videoHeight
+                                    : constraints.maxHeight,
+                                child: playerStack,
+                              ),
+
                             ],
                           );
                         },
