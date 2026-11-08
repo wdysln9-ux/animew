@@ -18,6 +18,8 @@ class MetaFilters {
     this.statuses = const [],
     this.minEpisodes = 0,
     this.maxEpisodes = 200,
+    this.minYear = 1960,
+    this.maxYear = 2026,
     this.year,
     this.season,
     this.format,
@@ -44,6 +46,8 @@ class MetaFilters {
   final List<MetaStatus> statuses;
   final int minEpisodes;
   final int maxEpisodes;
+  final int minYear;
+  final int maxYear;
   final int? year;
   final MetaSeason? season;
   final MetaFormat? format;
@@ -71,6 +75,7 @@ class MetaFilters {
       statuses.isEmpty &&
       minEpisodes == 0 &&
       maxEpisodes == 200 &&
+      minYear == 1960 && maxYear == 2026 &&
       year == null &&
       season == null &&
       format == null &&
@@ -97,6 +102,7 @@ class MetaFilters {
       statuses.isNotEmpty ||
       minEpisodes > 0 ||
       maxEpisodes < 200 ||
+      minYear > 1960 || maxYear < 2026 ||
       year != null ||
       season != null ||
       format != null ||
@@ -113,6 +119,8 @@ class MetaFilters {
     List<MetaStatus>? statuses,
     int? minEpisodes,
     int? maxEpisodes,
+    int? minYear,
+    int? maxYear,
     int? year,
     MetaSeason? season,
     MetaFormat? format,
@@ -135,6 +143,8 @@ class MetaFilters {
     statuses: statuses ?? this.statuses,
     minEpisodes: minEpisodes ?? this.minEpisodes,
     maxEpisodes: maxEpisodes ?? this.maxEpisodes,
+    minYear: minYear ?? this.minYear,
+    maxYear: maxYear ?? this.maxYear,
     year: clearYear ? null : (year ?? this.year),
     season: clearSeason ? null : (season ?? this.season),
     format: clearFormat ? null : (format ?? this.format),
@@ -157,6 +167,8 @@ class MetaFilters {
     if (statuses.isNotEmpty) 'sts': statuses.map((v) => v.name).toList(),
     if (minEpisodes > 0) 'emin': minEpisodes,
     if (maxEpisodes < 200) 'emax': maxEpisodes,
+    if (minYear > 1960) 'ymin': minYear,
+    if (maxYear < 2026) 'ymax': maxYear,
     if (year != null) 'y': year,
     if (season != null) 's': season!.name,
     if (format != null) 'f': format!.name,
@@ -182,6 +194,8 @@ class MetaFilters {
         statuses: [for (final v in (m['sts'] as List? ?? [])) ...MetaStatus.values.where((e) => e.name == v)],
         minEpisodes: m['emin'] as int? ?? 0,
         maxEpisodes: m['emax'] as int? ?? 200,
+        minYear: m['ymin'] as int? ?? 1960,
+        maxYear: m['ymax'] as int? ?? 2026,
         year: m['y'] as int?,
         season: pick(MetaSeason.values, m['s'] as String?),
         format: pick(MetaFormat.values, m['f'] as String?),
