@@ -4219,12 +4219,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     builder: (context, snap) {
                       final show = (snap.data ?? _c.player.state.buffering) &&
                           !_controlsVisible;
-                      return AnimatedOpacity(
-                        opacity: show ? 1 : 0,
-                        duration: const Duration(milliseconds: 150),
-                        child: TickerMode(
-                          enabled: show,
-                          child: GestureDetector(
+                      return IgnorePointer(
+                        // Opacity does not remove a widget from hit testing.
+                        // Without this guard, the invisible full-screen spinner
+                        // sits above the tap zones and makes the video feel dead.
+                        ignoring: !show,
+                        child: AnimatedOpacity(
+                          opacity: show ? 1 : 0,
+                          duration: const Duration(milliseconds: 150),
+                          child: TickerMode(
+                            enabled: show,
+                            child: GestureDetector(
                             behavior: HitTestBehavior.opaque,
                             onTap: show
                                 ? () {
@@ -4243,6 +4248,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   strokeWidth: 2.5,
                                 ),
                               ),
+                            ),
                             ),
                           ),
                         ),
