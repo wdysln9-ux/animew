@@ -90,7 +90,15 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
           ),
         );
       }
-      if (videos.isEmpty) return const SizedBox.shrink();
+      if (videos.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.fromLTRB(16, 18, 16, 0),
+          child: Text(
+            'Trailer belum tersedia di MyAnimeList.',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+        );
+      }
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 22, 0, 0),
         child: Column(
@@ -257,7 +265,15 @@ class _MalThemeSectionState extends State<_MalThemeSection> {
           ),
         );
       }
-      if (songs.isEmpty) return const SizedBox.shrink();
+      if (songs.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.fromLTRB(16, 18, 16, 0),
+          child: Text(
+            'Lagu tema belum tersedia di MyAnimeList.',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+        );
+      }
       final visible = _expanded ? songs : songs.take(3).toList();
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
