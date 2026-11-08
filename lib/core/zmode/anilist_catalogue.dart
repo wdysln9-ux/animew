@@ -279,7 +279,7 @@ class AniListCatalogue implements AnimeCatalogue {
     final legacyFormat = f != null && formats.isEmpty ? _alFormat(f.format) : null;
     final legacyStatus = f != null && statuses.isEmpty ? _alStatus(f.status) : null;
     final args = <String>[
-      if (q.trim().isNotEmpty) 'search:\\$q',
+      if (q.trim().isNotEmpty) 'search:\$q',
       'type:${_type(kind)}',
       if (_format(kind).isNotEmpty) _format(kind).replaceFirst(',', ''),
       if (f == null) 'isAdult:false',
@@ -317,7 +317,7 @@ class AniListCatalogue implements AnimeCatalogue {
     if (q.trim().isNotEmpty) vars['q'] = q;
 
     final full =
-        'query$decl{ Page(page:$page,perPage:\\$n){ '
+        'query$decl{ Page(page:$page,perPage:\$n){ '
         'media($args){ $_listFields } } }';
     var items = _items(await _gql(full, vars), kind);
 
