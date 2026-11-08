@@ -176,7 +176,8 @@ class _Hero extends StatelessWidget {
         ),
       ],
     );
-  }}
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // _HeroTrailer — the autoplaying, muted, looping trailer that becomes the hero
