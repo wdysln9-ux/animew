@@ -104,8 +104,8 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
     final now = DateTime.now().year;
     final years = [for (var y = now; y >= 1960; y--) y];
     final visibleYears = showAllYears
-        ? years.where((y) => y <= 2011).toList()
-        : years.where((y) => y >= 2012).toList();
+        ? years.where((y) => y >= 1980 && y <= 2011).toList()
+        : years.where((y) => y >= 2012 || y < 1980).toList();
     final formats = _formats();
     final sortLabels = <MetaSort, String>{
       MetaSort.popularity: 'Popularitas',
@@ -174,7 +174,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                   _chips(visibleYears.map((y) => _ChipData('$y', f.years.contains(y),
                     () => _toggle<int>(f.years, y, (xs) => f = f.copyWith(years: xs)))).toList(), cs),
                   if (!showAllYears)
-                    _moreButton('Tampilkan Semua Tahun', years.where((y) => y <= 2011).length, () => setState(() => showAllYears = true), cs),
+                    _moreButton('Tampilkan Semua Tahun', years.where((y) => y >= 1980 && y <= 2011).length, () => setState(() => showAllYears = true), cs),
                   if (showAllYears)
                     _moreButton('Sembunyikan Tahun Lama', 0, () => setState(() => showAllYears = false), cs),
                   if (isAniList) ...[
