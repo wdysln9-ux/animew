@@ -282,7 +282,7 @@ class _SeasonRail extends StatelessWidget {
           Text('Semua Musim', style: AppText.headline.copyWith(fontSize: 17)),
           const SizedBox(height: 12),
           SizedBox(
-            height: 188,
+            height: 222,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.only(right: 16),
@@ -292,33 +292,15 @@ class _SeasonRail extends StatelessWidget {
                 final season = seasons[index];
                 return SizedBox(
                   width: 116,
-                  child: GestureDetector(
+                  height: 222,
+                  child: PosterCard(
+                    title: season.title,
+                    imageUrl: season.cover,
+                    cellWidth: 116,
+                    statusBadge: season.isCurrent ? 'Dibuka' : null,
+                    seriesBadge: 'Seri ${season.number}',
+                    metaLine: 'TV · ${season.episodes ?? '—'} Eps',
                     onTap: () => onOpen(season),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(11),
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                if (season.cover != null)
-                                  CachedNetworkImage(imageUrl: season.cover!, fit: BoxFit.cover, errorWidget: (_, _, _) => const ColoredBox(color: AppColors.surface2))
-                                else
-                                  const ColoredBox(color: AppColors.surface2),
-                                Positioned(left: 6, bottom: 6, child: Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4), decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(6)), child: Text('Seri ${season.number}', style: AppText.caption.copyWith(color: Colors.white, fontSize: 10)))),
-                                if (season.isCurrent)
-                                  Positioned(right: 6, top: 6, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3), decoration: BoxDecoration(color: const Color(0xFF438BE8), borderRadius: BorderRadius.circular(6)), child: Text('Dibuka', style: AppText.caption.copyWith(color: Colors.white, fontSize: 9)))),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(season.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                        Text('TV · ${season.episodes ?? '—'} Eps', maxLines: 1, style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary)),
-                      ],
-                    ),
                   ),
                 );
               },
