@@ -569,6 +569,8 @@ class MetadataRepository implements CatalogueRepository {
   /// browse; both are the same request to the providers that support it.
   Future<List<String>> filterTags() => _al.tagCollection();
 
+  Future<List<String>> filterGenres() => _al.genreCollection();
+
   Future<List<MediaItem>> searchFiltered(
     String query, {
     MetaFilters? filters,
