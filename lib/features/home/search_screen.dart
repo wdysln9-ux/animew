@@ -1334,12 +1334,46 @@ class _SearchViewState extends State<_SearchView>
     final chips = <(String, MetaFilters)>[
       for (final g in f.genres)
         (g, f.copyWith(genres: [...f.genres]..remove(g))),
-      for (final t in f.tags) (t, f.copyWith(tags: [...f.tags]..remove(t))),
+      for (final t in f.tags)
+        (t, f.copyWith(tags: [...f.tags]..remove(t))),
+      if (f.years.isNotEmpty)
+        ('Tahun: ${f.years.join(', ')}', f.copyWith(years: const [])),
+      if (f.minYear > 1980 || f.maxYear < 2026)
+        ('${f.maxYear}–${f.minYear}', f.copyWith(minYear: 1980, maxYear: 2026)),
+      for (final season in f.seasons)
+        (switch (season) {
+          MetaSeason.winter => 'Winter',
+          MetaSeason.spring => 'Spring',
+          MetaSeason.summer => 'Summer',
+          MetaSeason.fall => 'Fall',
+        }, f.copyWith(seasons: [...f.seasons]..remove(season))),
       if (f.year != null) ('${f.year}', f.copyWith(clearYear: true)),
       if (f.season != null) (f.season!.name, f.copyWith(clearSeason: true)),
+      for (final format in f.formats)
+        (format.name.toUpperCase(), f.copyWith(formats: [...f.formats]..remove(format))),
       if (f.format != null) (f.format!.name, f.copyWith(clearFormat: true)),
+      for (final status in f.statuses)
+        (switch (status) {
+          MetaStatus.releasing => 'Tayang',
+          MetaStatus.finished => 'Selesai',
+          MetaStatus.notYetReleased => 'Segera',
+          MetaStatus.cancelled => 'Dibatalkan',
+        }, f.copyWith(statuses: [...f.statuses]..remove(status))),
       if (f.status != null) (f.status!.name, f.copyWith(clearStatus: true)),
-      if (f.minScore != null) ('${f.minScore}+', f.copyWith(clearScore: true)),
+      if (f.minEpisodes > 0 || f.maxEpisodes < 200)
+        ('Episode: ${f.minEpisodes}–${f.maxEpisodes}',
+          f.copyWith(minEpisodes: 0, maxEpisodes: 200)),
+      if (f.minScore != null) ('Skor ${f.minScore}+', f.copyWith(clearScore: true)),
+      if (f.sort != MetaSort.popularity)
+        (switch (f.sort) {
+          MetaSort.popularity => 'Popularitas',
+          MetaSort.score => 'Rating',
+          MetaSort.trending => 'Trending',
+          MetaSort.newest => 'Terbaru',
+          MetaSort.title => 'Judul',
+        }, f.copyWith(sort: MetaSort.popularity, sortAscending: false)),
+      if (f.sortAscending)
+        ('Urutan naik', f.copyWith(sortAscending: false)),
     ];
     if (chips.isEmpty) return const SizedBox.shrink();
     return SizedBox(
@@ -3567,7 +3601,7 @@ class _ActiveFilterChip extends StatelessWidget {
       child: GestureDetector(
         onTap: onRemove,
         child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
+          padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
           decoration: BoxDecoration(
             color: AppColors.accent.withValues(alpha: 0.16),
             borderRadius: BorderRadius.circular(16),
