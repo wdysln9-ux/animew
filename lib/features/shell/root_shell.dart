@@ -80,7 +80,9 @@ class _RootShellState extends State<RootShell>
   ///
   /// Starts wherever the user chose to land; [NavPrefs.startTab] falls back to
   /// the leftmost tab, so an untouched install still opens on Home.
-  late DockTab _tab = MiniPlayerState.active.value?.pageBuilder != null
+  // A mini-player always returns to the app's Home surface, never the
+  // previous episode-detail page or a user-configured secondary start tab.
+  late DockTab _tab = MiniPlayerState.active.value != null
       ? DockTab.home
       : _navPrefs.startTab;
 
