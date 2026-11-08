@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+
 import '../../core/zmode/metadata_filters.dart';
 import '../../core/zmode/metadata_repository.dart';
 import '../../core/zmode/zmode_ids.dart';
@@ -133,7 +135,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
               padding: const EdgeInsets.fromLTRB(18, 14, 14, 10),
               child: Row(children: [
                 Expanded(child: Text('Filter', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700))),
-                TextButton(onPressed: _reset, child: const Text('Atur Ulang')),
+                TextButton(style: TextButton.styleFrom(foregroundColor: AppColors.accent), onPressed: _reset, child: const Text('Atur Ulang')),
               ]),
             ),
             Expanded(
@@ -146,7 +148,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     TextButton.icon(
                       style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 8)),
                       onPressed: () => setState(() => f = f.copyWith(sortAscending: !f.sortAscending)),
-                      icon: Icon(f.sortAscending ? Icons.north : Icons.south, color: cs.primary, size: 17),
+                      icon: Icon(f.sortAscending ? Icons.north : Icons.south, color: AppColors.accent, size: 17),
                       label: Text(f.sortAscending ? 'Naik' : 'Turun', style: const TextStyle(fontSize: 13)),
                     ),
                   ]),
@@ -175,6 +177,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                       f.minYear.clamp(1980, now).toDouble(),
                       f.maxYear.clamp(1980, now).toDouble(),
                     ),
+                    activeColor: AppColors.accent,
                     onChanged: (v) => setState(() => f = f.copyWith(
                       minYear: v.start.round(), maxYear: v.end.round())),
                   ),
@@ -186,6 +189,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                   RangeSlider(
                     min: 0, max: 200, divisions: 200,
                     values: RangeValues(f.minEpisodes.toDouble(), f.maxEpisodes.toDouble()),
+                    activeColor: AppColors.accent,
                     onChanged: (v) => setState(() => f = f.copyWith(
                       minEpisodes: v.start.round(), maxEpisodes: v.end.round())),
                   ),
@@ -195,7 +199,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     ...visibleYears.map((y) => _ChipData('$y', f.years.contains(y),
                       () => _toggle<int>(f.years, y, (xs) => f = f.copyWith(years: xs)))),
                     _ChipData(showAllYears ? 'Lebih Sedikit' : 'Tampilkan Semua (+${years.length - visibleYears.length})', false,
-                      () => setState(() => showAllYears = !showAllYears)),
+                      () => setState(() => showAllYears = !showAllYears), action: true),
                   ], cs),
                   if (isAniList) ...[
                     const SizedBox(height: 22),
@@ -224,7 +228,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                             ...visible.map((t) => _ChipData(t, f.tags.contains(t),
                               () => _toggle<String>(f.tags, t, (xs) => f = f.copyWith(tags: xs)))),
                             if (all.length > 11) _ChipData(showAllTags ? 'Lebih Sedikit' : 'Tampilkan Semua (+${all.length - 11})', false,
-                              () => setState(() => showAllTags = !showAllTags)),
+                              () => setState(() => showAllTags = !showAllTags), action: true),
                           ], cs),
                         ]);
                       },
@@ -234,6 +238,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     const SizedBox(height: 18),
                     const Divider(),
                     SwitchListTile.adaptive(
+                      activeColor: AppColors.accent,
                       contentPadding: EdgeInsets.zero,
                       dense: true,
                       title: const Text('Hide My Anime', style: TextStyle(fontSize: 14)),
@@ -249,6 +254,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
               child: SizedBox(width: double.infinity, height: 50,
                 child: FilledButton(
                   onPressed: () => Navigator.of(context).pop(f),
+                  style: FilledButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white),
                   child: Text(count == 0 ? 'Simpan' : 'Simpan ($count)'),
                 ),
               ),
@@ -304,10 +310,23 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       showCheckmark: false,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
-      selectedColor: cs.primary,
+      selectedColor: AppColors.accent,
       backgroundColor: Colors.transparent,
-      side: BorderSide(color: d.selected ? cs.primary : cs.outline.withValues(alpha: .24)),
-      labelStyle: TextStyle(fontSize: 12.5, height: 1.05, color: d.selected ? cs.onPrimary : cs.onSurface.withValues(alpha: .58)),
+      side: BorderSide(
+        color: d.selected || d.action
+            ? AppColors.accent
+            : cs.outline.withValues(alpha: .24),
+      ),
+      labelStyle: TextStyle(
+        fontSize: 12.5,
+        height: 1.05,
+        color: d.selected
+            ? Colors.white
+            : d.action
+                ? AppColors.accent
+                : cs.onSurface.withValues(alpha: .58),
+        fontWeight: d.action ? FontWeight.w600 : FontWeight.normal,
+      ),
       shape: const StadiumBorder(),
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
     )).toList(),
@@ -319,14 +338,15 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       onPressed: onTap,
       icon: const Icon(Icons.expand_more),
       label: Text(count > 0 ? '$label (+$count)' : label),
-      style: OutlinedButton.styleFrom(foregroundColor: cs.primary, side: BorderSide(color: cs.primary)),
+      style: OutlinedButton.styleFrom(foregroundColor: AppColors.accent, side: BorderSide(color: AppColors.accent)),
     ),
   );
 }
 
 class _ChipData {
-  const _ChipData(this.label, this.selected, this.onTap);
+  const _ChipData(this.label, this.selected, this.onTap, {this.action = false});
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final bool action;
 }
