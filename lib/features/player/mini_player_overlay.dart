@@ -14,6 +14,7 @@ class MiniPlayerSession {
     required this.subtitle,
     required this.onRestore,
     required this.onClose,
+    this.pageBuilder,
   });
 
   final VideoController controller;
@@ -21,6 +22,7 @@ class MiniPlayerSession {
   final String subtitle;
   final VoidCallback onRestore;
   final VoidCallback onClose;
+  final WidgetBuilder? pageBuilder;
 }
 
 class MiniPlayerState {
