@@ -2437,44 +2437,33 @@ class _DetailViewState extends State<_DetailView>
             ),
           ),
 
-        // ── 5. Interactive genres and studio ──────────────────────────────
         if (detail.genres.isNotEmpty || detail.studios.isNotEmpty)
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (detail.genres.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 7,
-                      children: detail.genres.map((genre) => ActionChip(
-                        label: Text(genre, style: AppText.caption.copyWith(color: AppColors.accent)),
-                        visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
-                        padding: const EdgeInsets.symmetric(horizontal: 7),
-                        backgroundColor: Colors.transparent,
-                        side: BorderSide(color: AppColors.accent.withValues(alpha: 0.75)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => SearchScreen(
-                              initialFilters: MetaFilters(genres: [genre]),
-                            ),
-                          ),
-                        ),
-                      )).toList(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AnimeDetailGenreChips(
+                  genres: detail.genres,
+                  onTap: (genre) => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => SearchScreen(
+                        initialFilters: MetaFilters(genres: [genre]),
+                      ),
                     ),
-                  if (detail.studios.isNotEmpty)
-                    _InteractiveCreditLine(
+                  ),
+                ),
+                if (detail.studios.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: _InteractiveCreditLine(
                       label: 'Studio',
                       values: detail.studios.take(3).toList(),
                       onTap: (studio) => Navigator.of(context).push(
                         StudioPage.route(studio),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
 
