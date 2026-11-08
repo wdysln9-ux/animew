@@ -527,25 +527,6 @@ class AnimeDetailGenreChips extends StatelessWidget {
   }
 }
 
-String _indonesianCharacterRole(String role) {
-  switch (role.trim().toLowerCase()) {
-    case 'main':
-    case 'main character':
-      return 'Utama';
-    case 'supporting':
-    case 'supporting character':
-      return 'Pendukung';
-    case 'background':
-    case 'background character':
-      return 'Figuran';
-    case 'voice':
-    case 'voice actor':
-      return 'Pengisi suara';
-    default:
-      return role;
-  }
-}
-
 class AnimeDetailCharacterRail extends StatelessWidget {
   const AnimeDetailCharacterRail({required this.cast, this.onOpenPerson});
   final List<CastMember> cast;
