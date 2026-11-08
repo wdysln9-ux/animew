@@ -639,13 +639,7 @@ class _PlayButton extends StatelessWidget {
   });
   final String label;
   final VoidCallback? onPressed;
-
-  /// The episode list hasn't arrived yet. The button can't act, but dimming
-  /// it would say "there is nothing to play" — which isn't known yet — so it
-  /// keeps its normal look while the Episodes tab shows the skeleton.
   final bool loading;
-
-  /// Reading types (manga/novel) show a book icon instead of the play glyph.
   final IconData icon;
 
   @override
@@ -654,8 +648,42 @@ class _PlayButton extends StatelessWidget {
     return Opacity(
       opacity: enabled || loading ? 1.0 : 0.4,
       child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(28),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(28),
+          onTap: onPressed,
+          child: Container(
+            height: 52,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white24),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: AppColors.textPrimary, size: 24),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.button.copyWith(color: AppColors.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Full-width GRAY Download button
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: onPressed,
@@ -690,15 +718,12 @@ class _DownloadButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.loading = false,
+    this.icon = Icons.file_download_outlined,
   });
   final String label;
-
-  /// Null disables the button, dimmed the same way [_PlayButton] dims — the
-  /// two sit stacked, so they have to read as disabled the same way.
   final VoidCallback? onPressed;
-
-  /// See [_PlayButton.loading] — same rule, same reason.
   final bool loading;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -706,25 +731,29 @@ class _DownloadButton extends StatelessWidget {
       opacity: onPressed != null || loading ? 1.0 : 0.4,
       child: Material(
         color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(28),
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(28),
           onTap: onPressed,
-          child: SizedBox(
+          child: Container(
             height: 52,
             width: double.infinity,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white24),
+              borderRadius: BorderRadius.circular(28),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.file_download_outlined,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: AppText.button.copyWith(color: Colors.white),
+                Icon(icon, color: AppColors.textPrimary, size: 23),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.button.copyWith(color: AppColors.textPrimary),
+                  ),
                 ),
               ],
             ),
