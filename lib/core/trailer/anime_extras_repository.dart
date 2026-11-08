@@ -67,6 +67,7 @@ query ($id: Int, $search: String) {
     int? anilistId,
     required String title,
     String? englishTitle,
+    bool forceRefresh = false,
   }) async {
     final resolvedId = malId ?? await _resolveMalId(
       anilistId: anilistId,
@@ -76,6 +77,7 @@ query ($id: Int, $search: String) {
     if (resolvedId == null || resolvedId <= 0) {
       throw StateError('MAL ID untuk anime ini belum ditemukan.');
     }
+    if (forceRefresh) _cache.remove(resolvedId);
     final existing = _cache[resolvedId];
     if (existing != null) return existing;
     final request = _fetch(resolvedId);
@@ -102,6 +104,7 @@ query ($id: Int, $search: String) {
         : 'title:' + preferredTitle.toLowerCase();
 
     return _idCache.putIfAbsent(key, () async {
+      try {
       Future<int?> lookup({int? id, String? search}) async {
         final response = await _dio.post<dynamic>(
           _aniList,
@@ -130,6 +133,10 @@ query ($id: Int, $search: String) {
       }
       if (resolved == null) _idCache.remove(key);
       return resolved;
+      } catch (_) {
+        _idCache.remove(key);
+        rethrow;
+      }
     });
   }
 
