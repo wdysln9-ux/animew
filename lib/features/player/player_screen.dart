@@ -2232,7 +2232,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               _c.showStatus('Opening dilewati');
             }
             _c.seekTo(iv.end);
-            _bumpControls();
+            // OP/ED skip is a seek action; preserve the current control visibility.
           },
         );
       }
@@ -4240,21 +4240,23 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   StreamBuilder<bool>(
                     stream: _c.player.stream.buffering,
                     builder: (context, snap) {
-                      final show = (snap.data ?? false) && !_controlsVisible;
-                      return IgnorePointer(
-                        child: AnimatedOpacity(
-                          opacity: show ? 1 : 0,
-                          duration: const Duration(milliseconds: 150),
-                          // The spinner is kept mounted (so it can fade), but a
-                          // CircularProgressIndicator spins forever via a repeating
-                          // ticker — which scheduled a Flutter frame every vsync and
-                          // pinned the whole player at 60fps even while invisible and
-                          // the video sat idle. TickerMode freezes it unless it's
-                          // actually showing, letting the panel fall to the video's
-                          // real rate. The AnimatedOpacity's own ticker is outside
-                          // this, so the fade still plays.
-                          child: TickerMode(
-                            enabled: show,
+                      final show = (snap.data ?? _c.player.state.buffering) &&
+                          !_controlsVisible;
+                      return AnimatedOpacity(
+                        opacity: show ? 1 : 0,
+                        duration: const Duration(milliseconds: 150),
+                        child: TickerMode(
+                          enabled: show,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: show
+                                ? () {
+                                    // Tapping the unobstructed loading indicator
+                                    // pauses playback and reveals the full controls.
+                                    _c.player.pause();
+                                    _bumpControls();
+                                  }
+                                : null,
                             child: Center(
                               child: SizedBox(
                                 width: 36,
@@ -4433,7 +4435,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               setState(() => _duration = d);
                             }
                           },
-                          onInteract: _bumpControls,
+                          onInteract: _scheduleHide,
                           onRotate: _toggleOrientation,
                           portraitMode: _portraitMode,
                           episodeDetailMode: widget.episodeDetailMode,
@@ -4673,38 +4675,64 @@ class _PlayerScreenState extends State<PlayerScreen> {
               onPointerMove: _onPointerMove,
               onPointerUp: _onPointerUp,
               onPointerCancel: _onPointerUp,
-              child: _showEpisodeDetails
+              child: widget.episodeDetailMode
                   ? SafeArea(
                       top: true,
                       bottom: true,
-                      child: Column(
-                        children: [
-                        AspectRatio(
-                          aspectRatio: 16 / 9,
-                          child: playerStack,
-                        ),
-                        SizedBox(
-                          height: 3,
-                          child: StreamBuilder<Duration>(
-                            stream: _c.player.stream.position,
-                            initialData: _c.player.state.position,
-                            builder: (context, snapshot) {
-                              final duration = _c.player.state.duration;
-                              final position = snapshot.data ?? Duration.zero;
-                              final progress = duration.inMilliseconds <= 0
-                                  ? 0.0
-                                  : (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
-                              return LinearProgressIndicator(
-                                value: progress,
-                                minHeight: 3,
-                                backgroundColor: const Color(0xFF343434),
-                                valueColor: AlwaysStoppedAnimation<Color>(AppColors.accent),
-                              );
-                            },
-                          ),
-                        ),
-                        Expanded(child: _buildEpisodeDetailsPanel()),
-                        ],
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final videoHeight = (constraints.maxWidth * 9 / 16)
+                              .clamp(0.0, constraints.maxHeight)
+                              .toDouble();
+                          return Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                height: _showEpisodeDetails
+                                    ? videoHeight
+                                    : constraints.maxHeight,
+                                child: playerStack,
+                              ),
+                              Positioned.fill(
+                                child: Visibility(
+                                  visible: _showEpisodeDetails,
+                                  maintainState: true,
+                                  maintainAnimation: true,
+                                  maintainSize: true,
+                                  child: Column(
+                                    children: [
+                                      SizedBox(height: videoHeight),
+                                      SizedBox(
+                                        height: 3,
+                                        child: StreamBuilder<Duration>(
+                                          stream: _c.player.stream.position,
+                                          initialData: _c.player.state.position,
+                                          builder: (context, snapshot) {
+                                            final duration = _c.player.state.duration;
+                                            final position = snapshot.data ?? Duration.zero;
+                                            final progress = duration.inMilliseconds <= 0
+                                                ? 0.0
+                                                : (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
+                                            return LinearProgressIndicator(
+                                              value: progress,
+                                              minHeight: 3,
+                                              backgroundColor: const Color(0xFF343434),
+                                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.accent),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      Expanded(child: _buildEpisodeDetailsPanel()),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     )
                   : playerStack,
