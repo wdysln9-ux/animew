@@ -678,6 +678,13 @@ class _SearchViewState extends State<_SearchView>
   int get _metaFilterCount {
     final f = _metaFilters;
     return (f.genres.isNotEmpty ? 1 : 0) +
+        (f.tags.isNotEmpty ? 1 : 0) +
+        (f.years.isNotEmpty ? 1 : 0) +
+        (f.seasons.isNotEmpty ? 1 : 0) +
+        (f.formats.isNotEmpty ? 1 : 0) +
+        (f.statuses.isNotEmpty ? 1 : 0) +
+        (f.minYear > 1980 || f.maxYear < 2026 ? 1 : 0) +
+        (f.minEpisodes > 0 || f.maxEpisodes < 200 ? 1 : 0) +
         (f.year != null ? 1 : 0) +
         (f.season != null ? 1 : 0) +
         (f.format != null ? 1 : 0) +
