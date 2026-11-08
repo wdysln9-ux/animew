@@ -2225,10 +2225,6 @@ class _DetailViewState extends State<_DetailView>
       );
     }
 
-    // Kick off the trailer lookup (once). When it resolves, _trailerId is set
-    // and the hero swaps its static backdrop for the autoplaying trailer.
-    _resolveTrailer(detail);
-
     // Season data. PRESERVED.
     final seasonSet = seasonsOf(eps);
     final hasMultipleSeasons = seasonSet.length > 1;
@@ -2336,8 +2332,8 @@ class _DetailViewState extends State<_DetailView>
                 coverHeaders: coverHeaders,
                 hasCover: hasCover,
                 posterUrl: detail.cover ?? item.cover,
-                sourceLabel: sourceName,
-                animeId: detail.id,
+                sourceLabel: detail.malId != null ? 'MAL' : sourceName,
+                animeId: detail.malId?.toString() ?? detail.id,
                 tint: ThemeController.adaptiveColour ? _tint : null,
                 trailerId: _trailerId,
                 // Pause the trailer once the hero has scrolled past (reuses
