@@ -218,6 +218,15 @@ class MainActivity : AppCompatActivity(), FlutterEngineConfigurator {
         // The manifest meta-data is unchanged; we just have to read it ourselves.
         switchLaunchThemeForNormalTheme()
         super.onCreate(savedInstanceState)
+        // Let landscape immersive playback draw through the display cutout.
+        // This has no layout effect in normal portrait/edge-to-edge screens;
+        // SHORT_EDGES is only used by Android when a window opts into that area.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode =
+                    android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
         reconcileIconAliases()
         setContentView(R.layout.activity_main)
         // Survives configuration changes / process death: re-attaching a second
