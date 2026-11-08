@@ -2430,14 +2430,10 @@ class _DetailViewState extends State<_DetailView>
           ),
         ),
 
-        // ── 4. Synopsis (clamped) + "Read more" → Details tab ───────────────
         if ((cleanSynopsis(detail.description) ?? '').isNotEmpty)
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
-              child: _Description(
-                text: cleanSynopsis(detail.description) ?? '',
-              ),
+            child: AnimeDetailSynopsisSection(
+              text: cleanSynopsis(detail.description) ?? '',
             ),
           ),
 
