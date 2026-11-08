@@ -683,32 +683,6 @@ class _PlayButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Full-width GRAY Download button
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: onPressed,
-          child: SizedBox(
-            height: 52,
-            width: double.infinity,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.black, size: 26),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: AppText.button.copyWith(color: Colors.black),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Full-width GRAY Download button (surface2, white label) — Netflix-style.
 // Downloads aren't implemented yet, so it just snacks.
 // ─────────────────────────────────────────────────────────────────────────────
