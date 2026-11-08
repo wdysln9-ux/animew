@@ -126,14 +126,13 @@ import 'anime_community_tab.dart';
 import 'wrong_title_sheet.dart';
 import '../../l10n/l10n.dart';
 
-part 'detail_hero.dart';
 part 'anime_detail_layout.dart';
 part 'detail_info.dart';
 part 'detail_episodes.dart';
 part 'detail_sheets.dart';
 part 'detail_tabs.dart';
 part 'detail_skeleton.dart';
-part 'detail_mal_sections.dart';
+part 'anime_detail_extras.dart';
 
 part 'detail_screen_tv.dart';
 
