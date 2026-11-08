@@ -668,6 +668,7 @@ String metaSeasonLabel(MetaSeason s) => switch (s) {
 String metaFormatLabel(MetaFormat f) => switch (f) {
   MetaFormat.tv => 'TV',
   MetaFormat.movie => 'Movie',
+  MetaFormat.ona => 'ONA',
   MetaFormat.ova => 'OVA',
   MetaFormat.special => 'Special',
   MetaFormat.manga => 'Manga',
