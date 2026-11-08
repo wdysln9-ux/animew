@@ -626,6 +626,7 @@ class AnimeDetailSeasonRail extends StatelessWidget {
                     imageUrl: season.cover,
                     cellWidth: width,
                     seriesBadge: 'Seri ' + season.number.toString(),
+                    viewsBadge: season.popularity,
                     metaLine: season.episodes == null ? null : 'TV · ' + season.episodes.toString() + ' eps',
                     onTap: () => onOpen(season),
                   ),
