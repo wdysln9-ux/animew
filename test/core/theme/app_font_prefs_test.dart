@@ -23,7 +23,7 @@ void main() {
 
   test('a fresh install is on the default', () {
     expect(AppFontPrefs.family, AppText.defaultFontFamily);
-    expect(AppText.fontFamily, AppText.fallbackFontFamily);
+    expect(AppText.fontFamily, AppText.defaultFontFamily);
   });
 
   test('choosing a font applies it and bumps the revision', () async {
@@ -80,9 +80,9 @@ void main() {
     }
   });
 
-  test('Urbanist is the default downloadable family', () {
+  test('Urbanist is the default bundled variable font', () {
     expect(AppFontPrefs.family, 'Urbanist');
-    expect(AppFontPrefs.isBundled('Urbanist'), isFalse);
+    expect(AppFontPrefs.isBundled('Urbanist'), isTrue);
     expect(subtitleFontFileName('Urbanist'), 'Urbanist.ttf');
   });
 
@@ -96,8 +96,8 @@ void main() {
       );
       // And the fetcher has to know the filename, or ensure() can never work.
       expect(
-        f.family == 'Urbanist' || subtitleFontFileName(f.family) != null,
-        isTrue,
+        subtitleFontFileName(f.family),
+        isNotNull,
         reason: '"${f.family}" has no file mapping, so it can never download',
       );
     }
