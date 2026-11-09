@@ -20,7 +20,7 @@ class _MalTrailerSection extends StatefulWidget {
 
 class _MalTrailerSectionState extends State<_MalTrailerSection> {
   late Future<AnimeExtras> _future;
-  bool _expanded = false;
+  bool _expanded = true;
 
   @override
   void initState() {
@@ -212,7 +212,7 @@ class _MalThemeSection extends StatefulWidget {
 
 class _MalThemeSectionState extends State<_MalThemeSection> {
   late Future<AnimeExtras> _future;
-  bool _expanded = false;
+  bool _expanded = true;
 
   @override
   void initState() {
