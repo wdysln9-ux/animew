@@ -10,7 +10,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
     required this.coverHeaders,
     required this.sourceLabel,
     required this.animeId,
-    this.maxHeight = 381,
+    this.maxHeight = 386,
   });
 
   final String coverUrl;
@@ -111,7 +111,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               // clipped by the collapsing sliver. Its scale/crop never changes
               // while scrolling, so it cannot look like a camera zoom.
               Positioned(
-                top: 65,
+                top: 0,
                 left: 0,
                 right: 0,
                 bottom: -50,
@@ -124,15 +124,17 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        // Keep the upper third clear; the fade begins at
-                        // one-third of the hero and continues all the way
-                        // down to the page background.
+                        // A long, gradual fade: artwork remains visible
+                        // through the upper half and blends into the page
+                        // background without a dense dark band.
                         colors: [
                           AppColors.bg.withValues(alpha: 0.0),
-                          AppColors.bg.withValues(alpha: 0.0),
+                          AppColors.bg.withValues(alpha: 0.06),
+                          AppColors.bg.withValues(alpha: 0.24),
+                          AppColors.bg.withValues(alpha: 0.62),
                           AppColors.bg,
                         ],
-                        stops: [0.0, 0.33, 1.0],
+                        stops: [0.0, 0.18, 0.40, 0.70, 1.0],
                       ),
                     ),
                   ),
@@ -393,7 +395,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     final subtitle = englishTitle?.trim();
     final alternate = alternateTitle?.trim();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -413,7 +415,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               style: AppText.body.copyWith(fontSize: 12, color: AppColors.textTertiary)),
           ],
           if (metaLine.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 7),
             Text.rich(
               TextSpan(children: [
                 for (var i = 0; i < metaLine.split('  ·  ').length; i++)
@@ -454,7 +456,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
             ]),
           ],
           if ((format?.isNotEmpty ?? false) || (status?.isNotEmpty ?? false)) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 6,
@@ -538,13 +540,13 @@ class AnimeDetailActionButton extends StatelessWidget {
       opacity: onPressed != null || loading ? 1 : 0.42,
       child: Material(
         color: background,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(23),
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(24),
           child: Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            height: 46,
+            padding: const EdgeInsets.symmetric(horizontal: 11),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
@@ -556,7 +558,7 @@ class AnimeDetailActionButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 19, color: foreground),
+                Icon(icon, size: 18, color: foreground),
                 const SizedBox(width: 6),
                 Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
                   style: AppText.button.copyWith(fontSize: 12, color: foreground))),
@@ -608,7 +610,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
   Widget build(BuildContext context) {
     final data = _translated ?? widget.text;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -702,17 +704,17 @@ class _DetailCreditsState extends State<_DetailCredits> {
 
   Widget _chip(String label, Color color, {VoidCallback? onTap}) {
     final child = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: AppText.caption.copyWith(
-          fontSize: 11.5,
+          fontSize: 11,
           height: 1.1,
           color: Colors.white,
           fontWeight: FontWeight.w600,
@@ -731,7 +733,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
     final hasCredits = widget.studios.isNotEmpty || widget.producers.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -746,15 +748,15 @@ class _DetailCreditsState extends State<_DetailCredits> {
                     onTap: () => widget.onGenreTap(genre),
                     borderRadius: BorderRadius.circular(6),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                       decoration: BoxDecoration(
                         border: Border.all(color: genreColor.withValues(alpha: 0.8)),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(7),
                       ),
                       child: Text(
                         genre,
                         style: AppText.caption.copyWith(
-                          fontSize: 11.5,
+                          fontSize: 11,
                           color: genreColor,
                           fontWeight: FontWeight.w600,
                         ),
