@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/episode.dart';
+import '../metadata/jikan_api.dart';
 
 /// Next episode index when advancing. When [autoSkipFiller] is on and
 /// [fillerEps] is non-empty, jumps past consecutive filler episodes — but
@@ -90,12 +91,12 @@ class FillerService {
       var page = 1;
       while (page <= 20) {
         // hard cap: 20 pages (2000 eps) so a bad id can't loop
-        final resp = await _dio.get<dynamic>(
+        final raw = await JikanApi.get(
+          _dio,
           'https://api.jikan.moe/v4/anime/$malId/episodes',
-          queryParameters: {'page': page},
+          query: {'page': page},
         );
         // Dio may hand back a parsed Map OR a raw JSON String — handle both.
-        final raw = resp.data;
         final body = raw is Map
             ? raw
             : (raw is String ? jsonDecode(raw) as Map : const {});
@@ -110,8 +111,7 @@ class FillerService {
             (body['pagination']?['last_visible_page'] as num?)?.toInt() ?? page;
         if (page >= last) break;
         page++;
-        // Respect Jikan's rate limit (~3 req/s) on multi-page shows.
-        await Future.delayed(const Duration(milliseconds: 400));
+        // JikanApi enforces the shared rate limit for every Jikan caller.
       }
     } catch (_) {
       // keep whatever we collected (possibly empty)
