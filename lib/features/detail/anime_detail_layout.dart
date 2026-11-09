@@ -339,18 +339,18 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         children: [
           Text(title, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.largeTitle.copyWith(fontSize: 22, height: 1.14)),
+            style: AppText.largeTitle.copyWith(fontSize: 20, height: 1.14)),
           if (subtitle != null && subtitle.isNotEmpty && subtitle != title) ...[
             const SizedBox(height: 4),
             Text(subtitle, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 13, color: AppColors.textSecondary)),
+              style: AppText.body.copyWith(fontSize: 12, color: AppColors.textSecondary)),
           ],
           if (alternate != null && alternate.isNotEmpty && alternate != title && alternate != subtitle) ...[
             const SizedBox(height: 2),
             Text(alternate, textAlign: TextAlign.center, maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 11.5, color: AppColors.textTertiary)),
+              style: AppText.body.copyWith(fontSize: 10.5, color: AppColors.textTertiary)),
           ],
           if (metaLine.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -360,7 +360,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                   TextSpan(
                     text: '${i == 0 ? '' : '  ·  '}${metaLine.split('  ·  ')[i]}',
                     style: AppText.body.copyWith(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: i == 0 ? AppColors.accent
                           : (metaLine.split('  ·  ')[i].startsWith('★')
                               ? const Color(0xFF24C66A)
@@ -381,7 +381,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 11.5, color: AppColors.textSecondary),
+              style: AppText.body.copyWith(fontSize: 10.5, color: AppColors.textSecondary),
             ),
           ],
           if (broadcastLabel?.isNotEmpty == true) ...[
@@ -390,7 +390,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               Icon(Icons.access_time_rounded, size: 13, color: AppColors.accent),
               const SizedBox(width: 5),
               Flexible(child: Text(broadcastLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: AppText.body.copyWith(fontSize: 11.5, color: AppColors.accent))),
+                style: AppText.body.copyWith(fontSize: 10.5, color: AppColors.accent))),
             ]),
           ],
           if ((format?.isNotEmpty ?? false) || (status?.isNotEmpty ?? false)) ...[
@@ -416,19 +416,34 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-    decoration: BoxDecoration(
-      color: (label.toLowerCase().contains('selesai') || label.toLowerCase().contains('completed'))
-          ? const Color(0xFF17365F)
-          : (label.toLowerCase().contains('tayang') || label.toLowerCase().contains('ongoing'))
-              ? const Color(0xFF087A45)
-              : const Color(0xFFF47521),
-      borderRadius: BorderRadius.circular(6),
-    ),
-    child: Text(label, style: AppText.caption.copyWith(
-      fontSize: 10.5, color: Colors.white, fontWeight: FontWeight.w700)),
-  );
+  Widget build(BuildContext context) {
+    final value = label.toLowerCase();
+    final background = value.contains('selesai') || value.contains('completed')
+        ? const Color(0xFF17365F)
+        : value.contains('tayang') || value.contains('ongoing')
+            ? const Color(0xFF123D2B)
+            : const Color(0xFF3B2918);
+    final foreground = value.contains('selesai') || value.contains('completed')
+        ? const Color(0xFF9CC7FF)
+        : value.contains('tayang') || value.contains('ongoing')
+            ? const Color(0xFF8BE0AE)
+            : const Color(0xFFFFC58A);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: AppText.caption.copyWith(
+          fontSize: 10,
+          color: foreground,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
 }
 
 class AnimeDetailActionButton extends StatelessWidget {
@@ -589,7 +604,7 @@ class AnimeDetailGenreChips extends StatelessWidget {
                     border: Border.all(color: AppColors.accent.withValues(alpha: 0.72)),
                     borderRadius: BorderRadius.circular(7),
                   ),
-                  child: Text(genre, style: AppText.caption.copyWith(fontSize: 11, color: AppColors.accent)),
+                  child: Text(genre, style: AppText.caption.copyWith(fontSize: 10, color: AppColors.accent)),
                 ),
               ),
             ),
@@ -659,7 +674,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
               spacing: 5,
               runSpacing: 5,
               children: [
-                for (final credit in credits)
+                for (final credit in (_expanded ? credits : widget.studios))
                   _chip(credit, () {
                     if (widget.studios.contains(credit)) {
                       widget.onStudioTap(credit);
@@ -724,7 +739,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
           child: Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Row(children: [
-              Text('Karakter & Pengisi Suara', style: AppText.headline.copyWith(fontSize: 16)),
+              Text('Karakter', style: AppText.headline.copyWith(fontSize: 16)),
               const SizedBox(width: 7),
               Text(cast.length.toString(), style: AppText.caption.copyWith(color: AppColors.textSecondary)),
               const Spacer(),
