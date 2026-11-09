@@ -440,7 +440,7 @@ class MetadataEnrichment {
     final response = await _get('https://api.jikan.moe/v4/anime', {'q': title, 'limit': 10});
     final rows = response?['data'];
     if (rows is! List) return null;
-    String norm(String value) => value.toLowerCase().replaceAll(RegExp(r'[^\\p{L}\\p{N}]', unicode: true), '');
+    String norm(String value) => value.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
     final wanted = norm(title);
     for (final row in rows) {
       if (row is! Map) continue;
