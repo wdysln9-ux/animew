@@ -146,18 +146,32 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (sourceLabel.isNotEmpty)
-                            Text(sourceLabel, style: AppText.caption.copyWith(
-                              color: Colors.white, fontWeight: FontWeight.w700)),
+                            sourceLabel.toUpperCase() == 'MAL'
+                                ? const _MalTextWordmark()
+                                : Text(
+                                    sourceLabel,
+                                    style: AppText.caption.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 10,
+                                    ),
+                                  ),
                           if (sourceLabel.isNotEmpty && animeId.isNotEmpty)
-                            const SizedBox(width: 7),
+                            const SizedBox(width: 6),
                           if (animeId.isNotEmpty)
-                            Text('#$animeId', style: AppText.caption.copyWith(
-                              color: Colors.white, fontWeight: FontWeight.w700)),
+                            Text(
+                              '#$animeId',
+                              style: AppText.caption.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10,
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -292,16 +306,38 @@ class _AnimeDetailCircleAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: const Color(0x77000000),
+    color: const Color(0x99000000),
     shape: const CircleBorder(),
-    child: IconButton(
-      tooltip: label,
-      onPressed: onTap,
-      icon: Icon(icon, color: Colors.white, size: 23),
+    child: InkWell(
+      customBorder: const CircleBorder(),
+      onTap: onTap,
+      child: SizedBox(
+        width: 38,
+        height: 38,
+        child: Center(
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+      ),
     ),
   );
 }
 
+class _MalTextWordmark extends StatelessWidget {
+  const _MalTextWordmark();
+
+  @override
+  Widget build(BuildContext context) => Text(
+    'MAL',
+    style: AppText.caption.copyWith(
+      color: const Color(0xFF8DB8FF),
+      fontSize: 11,
+      fontWeight: FontWeight.w900,
+      fontStyle: FontStyle.italic,
+      letterSpacing: -0.6,
+      height: 1,
+    ),
+  );
+}
 
 class AnimeDetailTitleBlock extends StatelessWidget {
   const AnimeDetailTitleBlock({
