@@ -88,7 +88,7 @@ class _JikanAdapter implements HttpClientAdapter {
     );
   }
 
-  static Map<String, dynamic> _full(String title, int id) => {
+  Map<String, dynamic> _full(String title, int id) => {
     'data': {
       'type': 'TV',
       'title': title,
