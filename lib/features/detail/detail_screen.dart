@@ -2446,6 +2446,7 @@ class _DetailViewState extends State<_DetailView> {
             child: AnimeDetailSeasonRail(
               seasons: state.seasons,
               relations: state.relations.isNotEmpty ? state.relations : detail.relations,
+              loading: state.seasonsLoading,
               onOpenSeason: (season) => _openRelation(
                 MediaRelation(
                   title: season.title,
