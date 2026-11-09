@@ -10,7 +10,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
     required this.coverHeaders,
     required this.sourceLabel,
     required this.animeId,
-    this.maxHeight = 438,
+    this.maxHeight = 472,
   });
 
   final String coverUrl;
@@ -121,7 +121,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                           AppColors.bg.withValues(alpha: 0.76),
                           AppColors.bg,
                         ],
-                        stops: [0.0, 0.30, 0.70, 1.0],
+                        stops: [0.0, 0.36, 0.82, 1.0],
                       ),
                     ),
                   ),
@@ -180,7 +180,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 8,
+                bottom: -12,
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
@@ -436,7 +436,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: [
-                if (format?.isNotEmpty == true) _AnimeDetailMetadataChip(format!),
+                if (format?.isNotEmpty == true) _AnimeDetailMetadataChip(format!, isFormat: true),
                 if (status?.isNotEmpty == true) _AnimeDetailMetadataChip(status!),
               ],
             ),
@@ -448,18 +448,23 @@ class AnimeDetailTitleBlock extends StatelessWidget {
 }
 
 class _AnimeDetailMetadataChip extends StatelessWidget {
-  const _AnimeDetailMetadataChip(this.label);
+  const _AnimeDetailMetadataChip(this.label, {this.isFormat = false});
   final String label;
+  final bool isFormat;
 
   @override
   Widget build(BuildContext context) {
     final value = label.toLowerCase();
-    final background = value.contains('selesai') || value.contains('completed')
+    final background = isFormat
+        ? AppColors.accent
+        : value.contains('selesai') || value.contains('completed')
         ? const Color(0xFF17365F)
         : value.contains('tayang') || value.contains('ongoing')
             ? const Color(0xFF123D2B)
             : const Color(0xFF3B2918);
-    final foreground = value.contains('selesai') || value.contains('completed')
+    final foreground = isFormat
+        ? Colors.white
+        : value.contains('selesai') || value.contains('completed')
         ? const Color(0xFF9CC7FF)
         : value.contains('tayang') || value.contains('ongoing')
             ? const Color(0xFF8BE0AE)
@@ -509,15 +514,15 @@ class AnimeDetailActionButton extends StatelessWidget {
       opacity: onPressed != null || loading ? 1 : 0.42,
       child: Material(
         color: background,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(10),
           child: Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: active
                     ? AppColors.accent
@@ -527,10 +532,10 @@ class AnimeDetailActionButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 20, color: foreground),
+                Icon(icon, size: 19, color: foreground),
                 const SizedBox(width: 6),
                 Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: AppText.button.copyWith(fontSize: 12, color: foreground))),
+                  style: AppText.button.copyWith(fontSize: 11, color: foreground))),
               ],
             ),
           ),
