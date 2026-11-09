@@ -418,9 +418,32 @@ class AnimeDetailTitleBlock extends StatelessWidget {
             const SizedBox(height: 7),
             Text.rich(
               TextSpan(children: [
-                for (var i = 0; i < metaLine.split('  ·  ').length; i++)
+                for (var i = 0; i < metaLine.split('  ·  ').length; i++) ...[
+                  if (i > 0)
+                    TextSpan(
+                      text: '  ·  ',
+                      style: AppText.body.copyWith(
+                        fontSize: 15,
+                        color: AppColors.textTertiary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  if (metaLine.split('  ·  ')[i].startsWith('◉ '))
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 3),
+                        child: Icon(
+                          Icons.visibility_rounded,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
                   TextSpan(
-                    text: '${i == 0 ? '' : '  ·  '}${metaLine.split('  ·  ')[i]}',
+                    text: metaLine.split('  ·  ')[i].startsWith('◉ ')
+                        ? metaLine.split('  ·  ')[i].substring(2)
+                        : metaLine.split('  ·  ')[i],
                     style: AppText.body.copyWith(
                       fontSize: 13,
                       color: i == 0 ? AppColors.accent
@@ -430,6 +453,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                       fontWeight: i == 1 ? FontWeight.w700 : FontWeight.normal,
                     ),
                   ),
+                ],
               ]),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -438,12 +462,36 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           ],
           if ((ageRating?.isNotEmpty ?? false) || (dateLine?.isNotEmpty ?? false) || rank != null) ...[
             const SizedBox(height: 7),
-            Text(
-              [if (ageRating?.isNotEmpty == true) 'Age ${ageRating!}', if (dateLine?.isNotEmpty == true) dateLine!].join('   ·   '),
+            Text.rich(
+              TextSpan(children: [
+                for (var i = 0; i < [
+                  if (ageRating?.isNotEmpty == true) 'Age ${ageRating!}',
+                  if (dateLine?.isNotEmpty == true) dateLine!,
+                ].length; i++) ...[
+                  if (i > 0)
+                    TextSpan(
+                      text: '   ·   ',
+                      style: AppText.body.copyWith(
+                        fontSize: 14,
+                        color: AppColors.textTertiary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  TextSpan(
+                    text: [
+                      if (ageRating?.isNotEmpty == true) 'Age ${ageRating!}',
+                      if (dateLine?.isNotEmpty == true) dateLine!,
+                    ][i],
+                    style: AppText.body.copyWith(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ]),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
           if (broadcastLabel?.isNotEmpty == true) ...[
