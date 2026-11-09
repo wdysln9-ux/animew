@@ -34,23 +34,13 @@ class AnimeExtras {
   bool get isEmpty => videos.isEmpty && openings.isEmpty && endings.isEmpty;
 }
 
-/// Independent AniList -> MAL -> Jikan enrichment pipeline for the anime page.
-/// AniList remains the catalogue identity; MAL/Jikan are used only for extras.
+/// MAL/Jikan supplementary data for the anime page. AniList is not queried here.
 class AnimeExtrasRepository {
   AnimeExtrasRepository._();
 
   static final AnimeExtrasRepository instance = AnimeExtrasRepository._();
 
-  static const _aniList = 'https://graphql.anilist.co';
   static const _jikan = 'https://api.jikan.moe/v4';
-  static const _query = r'''
-query ($id: Int, $search: String) {
-  Media(id: $id, search: $search, type: ANIME) {
-    idMal
-    title { romaji english }
-  }
-}
-''';
 
   final Dio _dio = Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 12),
@@ -60,7 +50,6 @@ query ($id: Int, $search: String) {
   ));
 
   final Map<int, Future<AnimeExtras>> _cache = {};
-  final Map<String, Future<int?>> _idCache = {};
 
   Future<AnimeExtras> load({
     int? malId,
@@ -69,62 +58,30 @@ query ($id: Int, $search: String) {
     String? englishTitle,
     bool forceRefresh = false,
   }) async {
-    final resolvedId = malId ?? await _resolveMalId(
-      anilistId: anilistId,
-      title: title,
-      englishTitle: englishTitle,
-    );
+    final resolvedId = malId ??
+        await _searchJikanId(englishTitle?.trim().isNotEmpty == true
+            ? englishTitle!.trim()
+            : title.trim());
     if (resolvedId == null || resolvedId <= 0) {
-      final trailer = await _fetchAniListTrailer(anilistId);
-      if (trailer != null) {
-        return AnimeExtras(
-          malId: 0,
-          videos: [trailer],
-          themeError: 'ID MyAnimeList belum tersedia untuk lagu tema.',
-        );
-      }
-      throw StateError('Data tambahan anime belum bisa ditemukan.');
+      throw StateError('Data tambahan MAL belum bisa ditemukan.');
     }
     if (forceRefresh) _cache.remove(resolvedId);
     final existing = _cache[resolvedId];
     if (existing != null) return existing;
     final request = () async {
       final primary = await _fetch(resolvedId);
-      final aniTrailer = await _fetchAniListTrailer(anilistId);
-      final videos = <AnimeExtraVideo>[...primary.videos];
-      if (aniTrailer != null &&
-          !videos.any((video) => video.youtubeId == aniTrailer.youtubeId)) {
-        videos.add(aniTrailer);
-      }
-
-      if (primary.isEmpty && aniTrailer == null) {
-        // A stale/source-provided MAL id must not block a title lookup.
-        var fallbackId = await _resolveMalId(
-          anilistId: anilistId,
-          title: title,
-          englishTitle: englishTitle,
+      if (primary.isEmpty) {
+        final fallbackId = await _searchJikanId(
+          englishTitle?.trim().isNotEmpty == true
+              ? englishTitle!.trim()
+              : title,
         );
-        if (fallbackId == null || fallbackId == resolvedId) {
-          fallbackId = await _searchJikanId(
-            englishTitle?.trim().isNotEmpty == true
-                ? englishTitle!.trim()
-                : title,
-          );
-        }
         if (fallbackId != null && fallbackId > 0 && fallbackId != resolvedId) {
           final fallback = await _fetch(fallbackId);
           if (!fallback.isEmpty) return fallback;
         }
       }
-
-      return AnimeExtras(
-        malId: primary.malId,
-        videos: List.unmodifiable(videos),
-        openings: primary.openings,
-        endings: primary.endings,
-        videoError: primary.videoError,
-        themeError: primary.themeError,
-      );
+      return primary;
     }();
     _cache[resolvedId] = request;
     try {
@@ -133,97 +90,6 @@ query ($id: Int, $search: String) {
       _cache.remove(resolvedId);
       rethrow;
     }
-  }
-
-  Future<AnimeExtraVideo?> _fetchAniListTrailer(int? anilistId) async {
-    if (anilistId == null || anilistId <= 0) return null;
-    const query = r'''
-query ($id: Int) {
-  Media(id: $id, type: ANIME) {
-    trailer { id site thumbnail }
-  }
-}
-''';
-    try {
-      final response = await _dio.post<dynamic>(
-        _aniList,
-        data: {
-          'query': query,
-          'variables': {'id': anilistId},
-        },
-      );
-      final root = _map(response.data);
-      final media = _map(_map(root?['data'])?['Media']);
-      final trailer = _map(media?['trailer']);
-      final site = trailer?['site']?.toString().toLowerCase();
-      final id = trailer?['id']?.toString();
-      if (site != 'youtube' || id == null || id.isEmpty) return null;
-      return AnimeExtraVideo(
-        title: 'Trailer',
-        youtubeId: id,
-        imageUrl: trailer?['thumbnail']?.toString().isNotEmpty == true
-            ? trailer!['thumbnail'].toString()
-            : 'https://img.youtube.com/vi/$id/hqdefault.jpg',
-      );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<int?> _resolveMalId({
-    int? anilistId,
-    required String title,
-    String? englishTitle,
-  }) {
-    final preferredTitle = englishTitle?.trim().isNotEmpty == true
-        ? englishTitle!.trim()
-        : title.trim();
-    final key = anilistId != null
-        ? 'anilist:$anilistId:$preferredTitle'
-        : 'title:' + preferredTitle.toLowerCase();
-
-    return _idCache.putIfAbsent(key, () async {
-      try {
-      Future<int?> lookup({int? id, String? search}) async {
-        final response = await _dio.post<dynamic>(
-          _aniList,
-          data: {
-            'query': _query,
-            'variables': {'id': id, 'search': search},
-          },
-        );
-        final root = _map(response.data);
-        final media = _map(_map(root?['data'])?['Media']);
-        final value = media?['idMal'];
-        return value is int ? value : int.tryParse(value?.toString() ?? '');
-      }
-
-      int? resolved;
-      if (anilistId != null) {
-        try {
-          resolved = await lookup(id: anilistId);
-        } catch (_) {
-          // The title search below is an independent fallback, not a reason
-          // to hide all supplementary metadata for this anime.
-        }
-      }
-      if (resolved == null && preferredTitle.isNotEmpty) {
-        try {
-          resolved = await lookup(search: preferredTitle);
-        } catch (_) {
-          // Continue to Jikan's own title index below.
-        }
-      }
-      if (resolved == null && preferredTitle.isNotEmpty) {
-        resolved = await _searchJikanId(preferredTitle);
-      }
-      if (resolved == null) _idCache.remove(key);
-      return resolved;
-      } catch (_) {
-        _idCache.remove(key);
-        rethrow;
-      }
-    });
   }
 
   Future<int?> _searchJikanId(String title) async {

@@ -2236,6 +2236,37 @@ class _DetailViewState extends State<_DetailView> {
           ),
         ),
 
+        if (detail.genres.isNotEmpty || detail.studios.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AnimeDetailGenreChips(
+                  genres: detail.genres,
+                  onTap: (genre) => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => SearchScreen(
+                        initialFilters: MetaFilters(genres: [genre]),
+                      ),
+                    ),
+                  ),
+                ),
+                if (detail.studios.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: _InteractiveCreditLine(
+                      label: 'Studio',
+                      values: detail.studios.take(3).toList(),
+                      onTap: (studio) => Navigator.of(context).push(
+                        StudioPage.route(studio),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+
         // ── 3. White Play + gray Download buttons (full-width, stacked) ─────
         // (The hero banner autoplays the trailer; tap it for fullscreen.)
         //
@@ -2357,37 +2388,6 @@ class _DetailViewState extends State<_DetailView> {
             ),
           ),
         ),
-
-        if (detail.genres.isNotEmpty || detail.studios.isNotEmpty)
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AnimeDetailGenreChips(
-                  genres: detail.genres,
-                  onTap: (genre) => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => SearchScreen(
-                        initialFilters: MetaFilters(genres: [genre]),
-                      ),
-                    ),
-                  ),
-                ),
-                if (detail.studios.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                    child: _InteractiveCreditLine(
-                      label: 'Studio',
-                      values: detail.studios.take(3).toList(),
-                      onTap: (studio) => Navigator.of(context).push(
-                        StudioPage.route(studio),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
 
         if ((cleanSynopsis(detail.description) ?? '').isNotEmpty)
           SliverToBoxAdapter(
