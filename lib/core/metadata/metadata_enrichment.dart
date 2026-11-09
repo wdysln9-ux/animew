@@ -257,10 +257,10 @@ class MetadataEnrichment {
 
   /// Cast + Relations for [d].
   ///
-  /// Cast always comes from AniList or TMDB: MyAnimeList's v2 API serves no
-  /// characters at all (the field is accepted and ignored) and Simkl has no
-  /// people data, so there is nothing to switch to. Relations DO follow the
-  /// user's provider where that provider has them — see [_providerRelations].
+  /// Anime characters, voice actors and franchise links come from Jikan's
+  /// MAL-backed API. Manga/novel credits use AniList, while movie/TV credits
+  /// use TMDB. Provider-specific relation overrides are applied separately
+  /// where those providers expose the required data.
   Future<({List<CastMember> cast, List<MediaRelation> relations})> fetch(
     MediaDetail d,
   ) async {
@@ -279,11 +279,8 @@ class MetadataEnrichment {
   ) async {
     try {
       // Reading kinds are decided FIRST, before any id branch. A manga's MAL
-      // id is a MANGA id, and the id branch below reads the ANIME catalogue —
-      // the numbers are unrelated, so sending one down there returns someone
-      // else's show or nothing at all. Goes to AniList's MANGA side, never the
-      // video databases: see readingExtras for why that distinction is the
-      // whole point.
+      // id is a MANGA id, and the anime lookup below reads a separate catalogue.
+      // Keep reading titles on AniList's MANGA side, never the video databases.
       if (d.type == ProviderType.anime) {
         final id = d.malId ?? await resolveMalId(d);
         if (id == null) return (cast: <CastMember>[], relations: <MediaRelation>[]);
@@ -344,9 +341,8 @@ class MetadataEnrichment {
     final relations = <MediaRelation>[];
 
     // Characters, franchise relations, and recommendations are independent
-    // Jikan endpoints. Fetch them together to avoid three serial network
-    // round-trips and the artificial 1.1s of delays that made detail pages
-    // feel slow even when MAL ids were already known.
+    // Jikan endpoints. Start them together; JikanApi applies one shared
+    // request queue with rate-limit spacing/retries across all detail sections.
     final answers = await Future.wait([
       _get('$base/$id/characters'),
       _get('$base/$id/relations'),
