@@ -593,9 +593,10 @@ class AnimeDetailGenreChips extends StatelessWidget {
 }
 
 class _DetailCredits extends StatefulWidget {
-  const _DetailCredits({required this.genres, required this.studios, required this.onGenreTap, required this.onStudioTap});
+  const _DetailCredits({required this.genres, required this.studios, required this.producers, required this.onGenreTap, required this.onStudioTap});
   final List<String> genres;
   final List<String> studios;
+  final List<String> producers;
   final ValueChanged<String> onGenreTap;
   final ValueChanged<String> onStudioTap;
   @override
@@ -618,17 +619,22 @@ class _DetailCreditsState extends State<_DetailCredits> {
   );
   @override
   Widget build(BuildContext context) {
-    final studios = widget.studios;
+    final credits = [...widget.studios, ...widget.producers];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Column(children: [
         Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6,
           children: [for (final g in widget.genres) _chip(g, () => widget.onGenreTap(g), genre: true)]),
-        if (studios.isNotEmpty) ...[
+        if (credits.isNotEmpty) ...[
           const SizedBox(height: 8),
           Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6,
-            children: [for (final studio in ( _expanded ? studios : studios.take(2).toList())) _chip(studio, () => widget.onStudioTap(studio))]),
-          if (studios.length > 2)
+            children: [
+              for (final credit in (_expanded ? credits : credits.take(2).toList()))
+                _chip(credit, () {
+                  if (widget.studios.contains(credit)) widget.onStudioTap(credit);
+                }),
+            ]),
+          if (credits.length > 2)
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => setState(() => _expanded = !_expanded),
@@ -648,8 +654,9 @@ class _DetailCreditsState extends State<_DetailCredits> {
 }
 
 class AnimeDetailCharacterRail extends StatefulWidget {
-  const AnimeDetailCharacterRail({required this.cast, this.onOpenPerson});
+  const AnimeDetailCharacterRail({required this.cast, this.loading = false, this.onOpenPerson});
   final List<CastMember> cast;
+  final bool loading;
   final ValueChanged<PersonRef>? onOpenPerson;
   @override
   State<AnimeDetailCharacterRail> createState() => _AnimeDetailCharacterRailState();
@@ -659,7 +666,6 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
   @override
   Widget build(BuildContext context) {
     final cast = widget.cast;
-    if (cast.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 22, 0, 0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -677,7 +683,9 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
             ]),
           ),
         ),
-        if (_expanded) ...[
+        if (_expanded && cast.isEmpty)
+          Padding(padding: const EdgeInsets.only(top: 9, right: 16), child: Text(widget.loading ? 'Memuat karakter...' : 'Informasi karakter belum tersedia.', style: AppText.caption.copyWith(color: AppColors.textSecondary))),
+        if (_expanded && cast.isNotEmpty) ...[
           const SizedBox(height: 11),
           SizedBox(height: 128, child: ListView.separated(
             scrollDirection: Axis.horizontal,
@@ -749,7 +757,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     final related = widget.relations.where((r) =>
       !_isRecommended(r) && !seasonRelations.contains(r)).toList();
     final recommendations = widget.relations.where(_isRecommended).toList();
-    final tabs = <String>['Semua Musim', 'Anime Terkait', 'Rekomendasi'];
+    final tabs = <String>['Semua Musim', 'Terkait', 'Rekomendasi'];
     if (_selected >= tabs.length) _selected = 0;
 
     final width = posterRowWidth(context);
@@ -820,7 +828,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                     ));
                   }
                 } else {
-                  final rows = selectedTab == 'Anime Terkait' ? related : recommendations;
+                  final rows = selectedTab == 'Terkait' ? related : recommendations;
                   for (final relation in rows) {
                     cards.add(SizedBox(
                       width: width,

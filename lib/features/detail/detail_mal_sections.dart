@@ -54,14 +54,18 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
     future: _future,
     builder: (context, snapshot) {
       if (snapshot.connectionState != ConnectionState.done) {
-        return const Padding(
-          padding: EdgeInsets.fromLTRB(16, 22, 16, 4),
-          child: Row(
-            children: [
-              SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 1.8)),
-              SizedBox(width: 10),
-              Text('Memuat trailer dan PV...', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-            ],
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 22, 16, 4),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Row(children: [
+              Text('Trailer & PV', style: AppText.headline.copyWith(fontSize: 17)),
+              const Spacer(),
+              const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.6)),
+              const SizedBox(width: 8),
+              Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary),
+            ]),
           ),
         );
       }
@@ -240,14 +244,18 @@ class _MalThemeSectionState extends State<_MalThemeSection> {
     future: _future,
     builder: (context, snapshot) {
       if (snapshot.connectionState != ConnectionState.done) {
-        return const Padding(
-          padding: EdgeInsets.fromLTRB(16, 22, 16, 4),
-          child: Row(
-            children: [
-              SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 1.8)),
-              SizedBox(width: 10),
-              Text('Memuat lagu tema...', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-            ],
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 22, 16, 4),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Row(children: [
+              Text('Lagu Tema', style: AppText.headline.copyWith(fontSize: 17)),
+              const Spacer(),
+              const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.6)),
+              const SizedBox(width: 8),
+              Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary),
+            ]),
           ),
         );
       }

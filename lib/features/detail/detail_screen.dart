@@ -2253,11 +2253,12 @@ class _DetailViewState extends State<_DetailView> {
           ),
         ),
 
-        if (detail.genres.isNotEmpty || detail.studios.isNotEmpty)
+        if (detail.genres.isNotEmpty || detail.studios.isNotEmpty || detail.producers.isNotEmpty)
           SliverToBoxAdapter(
             child: _DetailCredits(
               genres: detail.genres,
               studios: detail.studios,
+              producers: detail.producers,
               onGenreTap: (genre) => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => SearchScreen(initialFilters: MetaFilters(genres: [genre])),
@@ -2414,6 +2415,7 @@ class _DetailViewState extends State<_DetailView> {
               cast: state.cast.isNotEmpty
                   ? state.cast
                   : [for (final name in detail.cast) CastMember(name: name)],
+              loading: state.extrasLoading,
               onOpenPerson: (ref) => Navigator.of(
                 context,
               ).push(PersonPage.route(ref, sourceId: widget.item.sourceId)),

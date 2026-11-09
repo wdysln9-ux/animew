@@ -39,7 +39,7 @@ class MalCatalogue implements AnimeCatalogue {
       // began this season from one merely still running through it.
       'start_season,start_date,mean,media_type';
   static const String _detailFields =
-      '$_listFields,synopsis,studios,media_type,num_chapters,'
+      '$_listFields,synopsis,studios,producers,media_type,num_chapters,'
       'mean,num_list_users,num_scoring_users,rank,rating,broadcast,'
       'average_episode_duration,source,start_date,end_date,nsfw';
 
@@ -319,6 +319,10 @@ class MalCatalogue implements AnimeCatalogue {
       studios: [
         for (final s in (map['studios'] as List? ?? const []))
           if (s is Map && s['name'] is String) s['name'] as String,
+      ],
+      producers: [
+        for (final p in (map['producers'] as List? ?? const []))
+          if (p is Map && p['name'] is String) p['name'] as String,
       ],
       episodes: _episodesFor(map, c),
       year: (map['start_season'] as Map?)?['year']?.toString(),

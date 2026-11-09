@@ -49,6 +49,9 @@ class MediaDetail extends Equatable {
   @JsonKey(defaultValue: <String>[])
   final List<String> studios;
 
+  /// Production committees credited by MAL.
+  final List<String> producers;
+
   @JsonKey(defaultValue: <Episode>[])
   final List<Episode> episodes;
 
@@ -164,6 +167,7 @@ class MediaDetail extends Equatable {
     this.status = MediaStatus.unknown,
     this.genres = const [],
     this.studios = const [],
+    this.producers = const [],
     this.episodes = const [],
     this.cast = const [],
     this.year,
@@ -214,6 +218,7 @@ class MediaDetail extends Equatable {
     MediaStatus? status,
     List<String>? genres,
     List<String>? studios,
+    List<String>? producers,
     List<Episode>? episodes,
     List<String>? cast,
     String? year,
@@ -258,6 +263,7 @@ class MediaDetail extends Equatable {
     status: status ?? this.status,
     genres: genres ?? this.genres,
     studios: studios ?? this.studios,
+    producers: producers ?? this.producers,
     episodes: episodes ?? this.episodes,
     cast: cast ?? this.cast,
     year: year ?? this.year,
@@ -305,6 +311,7 @@ class MediaDetail extends Equatable {
     status,
     genres,
     studios,
+    producers,
     episodes,
     cast,
     year,
