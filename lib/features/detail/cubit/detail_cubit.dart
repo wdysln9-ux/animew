@@ -51,6 +51,7 @@ class DetailState extends Equatable {
     this.cloudflareUrl,
     this.episodesLoading = false,
     this.extrasLoading = false,
+    this.seasonsLoading = false,
   });
 
   final DetailStatus status;
@@ -66,6 +67,7 @@ class DetailState extends Equatable {
   /// draw no Seasons section at all. See [SeasonChain].
   final List<SeasonEntry> seasons;
   final bool extrasLoading;
+  final bool seasonsLoading;
 
   /// 'sub' | 'dub'. Drives the Sub/Dub toggle and the player `category`.
   final String category;
@@ -99,6 +101,7 @@ class DetailState extends Equatable {
     bool clearCloudflareUrl = false,
     bool? episodesLoading,
     bool? extrasLoading,
+    bool? seasonsLoading,
   }) => DetailState(
     status: status ?? this.status,
     detail: detail ?? this.detail,
@@ -114,6 +117,7 @@ class DetailState extends Equatable {
         : (cloudflareUrl ?? this.cloudflareUrl),
     episodesLoading: episodesLoading ?? this.episodesLoading,
     extrasLoading: extrasLoading ?? this.extrasLoading,
+    seasonsLoading: seasonsLoading ?? this.seasonsLoading,
   );
 
   @override
@@ -130,6 +134,7 @@ class DetailState extends Equatable {
     seasons,
     cloudflareUrl,
     extrasLoading,
+    seasonsLoading,
   ];
 }
 
@@ -663,14 +668,18 @@ class DetailCubit extends Cubit<DetailState> {
   /// request, and nothing on screen is waiting for the answer. A miss is an
   /// empty list, which simply means no Seasons section.
   Future<void> _loadSeasons(MediaDetail d) async {
+    if (isClosed || state.seasonsLoading) return;
+    emit(state.copyWith(seasonsLoading: true));
     try {
       final seasons = await sl<MetadataEnrichment>().seasons(d);
-      if (isClosed || seasons.isEmpty) return;
+      if (isClosed) return;
       // The detail may have moved on while the walk was in flight.
       if (state.detail?.url != d.url) return;
       emit(state.copyWith(seasons: seasons));
     } catch (e) {
       _log('seasons failed: $e', level: 'W');
+    } finally {
+      if (!isClosed) emit(state.copyWith(seasonsLoading: false));
     }
   }
 
