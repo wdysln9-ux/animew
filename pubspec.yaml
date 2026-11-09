@@ -319,12 +319,8 @@ flutter:
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter.ttf
-    # The default UI font, and the ONLY one added to the APK for it: a default
-    # has to paint on the first frame, with no network. Every other choice in
-    # Settings → Interface → Appearance → Font is fetched on demand by
-    # SubtitleFontService and registered with FontLoader, which is app-wide —
-    # so they cost download, not install size. Variable, so one file covers
-    # w400 through w800 and headings are really bold rather than smeared.
+    # Nunito is the bundled offline fallback if the default font ever fails
+    # to load. Urbanist above is the actual variable-weight UI default.
     - family: Nunito
       fonts:
         - asset: assets/fonts/Nunito-Regular.ttf
