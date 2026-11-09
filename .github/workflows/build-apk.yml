@@ -126,6 +126,15 @@ jobs:
           mv build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/$APK_NAME"
           echo "APK_PATH=build/app/outputs/flutter-apk/$APK_NAME" >> "$GITHUB_ENV"
 
+      - name: Create delta patch against previous ARM64 release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check bsdiff4
+          python scripts/create_delta.py "$APK_PATH" "1.0.${GITHUB_RUN_NUMBER}"
+
       - name: Publish in-app update release
         uses: softprops/action-gh-release@v2
         with:
@@ -137,5 +146,5 @@ jobs:
             This pre-release was published after the Android APK build completed successfully.
           prerelease: true
           make_latest: false
-          files: ${{ env.APK_PATH }}
+          files: build/app/outputs/flutter-apk/AnimeW-v1.0.${{ github.run_number }}-arm64-v8a.*
           fail_on_unmatched_files: true
