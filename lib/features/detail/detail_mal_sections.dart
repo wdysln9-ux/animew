@@ -341,7 +341,7 @@ class _ThemeSongCard extends StatelessWidget {
     final label = opening ? 'OP' : 'ED';
     final cleanTitle = title
         .replaceFirst(RegExp(r'^["“]'), '')
-        .replaceFirst(RegExp(r'["”](?=\\s+by\\s|\\s*\\()'), '')
+        .replaceFirst(RegExp(r'["”](?=\s+by\s|\s*\()'), '')
         .trim();
 
     return Padding(

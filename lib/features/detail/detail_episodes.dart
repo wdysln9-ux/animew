@@ -1655,15 +1655,11 @@ class _EpisodeRow extends StatelessWidget {
                     ),
                     if (!sl<AppMode>().isTv) ...[
                       const SizedBox(width: 5),
-                      SizedBox(
-                        width: 34,
-                        height: 38,
-                        child: _EpisodeDownloadIcon(
-                          sourceId: sourceId,
-                          showId: showId,
-                          episodeId: ep.id,
-                          onTap: onDownload,
-                        ),
+                      _EpisodeDownloadIcon(
+                        sourceId: sourceId,
+                        showId: showId,
+                        episodeId: ep.id,
+                        onTap: onDownload,
                       ),
                     ],
                   ],
