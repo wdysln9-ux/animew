@@ -164,9 +164,9 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
                     child: SizedBox(
-                      width: 120,
-                      height: 180,
-                      child: _image(poster, width: 480),
+                      width: 132,
+                      height: 198,
+                      child: _image(poster, width: 528),
                     ),
                   ),
                 ),
@@ -386,9 +386,14 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-    decoration: BoxDecoration(color: AppColors.surface2, borderRadius: BorderRadius.circular(6)),
+    decoration: BoxDecoration(
+      color: label.toLowerCase().contains('selesai')
+          ? const Color(0xFF17365F)
+          : const Color(0xFFF47521),
+      borderRadius: BorderRadius.circular(6),
+    ),
     child: Text(label, style: AppText.caption.copyWith(
-      fontSize: 10.5, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+      fontSize: 10.5, color: Colors.white, fontWeight: FontWeight.w700)),
   );
 }
 
@@ -409,8 +414,8 @@ class AnimeDetailActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = primary ? Colors.white : AppColors.textPrimary;
-    final background = primary ? AppColors.accent : AppColors.surface2;
+    final foreground = AppColors.textPrimary;
+    final background = AppColors.surface2;
     return Opacity(
       opacity: onPressed != null || loading ? 1 : 0.42,
       child: Material(
@@ -424,7 +429,7 @@ class AnimeDetailActionButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
-              border: primary ? null : Border.all(color: AppColors.textTertiary.withValues(alpha: 0.28)),
+              border: Border.all(color: AppColors.textTertiary.withValues(alpha: 0.34)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -524,8 +529,9 @@ class AnimeDetailGenreChips extends StatelessWidget {
   Widget build(BuildContext context) {
     if (genres.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Wrap(
+        alignment: WrapAlignment.center,
         spacing: 6,
         runSpacing: 6,
         children: [
@@ -547,6 +553,61 @@ class AnimeDetailGenreChips extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _DetailCredits extends StatefulWidget {
+  const _DetailCredits({required this.genres, required this.studios, required this.onGenreTap, required this.onStudioTap});
+  final List<String> genres;
+  final List<String> studios;
+  final ValueChanged<String> onGenreTap;
+  final ValueChanged<String> onStudioTap;
+  @override
+  State<_DetailCredits> createState() => _DetailCreditsState();
+}
+class _DetailCreditsState extends State<_DetailCredits> {
+  bool _expanded = false;
+  Widget _chip(String label, VoidCallback onTap, {bool genre = false}) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(7),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: genre ? Colors.transparent : AppColors.surface2,
+        border: Border.all(color: genre ? AppColors.accent.withValues(alpha: .72) : AppColors.textTertiary.withValues(alpha: .28)),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(label, style: AppText.caption.copyWith(fontSize: 11, color: genre ? AppColors.accent : AppColors.textSecondary)),
+    ),
+  );
+  @override
+  Widget build(BuildContext context) {
+    final studios = widget.studios;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Column(children: [
+        Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6,
+          children: [for (final g in widget.genres) _chip(g, () => widget.onGenreTap(g), genre: true)]),
+        if (studios.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6,
+            children: [for (final studio in ( _expanded ? studios : studios.take(2).toList())) _chip(studio, () => widget.onStudioTap(studio))]),
+          if (studios.length > 2)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 7, bottom: 2),
+                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Icon(_expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, size: 17, color: AppColors.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(_expanded ? 'Lebih sedikit' : 'Selengkapnya', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+                ]),
+              ),
+            ),
+        ],
+      ]),
     );
   }
 }

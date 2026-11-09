@@ -2107,6 +2107,9 @@ class _DetailViewState extends State<_DetailView> {
           detail.banner ?? item.banner,
         ) ??
         '';
+    // The poster is intentionally reused as the backdrop; do not use the
+    // wide AniList banner for this page's reference design.
+    final heroPosterUrl = detail.cover ?? item.cover ?? coverUrl;
     final coverHeaders = detail.coverHeaders ?? item.coverHeaders;
     final hasCover = coverUrl.isNotEmpty;
 
@@ -2206,8 +2209,8 @@ class _DetailViewState extends State<_DetailView> {
 
         // ── 1. Hero: backdrop + overlapping poster + status/total ──────────
         AnimeDetailHeroSliver(
-          coverUrl: coverUrl,
-          posterUrl: detail.cover ?? item.cover,
+          coverUrl: heroPosterUrl,
+          posterUrl: heroPosterUrl,
           coverHeaders: coverHeaders,
           sourceLabel: (detail.malId ?? item.malId) != null ? 'MAL' : sourceName,
           animeId: (detail.malId ?? item.malId)?.toString() ?? detail.id,
@@ -2238,31 +2241,15 @@ class _DetailViewState extends State<_DetailView> {
 
         if (detail.genres.isNotEmpty || detail.studios.isNotEmpty)
           SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AnimeDetailGenreChips(
-                  genres: detail.genres,
-                  onTap: (genre) => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => SearchScreen(
-                        initialFilters: MetaFilters(genres: [genre]),
-                      ),
-                    ),
-                  ),
+            child: _DetailCredits(
+              genres: detail.genres,
+              studios: detail.studios,
+              onGenreTap: (genre) => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => SearchScreen(initialFilters: MetaFilters(genres: [genre])),
                 ),
-                if (detail.studios.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                    child: _InteractiveCreditLine(
-                      label: 'Studio',
-                      values: detail.studios.take(3).toList(),
-                      onTap: (studio) => Navigator.of(context).push(
-                        StudioPage.route(studio),
-                      ),
-                    ),
-                  ),
-              ],
+              ),
+              onStudioTap: (studio) => Navigator.of(context).push(StudioPage.route(studio)),
             ),
           ),
 

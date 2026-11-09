@@ -20,6 +20,7 @@ class _MalTrailerSection extends StatefulWidget {
 
 class _MalTrailerSectionState extends State<_MalTrailerSection> {
   late Future<AnimeExtras> _future;
+  bool _expanded = true;
 
   @override
   void initState() {
@@ -96,7 +97,20 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Trailer & PV', style: AppText.headline.copyWith(fontSize: 17)),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Row(children: [
+                  Text('Trailer & PV', style: AppText.headline.copyWith(fontSize: 17)),
+                  const Spacer(),
+                  Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.textSecondary),
+                ]),
+              ),
+            ),
+            if (_expanded) ...[
             const SizedBox(height: 12),
             SizedBox(
               height: 132,
@@ -155,6 +169,7 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
                 },
               ),
             ),
+            ],
           ],
         ),
       );
@@ -273,7 +288,7 @@ class _MalThemeSectionState extends State<_MalThemeSection> {
                   const SizedBox(width: 8),
                   Text('${songs.length}', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
                   const Spacer(),
-                  Icon(_expanded ? Icons.expand_less : Icons.chevron_right, color: AppColors.textSecondary),
+                  Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondary),
                 ],
               ),
             ),
