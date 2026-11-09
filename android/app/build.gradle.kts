@@ -184,6 +184,8 @@ configurations.configureEach {
 // Bundles the CloudStream runtime so .cs3 plugins can be DexClassLoaded against
 // it. GPL-3.0 — see docs/cloudstream-integration-spec.md §7.
 dependencies {
+    // Streaming BZip2 decompression for in-app BSDIFF40 APK reconstruction.
+    implementation("org.apache.commons:commons-compress:1.27.1")
     implementation("com.github.recloudstream.cloudstream:library:v4.8.0")
     // Jackson is already on the RUNTIME classpath (CloudStream library transitive
     // dep). compileOnly lets our clean-room DataStore reference JsonMapper for the
