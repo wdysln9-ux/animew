@@ -48,33 +48,57 @@ class MetadataEnrichment {
   }
 
   Future<List<SeasonEntry>> _fetchSeasons(MediaDetail d, int currentId) async {
-    final root = _jikanRelationsCache[currentId] ??
-        await _get('https://api.jikan.moe/v4/anime/$currentId/relations');
-    final rows = root?['data'];
-    if (rows is! List) return const [];
+    Future<List<({int id, String title})>> walk(String direction) async {
+      final result = <({int id, String title})>[];
+      final seen = <int>{currentId};
+      var cursor = currentId;
+      // A normal anime franchise rarely exceeds four main TV entries in
+      // either direction. Keep the walk bounded so a long-running franchise
+      // cannot turn opening one detail page into dozens of requests.
+      while (result.length < 4) {
+        final root = _jikanRelationsCache[cursor] ??
+            await _get('https://api.jikan.moe/v4/anime/$cursor/relations');
+        if (root != null) _jikanRelationsCache[cursor] = root;
+        final rows = root?['data'];
+        if (rows is! List) break;
 
-    final prequels = <({int id, String title})>[];
-    final sequels = <({int id, String title})>[];
-    for (final row in rows) {
-      if (row is! Map) continue;
-      final relation = row['relation']?.toString().toLowerCase();
-      if (relation != 'prequel' && relation != 'sequel') continue;
-      final entries = row['entry'];
-      if (entries is! List) continue;
-      for (final entry in entries) {
-        if (entry is! Map || entry['type']?.toString() != 'anime') continue;
-        final id = (entry['mal_id'] as num?)?.toInt();
-        final title = entry['name']?.toString().trim() ?? '';
-        if (id == null || id <= 0 || id == currentId || title.isEmpty) continue;
-        (relation == 'prequel' ? prequels : sequels).add((id: id, title: title));
+        ({int id, String title})? next;
+        for (final row in rows) {
+          if (row is! Map ||
+              row['relation']?.toString().toLowerCase() != direction) {
+            continue;
+          }
+          final entries = row['entry'];
+          if (entries is! List) continue;
+          for (final entry in entries) {
+            if (entry is! Map || entry['type']?.toString() != 'anime') {
+              continue;
+            }
+            final id = (entry['mal_id'] as num?)?.toInt();
+            final title = entry['name']?.toString().trim() ?? '';
+            if (id == null || id <= 0 || title.isEmpty || seen.contains(id)) {
+              continue;
+            }
+            next = (id: id, title: title);
+            break;
+          }
+          if (next != null) break;
+        }
+        if (next == null) break;
+        seen.add(next.id);
+        result.add(next);
+        cursor = next.id;
       }
+      return result;
     }
 
-    // MAL lists the nearest prequel first. Reverse it so the rail reads in
-    // chronological order. A cap protects the detail page from huge franchises.
+    // Each link points toward the nearest title first. Walk backwards and
+    // forwards independently, then reverse the prequels for chronological order.
+    final before = await walk('prequel');
+    final after = await walk('sequel');
     final ordered = <({int id, String title})>[
-      ...prequels.reversed,
-      ...sequels,
+      ...before.reversed,
+      ...after,
     ];
     final seen = <int>{};
     final candidates = ordered.where((entry) => seen.add(entry.id)).take(8).toList();
@@ -86,7 +110,7 @@ class MetadataEnrichment {
         _get('https://api.jikan.moe/v4/anime/${entry.id}/full'),
     ]);
 
-    final prequelIds = prequels.map((e) => e.id).toSet();
+    final prequelIds = before.map((e) => e.id).toSet();
     final resolved = <({int id, String title, String? cover, int? episodes, int? popularity, bool prequel})>[];
     for (var i = 0; i < candidates.length; i++) {
       final raw = details[i]?['data'];
@@ -139,6 +163,7 @@ class MetadataEnrichment {
     }
     return List.unmodifiable(result);
   }
+
 
   // TMDB v3 — api_key attached by the Dio interceptor (initDependencies).
   static const String _tmdbBase = 'https://api.themoviedb.org/3';

@@ -1,5 +1,5 @@
-// Relations follow the metadata provider the user picked; cast cannot, because
-// neither MAL nor Simkl serves any. The payloads below are trimmed copies of
+// Relations follow the selected metadata provider where supported. Anime
+// characters and voice actors come from Jikan's MAL-backed endpoints. The payloads below are trimmed copies of
 // what the live endpoints actually returned when this was written — both APIs
 // accept fields they do not answer with, so the shapes are worth pinning.
 
