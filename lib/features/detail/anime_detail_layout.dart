@@ -355,7 +355,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           if (broadcastLabel?.isNotEmpty == true) ...[
             const SizedBox(height: 6),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Icon(Icons.access_time_rounded, size: 13, color: AppColors.accent),
+              Icon(Icons.access_time_rounded, size: 13, color: AppColors.accent),
               const SizedBox(width: 5),
               Flexible(child: Text(broadcastLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: AppText.body.copyWith(fontSize: 11.5, color: AppColors.accent))),
