@@ -672,7 +672,7 @@ class AnimeDetailCharacterRail extends StatefulWidget {
   State<AnimeDetailCharacterRail> createState() => _AnimeDetailCharacterRailState();
 }
 class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
-  bool _expanded = false;
+  bool _expanded = true;
   @override
   Widget build(BuildContext context) {
     final cast = widget.cast;
