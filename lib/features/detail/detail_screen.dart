@@ -2413,10 +2413,7 @@ class _DetailViewState extends State<_DetailView> {
               englishTitle: detail.englishTitle,
             ),
           ),
-        if (!isReading &&
-            (state.seasons.isNotEmpty ||
-                state.relations.isNotEmpty ||
-                detail.relations.isNotEmpty))
+        if (!isReading)
           SliverToBoxAdapter(
             child: AnimeDetailSeasonRail(
               seasons: state.seasons,
