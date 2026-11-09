@@ -129,6 +129,7 @@ class DetailState extends Equatable {
     relations,
     seasons,
     cloudflareUrl,
+    extrasLoading,
   ];
 }
 
@@ -634,12 +635,16 @@ class DetailCubit extends Cubit<DetailState> {
         if (isClosed) return;
         if (extras.cast.isNotEmpty || extras.relations.isNotEmpty) {
           emit(state.copyWith(cast: extras.cast, relations: extras.relations));
-          // After the tab has something to show, not before: the walk costs a
-          // request per hop and nobody is waiting on it.
-          unawaited(_loadSeasons(d));
-          return;
         }
+        // Season discovery is independent of cast availability. A title can
+        // have a franchise chain even when its character endpoint is empty.
+        if (d.type == ProviderType.anime) unawaited(_loadSeasons(d));
+        if (extras.cast.isNotEmpty || extras.relations.isNotEmpty) return;
       } catch (_) {/* fall through to source-supplied extras */}
+    }
+    if (d.type == ProviderType.anime && d.malId != null && !isClosed) {
+      // Also attempt the season lookup if the metadata request failed.
+      unawaited(_loadSeasons(d));
     }
     // Fall back to Cast/Relations the source supplied directly (e.g.
     // CloudStream's actors/recommendations) — so the tabs fill even without ids.
