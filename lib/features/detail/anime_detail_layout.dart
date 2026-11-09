@@ -953,7 +953,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                     alignment: Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.only(right: 16),
-                      child: loading && selectedTab == 'Semua Musim'
+                      child: widget.loading && selectedTab == 'Semua Musim'
                           ? Row(
                               children: [
                                 const SizedBox(
