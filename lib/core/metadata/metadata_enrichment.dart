@@ -222,7 +222,18 @@ class MetadataEnrichment {
     final cast = <CastMember>[];
     final relations = <MediaRelation>[];
 
-    final characters = await _get('$base/$id/characters');
+    // Characters, franchise relations, and recommendations are independent
+    // Jikan endpoints. Fetch them together to avoid three serial network
+    // round-trips and the artificial 1.1s of delays that made detail pages
+    // feel slow even when MAL ids were already known.
+    final answers = await Future.wait([
+      _get('$base/$id/characters'),
+      _get('$base/$id/relations'),
+      _get('$base/$id/recommendations'),
+    ]);
+    final characters = answers[0];
+    final related = answers[1];
+    final recs = answers[2];
     final rows = characters?['data'];
     if (rows is List) {
       for (final row in rows.take(40)) {
@@ -240,8 +251,6 @@ class MetadataEnrichment {
       }
     }
 
-    await Future<void>.delayed(const Duration(milliseconds: 550));
-    final related = await _get('$base/$id/relations');
     final relationRows = related?['data'];
     if (relationRows is List) {
       for (final row in relationRows) {
@@ -259,8 +268,6 @@ class MetadataEnrichment {
       }
     }
 
-    await Future<void>.delayed(const Duration(milliseconds: 550));
-    final recs = await _get('$base/$id/recommendations');
     final recRows = recs?['data'];
     if (recRows is List) {
       for (final row in recRows.take(20)) {
