@@ -2154,9 +2154,18 @@ class _DetailViewState extends State<_DetailView> {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
       return '${months[date.month - 1]} ${date.day}, ${date.year}';
     }
-    final dateLine = detail.startDate == null
-        ? null
-        : '${dateLabel(detail.startDate!)}${detail.endDate == null ? '' : ' – ${dateLabel(detail.endDate!)}'}';
+    final countryLabel = switch (detail.country?.toUpperCase()) {
+      'JP' => 'Jepang',
+      'KR' => 'Korea',
+      'CN' => 'China',
+      'TW' => 'Taiwan',
+      _ => detail.country,
+    };
+    final dateLine = [
+      if (countryLabel?.isNotEmpty == true) countryLabel!,
+      if (detail.startDate != null)
+        '${dateLabel(detail.startDate!)}${detail.endDate == null ? '' : ' – ${dateLabel(detail.endDate!)}'}',
+    ].join(' · ');
 
     // ── Netflix-style meta line: "2010 · 10 Seasons · Completed" ────────────
     // Join only what we actually HAVE with " · " (no faked rating/HD/CC).

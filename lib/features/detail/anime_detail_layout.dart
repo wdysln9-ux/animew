@@ -387,7 +387,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
     decoration: BoxDecoration(
-      color: label.toLowerCase().contains('selesai')
+      color: (label.toLowerCase().contains('selesai') || label.toLowerCase().contains('completed'))
           ? const Color(0xFF17365F)
           : const Color(0xFFF47521),
       borderRadius: BorderRadius.circular(6),
