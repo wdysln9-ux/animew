@@ -10,7 +10,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
     required this.coverHeaders,
     required this.sourceLabel,
     required this.animeId,
-    this.maxHeight = 472,
+    this.maxHeight = 381,
   });
 
   final String coverUrl;
@@ -375,18 +375,18 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         children: [
           Text(title, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.largeTitle.copyWith(fontSize: 20, height: 1.14)),
+            style: AppText.largeTitle.copyWith(fontSize: 24, height: 1.14)),
           if (subtitle != null && subtitle.isNotEmpty && subtitle != title) ...[
             const SizedBox(height: 4),
             Text(subtitle, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 12, color: AppColors.textSecondary)),
+              style: AppText.body.copyWith(fontSize: 14, color: AppColors.textSecondary)),
           ],
           if (alternate != null && alternate.isNotEmpty && alternate != title && alternate != subtitle) ...[
             const SizedBox(height: 2),
             Text(alternate, textAlign: TextAlign.center, maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 10.5, color: AppColors.textTertiary)),
+              style: AppText.body.copyWith(fontSize: 12, color: AppColors.textTertiary)),
           ],
           if (metaLine.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -396,7 +396,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                   TextSpan(
                     text: '${i == 0 ? '' : '  ·  '}${metaLine.split('  ·  ')[i]}',
                     style: AppText.body.copyWith(
-                      fontSize: 11,
+                      fontSize: 13,
                       color: i == 0 ? AppColors.accent
                           : (metaLine.split('  ·  ')[i].startsWith('★')
                               ? const Color(0xFF24C66A)
@@ -417,16 +417,16 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 10.5, color: AppColors.textSecondary),
+              style: AppText.body.copyWith(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
           if (broadcastLabel?.isNotEmpty == true) ...[
             const SizedBox(height: 6),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(Icons.access_time_rounded, size: 13, color: AppColors.accent),
+              Icon(Icons.access_time_rounded, size: 15, color: AppColors.accent),
               const SizedBox(width: 5),
               Flexible(child: Text(broadcastLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: AppText.body.copyWith(fontSize: 10.5, color: AppColors.accent))),
+                style: AppText.body.copyWith(fontSize: 12, color: AppColors.accent))),
             ]),
           ],
           if ((format?.isNotEmpty ?? false) || (status?.isNotEmpty ?? false)) ...[
@@ -478,7 +478,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
       child: Text(
         label,
         style: AppText.caption.copyWith(
-          fontSize: 10,
+          fontSize: 11.5,
           color: foreground,
           fontWeight: FontWeight.w700,
         ),
@@ -514,15 +514,15 @@ class AnimeDetailActionButton extends StatelessWidget {
       opacity: onPressed != null || loading ? 1 : 0.42,
       child: Material(
         color: background,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(18),
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(18),
           child: Container(
-            height: 44,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: active
                     ? AppColors.accent
@@ -535,7 +535,7 @@ class AnimeDetailActionButton extends StatelessWidget {
                 Icon(icon, size: 19, color: foreground),
                 const SizedBox(width: 6),
                 Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: AppText.button.copyWith(fontSize: 11, color: foreground))),
+                  style: AppText.button.copyWith(fontSize: 12, color: foreground))),
               ],
             ),
           ),
@@ -676,132 +676,114 @@ class _DetailCredits extends StatefulWidget {
 class _DetailCreditsState extends State<_DetailCredits> {
   bool _expanded = false;
 
-  Widget _chip(
-    String label,
-    Color color, {
-    VoidCallback? onTap,
-    bool outlined = false,
-  }) {
+  Widget _chip(String label, Color color, {VoidCallback? onTap}) {
     final child = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: outlined ? Colors.transparent : color,
-        border: outlined ? Border.all(color: color, width: 1) : null,
-        borderRadius: BorderRadius.circular(6),
+        color: color,
+        borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
         label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: AppText.caption.copyWith(
-          fontSize: 10,
+          fontSize: 11.5,
           height: 1.1,
-          color: outlined ? color : Colors.white,
+          color: Colors.white,
           fontWeight: FontWeight.w600,
         ),
       ),
     );
     if (onTap == null) return child;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: child,
-    );
+    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(5), child: child);
   }
-
-  Widget _label(String value) => Padding(
-    padding: const EdgeInsets.only(bottom: 5),
-    child: Text(
-      value,
-      style: AppText.caption.copyWith(
-        fontSize: 10,
-        color: AppColors.textSecondary,
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-  );
 
   @override
   Widget build(BuildContext context) {
     const studioBlue = Color(0xFF2864B7);
     const producerPink = Color(0xFFB94B83);
     final genreColor = AppColors.accent;
-    final expanded = _expanded || widget.studios.isEmpty;
-    final visibleStudios = expanded
-        ? widget.studios
-        : widget.studios.take(2).toList(growable: false);
-    final hasHidden = widget.studios.length > visibleStudios.length ||
-        (widget.studios.isNotEmpty && widget.producers.isNotEmpty);
+    final hasCredits = widget.studios.isNotEmpty || widget.producers.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (widget.genres.isNotEmpty)
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: 5,
-              runSpacing: 5,
+              spacing: 6,
+              runSpacing: 6,
               children: [
                 for (final genre in widget.genres)
-                  _chip(
-                    genre,
-                    genreColor,
-                    outlined: true,
+                  InkWell(
                     onTap: () => widget.onGenreTap(genre),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: genreColor.withValues(alpha: 0.8)),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        genre,
+                        style: AppText.caption.copyWith(
+                          fontSize: 11.5,
+                          color: genreColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
               ],
             ),
-          if (widget.studios.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _label('Studio'),
+          if (hasCredits && !_expanded) ...[
+            const SizedBox(height: 7),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _expanded = true),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: Text('Selengkapnya', style: AppText.caption.copyWith(
+                  fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w700,
+                )),
+              ),
+            ),
+          ],
+          if (_expanded && widget.studios.isNotEmpty) ...[
+            const SizedBox(height: 7),
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: 5,
-              runSpacing: 5,
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                for (final studio in visibleStudios)
-                  _chip(
-                    studio,
-                    studioBlue,
-                    onTap: () => widget.onStudioTap(studio),
-                  ),
-                if (!expanded && hasHidden)
-                  GestureDetector(
-                    onTap: () => setState(() => _expanded = true),
-                    child: _chip('Selengkapnya', AppColors.textSecondary),
-                  ),
+                for (final studio in widget.studios)
+                  _chip(studio, studioBlue, onTap: () => widget.onStudioTap(studio)),
               ],
             ),
           ],
-          if (expanded && widget.producers.isNotEmpty) ...[
-            const SizedBox(height: 9),
-            _label('Produser'),
+          if (_expanded && widget.producers.isNotEmpty) ...[
+            const SizedBox(height: 6),
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: 5,
-              runSpacing: 5,
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                for (final producer in widget.producers)
-                  _chip(producer, producerPink),
+                for (final producer in widget.producers) _chip(producer, producerPink),
               ],
             ),
           ],
-          if (expanded && hasHidden)
+          if (_expanded && hasCredits)
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => setState(() => _expanded = false),
               child: Padding(
-                padding: const EdgeInsets.only(top: 5, bottom: 1),
-                child: Text(
-                  'Lebih sedikit',
-                  style: AppText.caption.copyWith(
-                    fontSize: 10,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                padding: const EdgeInsets.only(top: 6, bottom: 1),
+                child: Text('Lebih sedikit', style: AppText.caption.copyWith(
+                  fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600,
+                )),
               ),
             ),
         ],
