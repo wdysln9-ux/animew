@@ -35,38 +35,16 @@ class MetadataEnrichment {
   final AniListApi _anilist;
   final MetadataProviderPrefs? Function()? _prefs;
 
-  /// Built lazily and kept: the chain caches per franchise, and throwing that
-  /// away between titles would re-walk (and re-request) the same seasons.
-  late final SeasonChain _seasons =
-      SeasonChain(_anilist, sl<EpisodeMetadataService>());
-
+  /// Anime franchise relationships are supplied by Jikan/MAL. The old
+  /// AniList season-chain lookup is intentionally not used on anime details.
   /// The franchise's seasons in order, or empty when [d] has no prequel and no
   /// sequel — the ordinary case.
   ///
   /// Anime only: AniList models each season as its own title, which is the
   /// whole reason this exists. A TMDB series already carries real seasons in
   /// one entry and needs nothing here.
-  Future<List<SeasonEntry>> seasons(MediaDetail d) async {
-    if (d.type != ProviderType.anime) return const [];
-    try {
-      final malId = d.malId;
-      if (malId == null) return const [];
-      // MediaDetail carries a MAL id, never an AniList one, and the walk is
-      // AniList-native — so resolve once here rather than per hop.
-      final media = await _anilist.mediaByMalId(malId);
-      if (media == null) return const [];
-      return await _seasons.of(
-        anilistId: media.id,
-        currentTitle: d.title,
-        currentMalId: malId,
-        currentCover: d.cover,
-        currentEpisodes: media.episodes,
-        currentPopularity: d.popularity,
-      );
-    } catch (_) {
-      return const [];
-    }
-  }
+  Future<List<SeasonEntry>> seasons(MediaDetail d) async => const [];
+
 
   // TMDB v3 — api_key attached by the Dio interceptor (initDependencies).
   static const String _tmdbBase = 'https://api.themoviedb.org/3';
@@ -83,20 +61,29 @@ class MetadataEnrichment {
     }
   }
 
-  /// A movie-typed title from an anime-capable source may actually be anime the
-  /// plugin mislabeled. Return its MAL id ONLY on a strict AniList match (exact
-  /// normalized title + year within ±1); a known year is required — no year, no
-  /// guess. Null otherwise. The caller gates on source anime-capability.
+  /// Conservative title/year check for movie-typed entries from anime-capable
+  /// sources. Resolve against Jikan/MAL so the anime detail path stays MAL-only.
   Future<int?> promoteMovieToAnimeMalId(MediaDetail d) async {
     final year = int.tryParse(d.year ?? '');
     if (year == null || d.title.trim().isEmpty) return null;
     try {
-      final candidates = await _anilist.searchMedia(d.title);
-      return confidentAnimeMalId(d.title, year, candidates);
-    } catch (_) {
-      return null;
-    }
+      final response = await _get('https://api.jikan.moe/v4/anime', {'q': d.title, 'limit': 10});
+      final rows = response?['data'];
+      if (rows is! List) return null;
+      final wanted = _normTitle(d.title);
+      for (final row in rows) {
+        if (row is! Map) continue;
+        final titles = [row['title']?.toString() ?? '', row['title_english']?.toString() ?? ''];
+        final start = row['year'] ?? (row['aired'] is Map ? (row['aired'] as Map)['prop'] is Map ? ((row['aired'] as Map)['prop'] as Map)['from'] is Map ? (((row['aired'] as Map)['prop'] as Map)['from'] as Map)['year'] : null : null : null);
+        final candidateYear = (start as num?)?.toInt();
+        if (titles.any((value) => _normTitle(value) == wanted) && candidateYear != null && (candidateYear - year).abs() <= 1) {
+          return (row['mal_id'] as num?)?.toInt();
+        }
+      }
+    } catch (_) {}
+    return null;
   }
+
 
   /// Pure guard: the MAL id of the first AniList candidate whose normalized
   /// title (romaji OR english) EXACTLY equals [title] and whose seasonYear is
