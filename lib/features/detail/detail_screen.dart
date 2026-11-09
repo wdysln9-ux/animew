@@ -439,7 +439,7 @@ class _DetailView extends StatefulWidget {
 }
 
 class _DetailViewState extends State<_DetailView> {
-  static const double _expandedHeight = 438;
+  static const double _expandedHeight = 250;
 
   // The episode url we've already kicked a background source-prefetch for, so we
   // don't re-fire it on every rebuild (see _maybePrefetch).
@@ -2147,6 +2147,13 @@ class _DetailViewState extends State<_DetailView> {
     final formatStr = detail.format?.trim().isNotEmpty == true
         ? detail.format!.trim()
         : null;
+    String dateLabel(DateTime date) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    }
+    final dateLine = detail.startDate == null
+        ? null
+        : '${dateLabel(detail.startDate!)}${detail.endDate == null ? '' : ' – ${dateLabel(detail.endDate!)}'}';
 
     // ── Netflix-style meta line: "2010 · 10 Seasons · Completed" ────────────
     // Join only what we actually HAVE with " · " (no faked rating/HD/CC).
@@ -2221,6 +2228,10 @@ class _DetailViewState extends State<_DetailView> {
               metaLine: metaLine,
               format: formatStr,
               status: statusStr,
+              ageRating: detail.ageRating,
+              dateLine: dateLine,
+              broadcastLabel: detail.broadcastLabel,
+              rank: detail.rank,
             ),
           ),
         ),

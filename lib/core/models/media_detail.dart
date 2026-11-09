@@ -142,6 +142,16 @@ class MediaDetail extends Equatable {
 
   final bool isAdult;
 
+  /// MAL-specific metadata shown in the compact hero information rows.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? ageRating;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? broadcastLabel;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final int? rank;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final int? scoringUsers;
+
   const MediaDetail({
     required this.id,
     required this.title,
@@ -182,6 +192,10 @@ class MediaDetail extends Equatable {
     this.nativeTitle,
     this.synonyms = const [],
     this.isAdult = false,
+    this.ageRating,
+    this.broadcastLabel,
+    this.rank,
+    this.scoringUsers,
   });
 
   factory MediaDetail.fromJson(Map<String, dynamic> json) =>
@@ -228,6 +242,10 @@ class MediaDetail extends Equatable {
     String? nativeTitle,
     List<String>? synonyms,
     bool? isAdult,
+    String? ageRating,
+    String? broadcastLabel,
+    int? rank,
+    int? scoringUsers,
   }) => MediaDetail(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -268,6 +286,10 @@ class MediaDetail extends Equatable {
     nativeTitle: nativeTitle ?? this.nativeTitle,
     synonyms: synonyms ?? this.synonyms,
     isAdult: isAdult ?? this.isAdult,
+    ageRating: ageRating ?? this.ageRating,
+    broadcastLabel: broadcastLabel ?? this.broadcastLabel,
+    rank: rank ?? this.rank,
+    scoringUsers: scoringUsers ?? this.scoringUsers,
   );
 
   @override
@@ -311,6 +333,10 @@ class MediaDetail extends Equatable {
     nativeTitle,
     synonyms,
     isAdult,
+    ageRating,
+    broadcastLabel,
+    rank,
+    scoringUsers,
   ];
 }
 

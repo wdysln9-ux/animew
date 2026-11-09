@@ -164,8 +164,8 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
                     child: SizedBox(
-                      width: 144,
-                      height: 210,
+                      width: 120,
+                      height: 180,
                       child: _image(poster, width: 480),
                     ),
                   ),
@@ -303,6 +303,10 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     this.englishTitle,
     this.format,
     this.status,
+    this.ageRating,
+    this.dateLine,
+    this.broadcastLabel,
+    this.rank,
   });
 
   final String title;
@@ -310,6 +314,10 @@ class AnimeDetailTitleBlock extends StatelessWidget {
   final String metaLine;
   final String? format;
   final String? status;
+  final String? ageRating;
+  final String? dateLine;
+  final String? broadcastLabel;
+  final int? rank;
 
   @override
   Widget build(BuildContext context) {
@@ -333,6 +341,25 @@ class AnimeDetailTitleBlock extends StatelessWidget {
             Text(metaLine, textAlign: TextAlign.center, maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppText.body.copyWith(fontSize: 12, color: AppColors.textSecondary)),
+          ],
+          if ((ageRating?.isNotEmpty ?? false) || (dateLine?.isNotEmpty ?? false) || rank != null) ...[
+            const SizedBox(height: 7),
+            Text(
+              [if (ageRating?.isNotEmpty == true) 'Usia ${ageRating!}', if (dateLine?.isNotEmpty == true) dateLine!, if (rank != null) 'Peringkat #$rank'].join('   ·   '),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.body.copyWith(fontSize: 11.5, color: AppColors.textSecondary),
+            ),
+          ],
+          if (broadcastLabel?.isNotEmpty == true) ...[
+            const SizedBox(height: 6),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const Icon(Icons.access_time_rounded, size: 13, color: AppColors.accent),
+              const SizedBox(width: 5),
+              Flexible(child: Text(broadcastLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: AppText.body.copyWith(fontSize: 11.5, color: AppColors.accent))),
+            ]),
           ],
           if ((format?.isNotEmpty ?? false) || (status?.isNotEmpty ?? false)) ...[
             const SizedBox(height: 10),

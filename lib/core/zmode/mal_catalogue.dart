@@ -40,8 +40,8 @@ class MalCatalogue implements AnimeCatalogue {
       'start_season,start_date,mean,media_type';
   static const String _detailFields =
       '$_listFields,synopsis,studios,media_type,num_chapters,'
-      'mean,num_list_users,average_episode_duration,source,'
-      'start_date,end_date,nsfw';
+      'mean,num_list_users,num_scoring_users,rank,rating,broadcast,'
+      'average_episode_duration,source,start_date,end_date,nsfw';
 
   Future<Response<dynamic>> _get(String path, Map<String, dynamic> q) =>
       _dio.get<dynamic>(
@@ -352,6 +352,10 @@ class MalCatalogue implements AnimeCatalogue {
       ],
       // 'white' is the safe bucket; 'gray' and 'black' are not.
       isAdult: (map['nsfw'] as String?) != null && map['nsfw'] != 'white',
+      ageRating: _ageRating(map['rating'] as String?),
+      broadcastLabel: _broadcastLabel(map['broadcast']),
+      rank: map['rank'] as int?,
+      scoringUsers: map['num_scoring_users'] as int?,
     );
   }
 
@@ -361,6 +365,35 @@ class MalCatalogue implements AnimeCatalogue {
   static int? _score(Object? mean) {
     final v = (mean as num?)?.toDouble();
     return v == null || v <= 0 ? null : (v * 10).round();
+  }
+
+  static String? _ageRating(String? value) => switch (value) {
+    'g' => 'Semua umur',
+    'pg' => 'Bimbingan orang tua',
+    'pg_13' => '13+',
+    'r' => '17+',
+    'r+' => '17+',
+    'rx' => 'Dewasa',
+    _ => null,
+  };
+
+  static String? _broadcastLabel(Object? raw) {
+    if (raw is! Map) return null;
+    final day = raw['day_of_the_week']?.toString().trim();
+    final time = raw['start_time']?.toString().trim();
+    if ((day == null || day.isEmpty) && (time == null || time.isEmpty)) return null;
+    final parts = <String>[];
+    if (day != null && day.isNotEmpty) {
+      parts.add(switch (day.toLowerCase()) {
+        'mondays' => 'Senin', 'tuesdays' => 'Selasa', 'wednesdays' => 'Rabu',
+        'thursdays' => 'Kamis', 'fridays' => 'Jumat', 'saturdays' => 'Sabtu',
+        'sundays' => 'Minggu', _ => day,
+      });
+    }
+    if (time != null && time.isNotEmpty) parts.add(time);
+    final zone = raw['timezone']?.toString().trim();
+    if (zone != null && zone.isNotEmpty) parts.add('($zone)');
+    return parts.join(' ');
   }
 
   static int? _durationMins(Object? seconds) {
