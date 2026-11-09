@@ -13,7 +13,7 @@ void main() {
     dir = await Directory.systemTemp.createTemp('app_font_prefs');
     Hive.init(dir.path);
     AppText.fontFamily = AppText.defaultFontFamily;
-    await AppFontPrefs.init();
+    await AppFontPrefs.init(loadDownloaded: false);
   });
 
   tearDown(() async {
@@ -23,7 +23,7 @@ void main() {
 
   test('a fresh install is on the default', () {
     expect(AppFontPrefs.family, AppText.defaultFontFamily);
-    expect(AppText.fontFamily, AppText.defaultFontFamily);
+    expect(AppText.fontFamily, AppText.fallbackFontFamily);
   });
 
   test('choosing a font applies it and bumps the revision', () async {
@@ -80,8 +80,10 @@ void main() {
     }
   });
 
-  test('the default is bundled — it has to paint before any network', () {
-    expect(AppFontPrefs.isBundled(AppText.defaultFontFamily), isTrue);
+  test('Urbanist is the default downloadable family', () {
+    expect(AppFontPrefs.family, 'Urbanist');
+    expect(AppFontPrefs.isBundled('Urbanist'), isFalse);
+    expect(subtitleFontFileName('Urbanist'), 'Urbanist.ttf');
   });
 
   test('a downloadable font is NOT bundled, or it costs install size', () async {
@@ -94,8 +96,8 @@ void main() {
       );
       // And the fetcher has to know the filename, or ensure() can never work.
       expect(
-        subtitleFontFileName(f.family),
-        isNotNull,
+        f.family == 'Urbanist' || subtitleFontFileName(f.family) != null,
+        isTrue,
         reason: '"${f.family}" has no file mapping, so it can never download',
       );
     }
