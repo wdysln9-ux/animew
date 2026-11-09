@@ -9,7 +9,10 @@ class JikanApi {
 
   static Future<void> _tail = Future<void>.value();
   static DateTime? _lastRequestAt;
+  static final List<DateTime> _recentStarts = <DateTime>[];
   static const Duration _minimumGap = Duration(milliseconds: 380);
+  static const Duration _window = Duration(minutes: 1);
+  static const int _requestsPerWindow = 55;
 
   static Future<dynamic> get(
     Dio dio,
@@ -24,14 +27,25 @@ class JikanApi {
 
     try {
       for (var attempt = 0; attempt < 3; attempt++) {
+        var now = DateTime.now();
+        _recentStarts.removeWhere((started) => now.difference(started) >= _window);
+        if (_recentStarts.length >= _requestsPerWindow) {
+          final waitUntil = _recentStarts.first.add(_window);
+          final wait = waitUntil.difference(now);
+          if (wait > Duration.zero) await Future<void>.delayed(wait);
+          now = DateTime.now();
+          _recentStarts.removeWhere((started) => now.difference(started) >= _window);
+        }
         final last = _lastRequestAt;
         if (last != null) {
-          final elapsed = DateTime.now().difference(last);
+          final elapsed = now.difference(last);
           if (elapsed < _minimumGap) {
             await Future<void>.delayed(_minimumGap - elapsed);
+            now = DateTime.now();
           }
         }
-        _lastRequestAt = DateTime.now();
+        _lastRequestAt = now;
+        _recentStarts.add(now);
 
         try {
           final response = await dio.get<dynamic>(
