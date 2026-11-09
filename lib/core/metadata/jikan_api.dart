@@ -39,7 +39,7 @@ class JikanApi {
             queryParameters: query,
             options: Options(
               headers: headers,
-              validateStatus: (status) => status != null && status < 600,
+              validateStatus: (status) => status != null && status < 400,
             ),
           );
           final status = response.statusCode ?? 200;
