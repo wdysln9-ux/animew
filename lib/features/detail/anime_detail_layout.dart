@@ -436,7 +436,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                         child: Icon(
                           Icons.visibility_rounded,
                           size: 14,
-                          color: AppColors.textSecondary,
+                          color: Colors.white,
                         ),
                       ),
                     ),
