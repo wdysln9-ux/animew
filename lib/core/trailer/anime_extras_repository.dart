@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 
+import '../metadata/jikan_api.dart';
+
 class AnimeExtraVideo {
   const AnimeExtraVideo({
     required this.title,
@@ -93,11 +95,12 @@ class AnimeExtrasRepository {
   }
 
   Future<int?> _searchJikanId(String title) async {
-    final response = await _dio.get<dynamic>(
+    final response = await JikanApi.get(
+      _dio,
       '$_jikan/anime',
-      queryParameters: {'q': title, 'limit': 10},
+      query: {'q': title, 'limit': 10},
     );
-    final root = _map(response.data);
+    final root = _map(response);
     final entries = _list(root?['data']) ?? const [];
     String normalize(String value) =>
         value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
@@ -184,27 +187,7 @@ class AnimeExtrasRepository {
     }
   }
 
-  Future<dynamic> _getWithRetry(String url) async {
-    for (var attempt = 0; attempt < 3; attempt++) {
-      try {
-        final response = await _dio.get<dynamic>(url);
-        return response.data;
-      } on DioException catch (error) {
-        final status = error.response?.statusCode;
-        final retryable = status == 429 || (status != null && status >= 500);
-        if (attempt < 2 && retryable) {
-          // Jikan rate limits with HTTP 429. Back off progressively instead
-          // of immediately issuing another request into the same limit.
-          await Future<void>.delayed(
-            Duration(milliseconds: status == 429 ? 1200 * (attempt + 1) : 700),
-          );
-          continue;
-        }
-        rethrow;
-      }
-    }
-    throw StateError('Jikan tidak merespons.');
-  }
+  Future<dynamic> _getWithRetry(String url) => JikanApi.get(_dio, url);
 
   static Map<String, dynamic>? _map(dynamic value) => value is Map
       ? Map<String, dynamic>.from(value)
