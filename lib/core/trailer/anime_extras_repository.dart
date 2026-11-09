@@ -60,10 +60,22 @@ class AnimeExtrasRepository {
     String? englishTitle,
     bool forceRefresh = false,
   }) async {
-    final resolvedId = malId ??
-        await _searchJikanId(englishTitle?.trim().isNotEmpty == true
-            ? englishTitle!.trim()
-            : title.trim());
+    int? resolvedId = malId;
+    if (resolvedId == null) {
+      final titles = <String>{
+        if (englishTitle?.trim().isNotEmpty == true) englishTitle!.trim(),
+        title.trim(),
+      };
+      for (final candidate in titles) {
+        if (candidate.isEmpty) continue;
+        try {
+          resolvedId = await _searchJikanId(candidate);
+        } catch (_) {
+          // Keep trying the alternate title if Jikan is temporarily unavailable.
+        }
+        if (resolvedId != null) break;
+      }
+    }
     if (resolvedId == null || resolvedId <= 0) {
       throw StateError('Data tambahan MAL belum bisa ditemukan.');
     }
@@ -102,8 +114,7 @@ class AnimeExtrasRepository {
     );
     final root = _map(response);
     final entries = _list(root?['data']) ?? const [];
-    String normalize(String value) =>
-        value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    String normalize(String value) => value.toLowerCase().replaceAll(RegExp(r'[^\\p{L}\\p{N}]', unicode: true), '');
     final wanted = normalize(title);
 
     for (final raw in entries) {
