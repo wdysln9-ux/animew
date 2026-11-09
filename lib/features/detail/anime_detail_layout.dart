@@ -10,7 +10,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
     required this.coverHeaders,
     required this.sourceLabel,
     required this.animeId,
-    this.maxHeight = 386,
+    this.maxHeight = 376,
   });
 
   final String coverUrl;
