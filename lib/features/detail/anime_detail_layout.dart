@@ -180,7 +180,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: -12,
+                bottom: 0,
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
