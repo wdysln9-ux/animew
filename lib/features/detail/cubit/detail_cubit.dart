@@ -718,13 +718,13 @@ class DetailCubit extends Cubit<DetailState> {
 String statusLabel(MediaStatus status) {
   switch (status) {
     case MediaStatus.ongoing:
-      return 'Ongoing';
+      return 'Tayang';
     case MediaStatus.completed:
-      return 'Completed';
+      return 'Selesai';
     case MediaStatus.hiatus:
       return 'Hiatus';
     case MediaStatus.cancelled:
-      return 'Cancelled';
+      return 'Dibatalkan';
     case MediaStatus.unknown:
       return '';
   }
