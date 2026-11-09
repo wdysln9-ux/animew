@@ -17,7 +17,7 @@ import java.io.RandomAccessFile
  * chunks so rebuilding an APK does not require keeping the whole APK in RAM.
  */
 object ApkDeltaPatcher {
-    private const val HEADER_SIZE = 32
+    private const val HEADER_SIZE = 32L
     private const val BUFFER_SIZE = 64 * 1024
     private const val MAX_OUTPUT_SIZE = 300L * 1024L * 1024L
 
