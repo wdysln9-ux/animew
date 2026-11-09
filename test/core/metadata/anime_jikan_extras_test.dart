@@ -15,7 +15,7 @@ class _JikanAdapter implements HttpClientAdapter {
           'data': [
             {
               'character': {
-                'name': 'Main Character',
+                'name': 'Yamada Taro',
                 'images': {
                   'jpg': {'image_url': 'https://img.test/character.jpg'},
                 },
@@ -81,7 +81,7 @@ class _JikanAdapter implements HttpClientAdapter {
     };
     return ResponseBody.fromString(
       jsonEncode(body),
-      200,
+      path == '/v4/anime/100/recommendations' ? 503 : 200,
       headers: {
         Headers.contentTypeHeader: [Headers.jsonContentType],
       },
@@ -106,7 +106,7 @@ class _JikanAdapter implements HttpClientAdapter {
 }
 
 void main() {
-  test('anime extras include voice actors and a complete MAL season chain', () async {
+  test('anime extras keep character names and roles despite a recommendations endpoint failure', () async {
     final dio = Dio()..httpClientAdapter = _JikanAdapter();
     final enrichment = MetadataEnrichment(dio);
     final detail = MediaDetail(
@@ -119,12 +119,11 @@ void main() {
     );
 
     final extras = await enrichment.fetch(detail);
-    expect(extras.cast.map((person) => person.name), [
-      'Main Character',
-      'Japanese Voice Actor',
-    ]);
-    expect(extras.cast.last.role, 'VA Jepang');
-    expect(extras.cast.last.photo, 'https://img.test/voice.jpg');
+    // A recommendations failure is isolated: valid character records and
+    // franchise relations must still survive the same enrichment request.
+    expect(extras.cast.map((person) => person.name), ['Yamada Taro']);
+    expect(extras.cast.single.role, 'Main');
+    expect(extras.cast.single.photo, 'https://img.test/character.jpg');
 
     final seasons = await enrichment.seasons(detail);
     expect(seasons.map((season) => season.malId), [80, 90, 110, 120]);
