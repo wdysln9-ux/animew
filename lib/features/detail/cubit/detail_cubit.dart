@@ -581,7 +581,7 @@ class DetailCubit extends Cubit<DetailState> {
     }
 
     // Id-less anime (Aniyomi, most CloudStream): resolve the MAL id from title
-    // via AniList and store it, so the player, scrobbler AND the filler-episode
+    // via Jikan and store it, so the player, scrobbler AND the filler-episode
     // lookup all key off a real id instead of nothing.
     if (d.malId == null && d.type == ProviderType.anime) {
       try {
@@ -618,8 +618,8 @@ class DetailCubit extends Cubit<DetailState> {
     // _enrichEpisodesOnly guards against patching a stale episode list.
     unawaited(_enrichEpisodesOnly(d));
 
-    // Prefer id-based enrichment (AniList/TMDB) — it's richer: actor photos,
-    // more entries, properly-linked relations. Id-less anime (Aniyomi, most
+    // Prefer id-based enrichment (Jikan/MAL for anime, AniList for reading,
+    // TMDB for movies/TV). Id-less anime (Aniyomi, most
     // CloudStream) also go through fetch(), which resolves extras by title.
     // Manga/novel join the id-less title-search path. They resolve no id at
     // all above (the TMDB step is movie-only, the MAL step anime-only), so
