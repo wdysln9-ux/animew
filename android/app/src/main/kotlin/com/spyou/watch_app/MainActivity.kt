@@ -498,6 +498,36 @@ class MainActivity : AppCompatActivity(), FlutterEngineConfigurator {
             "zangetsu/update_downloads",
         ).setMethodCallHandler { call, result ->
             when (call.method) {
+                "getInstalledApkPath" -> {
+                    result.success(applicationInfo.sourceDir)
+                }
+                "applyBsdiff" -> {
+                    val basePath = call.argument<String>("basePath")
+                    val patchPath = call.argument<String>("patchPath")
+                    val outputPath = call.argument<String>("outputPath")
+                    val expectedSize = call.argument<Number>("expectedSize")?.toLong() ?: 0L
+                    if (basePath.isNullOrBlank() || patchPath.isNullOrBlank() ||
+                        outputPath.isNullOrBlank() || expectedSize <= 0L
+                    ) {
+                        result.error("BAD_ARGS", "Invalid delta patch arguments", null)
+                    } else {
+                        Thread {
+                            try {
+                                val rebuilt = ApkDeltaPatcher.apply(
+                                    File(basePath),
+                                    File(patchPath),
+                                    File(outputPath),
+                                    expectedSize,
+                                )
+                                runOnUiThread { result.success(rebuilt.absolutePath) }
+                            } catch (e: Exception) {
+                                runOnUiThread {
+                                    result.error("PATCH_FAILED", e.message ?: "Could not rebuild APK", null)
+                                }
+                            }
+                        }.start()
+                    }
+                }
                 "saveApkToDownloads" -> {
                     val sourcePath = call.argument<String>("sourcePath")
                     val fileName = call.argument<String>("fileName")
