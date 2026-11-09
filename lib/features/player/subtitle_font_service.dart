@@ -106,7 +106,7 @@ class SubtitleFontService {
         return false;
       }
     }
-    final fname = subtitleFontFileName(family);
+    final fname = _fileNameFor(family);
     if (fname == null) return false;
     try {
       final dir = await _fontsDir();
@@ -153,7 +153,8 @@ class SubtitleFontService {
       final families = <String, String>{
         for (final family in kBundledSubtitleFonts)
           if (family.isNotEmpty && !bundled.contains(family))
-            family: ?subtitleFontFileName(family),
+            family: ?_fileNameFor(family),
+        'Urbanist': 'Urbanist.ttf',
         ..._customs,
       };
       for (final e in families.entries) {
