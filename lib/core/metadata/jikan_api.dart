@@ -55,7 +55,7 @@ class JikanApi {
               response.headers.value('retry-after') ?? '',
             );
             final waitMs = retryAfter != null
-                ? (retryAfter * 1000).clamp(1200, 6000)
+                ? (retryAfter * 1000).clamp(1200, 6000).toInt()
                 : (status == 429 ? 1200 * (attempt + 1) : 700);
             await Future<void>.delayed(Duration(milliseconds: waitMs));
             continue;
