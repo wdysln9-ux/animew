@@ -314,8 +314,27 @@ flutter:
   fonts:
     - family: Urbanist
       fonts:
+        # Urbanist is a variable font (wght 100–900). Register the same
+        # variable asset across its supported weights so Flutter resolves
+        # semibold/bold UI styles to the real variable weight, not faux bold.
+        - asset: assets/fonts/Urbanist.ttf
+          weight: 100
+        - asset: assets/fonts/Urbanist.ttf
+          weight: 200
+        - asset: assets/fonts/Urbanist.ttf
+          weight: 300
         - asset: assets/fonts/Urbanist.ttf
           weight: 400
+        - asset: assets/fonts/Urbanist.ttf
+          weight: 500
+        - asset: assets/fonts/Urbanist.ttf
+          weight: 600
+        - asset: assets/fonts/Urbanist.ttf
+          weight: 700
+        - asset: assets/fonts/Urbanist.ttf
+          weight: 800
+        - asset: assets/fonts/Urbanist.ttf
+          weight: 900
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter.ttf
