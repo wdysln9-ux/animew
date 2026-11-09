@@ -7,15 +7,22 @@ import hashlib
 import json
 import os
 import sys
-import tempfile
 import urllib.request
 from pathlib import Path
 
 import bsdiff4
 
 
-def request_bytes(url: str, token: str | None = None) -> bytes:
-    headers = {"Accept": "application/vnd.github+json", "User-Agent": "AnimeW-Delta-Builder"}
+def request_bytes(
+    url: str,
+    token: str | None = None,
+    accept: str = "application/vnd.github+json",
+) -> bytes:
+    headers = {
+        "Accept": accept,
+        "User-Agent": "AnimeW-Delta-Builder",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
     if token:
         headers["Authorization"] = f"Bearer {token}"
     req = urllib.request.Request(url, headers=headers)
@@ -63,7 +70,14 @@ def main() -> int:
             print("No previous ARM64 release APK found; publishing full APK only.")
             return 0
 
-        old_apk = request_bytes(previous_asset["browser_download_url"], token)
+        # Private repositories require the authenticated asset API endpoint.
+        # Asking for octet-stream here lets GitHub return a short-lived download
+        # redirect without relying on Authorization surviving a host change.
+        old_apk = request_bytes(
+            previous_asset["url"],
+            token,
+            "application/octet-stream",
+        )
         patch = bsdiff4.diff(old_apk, new_apk)
 
         # A patch that is nearly as large as the APK is not useful. The app
