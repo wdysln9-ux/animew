@@ -8,8 +8,6 @@ import '../models/media_extras.dart';
 import '../models/person.dart';
 import '../models/provider_info.dart';
 import '../zmode/metadata_provider_prefs.dart';
-import '../di/injector.dart';
-import 'episode_metadata_service.dart';
 import '../zmode/season_chain.dart';
 
 /// Fetches anime characters and related titles from Jikan (MAL data), while
@@ -74,8 +72,11 @@ class MetadataEnrichment {
       for (final row in rows) {
         if (row is! Map) continue;
         final titles = [row['title']?.toString() ?? '', row['title_english']?.toString() ?? ''];
-        final start = row['year'] ?? (row['aired'] is Map ? (row['aired'] as Map)['prop'] is Map ? ((row['aired'] as Map)['prop'] as Map)['from'] is Map ? (((row['aired'] as Map)['prop'] as Map)['from'] as Map)['year'] : null : null : null);
-        final candidateYear = (start as num?)?.toInt();
+        final aired = row['aired'];
+        final prop = aired is Map ? aired['prop'] : null;
+        final from = prop is Map ? prop['from'] : null;
+        final startYear = from is Map ? from['year'] : null;
+        final candidateYear = ((row['year'] ?? startYear) as num?)?.toInt();
         if (titles.any((value) => _normTitle(value) == wanted) && candidateYear != null && (candidateYear - year).abs() <= 1) {
           return (row['mal_id'] as num?)?.toInt();
         }
