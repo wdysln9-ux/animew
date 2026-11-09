@@ -340,20 +340,26 @@ class MetadataEnrichment {
     final cast = <CastMember>[];
     final relations = <MediaRelation>[];
 
-    // Characters, franchise relations, and recommendations are independent
-    // Jikan endpoints. Start them together; JikanApi applies one shared
-    // request queue with rate-limit spacing/retries across all detail sections.
+    // Treat every Jikan endpoint independently. A missing recommendations
+    // response must never erase valid character data or franchise relations.
+    // JikanApi still serializes requests and applies its shared rate limit.
+    Future<dynamic> safe(String url) async {
+      try {
+        return await _get(url);
+      } catch (_) {
+        return null;
+      }
+    }
     final answers = await Future.wait([
-      _get('$base/$id/characters'),
-      _get('$base/$id/relations'),
-      _get('$base/$id/recommendations'),
+      safe('$base/$id/characters'),
+      safe('$base/$id/relations'),
+      safe('$base/$id/recommendations'),
     ]);
     final characters = answers[0];
     final related = answers[1];
     if (related != null) _jikanRelationsCache[id] = related;
     final recs = answers[2];
     final rows = characters?['data'];
-    final seenVoiceActors = <String>{};
     if (rows is List) {
       for (final row in rows.take(40)) {
         if (row is! Map) continue;
@@ -368,30 +374,6 @@ class MetadataEnrichment {
         cast.add(CastMember(name: name, role: role?.isNotEmpty == true ? role : null,
           photo: photo?.isNotEmpty == true ? photo : null));
 
-        // Jikan nests voice actors under each character. Add their portrait
-        // and language so this rail represents both the character and its cast.
-        final voiceActors = row['voice_actors'];
-        if (voiceActors is List) {
-          for (final voice in voiceActors) {
-            if (voice is! Map || cast.length >= 100) continue;
-            final person = voice['person'];
-            if (person is! Map) continue;
-            final voiceName = person['name']?.toString().trim() ?? '';
-            final language = voice['language']?.toString().trim() ?? '';
-            final voiceKey = '${voiceName.toLowerCase()}|${language.toLowerCase()}';
-            if (voiceName.isEmpty || !seenVoiceActors.add(voiceKey)) continue;
-            final voiceImages = person['images'];
-            final voiceJpg = voiceImages is Map ? voiceImages['jpg'] : null;
-            final voicePhoto = voiceJpg is Map
-                ? (voiceJpg['image_url'] ?? voiceJpg['small_image_url'])?.toString()
-                : null;
-            cast.add(CastMember(
-              name: voiceName,
-              role: _voiceActorLabel(language),
-              photo: voicePhoto?.isNotEmpty == true ? voicePhoto : null,
-            ));
-          }
-        }
       }
     }
 
@@ -429,16 +411,6 @@ class MetadataEnrichment {
     }
     return (cast: cast, relations: relations);
   }
-
-  static String _voiceActorLabel(String language) => switch (language.toLowerCase()) {
-    'japanese' => 'VA Jepang',
-    'english' => 'VA Inggris',
-    'korean' => 'VA Korea',
-    'chinese' => 'VA Mandarin',
-    'french' => 'VA Prancis',
-    'german' => 'VA Jerman',
-    _ => language.isEmpty ? 'Pengisi suara' : 'VA $language',
-  };
 
   static String? _indonesianMalRelation(String? value) {
     if (value == null || value.isEmpty) return null;
