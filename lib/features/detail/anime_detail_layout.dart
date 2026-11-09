@@ -329,7 +329,7 @@ class _MalTextWordmark extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     'MAL',
     style: AppText.caption.copyWith(
-      color: const Color(0xFF8DB8FF),
+      color: Colors.white,
       fontSize: 11,
       fontWeight: FontWeight.w900,
       fontStyle: FontStyle.italic,
