@@ -612,30 +612,10 @@ class DetailCubit extends Cubit<DetailState> {
       } catch (_) {/* stays a movie */}
     }
 
-    // Fill in per-episode descriptions (AniZip for anime, TMDB season for a
-    // movie-source TV series). Best-effort — a miss leaves the row on its date.
-    if (d.episodes.isNotEmpty) {
-      try {
-        final enriched = await sl<EpisodeMetadataService>().enrich(
-          episodes: d.episodes,
-          type: d.type,
-          malId: d.malId,
-          tmdbId: d.tmdbId,
-          tmdbIsTv: d.tmdbIsTv,
-        );
-        if (isClosed) return;
-        // Episode descriptions are the one result tied to a SPECIFIC list.
-        // If the source has since replaced it, these belong to the old one —
-        // drop them rather than reinstating the list they came from.
-        final onScreen = state.detail?.episodes;
-        if (!identical(enriched, d.episodes) &&
-            onScreen != null &&
-            identical(onScreen, d.episodes)) {
-          d = d.copyWith(episodes: enriched);
-          _patchDetail((cur) => cur.copyWith(episodes: enriched));
-        }
-      } catch (_) {/* keep episodes as-is */}
-    }
+    // Episode descriptions are useful but must not delay MAL cast and
+    // franchise data. Start this independent enrichment in the background;
+    // _enrichEpisodesOnly guards against patching a stale episode list.
+    unawaited(_enrichEpisodesOnly(d));
 
     // Prefer id-based enrichment (AniList/TMDB) — it's richer: actor photos,
     // more entries, properly-linked relations. Id-less anime (Aniyomi, most
