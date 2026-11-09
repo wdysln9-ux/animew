@@ -726,7 +726,8 @@ class _DetailCreditsState extends State<_DetailCredits> {
     const studioBlue = Color(0xFF2864B7);
     const producerPink = Color(0xFFB94B83);
     final genreColor = AppColors.accent;
-    final visibleStudios = _expanded
+    final expanded = _expanded || widget.studios.isEmpty;
+    final visibleStudios = expanded
         ? widget.studios
         : widget.studios.take(2).toList(growable: false);
     final hasHidden = widget.studios.length > visibleStudios.length ||
@@ -766,7 +767,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
                     studioBlue,
                     onTap: () => widget.onStudioTap(studio),
                   ),
-                if (!_expanded && hasHidden)
+                if (!expanded && hasHidden)
                   GestureDetector(
                     onTap: () => setState(() => _expanded = true),
                     child: _chip('Selengkapnya', AppColors.textSecondary),
@@ -774,7 +775,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
               ],
             ),
           ],
-          if (_expanded && widget.producers.isNotEmpty) ...[
+          if (expanded && widget.producers.isNotEmpty) ...[
             const SizedBox(height: 9),
             _label('Produser'),
             Wrap(
@@ -787,7 +788,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
               ],
             ),
           ],
-          if (_expanded && hasHidden)
+          if (expanded && hasHidden)
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => setState(() => _expanded = false),
