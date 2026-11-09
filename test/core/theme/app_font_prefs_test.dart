@@ -52,7 +52,8 @@ void main() {
     // so boot must fall back to the bundled Nunito family instead.
     await AppFontPrefs.setFamily('Montserrat');
     AppText.fontFamily = 'something else entirely';
-    await AppFontPrefs.init();
+    // Simulate an offline boot deterministically; no network request is needed.
+    await AppFontPrefs.init(loadDownloaded: false);
     expect(AppText.fontFamily, AppText.fallbackFontFamily);
     // The CHOICE is kept though — it comes back once the download succeeds.
     expect(AppFontPrefs.family, 'Montserrat');
