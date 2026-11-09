@@ -2147,9 +2147,20 @@ class _DetailViewState extends State<_DetailView> {
 
     // ── Status label and detail metadata ───────────────────────────────────
     final statusStr = statusLabel(detail.status);
-    final formatStr = detail.format?.trim().isNotEmpty == true
-        ? detail.format!.trim()
-        : null;
+    final rawFormat = detail.format?.trim();
+    final formatStr = rawFormat == null || rawFormat.isEmpty
+        ? null
+        : switch (rawFormat.toLowerCase().replaceAll('_', ' ').trim()) {
+            'tv' => 'TV',
+            'tv short' => 'TV Short',
+            'tv special' => 'TV Special',
+            'ova' => 'OVA',
+            'ona' => 'ONA',
+            'movie' => 'Movie',
+            'special' => 'Special',
+            'music' => 'Music',
+            _ => rawFormat,
+          };
     String dateLabel(DateTime date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
       return '${months[date.month - 1]} ${date.day}, ${date.year}';
