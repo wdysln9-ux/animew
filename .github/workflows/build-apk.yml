@@ -101,6 +101,53 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Add retries for transient libmpv download failures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          candidates = list((Path.home() / ".pub-cache/git").glob(
+              "media-kit-*/libs/android/media_kit_libs_android_video/android/build.gradle"
+          ))
+          if len(candidates) != 1:
+              raise SystemExit(f"Expected one media-kit Android build.gradle, found {len(candidates)}")
+
+          path = candidates[0]
+          source = path.read_text()
+          old = """                destFile.withOutputStream { os ->
+                    os << new URL(fileInfo.url).openStream()
+                }"""
+          new = """                boolean downloaded = false
+                for (int attempt = 1; attempt <= 5 && !downloaded; attempt++) {
+                    try {
+                        def connection = new URL(fileInfo.url).openConnection()
+                        connection.setConnectTimeout(30000)
+                        connection.setReadTimeout(120000)
+                        connection.getInputStream().withCloseable { input ->
+                            destFile.withOutputStream { os -> os << input }
+                        }
+                        downloaded = true
+                    } catch (Exception error) {
+                        destFile.delete()
+                        if (attempt == 5) {
+                            throw new GradleException("Download failed after 5 attempts: ${fileInfo.url}", error)
+                        }
+                        println "Download attempt ${attempt}/5 failed: ${error.message}. Retrying..."
+                        sleep(5000L * attempt)
+                    }
+                }"""
+          if old not in source:
+              if "Download failed after 5 attempts" in source:
+                  print("Retry patch already present.")
+              else:
+                  raise SystemExit("Expected libmpv download block not found; no patch applied.")
+          else:
+              path.write_text(source.replace(old, new, 1))
+              print(f"Added download retries to {path}")
+          PY
+
       - name: Configure persistent Android signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
