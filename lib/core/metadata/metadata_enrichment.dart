@@ -12,11 +12,8 @@ import '../di/injector.dart';
 import 'episode_metadata_service.dart';
 import '../zmode/season_chain.dart';
 
-/// Fetches Cast + Relations for a title from a metadata API — AniList for anime
-/// (keyed by MAL id), TMDB for movies/series (keyed by TMDB id, via the same
-/// keyless proxy the trailer service uses). Works for ALL sources because it
-/// keys off ids the providers already expose. Best-effort: any miss/failure
-/// yields empty lists, so the Detail tabs fall back to their empty state.
+/// Fetches anime characters and related titles from Jikan (MAL data), while
+/// retaining AniList enrichment only for reading titles and TMDB for movies/TV.
 class MetadataEnrichment {
   /// [anilistToken] supplies the signed-in user's AniList access token. AniList
   /// has disabled UNAUTHENTICATED API access, so anonymous searches (malId
@@ -75,13 +72,12 @@ class MetadataEnrichment {
   static const String _tmdbBase = 'https://api.themoviedb.org/3';
   static const String _img = 'https://image.tmdb.org/t/p';
 
-  /// Resolve a MAL id for an id-less ANIME from its title (AniList search).
-  /// Best-effort, null on miss / non-anime.
+  /// Resolve an id-less anime directly against Jikan/MAL, never AniList.
   Future<int?> resolveMalId(MediaDetail d) async {
     if (d.malId != null) return d.malId;
     if (d.type != ProviderType.anime || d.title.trim().isEmpty) return null;
     try {
-      return await _anilist.idMalByTitle(d.title);
+      return await _searchJikanId(d.englishTitle?.trim().isNotEmpty == true ? d.englishTitle!.trim() : d.title.trim());
     } catch (_) {
       return null;
     }
@@ -179,6 +175,11 @@ class MetadataEnrichment {
       // else's show or nothing at all. Goes to AniList's MANGA side, never the
       // video databases: see readingExtras for why that distinction is the
       // whole point.
+      if (d.type == ProviderType.anime) {
+        final id = d.malId ?? await resolveMalId(d);
+        if (id == null) return (cast: <CastMember>[], relations: <MediaRelation>[]);
+        return await _jikanAnimeExtras(id);
+      }
       if (d.type == ProviderType.manga || d.type == ProviderType.novel) {
         if (d.malId != null) {
           final byId = await _anilist.readingExtras(d.malId!);
@@ -191,14 +192,8 @@ class MetadataEnrichment {
         }
         return (cast: <CastMember>[], relations: <MediaRelation>[]);
       }
-      if (d.malId != null) return await _anilist.mediaExtras(d.malId!);
+      if (d.malId != null) return await _anilist.readingExtras(d.malId!);
       if (d.tmdbId != null) return await _tmdb(d.tmdbId!, d.tmdbIsTv);
-      // Id-less anime (Aniyomi, most CloudStream): AniList exposes no id, so
-      // resolve cast + relations by title search. Best-effort; a wrong title
-      // match just yields slightly-off extras (never a crash).
-      if (d.type == ProviderType.anime && d.title.trim().isNotEmpty) {
-        return await _anilist.mediaExtrasBySearch(d.title);
-      }
     } catch (_) {}
     return (cast: <CastMember>[], relations: <MediaRelation>[]);
   }
@@ -220,10 +215,11 @@ class MetadataEnrichment {
     try {
       final reading =
           d.type == ProviderType.manga || d.type == ProviderType.novel;
-      if (reading || d.type == ProviderType.anime) {
+      if (reading) {
         if (prefs.anime != AnimeProvider.mal || d.malId == null) return null;
-        return await _malRelations(d.malId!, reading: reading);
+        return await _malRelations(d.malId!, reading: true);
       }
+      // Anime relations are fetched from Jikan alongside characters above.
       if (prefs.video != VideoProvider.simkl || d.tmdbId == null) return null;
       return await _simklRelations(d.tmdbId!, isTv: d.tmdbIsTv);
     } catch (_) {
@@ -231,6 +227,103 @@ class MetadataEnrichment {
       // strictly better than an empty Relations tab.
       return null;
     }
+  }
+
+  Future<({List<CastMember> cast, List<MediaRelation> relations})> _jikanAnimeExtras(int id) async {
+    const base = 'https://api.jikan.moe/v4/anime';
+    final cast = <CastMember>[];
+    final relations = <MediaRelation>[];
+
+    final characters = await _get('$base/$id/characters');
+    final rows = characters?['data'];
+    if (rows is List) {
+      for (final row in rows.take(40)) {
+        if (row is! Map) continue;
+        final character = row['character'];
+        if (character is! Map) continue;
+        final name = character['name']?.toString().trim();
+        if (name == null || name.isEmpty) continue;
+        final images = character['images'];
+        final jpg = images is Map ? images['jpg'] : null;
+        final photo = jpg is Map ? (jpg['image_url'] ?? jpg['large_image_url'])?.toString() : null;
+        final role = row['role']?.toString().trim();
+        cast.add(CastMember(name: name, role: role?.isNotEmpty == true ? role : null,
+          photo: photo?.isNotEmpty == true ? photo : null));
+      }
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 550));
+    final related = await _get('$base/$id/relations');
+    final relationRows = related?['data'];
+    if (relationRows is List) {
+      for (final row in relationRows) {
+        if (row is! Map) continue;
+        final label = _indonesianMalRelation(row['relation']?.toString());
+        final entries = row['entry'];
+        if (entries is! List) continue;
+        for (final entry in entries) {
+          if (entry is! Map || entry['type']?.toString() != 'anime') continue;
+          final title = entry['name']?.toString().trim();
+          final malId = (entry['mal_id'] as num?)?.toInt();
+          if (title == null || title.isEmpty || malId == null) continue;
+          relations.add(MediaRelation(title: title, relation: label, malId: malId));
+        }
+      }
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 550));
+    final recs = await _get('$base/$id/recommendations');
+    final recRows = recs?['data'];
+    if (recRows is List) {
+      for (final row in recRows.take(20)) {
+        if (row is! Map) continue;
+        final entry = row['entry'];
+        if (entry is! Map) continue;
+        final title = entry['title']?.toString().trim();
+        final malId = (entry['mal_id'] as num?)?.toInt();
+        if (title == null || title.isEmpty || malId == null) continue;
+        final images = entry['images'];
+        final jpg = images is Map ? images['jpg'] : null;
+        final cover = jpg is Map ? (jpg['large_image_url'] ?? jpg['image_url'])?.toString() : null;
+        relations.add(MediaRelation(title: title, cover: cover, relation: 'Recommended', malId: malId));
+      }
+    }
+    return (cast: cast, relations: relations);
+  }
+
+  static String? _indonesianMalRelation(String? value) {
+    if (value == null || value.isEmpty) return null;
+    return switch (value.toLowerCase()) {
+      'prequel' => 'Prekuel',
+      'sequel' => 'Sekuel',
+      'side story' => 'Cerita sampingan',
+      'parent story' => 'Cerita utama',
+      'alternative version' => 'Versi alternatif',
+      'alternative setting' => 'Latar alternatif',
+      'spin-off' => 'Spin-off',
+      'summary' => 'Ringkasan',
+      'full story' => 'Cerita lengkap',
+      _ => value,
+    };
+  }
+
+  Future<int?> _searchJikanId(String title) async {
+    final response = await _get('https://api.jikan.moe/v4/anime', {'q': title, 'limit': 10});
+    final rows = response?['data'];
+    if (rows is! List) return null;
+    String norm(String value) => value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final wanted = norm(title);
+    for (final row in rows) {
+      if (row is! Map) continue;
+      final candidates = [
+        row['title']?.toString() ?? '',
+        row['title_english']?.toString() ?? '',
+        row['title_japanese']?.toString() ?? '',
+        if (row['title_synonyms'] is List) ...(row['title_synonyms'] as List).map((v) => v.toString()),
+      ];
+      if (candidates.any((candidate) => norm(candidate) == wanted)) return (row['mal_id'] as num?)?.toInt();
+    }
+    return null;
   }
 
   /// MAL keys manga relations by MANGA id and anime relations by ANIME id, and
