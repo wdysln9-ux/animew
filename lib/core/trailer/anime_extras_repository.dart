@@ -79,29 +79,30 @@ class AnimeExtrasRepository {
     if (resolvedId == null || resolvedId <= 0) {
       throw StateError('Data tambahan MAL belum bisa ditemukan.');
     }
-    if (forceRefresh) _cache.remove(resolvedId);
-    final existing = _cache[resolvedId];
+    final primaryId = resolvedId;
+    if (forceRefresh) _cache.remove(primaryId);
+    final existing = _cache[primaryId];
     if (existing != null) return existing;
     final request = () async {
-      final primary = await _fetch(resolvedId);
+      final primary = await _fetch(primaryId);
       if (primary.isEmpty) {
         final fallbackId = await _searchJikanId(
           englishTitle?.trim().isNotEmpty == true
               ? englishTitle!.trim()
               : title,
         );
-        if (fallbackId != null && fallbackId > 0 && fallbackId != resolvedId) {
+        if (fallbackId != null && fallbackId > 0 && fallbackId != primaryId) {
           final fallback = await _fetch(fallbackId);
           if (!fallback.isEmpty) return fallback;
         }
       }
       return primary;
     }();
-    _cache[resolvedId] = request;
+    _cache[primaryId] = request;
     try {
       return await request;
     } catch (_) {
-      _cache.remove(resolvedId);
+      _cache.remove(primaryId);
       rethrow;
     }
   }
