@@ -16,6 +16,9 @@ abstract class AppText {
   /// What a fresh install uses.
   static const String defaultFontFamily = 'Urbanist';
 
+  /// Bundled fallback for offline startup if Urbanist has not been cached yet.
+  static const String fallbackFontFamily = 'Nunito';
+
   /// Platform CJK fonts. None of the UI families carry CJK glyphs; missing
   /// characters fall through to these (iOS Hiragino/PingFang, Android Noto).
   static const fontFamilyFallback = <String>[
