@@ -104,7 +104,13 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               // The artwork is laid out at its original hero dimensions and
               // clipped by the collapsing sliver. Its scale/crop never changes
               // while scrolling, so it cannot look like a camera zoom.
-              Positioned.fill(child: _image(coverUrl)),
+              Positioned(
+                top: 50,
+                left: 0,
+                right: 0,
+                bottom: -50,
+                child: _image(coverUrl),
+              ),
               Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
@@ -117,11 +123,11 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                             AppColors.accent.withValues(alpha: 0.18),
                             AppColors.bg,
                           ).withValues(alpha: 0.38),
-                          AppColors.bg.withValues(alpha: 0.12),
-                          AppColors.bg.withValues(alpha: 0.76),
+                          AppColors.bg.withValues(alpha: 0.04),
+                          AppColors.bg.withValues(alpha: 0.52),
                           AppColors.bg,
                         ],
-                        stops: [0.0, 0.36, 0.82, 1.0],
+                        stops: [0.0, 0.56, 0.72, 1.0],
                       ),
                     ),
                   ),
