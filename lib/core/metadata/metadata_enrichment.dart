@@ -173,11 +173,19 @@ class MetadataEnrichment {
   Future<int?> resolveMalId(MediaDetail d) async {
     if (d.malId != null) return d.malId;
     if (d.type != ProviderType.anime || d.title.trim().isEmpty) return null;
-    try {
-      return await _searchJikanId(d.englishTitle?.trim().isNotEmpty == true ? d.englishTitle!.trim() : d.title.trim());
-    } catch (_) {
-      return null;
+    final titles = <String>{
+      if (d.englishTitle?.trim().isNotEmpty == true) d.englishTitle!.trim(),
+      d.title.trim(),
+    };
+    for (final title in titles) {
+      try {
+        final id = await _searchJikanId(title);
+        if (id != null) return id;
+      } catch (_) {
+        // Try the next known title before giving up on MAL resolution.
+      }
     }
+    return null;
   }
 
   /// Conservative title/year check for movie-typed entries from anime-capable
@@ -432,7 +440,7 @@ class MetadataEnrichment {
     final response = await _get('https://api.jikan.moe/v4/anime', {'q': title, 'limit': 10});
     final rows = response?['data'];
     if (rows is! List) return null;
-    String norm(String value) => value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    String norm(String value) => value.toLowerCase().replaceAll(RegExp(r'[^\\p{L}\\p{N}]', unicode: true), '');
     final wanted = norm(title);
     for (final row in rows) {
       if (row is! Map) continue;
