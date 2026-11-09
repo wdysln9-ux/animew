@@ -439,7 +439,7 @@ class _DetailView extends StatefulWidget {
 }
 
 class _DetailViewState extends State<_DetailView> {
-  static const double _expandedHeight = 370;
+  static const double _expandedHeight = 394;
 
   // The episode url we've already kicked a background source-prefetch for, so we
   // don't re-fire it on every rebuild (see _maybePrefetch).
@@ -2333,8 +2333,8 @@ class _DetailViewState extends State<_DetailView> {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: AppColors.surface2,
                     border: Border.all(color: Colors.white24),
@@ -2342,7 +2342,7 @@ class _DetailViewState extends State<_DetailView> {
                   ),
                   child: PopupMenuButton<String>(
                     tooltip: 'Lainnya',
-                    icon: const Icon(Icons.more_horiz_rounded, color: AppColors.textPrimary),
+                    icon: const Icon(Icons.more_horiz_rounded, color: AppColors.textPrimary, size: 21),
                     onSelected: (value) {
                       switch (value) {
                         case 'save':
