@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:watch_app/core/hive/safe_box.dart';
 
+import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
@@ -19,6 +21,9 @@ class UpdateInfo {
     required this.assetName,
     required this.apkSize,
     this.isPrerelease = false,
+    this.deltaPatchUrl,
+    this.deltaPatchSize = 0,
+    this.deltaMetadataUrl,
   });
 
   /// Normalised version, e.g. "1.3.0".
@@ -39,6 +44,11 @@ class UpdateInfo {
 
   /// True when the chosen release is a GitHub pre-release (beta).
   final bool isPrerelease;
+
+  /// Optional BSDIFF40 patch and its metadata for the exact previous APK.
+  final String? deltaPatchUrl;
+  final int deltaPatchSize;
+  final String? deltaMetadataUrl;
 }
 
 /// In-app updater: checks the public GitHub Releases of this fork, compares
@@ -78,9 +88,10 @@ class UpdateService {
       if (compareVersions(version, pkg.version) <= 0) return null;
       if (respectSkip && await _skippedVersion() == version) return null;
 
-      final apk = _pickApk(
-          (release['assets'] as List?) ?? const [], await _deviceAbis());
+      final assets = (release['assets'] as List?) ?? const [];
+      final apk = _pickApk(assets, await _deviceAbis());
       if (apk == null) return null;
+      final delta = _pickDeltaAssets(assets);
 
       return UpdateInfo(
         version: version,
@@ -89,6 +100,9 @@ class UpdateService {
         assetName: apk.$1,
         apkSize: apk.$3,
         isPrerelease: release['prerelease'] == true,
+        deltaPatchUrl: delta?.$2,
+        deltaPatchSize: delta?.$3 ?? 0,
+        deltaMetadataUrl: delta?.$5,
       );
     } catch (_) {
       return null;
@@ -146,6 +160,83 @@ class UpdateService {
     } catch (_) {
       return '';
     }
+  }
+
+  /// Download a compact delta when it exactly matches the installed APK.
+  /// Any mismatch or patch error falls back to the complete signed APK.
+  Future<File> downloadUpdate(
+    UpdateInfo info, {
+    void Function(double progress)? onProgress,
+  }) async {
+    try {
+      final patchUrl = info.deltaPatchUrl;
+      final metadataUrl = info.deltaMetadataUrl;
+      if (patchUrl != null && metadataUrl != null && info.deltaPatchSize > 0) {
+        final pkg = await PackageInfo.fromPlatform();
+        final response = await _dio.get<String>(
+          metadataUrl,
+          options: Options(responseType: ResponseType.plain),
+        );
+        final metadata = jsonDecode(response.data ?? '') as Map<String, dynamic>;
+        if (metadata['format'] == 'BSDIFF40' &&
+            metadata['base_version'] == pkg.version &&
+            metadata['target_version'] == info.version) {
+          final basePath = await _downloadsChannel.invokeMethod<String>(
+            'getInstalledApkPath',
+          );
+          if (basePath != null && basePath.isNotEmpty) {
+            final base = File(basePath);
+            final baseHash = await _sha256File(base);
+            if (baseHash == metadata['base_sha256']) {
+              final dir = await getTemporaryDirectory();
+              final patch = File('${dir.path}/animew-update.bsdiff');
+              final output = File('${dir.path}/animew-update-${info.version}.apk');
+              if (await patch.exists()) await patch.delete();
+              if (await output.exists()) await output.delete();
+
+              await _dio.download(
+                patchUrl,
+                patch.path,
+                onReceiveProgress: (received, total) {
+                  if (total > 0) onProgress?.call(received / total);
+                },
+              );
+              if (await patch.length() != info.deltaPatchSize ||
+                  await _sha256File(patch) != metadata['patch_sha256']) {
+                throw Exception('Delta patch integrity check failed');
+              }
+
+              await _downloadsChannel.invokeMethod<String>('applyBsdiff', {
+                'basePath': base.path,
+                'patchPath': patch.path,
+                'outputPath': output.path,
+                'expectedSize': (metadata['target_size'] as num).toInt(),
+              });
+              if (!await output.exists() ||
+                  await output.length() != (metadata['target_size'] as num).toInt() ||
+                  await _sha256File(output) != metadata['target_sha256']) {
+                if (await output.exists()) await output.delete();
+                throw Exception('Reconstructed APK integrity check failed');
+              }
+              await patch.delete();
+              return output;
+            }
+          }
+        }
+      }
+    } catch (_) {
+      // A delta is an optimization, never a blocker. Continue with the full APK.
+    }
+    return downloadApk(
+      info.apkUrl,
+      expectedSize: info.apkSize,
+      onProgress: onProgress,
+    );
+  }
+
+  Future<String> _sha256File(File file) async {
+    final digest = await sha256.bind(file.openRead()).first;
+    return digest.toString();
   }
 
   /// Download the APK to the cache dir, reporting 0..1 progress. Throws on
@@ -278,6 +369,36 @@ class UpdateService {
       if (match != null) return match;
     }
     return withFrag('universal') ?? apks.first;
+  }
+
+  /// Returns (patch name, URL, size, metadata name, metadata URL) only
+  /// when both ARM64 delta assets exist in this release.
+  (String, String, int, String, String)? _pickDeltaAssets(List assets) {
+    String? patchName;
+    String? patchUrl;
+    var patchSize = 0;
+    String? metadataName;
+    String? metadataUrl;
+    for (final asset in assets) {
+      if (asset is! Map) continue;
+      final name = (asset['name'] as String?) ?? '';
+      final url = (asset['browser_download_url'] as String?) ?? '';
+      final size = (asset['size'] as num?)?.toInt() ?? 0;
+      if (!name.toLowerCase().contains('arm64-v8a')) continue;
+      if (name.toLowerCase().endsWith('.bsdiff')) {
+        patchName = name;
+        patchUrl = url;
+        patchSize = size;
+      } else if (name.toLowerCase().endsWith('.delta.json')) {
+        metadataName = name;
+        metadataUrl = url;
+      }
+    }
+    if (patchName == null || patchUrl == null || metadataName == null ||
+        metadataUrl == null || patchSize <= 0) {
+      return null;
+    }
+    return (patchName, patchUrl, patchSize, metadataName, metadataUrl);
   }
 
   /// Compare two version strings with semver pre-release ordering.
