@@ -760,14 +760,16 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
 
   @override
   Widget build(BuildContext context) {
-    final seasonIds = widget.seasons.map((s) => s.malId).whereType<int>().toSet();
-    final seasonRelations = widget.relations.where((r) {
+    final allSeasonRelations = widget.relations.where((r) {
       final value = r.relation?.toLowerCase();
-      return (value == 'prekuel' || value == 'sequel') &&
-          (r.malId == null || !seasonIds.contains(r.malId));
+      return value == 'prekuel' || value == 'sequel';
     }).toList();
+    final seasonIds = widget.seasons.map((s) => s.malId).whereType<int>().toSet();
+    final seasonRelations = allSeasonRelations
+        .where((r) => r.malId == null || !seasonIds.contains(r.malId))
+        .toList();
     final related = widget.relations.where((r) =>
-      !_isRecommended(r) && !seasonRelations.contains(r)).toList();
+      !_isRecommended(r) && !allSeasonRelations.contains(r)).toList();
     final recommendations = widget.relations.where(_isRecommended).toList();
     final tabs = <String>['Semua Musim', 'Terkait', 'Rekomendasi'];
     if (_selected >= tabs.length) _selected = 0;
