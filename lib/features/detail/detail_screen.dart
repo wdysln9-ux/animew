@@ -439,7 +439,7 @@ class _DetailView extends StatefulWidget {
 }
 
 class _DetailViewState extends State<_DetailView> {
-  static const double _expandedHeight = 250;
+  static const double _expandedHeight = 370;
 
   // The episode url we've already kicked a background source-prefetch for, so we
   // don't re-fire it on every rebuild (see _maybePrefetch).
@@ -2184,7 +2184,11 @@ class _DetailViewState extends State<_DetailView> {
       metaParts.add('★ ${(detail.score! / 10).toStringAsFixed(2)}');
     }
     if (detail.popularity != null) {
-      metaParts.add('◉ ${_thousands(detail.popularity!)}');
+      final count = detail.popularity!;
+      final compact = count >= 1000
+          ? '${(count / 1000).toStringAsFixed(1)}K'
+          : _thousands(count);
+      metaParts.add('◉ $compact');
     }
     final metaLine = metaParts.join('  ·  ');
 
@@ -2237,6 +2241,7 @@ class _DetailViewState extends State<_DetailView> {
             child: AnimeDetailTitleBlock(
               title: detail.title,
               englishTitle: detail.englishTitle,
+              alternateTitle: detail.synonyms.isNotEmpty ? detail.synonyms.first : null,
               metaLine: metaLine,
               format: formatStr,
               status: statusStr,
@@ -2291,7 +2296,8 @@ class _DetailViewState extends State<_DetailView> {
                 Expanded(
                   child: AnimeDetailActionButton(
                     loading: state.episodesLoading,
-                    label: isReading ? downloadLabel : 'Simpan',
+                    label: isReading ? downloadLabel : (_inMyList ? 'Tersimpan' : 'Simpan'),
+                    active: !isReading && _inMyList,
                     icon: isReading ? Icons.file_download_outlined : Icons.bookmark_border_rounded,
                     onPressed: isReading
                         ? (eps.isEmpty

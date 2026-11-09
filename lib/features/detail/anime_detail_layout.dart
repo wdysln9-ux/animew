@@ -164,8 +164,8 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
                     child: SizedBox(
-                      width: 132,
-                      height: 198,
+                      width: 160,
+                      height: 256,
                       child: _image(poster, width: 528),
                     ),
                   ),
@@ -301,6 +301,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     required this.title,
     required this.metaLine,
     this.englishTitle,
+    this.alternateTitle,
     this.format,
     this.status,
     this.ageRating,
@@ -311,6 +312,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
 
   final String title;
   final String? englishTitle;
+  final String? alternateTitle;
   final String metaLine;
   final String? format;
   final String? status;
@@ -322,6 +324,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle = englishTitle?.trim();
+    final alternate = alternateTitle?.trim();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Column(
@@ -329,23 +332,45 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         children: [
           Text(title, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.largeTitle.copyWith(fontSize: 24, height: 1.14)),
+            style: AppText.largeTitle.copyWith(fontSize: 22, height: 1.14)),
           if (subtitle != null && subtitle.isNotEmpty && subtitle != title) ...[
             const SizedBox(height: 4),
             Text(subtitle, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: AppText.body.copyWith(fontSize: 13, color: AppColors.textSecondary)),
           ],
+          if (alternate != null && alternate.isNotEmpty && alternate != title && alternate != subtitle) ...[
+            const SizedBox(height: 2),
+            Text(alternate, textAlign: TextAlign.center, maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.body.copyWith(fontSize: 11.5, color: AppColors.textTertiary)),
+          ],
           if (metaLine.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(metaLine, textAlign: TextAlign.center, maxLines: 1,
+            Text.rich(
+              TextSpan(children: [
+                for (var i = 0; i < metaLine.split('  ·  ').length; i++)
+                  TextSpan(
+                    text: '${i == 0 ? '' : '  ·  '}${metaLine.split('  ·  ')[i]}',
+                    style: AppText.body.copyWith(
+                      fontSize: 12,
+                      color: i == 0 ? AppColors.accent
+                          : (metaLine.split('  ·  ')[i].startsWith('★')
+                              ? const Color(0xFF24C66A)
+                              : AppColors.textSecondary),
+                      fontWeight: i == 1 ? FontWeight.w700 : FontWeight.normal,
+                    ),
+                  ),
+              ]),
+              textAlign: TextAlign.center,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 12, color: AppColors.textSecondary)),
+            ),
           ],
           if ((ageRating?.isNotEmpty ?? false) || (dateLine?.isNotEmpty ?? false) || rank != null) ...[
             const SizedBox(height: 7),
             Text(
-              [if (ageRating?.isNotEmpty == true) 'Usia ${ageRating!}', if (dateLine?.isNotEmpty == true) dateLine!, if (rank != null) 'Peringkat #$rank'].join('   ·   '),
+              [if (ageRating?.isNotEmpty == true) 'Age ${ageRating!}', if (dateLine?.isNotEmpty == true) dateLine!].join('   ·   '),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -389,7 +414,9 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
     decoration: BoxDecoration(
       color: (label.toLowerCase().contains('selesai') || label.toLowerCase().contains('completed'))
           ? const Color(0xFF17365F)
-          : const Color(0xFFF47521),
+          : (label.toLowerCase().contains('tayang') || label.toLowerCase().contains('ongoing'))
+              ? const Color(0xFF087A45)
+              : const Color(0xFFF47521),
       borderRadius: BorderRadius.circular(6),
     ),
     child: Text(label, style: AppText.caption.copyWith(
@@ -404,6 +431,7 @@ class AnimeDetailActionButton extends StatelessWidget {
     required this.onPressed,
     this.loading = false,
     this.primary = false,
+    this.active = false,
   });
 
   final String label;
@@ -411,11 +439,14 @@ class AnimeDetailActionButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool loading;
   final bool primary;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
-    final foreground = AppColors.textPrimary;
-    final background = AppColors.surface2;
+    final foreground = active ? Colors.white : AppColors.textPrimary;
+    final background = active
+        ? AppColors.accent
+        : (primary ? AppColors.bg : AppColors.surface2);
     return Opacity(
       opacity: onPressed != null || loading ? 1 : 0.42,
       child: Material(
@@ -429,7 +460,11 @@ class AnimeDetailActionButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.textTertiary.withValues(alpha: 0.34)),
+              border: Border.all(
+                color: active
+                    ? AppColors.accent
+                    : AppColors.textTertiary.withValues(alpha: primary ? 0.48 : 0.34),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -620,7 +655,7 @@ class AnimeDetailCharacterRail extends StatefulWidget {
   State<AnimeDetailCharacterRail> createState() => _AnimeDetailCharacterRailState();
 }
 class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
-  bool _expanded = true;
+  bool _expanded = false;
   @override
   Widget build(BuildContext context) {
     final cast = widget.cast;
@@ -638,7 +673,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
               const SizedBox(width: 7),
               Text(cast.length.toString(), style: AppText.caption.copyWith(color: AppColors.textSecondary)),
               const Spacer(),
-              Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondary),
+              Icon(_expanded ? Icons.keyboard_arrow_up_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary),
             ]),
           ),
         ),
