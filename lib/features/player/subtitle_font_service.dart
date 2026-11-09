@@ -74,7 +74,7 @@ class SubtitleFontService {
   /// built-in families and returns null for anything else, so a custom family
   /// would otherwise look unavailable everywhere.
   String? _fileNameFor(String family) =>
-      _customs[family] ?? subtitleFontFileName(family);
+      _customs[family] ?? (family == 'Urbanist' ? 'Urbanist.ttf' : subtitleFontFileName(family));
 
   /// True when [family] is usable right now (Default, bundled, downloaded, or
   /// a custom font whose file is still on disk).
@@ -112,8 +112,11 @@ class SubtitleFontService {
       final dir = await _fontsDir();
       final f = File('${dir.path}/$fname');
       if (!f.existsSync()) {
+        final fontUrl = family == 'Urbanist'
+            ? 'https://raw.githubusercontent.com/google/fonts/main/ofl/urbanist/Urbanist%5Bwght%5D.ttf'
+            : '$_base$fname';
         final resp = await _dio.get<List<int>>(
-          '$_base$fname',
+          fontUrl,
           options: Options(responseType: ResponseType.bytes),
         );
         final bytes = resp.data;

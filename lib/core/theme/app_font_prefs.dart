@@ -45,6 +45,7 @@ class AppFontPrefs {
   /// Offered in the picker, in the order shown. Nunito first: it is the
   /// default and the one the app is designed around.
   static const List<AppFont> _builtInFonts = [
+    AppFont('Urbanist', 'Urbanist'),
     AppFont('Nunito', 'Nunito', bundled: true),
     AppFont('Inter', 'Inter', bundled: true),
     AppFont('Noto Sans', 'Noto Sans', bundled: true),
