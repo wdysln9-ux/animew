@@ -114,7 +114,7 @@ class AnimeExtrasRepository {
     );
     final root = _map(response);
     final entries = _list(root?['data']) ?? const [];
-    String normalize(String value) => value.toLowerCase().replaceAll(RegExp(r'[^\\p{L}\\p{N}]', unicode: true), '');
+    String normalize(String value) => value.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
     final wanted = normalize(title);
 
     for (final raw in entries) {
