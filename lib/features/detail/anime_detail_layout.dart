@@ -731,7 +731,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
         ? widget.studios
         : widget.studios.take(2).toList(growable: false);
     final hasHidden = widget.studios.length > visibleStudios.length ||
-        widget.producers.isNotEmpty;
+        (widget.studios.isNotEmpty && widget.producers.isNotEmpty);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
