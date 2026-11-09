@@ -28,8 +28,8 @@ class AppFont {
 
 /// The UI font, and the small store behind it.
 ///
-/// Only the default is in the APK — a default has to paint on the first frame
-/// with no network. The rest are fetched on first pick by
+/// Urbanist is bundled so the default paints on the first frame without a
+/// network request. Remaining downloadable choices are fetched on first pick by
 /// [SubtitleFontService], which registers them through [FontLoader]; that is
 /// app-wide, not subtitle-only, so a downloaded family works for the UI.
 class AppFontPrefs {
@@ -45,7 +45,7 @@ class AppFontPrefs {
   /// Offered in the picker, in the order shown. Urbanist is the default;
   /// Nunito remains the offline-safe fallback.
   static const List<AppFont> _builtInFonts = [
-    AppFont('Urbanist', 'Urbanist'),
+    AppFont('Urbanist', 'Urbanist', bundled: true),
     AppFont('Nunito', 'Nunito', bundled: true),
     AppFont('Inter', 'Inter', bundled: true),
     AppFont('Noto Sans', 'Noto Sans', bundled: true),
