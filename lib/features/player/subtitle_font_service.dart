@@ -12,8 +12,8 @@ import '../../core/playback/playback_prefs.dart'
     show PlaybackPrefs, kBundledSubtitleFonts;
 import '../../core/playback/tv_track_helpers.dart' show subtitleFontFileName;
 
-/// Download-on-demand for subtitle fonts. Only Inter (UI font) and Noto Sans
-/// (the libass Android fallback) ship in the APK; the rest are fetched from the
+/// Download-on-demand for subtitle fonts. Urbanist, Nunito, Inter and Noto Sans
+/// ship in the APK; the remaining families are fetched from the
 /// app's own public repo on first pick, cached to `<appSupport>/sub_fonts/`, and
 /// registered with Flutter's [FontLoader] so the overlay + preview can use them.
 /// The same folder is mpv's `sub-fonts-dir`, so libass sees them too.
@@ -25,7 +25,7 @@ class SubtitleFontService {
   static final SubtitleFontService instance = SubtitleFontService._();
 
   /// Families bundled in the APK (registered in pubspec) — always available.
-  static const Set<String> bundled = {'Inter', 'Noto Sans'};
+  static const Set<String> bundled = {'Urbanist', 'Nunito', 'Inter', 'Noto Sans'};
 
   static const String _base =
       'https://raw.githubusercontent.com/Spyou/Zangetsu/main/assets/fonts/';
@@ -154,7 +154,6 @@ class SubtitleFontService {
         for (final family in kBundledSubtitleFonts)
           if (family.isNotEmpty && !bundled.contains(family))
             family: ?_fileNameFor(family),
-        'Urbanist': 'Urbanist.ttf',
         ..._customs,
       };
       for (final e in families.entries) {
