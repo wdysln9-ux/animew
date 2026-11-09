@@ -217,7 +217,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                   ),
                   const SizedBox(height: 10),
                   _heading('Tahun', theme),
-                  _chips([
+                  _yearChips([
                     ...visibleYears.map((y) => _ChipData('$y', f.years.contains(y),
                       () => _toggle<int>(f.years, y, (xs) => f = f.copyWith(years: xs)))),
                     _ChipData(showAllYears ? 'Lebih Sedikit' : 'Tampilkan Semua (+${years.length - visibleYears.length})', false,
@@ -324,14 +324,14 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
   );
 
   Widget _chips(List<_ChipData> data, ColorScheme cs) => Wrap(
-    spacing: 4, runSpacing: 4,
+    spacing: 6, runSpacing: 6,
     children: data.map((d) => ChoiceChip(
       label: Text(d.label, maxLines: 1, overflow: TextOverflow.ellipsis),
       selected: d.selected,
       onSelected: (_) => d.onTap(),
       showCheckmark: false,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+      visualDensity: const VisualDensity(horizontal: -1, vertical: 0),
       selectedColor: AppColors.accent,
       backgroundColor: Colors.transparent,
       side: BorderSide(
@@ -340,8 +340,8 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
             : cs.outline.withValues(alpha: .24),
       ),
       labelStyle: TextStyle(
-        fontSize: 11,
-        height: 1.1,
+        fontSize: 12.5,
+        height: 1.15,
         color: d.selected
             ? Colors.white
             : d.action
@@ -349,9 +349,39 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                 : cs.onSurface.withValues(alpha: .58),
         fontWeight: d.action ? FontWeight.w600 : FontWeight.normal,
       ),
-      labelPadding: EdgeInsets.zero,
       shape: const StadiumBorder(),
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+    )).toList(),
+  );
+
+  Widget _yearChips(List<_ChipData> data, ColorScheme cs) => Wrap(
+    spacing: 4, runSpacing: 6,
+    children: data.map((d) => ChoiceChip(
+      label: Text(d.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      selected: d.selected,
+      onSelected: (_) => d.onTap(),
+      showCheckmark: false,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: const VisualDensity(horizontal: -1, vertical: 0),
+      selectedColor: AppColors.accent,
+      backgroundColor: Colors.transparent,
+      side: BorderSide(
+        color: d.selected || d.action
+            ? AppColors.accent
+            : cs.outline.withValues(alpha: .24),
+      ),
+      labelStyle: TextStyle(
+        fontSize: 11.5,
+        height: 1.15,
+        color: d.selected
+            ? Colors.white
+            : d.action
+                ? AppColors.accent
+                : cs.onSurface.withValues(alpha: .58),
+        fontWeight: d.action ? FontWeight.w600 : FontWeight.normal,
+      ),
+      shape: const StadiumBorder(),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
     )).toList(),
   );
 
