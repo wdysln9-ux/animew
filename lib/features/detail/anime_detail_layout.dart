@@ -115,7 +115,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                           Color.alphaBlend(
                             AppColors.accent.withValues(alpha: 0.18),
                             AppColors.bg,
-                          ),
+                          ).withValues(alpha: 0.38),
                           AppColors.bg.withValues(alpha: 0.12),
                           AppColors.bg.withValues(alpha: 0.76),
                           AppColors.bg,
