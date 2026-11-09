@@ -282,6 +282,7 @@ TvSubDecision decideSubtitle({
 /// (and under `assets/fonts/` for APK-bundled families).
 String? subtitleFontFileName(String family) {
   const map = {
+    'Urbanist': 'Urbanist.ttf',
     'Inter': 'Inter.ttf',
     'Poppins': 'Poppins-Regular.ttf',
     'Roboto': 'Roboto-Regular.ttf',
