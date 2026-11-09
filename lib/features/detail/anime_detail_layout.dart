@@ -51,7 +51,11 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   final String animeId;
   final double maxHeight;
 
-  Widget _image(String url, {int width = 900}) {
+  Widget _image(
+    String url, {
+    int width = 900,
+    Alignment alignment = Alignment.center,
+  }) {
     if (url.isEmpty) return ColoredBox(color: AppColors.surface2);
     final aniSource = coverHeaders?['x-ani-src'];
     final mihonSource = coverHeaders?['x-mihon-src'];
@@ -64,6 +68,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
           width: width,
         ),
         fit: BoxFit.cover,
+        alignment: alignment,
         errorBuilder: (_, _, _) => ColoredBox(color: AppColors.surface2),
       );
     }
@@ -71,6 +76,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
       imageUrl: url,
       httpHeaders: coverHeaders,
       fit: BoxFit.cover,
+      alignment: alignment,
       memCacheWidth: width,
       placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
       errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2),
@@ -105,11 +111,11 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               // clipped by the collapsing sliver. Its scale/crop never changes
               // while scrolling, so it cannot look like a camera zoom.
               Positioned(
-                top: 50,
+                top: 65,
                 left: 0,
                 right: 0,
                 bottom: -50,
-                child: _image(coverUrl),
+                child: _image(coverUrl, alignment: Alignment.topCenter),
               ),
               Positioned.fill(
                 child: IgnorePointer(
@@ -118,16 +124,15 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
+                        // Keep the upper third clear; the fade begins at
+                        // one-third of the hero and continues all the way
+                        // down to the page background.
                         colors: [
-                          Color.alphaBlend(
-                            AppColors.accent.withValues(alpha: 0.18),
-                            AppColors.bg,
-                          ).withValues(alpha: 0.38),
-                          AppColors.bg.withValues(alpha: 0.04),
-                          AppColors.bg.withValues(alpha: 0.52),
+                          AppColors.bg.withValues(alpha: 0.0),
+                          AppColors.bg.withValues(alpha: 0.0),
                           AppColors.bg,
                         ],
-                        stops: [0.0, 0.56, 0.72, 1.0],
+                        stops: [0.0, 0.33, 1.0],
                       ),
                     ),
                   ),
@@ -144,18 +149,21 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               ),
               if (sourceLabel.isNotEmpty || animeId.isNotEmpty)
                 Positioned(
-                  top: topInset + 14,
+                  top: topInset + 8,
                   right: 14,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: const Color(0xB8000000),
                       borderRadius: BorderRadius.circular(22),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                    child: SizedBox(
+                      height: 38,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
                           if (sourceLabel.isNotEmpty)
                             sourceLabel.toUpperCase() == 'MAL'
                                 ? const _MalTextWordmark()
@@ -175,10 +183,12 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                               style: AppText.caption.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 10,
+                                fontSize: 11.5,
+                                height: 1,
                               ),
                             ),
                         ],
+                        ),
                       ),
                     ),
                   ),
@@ -332,15 +342,23 @@ class _MalTextWordmark extends StatelessWidget {
   const _MalTextWordmark();
 
   @override
-  Widget build(BuildContext context) => Text(
-    'MAL',
-    style: AppText.caption.copyWith(
-      color: Colors.white,
-      fontSize: 11,
-      fontWeight: FontWeight.w900,
-      fontStyle: FontStyle.italic,
-      letterSpacing: -0.6,
-      height: 1,
+  Widget build(BuildContext context) => Image.network(
+    'https://cdn.myanimelist.net/images/mal-logo-xsmall@2x.png?v=160803001',
+    width: 68,
+    height: 12,
+    fit: BoxFit.contain,
+    color: Colors.white,
+    colorBlendMode: BlendMode.srcIn,
+    errorBuilder: (_, _, _) => Text(
+      'MyAnimeList',
+      style: AppText.caption.copyWith(
+        color: Colors.white,
+        fontSize: 10,
+        fontWeight: FontWeight.w800,
+        fontStyle: FontStyle.italic,
+        letterSpacing: -0.35,
+        height: 1,
+      ),
     ),
   );
 }
