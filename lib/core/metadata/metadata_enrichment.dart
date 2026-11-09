@@ -9,6 +9,7 @@ import '../models/person.dart';
 import '../models/provider_info.dart';
 import '../zmode/metadata_provider_prefs.dart';
 import '../zmode/season_chain.dart';
+import 'jikan_api.dart';
 
 /// Fetches anime characters and related titles from Jikan (MAL data), while
 /// retaining AniList enrichment only for reading titles and TMDB for movies/TV.
@@ -32,17 +33,112 @@ class MetadataEnrichment {
   final Dio _dio;
   final AniListApi _anilist;
   final MetadataProviderPrefs? Function()? _prefs;
+  final Map<int, Map<String, dynamic>> _jikanRelationsCache = {};
+  final Map<int, Future<List<SeasonEntry>>> _seasonCache = {};
 
-  /// Anime franchise relationships are supplied by Jikan/MAL. The old
-  /// AniList season-chain lookup is intentionally not used on anime details.
-  /// The franchise's seasons in order, or empty when [d] has no prequel and no
-  /// sequel — the ordinary case.
-  ///
-  /// Anime only: AniList models each season as its own title, which is the
-  /// whole reason this exists. A TMDB series already carries real seasons in
-  /// one entry and needs nothing here.
-  Future<List<SeasonEntry>> seasons(MediaDetail d) async => const [];
+  /// Anime franchise seasons from MAL's prequel/sequel graph. The current
+  /// title is excluded; returned entries are the other TV/ONA seasons, ordered
+  /// from the earliest prequel through the latest sequel.
+  Future<List<SeasonEntry>> seasons(MediaDetail d) {
+    final id = d.malId;
+    if (d.type != ProviderType.anime || id == null || id <= 0) {
+      return Future.value(const []);
+    }
+    return _seasonCache.putIfAbsent(id, () => _fetchSeasons(d, id));
+  }
 
+  Future<List<SeasonEntry>> _fetchSeasons(MediaDetail d, int currentId) async {
+    final root = _jikanRelationsCache[currentId] ??
+        await _get('https://api.jikan.moe/v4/anime/$currentId/relations');
+    final rows = root?['data'];
+    if (rows is! List) return const [];
+
+    final prequels = <({int id, String title})>[];
+    final sequels = <({int id, String title})>[];
+    for (final row in rows) {
+      if (row is! Map) continue;
+      final relation = row['relation']?.toString().toLowerCase();
+      if (relation != 'prequel' && relation != 'sequel') continue;
+      final entries = row['entry'];
+      if (entries is! List) continue;
+      for (final entry in entries) {
+        if (entry is! Map || entry['type']?.toString() != 'anime') continue;
+        final id = (entry['mal_id'] as num?)?.toInt();
+        final title = entry['name']?.toString().trim() ?? '';
+        if (id == null || id <= 0 || id == currentId || title.isEmpty) continue;
+        (relation == 'prequel' ? prequels : sequels).add((id: id, title: title));
+      }
+    }
+
+    // MAL lists the nearest prequel first. Reverse it so the rail reads in
+    // chronological order. A cap protects the detail page from huge franchises.
+    final ordered = <({int id, String title})>[
+      ...prequels.reversed,
+      ...sequels,
+    ];
+    final seen = <int>{};
+    final candidates = ordered.where((entry) => seen.add(entry.id)).take(8).toList();
+    if (candidates.isEmpty) return const [];
+
+    // Full records supply each season's poster, episode count and popularity.
+    final details = await Future.wait([
+      for (final entry in candidates)
+        _get('https://api.jikan.moe/v4/anime/${entry.id}/full'),
+    ]);
+
+    final prequelIds = prequels.map((e) => e.id).toSet();
+    final resolved = <({int id, String title, String? cover, int? episodes, int? popularity, bool prequel})>[];
+    for (var i = 0; i < candidates.length; i++) {
+      final raw = details[i]?['data'];
+      final info = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+      final type = info['type']?.toString();
+      if (type != null && !const {'TV', 'TV Short', 'ONA'}.contains(type)) {
+        continue;
+      }
+      final images = info['images'];
+      final jpg = images is Map ? images['jpg'] : null;
+      final cover = jpg is Map
+          ? (jpg['large_image_url'] ?? jpg['image_url'])?.toString()
+          : null;
+      final entry = candidates[i];
+      resolved.add((
+        id: entry.id,
+        title: (info['title_english'] ?? info['title'] ?? entry.title).toString(),
+        cover: cover,
+        episodes: (info['episodes'] as num?)?.toInt(),
+        popularity: (info['popularity'] as num?)?.toInt(),
+        prequel: prequelIds.contains(entry.id),
+      ));
+    }
+
+    final previous = resolved.where((e) => e.prequel).toList();
+    final next = resolved.where((e) => !e.prequel).toList();
+    final result = <SeasonEntry>[];
+    var number = 1;
+    for (final entry in previous) {
+      result.add(SeasonEntry(
+        number: number++,
+        title: entry.title,
+        malId: entry.id,
+        cover: entry.cover,
+        episodes: entry.episodes,
+        popularity: entry.popularity,
+      ));
+    }
+    // The currently opened title occupies the next number in the chain.
+    number = previous.length + 2;
+    for (final entry in next) {
+      result.add(SeasonEntry(
+        number: number++,
+        title: entry.title,
+        malId: entry.id,
+        cover: entry.cover,
+        episodes: entry.episodes,
+        popularity: entry.popularity,
+      ));
+    }
+    return List.unmodifiable(result);
+  }
 
   // TMDB v3 — api_key attached by the Dio interceptor (initDependencies).
   static const String _tmdbBase = 'https://api.themoviedb.org/3';
@@ -233,8 +329,10 @@ class MetadataEnrichment {
     ]);
     final characters = answers[0];
     final related = answers[1];
+    if (related != null) _jikanRelationsCache[id] = related;
     final recs = answers[2];
     final rows = characters?['data'];
+    final seenVoiceActors = <String>{};
     if (rows is List) {
       for (final row in rows.take(40)) {
         if (row is! Map) continue;
@@ -248,6 +346,31 @@ class MetadataEnrichment {
         final role = row['role']?.toString().trim();
         cast.add(CastMember(name: name, role: role?.isNotEmpty == true ? role : null,
           photo: photo?.isNotEmpty == true ? photo : null));
+
+        // Jikan nests voice actors under each character. Add their portrait
+        // and language so this rail represents both the character and its cast.
+        final voiceActors = row['voice_actors'];
+        if (voiceActors is List) {
+          for (final voice in voiceActors) {
+            if (voice is! Map || cast.length >= 100) continue;
+            final person = voice['person'];
+            if (person is! Map) continue;
+            final voiceName = person['name']?.toString().trim() ?? '';
+            final language = voice['language']?.toString().trim() ?? '';
+            final voiceKey = '${voiceName.toLowerCase()}|${language.toLowerCase()}';
+            if (voiceName.isEmpty || !seenVoiceActors.add(voiceKey)) continue;
+            final voiceImages = person['images'];
+            final voiceJpg = voiceImages is Map ? voiceImages['jpg'] : null;
+            final voicePhoto = voiceJpg is Map
+                ? (voiceJpg['image_url'] ?? voiceJpg['small_image_url'])?.toString()
+                : null;
+            cast.add(CastMember(
+              name: voiceName,
+              role: _voiceActorLabel(language),
+              photo: voicePhoto?.isNotEmpty == true ? voicePhoto : null,
+            ));
+          }
+        }
       }
     }
 
@@ -285,6 +408,16 @@ class MetadataEnrichment {
     }
     return (cast: cast, relations: relations);
   }
+
+  static String _voiceActorLabel(String language) => switch (language.toLowerCase()) {
+    'japanese' => 'VA Jepang',
+    'english' => 'VA Inggris',
+    'korean' => 'VA Korea',
+    'chinese' => 'VA Mandarin',
+    'french' => 'VA Prancis',
+    'german' => 'VA Jerman',
+    _ => language.isEmpty ? 'Pengisi suara' : 'VA $language',
+  };
 
   static String? _indonesianMalRelation(String? value) {
     if (value == null || value.isEmpty) return null;
@@ -540,15 +673,19 @@ class MetadataEnrichment {
     Map<String, String>? headers,
   ]) async {
     try {
-      final res = await _dio.get<dynamic>(
-        url,
-        queryParameters: query,
-        options: Options(
-          headers: headers,
-          validateStatus: (s) => s != null && s < 500,
-        ),
-      );
-      final data = res.data;
+      final dynamic data;
+      if (url.startsWith('https://api.jikan.moe/v4/')) {
+        data = await JikanApi.get(_dio, url, query: query, headers: headers);
+      } else {
+        data = (await _dio.get<dynamic>(
+          url,
+          queryParameters: query,
+          options: Options(
+            headers: headers,
+            validateStatus: (s) => s != null && s < 500,
+          ),
+        )).data;
+      }
       if (data is Map) return Map<String, dynamic>.from(data);
     } catch (_) {}
     return null;
