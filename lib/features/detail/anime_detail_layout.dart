@@ -643,12 +643,17 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
 
   @override
   Widget build(BuildContext context) {
-    final related = widget.relations.where((r) => !_isRecommended(r)).toList();
+    final seasonRelations = widget.relations.where((r) {
+      final value = r.relation?.toLowerCase();
+      return value == 'prekuel' || value == 'sequel';
+    }).toList();
+    final related = widget.relations.where((r) =>
+      !_isRecommended(r) && !seasonRelations.contains(r)).toList();
     final recommendations = widget.relations.where(_isRecommended).toList();
     final tabs = <String>[
-      if (widget.seasons.isNotEmpty) 'Semua Musim',
-      if (widget.seasons.isNotEmpty || related.isNotEmpty) 'Terkait',
-      if (widget.seasons.isNotEmpty || recommendations.isNotEmpty) 'Rekomendasi',
+      if (widget.seasons.isNotEmpty || seasonRelations.isNotEmpty) 'Semua Musim',
+      if (related.isNotEmpty) 'Terkait',
+      if (recommendations.isNotEmpty) 'Rekomendasi',
     ];
     if (tabs.isEmpty) return const SizedBox.shrink();
     if (_selected >= tabs.length) _selected = 0;
@@ -705,6 +710,18 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         viewsBadge: season.popularity,
                         metaLine: season.episodes == null ? null : 'TV · ${season.episodes} eps',
                         onTap: () => widget.onOpenSeason(season),
+                      ),
+                    ));
+                  }
+                  for (final relation in seasonRelations) {
+                    cards.add(SizedBox(
+                      width: width,
+                      child: PosterCard(
+                        title: relation.title,
+                        imageUrl: relation.cover,
+                        cellWidth: width,
+                        seriesBadge: relation.relation,
+                        onTap: () => widget.onOpenRelation(relation),
                       ),
                     ));
                   }
