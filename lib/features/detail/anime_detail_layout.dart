@@ -792,11 +792,13 @@ class AnimeDetailSeasonRail extends StatefulWidget {
   const AnimeDetailSeasonRail({
     required this.seasons,
     required this.relations,
+    this.loading = false,
     required this.onOpenSeason,
     required this.onOpenRelation,
   });
   final List<SeasonEntry> seasons;
   final List<MediaRelation> relations;
+  final bool loading;
   final ValueChanged<SeasonEntry> onOpenSeason;
   final ValueChanged<MediaRelation> onOpenRelation;
 
@@ -915,14 +917,29 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                     alignment: Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.only(right: 16),
-                      child: Text(
-                        selectedTab == 'Anime Terkait'
-                            ? 'Belum ada anime terkait.'
-                            : selectedTab == 'Rekomendasi'
-                                ? 'Belum ada rekomendasi.'
-                                : 'Belum ada musim lain.',
-                        style: AppText.caption.copyWith(color: AppColors.textSecondary),
-                      ),
+                      child: loading && selectedTab == 'Semua Musim'
+                          ? Row(
+                              children: [
+                                const SizedBox(
+                                  width: 13,
+                                  height: 13,
+                                  child: CircularProgressIndicator(strokeWidth: 1.6),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Memuat daftar musim...',
+                                  style: AppText.caption.copyWith(color: AppColors.textSecondary),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              selectedTab == 'Terkait'
+                                  ? 'Belum ada anime terkait.'
+                                  : selectedTab == 'Rekomendasi'
+                                      ? 'Belum ada rekomendasi.'
+                                      : 'Belum ada musim lain.',
+                              style: AppText.caption.copyWith(color: AppColors.textSecondary),
+                            ),
                     ),
                   );
                 }
