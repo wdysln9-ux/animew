@@ -656,102 +656,153 @@ class AnimeDetailGenreChips extends StatelessWidget {
 }
 
 class _DetailCredits extends StatefulWidget {
-  const _DetailCredits({required this.genres, required this.studios, required this.producers, required this.onGenreTap, required this.onStudioTap});
+  const _DetailCredits({
+    required this.genres,
+    required this.studios,
+    required this.producers,
+    required this.onGenreTap,
+    required this.onStudioTap,
+  });
   final List<String> genres;
   final List<String> studios;
   final List<String> producers;
   final ValueChanged<String> onGenreTap;
   final ValueChanged<String> onStudioTap;
+
   @override
   State<_DetailCredits> createState() => _DetailCreditsState();
 }
-class _DetailCreditsState extends State<_DetailCredits> {
-  bool _expanded = true;
 
-  Widget _chip(String label, VoidCallback onTap, {bool genre = false}) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(7),
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+class _DetailCreditsState extends State<_DetailCredits> {
+  bool _expanded = false;
+
+  Widget _chip(
+    String label,
+    Color color, {
+    VoidCallback? onTap,
+    bool outlined = false,
+  }) {
+    final child = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: genre ? Colors.transparent : AppColors.surface2,
-        border: Border.all(
-          color: genre
-              ? AppColors.accent.withValues(alpha: .72)
-              : AppColors.textTertiary.withValues(alpha: .28),
-        ),
-        borderRadius: BorderRadius.circular(7),
+        color: outlined ? Colors.transparent : color,
+        border: outlined ? Border.all(color: color, width: 1) : null,
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: AppText.caption.copyWith(
           fontSize: 10,
-          color: genre ? AppColors.accent : AppColors.textSecondary,
+          height: 1.1,
+          color: outlined ? color : Colors.white,
+          fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+    if (onTap == null) return child;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: child,
+    );
+  }
+
+  Widget _label(String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 5),
+    child: Text(
+      value,
+      style: AppText.caption.copyWith(
+        fontSize: 10,
+        color: AppColors.textSecondary,
+        fontWeight: FontWeight.w700,
       ),
     ),
   );
 
   @override
   Widget build(BuildContext context) {
-    final credits = [...widget.studios, ...widget.producers];
+    const studioBlue = Color(0xFF2864B7);
+    const producerPink = Color(0xFFB94B83);
+    const genreColor = AppColors.accent;
+    final visibleStudios = _expanded
+        ? widget.studios
+        : widget.studios.take(2).toList(growable: false);
+    final hasHidden = widget.studios.length > visibleStudios.length ||
+        widget.producers.isNotEmpty;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 9, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 5,
-            runSpacing: 5,
-            children: [
-              for (final genre in widget.genres)
-                _chip(genre, () => widget.onGenreTap(genre), genre: true),
-            ],
-          ),
-          if (credits.isNotEmpty) ...[
-            const SizedBox(height: 6),
+          if (widget.genres.isNotEmpty)
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 5,
               runSpacing: 5,
               children: [
-                for (final credit in (_expanded ? credits : widget.studios))
-                  _chip(credit, () {
-                    if (widget.studios.contains(credit)) {
-                      widget.onStudioTap(credit);
-                    }
-                  }),
+                for (final genre in widget.genres)
+                  _chip(
+                    genre,
+                    genreColor,
+                    outlined: true,
+                    onTap: () => widget.onGenreTap(genre),
+                  ),
               ],
             ),
-            const SizedBox(height: 4),
+          if (widget.studios.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _label('Studio'),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 5,
+              runSpacing: 5,
+              children: [
+                for (final studio in visibleStudios)
+                  _chip(
+                    studio,
+                    studioBlue,
+                    onTap: () => widget.onStudioTap(studio),
+                  ),
+                if (!_expanded && hasHidden)
+                  GestureDetector(
+                    onTap: () => setState(() => _expanded = true),
+                    child: _chip('Selengkapnya', AppColors.textSecondary),
+                  ),
+              ],
+            ),
+          ],
+          if (_expanded && widget.producers.isNotEmpty) ...[
+            const SizedBox(height: 9),
+            _label('Produser'),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 5,
+              runSpacing: 5,
+              children: [
+                for (final producer in widget.producers)
+                  _chip(producer, producerPink),
+              ],
+            ),
+          ],
+          if (_expanded && hasHidden)
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _expanded = !_expanded),
+              onTap: () => setState(() => _expanded = false),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _expanded ? 'Lebih sedikit' : 'Selengkapnya',
-                      style: AppText.caption.copyWith(
-                        fontSize: 10,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: 3),
-                    Icon(
-                      _expanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      size: 16,
-                      color: AppColors.textSecondary,
-                    ),
-                  ],
+                padding: const EdgeInsets.only(top: 5, bottom: 1),
+                child: Text(
+                  'Lebih sedikit',
+                  style: AppText.caption.copyWith(
+                    fontSize: 10,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-          ],
         ],
       ),
     );
