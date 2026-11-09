@@ -490,17 +490,17 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 17)),
+          const SizedBox(height: 9),
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
             alignment: Alignment.topCenter,
-            child: ClipRect(
-              child: ConstrainedBox(
-                constraints: _expanded ? const BoxConstraints() : const BoxConstraints(maxHeight: 64),
-                child: AniListMarkdown(data: data, textStyle: AppText.body.copyWith(
-                  fontSize: 13, height: 1.48, color: AppColors.textSecondary)),
-              ),
-            ),
+            child: _expanded
+                ? AniListMarkdown(data: data, textStyle: AppText.body.copyWith(
+                    fontSize: 13, height: 1.48, color: AppColors.textSecondary))
+                : Text(data, maxLines: 3, overflow: TextOverflow.ellipsis,
+                    style: AppText.body.copyWith(fontSize: 13, height: 1.48, color: AppColors.textSecondary)),
           ),
           const SizedBox(height: 5),
           GestureDetector(
@@ -612,68 +612,71 @@ class _DetailCreditsState extends State<_DetailCredits> {
   }
 }
 
-class AnimeDetailCharacterRail extends StatelessWidget {
+class AnimeDetailCharacterRail extends StatefulWidget {
   const AnimeDetailCharacterRail({required this.cast, this.onOpenPerson});
   final List<CastMember> cast;
   final ValueChanged<PersonRef>? onOpenPerson;
-
+  @override
+  State<AnimeDetailCharacterRail> createState() => _AnimeDetailCharacterRailState();
+}
+class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
+  bool _expanded = true;
   @override
   Widget build(BuildContext context) {
+    final cast = widget.cast;
     if (cast.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 22, 0, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Text('Karakter', style: AppText.headline.copyWith(fontSize: 17)),
-            const SizedBox(width: 7),
-            Text(cast.length.toString(), style: AppText.caption.copyWith(color: AppColors.textSecondary)),
-          ]),
-          const SizedBox(height: 11),
-          SizedBox(
-            height: 128,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(right: 16),
-              itemCount: cast.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                final member = cast[index];
-                return SizedBox(
-                  width: 82,
-                  child: GestureDetector(
-                    onTap: member.person == null || onOpenPerson == null ? null : () => onOpenPerson!(member.person!),
-                    child: Column(children: [
-                      ClipOval(
-                        child: SizedBox(
-                          width: 68,
-                          height: 68,
-                          child: member.photo?.isNotEmpty == true
-                              ? CachedNetworkImage(
-                                  imageUrl: member.photo!, fit: BoxFit.cover,
-                                  placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
-                                  errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2, child: const Icon(Icons.person_outline_rounded)),
-                                )
-                              : ColoredBox(color: AppColors.surface2, child: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary)),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(member.name, maxLines: 2, textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.caption.copyWith(fontSize: 10.5, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                      if (member.role?.isNotEmpty == true)
-                        Text(_indonesianCharacterRole(member.role!), maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppText.caption.copyWith(fontSize: 9, color: AppColors.accent)),
-                    ]),
-                  ),
-                );
-              },
-            ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Row(children: [
+              Text('Karakter', style: AppText.headline.copyWith(fontSize: 17)),
+              const SizedBox(width: 7),
+              Text(cast.length.toString(), style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+              const Spacer(),
+              Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondary),
+            ]),
           ),
+        ),
+        if (_expanded) ...[
+          const SizedBox(height: 11),
+          SizedBox(height: 128, child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.only(right: 16),
+            itemCount: cast.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final member = cast[index];
+              return SizedBox(width: 82, child: GestureDetector(
+                onTap: member.person == null || widget.onOpenPerson == null
+                    ? null : () => widget.onOpenPerson!(member.person!),
+                child: Column(children: [
+                  ClipOval(child: SizedBox(width: 68, height: 68,
+                    child: member.photo?.isNotEmpty == true
+                        ? CachedNetworkImage(imageUrl: member.photo!, fit: BoxFit.cover,
+                            placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
+                            errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2,
+                              child: const Icon(Icons.person_outline_rounded)))
+                        : ColoredBox(color: AppColors.surface2,
+                            child: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary)))),
+                  const SizedBox(height: 6),
+                  Text(member.name, maxLines: 2, textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.caption.copyWith(fontSize: 10.5, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                  if (member.role?.isNotEmpty == true)
+                    Text(_indonesianCharacterRole(member.role!), maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.caption.copyWith(fontSize: 9, color: AppColors.accent)),
+                ]),
+              ));
+            },
+          )),
         ],
-      ),
+      ]),
     );
   }
 }
@@ -711,12 +714,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     final related = widget.relations.where((r) =>
       !_isRecommended(r) && !seasonRelations.contains(r)).toList();
     final recommendations = widget.relations.where(_isRecommended).toList();
-    final tabs = <String>[
-      if (widget.seasons.isNotEmpty || seasonRelations.isNotEmpty) 'Semua Musim',
-      if (related.isNotEmpty) 'Terkait',
-      if (recommendations.isNotEmpty) 'Rekomendasi',
-    ];
-    if (tabs.isEmpty) return const SizedBox.shrink();
+    final tabs = <String>['Semua Musim', 'Anime Terkait', 'Rekomendasi'];
     if (_selected >= tabs.length) _selected = 0;
 
     final width = posterRowWidth(context);
@@ -787,7 +785,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                     ));
                   }
                 } else {
-                  final rows = selectedTab == 'Terkait' ? related : recommendations;
+                  final rows = selectedTab == 'Anime Terkait' ? related : recommendations;
                   for (final relation in rows) {
                     cards.add(SizedBox(
                       width: width,
@@ -807,7 +805,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                     child: Padding(
                       padding: const EdgeInsets.only(right: 16),
                       child: Text(
-                        selectedTab == 'Terkait'
+                        selectedTab == 'Anime Terkait'
                             ? 'Belum ada anime terkait.'
                             : selectedTab == 'Rekomendasi'
                                 ? 'Belum ada rekomendasi.'
