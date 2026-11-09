@@ -1907,10 +1907,17 @@ class _DetailViewState extends State<_DetailView> {
   @override
   Widget build(BuildContext context) {
     if (sl<AppMode>().isTv) return DetailScreenTv(item: widget.item);
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
-            child: Stack(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        body: SafeArea(
+          top: false,
+          child: Stack(
           children: [
           // Adaptive colour stays behind the single scrolling detail page.
           if (ThemeController.adaptiveColour) PosterTintLayer(notifier: _tint),
@@ -2018,6 +2025,7 @@ class _DetailViewState extends State<_DetailView> {
             ],
           ),
         ),
+      ),
     );
   }
 
