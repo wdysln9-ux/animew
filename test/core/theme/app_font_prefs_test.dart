@@ -49,11 +49,11 @@ void main() {
     // FontLoader registrations do not survive a restart, so boot re-fetches.
     // With no network (as here) the font is not on the device — applying it
     // anyway would draw the platform default and look like a broken setting,
-    // so boot must fall back to the bundled default instead.
+    // so boot must fall back to the bundled Nunito family instead.
     await AppFontPrefs.setFamily('Montserrat');
     AppText.fontFamily = 'something else entirely';
     await AppFontPrefs.init();
-    expect(AppText.fontFamily, AppText.defaultFontFamily);
+    expect(AppText.fontFamily, AppText.fallbackFontFamily);
     // The CHOICE is kept though — it comes back once the download succeeds.
     expect(AppFontPrefs.family, 'Montserrat');
   });
