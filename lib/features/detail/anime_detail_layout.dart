@@ -725,7 +725,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
   Widget build(BuildContext context) {
     const studioBlue = Color(0xFF2864B7);
     const producerPink = Color(0xFFB94B83);
-    const genreColor = AppColors.accent;
+    final genreColor = AppColors.accent;
     final visibleStudios = _expanded
         ? widget.studios
         : widget.studios.take(2).toList(growable: false);
