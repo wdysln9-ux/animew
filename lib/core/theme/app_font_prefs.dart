@@ -42,8 +42,8 @@ class AppFontPrefs {
   /// it does for [ThemeController.revision].
   static final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
-  /// Offered in the picker, in the order shown. Nunito first: it is the
-  /// default and the one the app is designed around.
+  /// Offered in the picker, in the order shown. Urbanist is the default;
+  /// Nunito remains the offline-safe fallback.
   static const List<AppFont> _builtInFonts = [
     AppFont('Urbanist', 'Urbanist'),
     AppFont('Nunito', 'Nunito', bundled: true),
@@ -84,7 +84,7 @@ class AppFontPrefs {
 
   /// Opens the box and applies the saved font BEFORE the first frame, so the
   /// app never paints one font and then swaps.
-  static Future<void> init() async {
+  static Future<void> init({bool loadDownloaded = true}) async {
     if (!Hive.isBoxOpen(boxName)) await openBoxSafely(boxName);
     final saved = family;
     // FontLoader registrations do not survive a restart, so a downloaded
@@ -92,9 +92,13 @@ class AppFontPrefs {
     // app boots into a font Flutter doesn't know and quietly draws the
     // platform default, which reads as the setting having been forgotten.
     if (!isBundled(saved)) {
+      if (!loadDownloaded) {
+        AppText.fontFamily = AppText.fallbackFontFamily;
+        return;
+      }
       final ok = await SubtitleFontService.instance.ensure(saved);
       if (!ok) {
-        AppText.fontFamily = AppText.defaultFontFamily;
+        AppText.fontFamily = AppText.fallbackFontFamily;
         return;
       }
     }
