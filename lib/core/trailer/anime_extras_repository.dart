@@ -121,26 +121,17 @@ class AnimeExtrasRepository {
   }
 
   Future<AnimeExtras> _fetch(int malId) async {
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    dynamic videosResponse;
-    dynamic themesResponse;
-    String? videoError;
-    String? themeError;
-
-    try {
-      videosResponse = await _getWithRetry('$_jikan/anime/$malId/videos');
-    } catch (error) {
-      videoError = error.toString();
-    }
-
-    // Respect Jikan's request pacing even when the first endpoint failed.
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-
-    try {
-      themesResponse = await _getWithRetry('$_jikan/anime/$malId/themes');
-    } catch (error) {
-      themeError = error.toString();
-    }
+    // Both endpoints are independent. Request them together instead of
+    // serializing two network round-trips; Jikan permits this pair under its
+    // normal per-second request budget.
+    final results = await Future.wait([
+      _safeGet('$_jikan/anime/$malId/videos'),
+      _safeGet('$_jikan/anime/$malId/themes'),
+    ]);
+    final videosResponse = results[0].$1;
+    final themesResponse = results[1].$1;
+    final videoError = results[0].$2;
+    final themeError = results[1].$2;
 
     final videosRoot = _map(videosResponse);
     final videoData = _map(videosRoot?['data']);
@@ -185,16 +176,28 @@ class AnimeExtrasRepository {
     );
   }
 
+  Future<(dynamic, String?)> _safeGet(String url) async {
+    try {
+      return (await _getWithRetry(url), null);
+    } catch (error) {
+      return (null, error.toString());
+    }
+  }
+
   Future<dynamic> _getWithRetry(String url) async {
-    for (var attempt = 0; attempt < 2; attempt++) {
+    for (var attempt = 0; attempt < 3; attempt++) {
       try {
         final response = await _dio.get<dynamic>(url);
         return response.data;
       } on DioException catch (error) {
         final status = error.response?.statusCode;
         final retryable = status == 429 || (status != null && status >= 500);
-        if (attempt == 0 && retryable) {
-          await Future<void>.delayed(const Duration(milliseconds: 1400));
+        if (attempt < 2 && retryable) {
+          // Jikan rate limits with HTTP 429. Back off progressively instead
+          // of immediately issuing another request into the same limit.
+          await Future<void>.delayed(
+            Duration(milliseconds: status == 429 ? 1200 * (attempt + 1) : 700),
+          );
           continue;
         }
         rethrow;
