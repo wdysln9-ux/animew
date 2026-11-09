@@ -46,6 +46,7 @@ import 'core/zmode/match_store.dart';
 import 'core/zmode/metadata_provider_prefs.dart';
 import 'core/zmode/zmode_prefs.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_text.dart';
 import 'core/theme/app_font_prefs.dart';
 import 'core/theme/theme_controller.dart';
 import 'core/tv/tv_route_pop_guard.dart';
@@ -795,8 +796,18 @@ class _WatchAppState extends State<WatchApp> with WidgetsBindingObserver {
                 )
               : (child ?? const SizedBox.shrink());
           final isTv = sl.isRegistered<AppMode>() && sl<AppMode>().isTv;
-          return PosterCardScope(
-            child: isTv ? TvViewport(child: content) : content,
+          // Enforce the selected app font as the inherited text face across
+          // every route and custom widget. Many screens use partial/const
+          // TextStyles (color/size/weight only); those must inherit Urbanist
+          // instead of falling back to a component's platform default.
+          return DefaultTextStyle.merge(
+            style: TextStyle(
+              fontFamily: AppText.fontFamily,
+              fontFamilyFallback: AppText.fontFamilyFallback,
+            ),
+            child: PosterCardScope(
+              child: isTv ? TvViewport(child: content) : content,
+            ),
           );
         },
       ),
