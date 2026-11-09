@@ -1545,22 +1545,13 @@ class _EpisodeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Listed by the catalogue, absent from every matched source. Kept in the
-    // list — an airing show's next episode genuinely exists — but dimmed and
-    // labelled, so it reads as "not yet" rather than as a row that silently
-    // does nothing.
     final unavailable = !ep.available;
     final titleColor = unavailable
         ? AppColors.textTertiary
         : isResume
-        ? AppColors.accent
-        : (isWatched ? AppColors.textSecondary : AppColors.textPrimary);
+            ? AppColors.accent
+            : (isWatched ? AppColors.textSecondary : AppColors.textPrimary);
 
-    final thumbUrl = (ep.thumbnail != null && ep.thumbnail!.isNotEmpty)
-        ? ep.thumbnail!
-        : coverUrl;
-
-    // Runtime and air date are localized for the episode tab only.
     String formatEpisodeDate(String raw) {
       final parsed = DateTime.tryParse(raw.trim());
       if (parsed == null) return raw.trim();
@@ -1577,9 +1568,6 @@ class _EpisodeRow extends StatelessWidget {
               formatEpisodeDate(ep.date!),
           ].join('  ·  ');
 
-    // Prefer the real AniZip/TMDB title when the source only gave a generic
-    // "Episode N" (or nothing); keep the source's own title when it has a real
-    // one.
     final srcTitle = displayTitle.trim();
     final titleText =
         episodeDisplayTitle(ep, sourceTitle: srcTitle, number: epNum) ?? '';
@@ -1588,201 +1576,110 @@ class _EpisodeRow extends StatelessWidget {
         : context.l10n.episodeLabel(epNum);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       child: Material(
         color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(12),
           splashColor: AppColors.accentSoft,
           highlightColor: AppColors.surface,
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Rounded 16:9 thumbnail with a centered play-circle.
-                SizedBox(
-                  width: 89,
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Stack(
-                        fit: StackFit.expand,
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 39,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignment: Alignment.center,
+                      child: isWatched && !isResume
+                          ? Icon(Icons.check_rounded, color: AppColors.accent, size: 20)
+                          : Text(
+                              '$epNum',
+                              style: AppText.body.copyWith(
+                                color: unavailable ? AppColors.textTertiary : AppColors.accent,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 11),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          thumbUrl.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: thumbUrl,
-                                  cacheManager:
-                                      AppImageCache.cacheManagerOrDefault,
-                                  httpHeaders: coverHeaders,
-                                  fit: BoxFit.cover,
-                                  memCacheWidth: 320,
-                                  placeholder: (c, u) =>
-                                      ColoredBox(color: AppColors.surface2),
-                                  errorWidget: (c, u, e) =>
-                                      ColoredBox(color: AppColors.surface2),
-                                )
-                              : ColoredBox(color: AppColors.surface2),
-                          if (isWatched)
-                            const DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Color(0x73000000),
-                              ),
-                              child: SizedBox.expand(),
+                          AutoTranslatedText(
+                            text: heading,
+                            style: AppText.body.copyWith(
+                              color: titleColor,
+                              fontSize: 12.5,
+                              fontWeight: isResume ? FontWeight.w800 : FontWeight.w700,
+                              height: 1.25,
                             ),
-                          // Centered play-circle (white ring like the ref).
-                          Center(
-                            child: DecoratedBox(
-                              decoration: const BoxDecoration(
-                                color: Color(0x59000000),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(7),
-                                child: Icon(
-                                  unavailable
-                                      ? Icons.hourglass_empty_rounded
-                                      : Icons.play_arrow_rounded,
-                                  color: unavailable
-                                      ? Colors.white70
-                                      : Colors.white,
-                                  size: 22,
-                                ),
-                              ),
-                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          if (isWatched)
-                            const Positioned(
-                              top: 4,
-                              right: 4,
-                              child: Icon(
-                                Icons.check_circle,
-                                color: Colors.white,
-                                size: 16,
+                          if (metaLine.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              metaLine,
+                              style: AppText.caption.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 10.5,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          // Rating chip — top-left so it never overlaps the
-                          // watched check (top-right); always fully visible,
-                          // unlike the old inline "★ 8.0" that got clipped.
-                          if (ep.rating != null)
-                            Positioned(
-                              top: 4,
-                              left: 4,
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xB3000000),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 5,
-                                    vertical: 2,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.star_rounded,
-                                        color: Color(0xFFFFC107),
-                                        size: 11,
-                                      ),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        ep.rating!.toStringAsFixed(1),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.1,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                          ],
+                          if (isResume || filler) ...[
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                if (isResume) TagBadge(text: context.l10n.continueBadge),
+                                if (isResume && filler) const SizedBox(width: 6),
+                                if (filler) TagBadge(text: context.l10n.fillerBadge),
+                              ],
                             ),
-                          if (isInProgress)
-                            Positioned(
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              child: _ThumbnailProgressBar(fraction: fraction),
-                            ),
+                          ],
                         ],
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 11),
-                // Title + date/duration under + badges.
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AutoTranslatedText(
-                        text: heading,
-                        style: AppText.body.copyWith(
-                          color: titleColor,
-                          fontWeight: isResume
-                              ? FontWeight.w800
-                              : FontWeight.w700,
+                    if (!sl<AppMode>().isTv) ...[
+                      const SizedBox(width: 5),
+                      SizedBox(
+                        width: 34,
+                        height: 38,
+                        child: _EpisodeDownloadIcon(
+                          sourceId: sourceId,
+                          showId: showId,
+                          episodeId: ep.id,
+                          onTap: onDownload,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (metaLine.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          metaLine,
-                          style: AppText.caption.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      if (isResume || filler) ...[
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            if (isResume)
-                              TagBadge(text: context.l10n.continueBadge),
-                            if (isResume && filler) const SizedBox(width: 6),
-                            if (filler)
-                              TagBadge(text: context.l10n.fillerBadge),
-                          ],
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
-                // Per-episode download icon (phone only). On TV it's redundant
-                // clutter next to the main Download button + hard to focus, so
-                // it's hidden — the TV path downloads via the Download action.
-                if (!sl<AppMode>().isTv) ...[
-                  const SizedBox(width: 8),
-                  _EpisodeDownloadIcon(
-                    sourceId: sourceId,
-                    showId: showId,
-                    episodeId: ep.id,
-                    onTap: onDownload,
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
-            ),
+              ),
+              if (isInProgress)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _ThumbnailProgressBar(fraction: fraction),
+                ),
+            ],
           ),
         ),
+      ),
     );
   }
 }

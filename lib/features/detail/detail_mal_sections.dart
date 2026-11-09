@@ -319,20 +319,95 @@ class _MalThemeSectionState extends State<_MalThemeSection> {
               ),
             if (songs.isNotEmpty) const SizedBox(height: 8),
             for (final song in visible)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5),
-                child: Row(
-                  children: [
-                    Icon(song.$1 == 'Opening' ? Icons.play_circle_outline : Icons.music_note, size: 17, color: AppColors.accent),
-                    const SizedBox(width: 9),
-                    Expanded(child: Text(song.$2, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body.copyWith(fontSize: 13))),
-                    Text(song.$1 == 'Opening' ? 'OP' : 'ED', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
-                  ],
-                ),
-              ),
+              _ThemeSongCard(kind: song.$1, title: song.$2),
           ],
         ),
       );
     },
   );
 }
+
+// Compact MAL theme-song card matching the detail-page reference.
+class _ThemeSongCard extends StatelessWidget {
+  const _ThemeSongCard({required this.kind, required this.title});
+
+  final String kind;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final opening = kind == 'Opening';
+    final accent = opening ? AppColors.accent : const Color(0xFF9B83D8);
+    final label = opening ? 'OP' : 'ED';
+    final cleanTitle = title
+        .replaceFirst(RegExp(r'^["“]'), '')
+        .replaceFirst(RegExp(r'["”](?=\\s+by\\s|\\s*\\()'), '')
+        .trim();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface2,
+          borderRadius: BorderRadius.circular(11),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(
+                opening ? Icons.play_arrow_rounded : Icons.music_note_rounded,
+                color: accent,
+                size: 23,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                cleanTitle.isEmpty ? title : cleanTitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.body.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  height: 1.25,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.music_note_rounded,
+              size: 17,
+              color: AppColors.textTertiary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
