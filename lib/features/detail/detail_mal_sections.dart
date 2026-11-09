@@ -20,7 +20,7 @@ class _MalTrailerSection extends StatefulWidget {
 
 class _MalTrailerSectionState extends State<_MalTrailerSection> {
   late Future<AnimeExtras> _future;
-  bool _expanded = true;
+  bool _expanded = false;
 
   @override
   void initState() {
@@ -91,7 +91,8 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
           ),
         );
       }
-      if (videos.isEmpty) return const SizedBox.shrink();
+      // Keep the section header visible even when MAL has no trailer;
+      // users can still expand it to see the empty-state explanation.
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 22, 0, 0),
         child: Column(
@@ -105,13 +106,22 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
                 child: Row(children: [
                   Text('Trailer & PV', style: AppText.headline.copyWith(fontSize: 17)),
                   const Spacer(),
-                  Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.keyboard_arrow_down_rounded,
+                  Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded,
                     color: AppColors.textSecondary),
                 ]),
               ),
             ),
             if (_expanded) ...[
             const SizedBox(height: 12),
+            if (videos.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Text(
+                  'Trailer belum tersedia di MyAnimeList.',
+                  style: AppText.caption.copyWith(color: AppColors.textSecondary),
+                ),
+              )
+            else
             SizedBox(
               height: 132,
               child: ListView.separated(
@@ -272,7 +282,6 @@ class _MalThemeSectionState extends State<_MalThemeSection> {
           ),
         );
       }
-      if (songs.isEmpty) return const SizedBox.shrink();
       final visible = _expanded ? songs : songs.take(3).toList();
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
@@ -288,11 +297,19 @@ class _MalThemeSectionState extends State<_MalThemeSection> {
                   const SizedBox(width: 8),
                   Text('${songs.length}', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
                   const Spacer(),
-                  Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondary),
+                  Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary),
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            if (_expanded && songs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Lagu tema belum tersedia di MyAnimeList.',
+                  style: AppText.caption.copyWith(color: AppColors.textSecondary),
+                ),
+              ),
+            if (songs.isNotEmpty) const SizedBox(height: 8),
             for (final song in visible)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 5),
