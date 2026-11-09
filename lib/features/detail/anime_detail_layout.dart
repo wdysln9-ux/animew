@@ -538,15 +538,15 @@ class AnimeDetailActionButton extends StatelessWidget {
       opacity: onPressed != null || loading ? 1 : 0.42,
       child: Material(
         color: background,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(24),
           child: Container(
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: active
                     ? AppColors.accent
