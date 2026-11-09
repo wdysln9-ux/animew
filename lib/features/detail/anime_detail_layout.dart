@@ -85,6 +85,9 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   ) {
     final poster = posterUrl?.isNotEmpty == true ? posterUrl! : coverUrl;
     final topInset = MediaQuery.paddingOf(context).top;
+    final posterWidth = (MediaQuery.sizeOf(context).width * 0.48)
+        .clamp(164.0, 184.0);
+    final posterHeight = posterWidth * 1.58;
 
     return ClipRect(
       child: OverflowBox(
@@ -109,7 +112,10 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppColors.bg.withValues(alpha: 0.38),
+                          Color.alphaBlend(
+                            AppColors.accent.withValues(alpha: 0.18),
+                            AppColors.bg,
+                          ),
                           AppColors.bg.withValues(alpha: 0.12),
                           AppColors.bg.withValues(alpha: 0.76),
                           AppColors.bg,
@@ -164,8 +170,8 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
                     child: SizedBox(
-                      width: 160,
-                      height: 256,
+                      width: posterWidth,
+                      height: posterHeight,
                       child: _image(poster, width: 528),
                     ),
                   ),
@@ -679,7 +685,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
           child: Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Row(children: [
-              Text('Karakter', style: AppText.headline.copyWith(fontSize: 17)),
+              Text('Karakter & Pengisi Suara', style: AppText.headline.copyWith(fontSize: 16)),
               const SizedBox(width: 7),
               Text(cast.length.toString(), style: AppText.caption.copyWith(color: AppColors.textSecondary)),
               const Spacer(),
@@ -754,9 +760,11 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
 
   @override
   Widget build(BuildContext context) {
+    final seasonIds = widget.seasons.map((s) => s.malId).whereType<int>().toSet();
     final seasonRelations = widget.relations.where((r) {
       final value = r.relation?.toLowerCase();
-      return value == 'prekuel' || value == 'sequel';
+      return (value == 'prekuel' || value == 'sequel') &&
+          (r.malId == null || !seasonIds.contains(r.malId));
     }).toList();
     final related = widget.relations.where((r) =>
       !_isRecommended(r) && !seasonRelations.contains(r)).toList();
