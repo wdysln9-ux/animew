@@ -20,6 +20,7 @@ class _MalTrailerSection extends StatefulWidget {
 
 class _MalTrailerSectionState extends State<_MalTrailerSection> {
   late Future<AnimeExtras> _future;
+  bool _expanded = false;
 
   @override
   void initState() {
@@ -79,90 +80,112 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
         );
       }
       final videos = snapshot.data?.videos ?? const <AnimeExtraVideo>[];
-      if (videos.isEmpty && snapshot.data?.videoError != null) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
-          child: Row(
-            children: [
-              const Expanded(child: Text('Trailer belum bisa dimuat.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
-              TextButton(onPressed: () => setState(() => _load(retry: true)), child: const Text('Coba lagi')),
-            ],
-          ),
-        );
-      }
-      if (videos.isEmpty) {
-        return const Padding(
-          padding: EdgeInsets.fromLTRB(16, 18, 16, 0),
-          child: Text(
-            'Trailer belum tersedia di MyAnimeList.',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-          ),
-        );
-      }
+      final error = snapshot.data?.videoError;
       return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 22, 0, 0),
+        padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Trailer & PV', style: AppText.headline.copyWith(fontSize: 17)),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 132,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(right: 16),
-                itemCount: videos.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  final video = videos[index];
-                  return SizedBox(
-                    width: 184,
-                    child: GestureDetector(
-                      onTap: () => launchUrl(
-                        Uri.parse('https://www.youtube.com/watch?v=${video.youtubeId}'),
-                        mode: LaunchMode.externalApplication,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  if (video.imageUrl != null)
-                                    CachedNetworkImage(
-                                      imageUrl: video.imageUrl!,
-                                      fit: BoxFit.cover,
-                                      errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2),
-                                    )
-                                  else
-                                    ColoredBox(color: AppColors.surface2),
-                                  Center(
-                                    child: Container(
-                                      width: 42,
-                                      height: 30,
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(9),
-                                      ),
-                                      child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 26),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(video.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(color: AppColors.textPrimary)),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Row(
+                children: [
+                  Text('Trailer & PV', style: AppText.headline.copyWith(fontSize: 17)),
+                  const SizedBox(width: 8),
+                  Text('${videos.length}', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+                  const Spacer(),
+                  Icon(
+                    _expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
               ),
             ),
+            if (_expanded) ...[
+              const SizedBox(height: 12),
+              if (videos.isEmpty)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        error != null
+                            ? 'Trailer belum bisa dimuat.'
+                            : 'Trailer belum tersedia di MyAnimeList.',
+                        style: AppText.caption.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ),
+                    if (error != null)
+                      TextButton(
+                        onPressed: () => setState(() => _load(retry: true)),
+                        child: const Text('Coba lagi'),
+                      ),
+                  ],
+                )
+              else
+                SizedBox(
+                  height: 132,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(right: 16),
+                    itemCount: videos.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      final video = videos[index];
+                      return SizedBox(
+                        width: 184,
+                        child: GestureDetector(
+                          onTap: () => launchUrl(
+                            Uri.parse('https://www.youtube.com/watch?v=${video.youtubeId}'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      if (video.imageUrl != null)
+                                        CachedNetworkImage(
+                                          imageUrl: video.imageUrl!,
+                                          fit: BoxFit.cover,
+                                          errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2),
+                                        )
+                                      else
+                                        ColoredBox(color: AppColors.surface2),
+                                      Center(
+                                        child: Container(
+                                          width: 42,
+                                          height: 30,
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            borderRadius: BorderRadius.circular(9),
+                                          ),
+                                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 26),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                video.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppText.caption.copyWith(color: AppColors.textPrimary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
           ],
         ),
       );
