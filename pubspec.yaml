@@ -275,6 +275,8 @@ flutter_launcher_icons:
 flutter:
   generate: true
   uses-material-design: true
+  licenses:
+    - assets/fonts/Urbanist-OFL.txt
   assets:
     - assets/icons/lucide/
     # Shared with Android's native network security configuration.
@@ -310,6 +312,10 @@ flutter:
     - assets/icon/providers/simkl.png
 
   fonts:
+    - family: Urbanist
+      fonts:
+        - asset: assets/fonts/Urbanist.ttf
+          weight: 400
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter.ttf
