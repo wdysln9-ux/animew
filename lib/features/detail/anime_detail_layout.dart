@@ -626,27 +626,31 @@ class _DetailCreditsState extends State<_DetailCredits> {
         Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6,
           children: [for (final g in widget.genres) _chip(g, () => widget.onGenreTap(g), genre: true)]),
         if (credits.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6,
-            children: [
-              for (final credit in (_expanded ? credits : credits.take(2).toList()))
-                _chip(credit, () {
-                  if (widget.studios.contains(credit)) widget.onStudioTap(credit);
-                }),
-            ]),
-          if (credits.length > 2)
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _expanded = !_expanded),
-              child: Padding(
-                padding: const EdgeInsets.only(top: 7, bottom: 2),
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(_expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, size: 17, color: AppColors.textSecondary),
-                  const SizedBox(width: 4),
-                  Text(_expanded ? 'Lebih sedikit' : 'Selengkapnya', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
-                ]),
-              ),
+          const SizedBox(height: 7),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text(_expanded ? 'Lebih sedikit' : 'Selengkapnya',
+                    style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+                const SizedBox(width: 3),
+                Icon(_expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                    size: 17, color: AppColors.textSecondary),
+              ]),
             ),
+          ),
+          if (_expanded) ...[
+            const SizedBox(height: 5),
+            Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6,
+              children: [
+                for (final credit in credits)
+                  _chip(credit, () {
+                    if (widget.studios.contains(credit)) widget.onStudioTap(credit);
+                  }),
+              ]),
+          ],
         ],
       ]),
     );
