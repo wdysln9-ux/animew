@@ -648,7 +648,7 @@ class DetailCubit extends Cubit<DetailState> {
 
     // Episode descriptions remain a separate player concern, not detail-page
     // metadata. Keep their existing enrichment behavior.
-    unawaited(_enrichEpisodesOnly(d));
+    if (!isAniListDetail) unawaited(_enrichEpisodesOnly(d));
 
     // Non-AniList sources that do not supply extras can still use the legacy
     // metadata fallback. AniList never falls through to extra requests.
