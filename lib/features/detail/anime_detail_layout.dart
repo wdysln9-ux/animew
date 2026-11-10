@@ -136,11 +136,11 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         // blend it into the page background across the lower
                         // half of the hero. Avoid a visible horizontal band.
                         colors: [
-                          Colors.black.withValues(alpha: 0.18),
-                          Colors.black.withValues(alpha: 0.28),
-                          AppColors.bg.withValues(alpha: 0.22),
-                          AppColors.bg.withValues(alpha: 0.40),
-                          AppColors.bg.withValues(alpha: 0.55),
+                          Colors.black.withValues(alpha: 0.32),
+                          Colors.black.withValues(alpha: 0.42),
+                          AppColors.bg.withValues(alpha: 0.34),
+                          AppColors.bg.withValues(alpha: 0.52),
+                          AppColors.bg.withValues(alpha: 0.68),
                         ],
                         stops: [0.0, 0.24, 0.50, 0.76, 1.0],
                       ),
@@ -217,7 +217,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 19,
+                bottom: 20,
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
@@ -381,6 +381,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     required this.title,
     required this.metaLine,
     this.englishTitle,
+    this.romajiTitle,
     this.backdropUrl,
     this.alternateTitle,
     this.format,
@@ -393,6 +394,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
 
   final String title;
   final String? englishTitle;
+  final String? romajiTitle;
   final String? backdropUrl;
   final String? alternateTitle;
   final String metaLine;
@@ -405,8 +407,8 @@ class AnimeDetailTitleBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final english = (englishTitle?.trim().isNotEmpty == true ? englishTitle : title)!.trim();
-    final translated = english;
+    final romaji = (romajiTitle?.trim().isNotEmpty == true ? romajiTitle : title).trim();
+    final english = (englishTitle?.trim().isNotEmpty == true ? englishTitle : title).trim();
     return SizedBox(
       width: double.infinity,
       child: Stack(
@@ -419,15 +421,20 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           child: ColoredBox(color: AppColors.bg),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 5, 16, 0),
           child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          if (romaji.isNotEmpty)
+            Text(romaji, textAlign: TextAlign.center, maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.largeTitle.copyWith(fontSize: 23, height: 1.14)),
+          if (romaji.isNotEmpty && english.isNotEmpty) const SizedBox(height: 2),
           Text(english, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: AppText.largeTitle.copyWith(fontSize: 23, height: 1.14)),
           const SizedBox(height: 2),
-          AutoTranslatedText(text: translated, textAlign: TextAlign.center, maxLines: 2,
+          AutoTranslatedText(text: english, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: AppText.body.copyWith(fontSize: 15, color: AppColors.textSecondary)),
           if (metaLine.isNotEmpty) ...[
@@ -437,12 +444,11 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                 for (var i = 0; i < metaLine.split('  ·  ').length; i++) ...[
                   if (i > 0)
                     TextSpan(
-                      text: '  ·  ',
-                      style: AppText.body.copyWith(
-                        fontSize: 17,
-                        color: AppColors.textTertiary,
-                        fontWeight: FontWeight.w800,
-                      ),
+                      children: [
+                        const TextSpan(text: '  '),
+                        TextSpan(text: '·', style: AppText.body.copyWith(fontSize: 17, color: AppColors.textTertiary, fontWeight: FontWeight.w900)),
+                        const TextSpan(text: '  '),
+                      ],
                     ),
                   if (metaLine.split('  ·  ')[i].startsWith('◉ '))
                     WidgetSpan(
@@ -450,9 +456,9 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.only(right: 3),
                         child: Icon(
-                          Icons.visibility_rounded,
+                          Icons.visibility_outlined,
                           size: 14,
-                          color: Colors.white,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -486,12 +492,11 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                 ].length; i++) ...[
                   if (i > 0)
                     TextSpan(
-                      text: '   ·   ',
-                      style: AppText.body.copyWith(
-                        fontSize: 16,
-                        color: AppColors.textTertiary,
-                        fontWeight: FontWeight.w800,
-                      ),
+                      children: [
+                        const TextSpan(text: '   '),
+                        TextSpan(text: '·', style: AppText.body.copyWith(fontSize: 16, color: AppColors.textTertiary, fontWeight: FontWeight.w900)),
+                        const TextSpan(text: '   '),
+                      ],
                     ),
                   TextSpan(
                     text: [
