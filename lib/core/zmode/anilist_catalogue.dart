@@ -76,7 +76,7 @@ class AniListCatalogue implements AnimeCatalogue {
       // drop the long tail of 3% tags.
       'tags{name rank isMediaSpoiler} '
       'trailer{id site thumbnail} '
-      'characters(sort:ROLE,perPage:25){edges{role node{name{full} image{large}} voiceActors(language:JAPANESE){name{full}}}} '
+      'characters(sort:ROLE,perPage:25){edges{role node{name{full} image{large}}}} '
       'relations{edges{relationType node{id idMal type title{romaji english} coverImage{large}}}} '
       'recommendations(sort:RATING_DESC,perPage:10){nodes{mediaRecommendation{id idMal type title{romaji english} coverImage{large}}}}';
 
@@ -414,20 +414,10 @@ class AniListCatalogue implements AnimeCatalogue {
         if (node is! Map) continue;
         final name = ((node['name'] as Map?)?['full'] as String?)?.trim();
         if (name == null || name.isEmpty) continue;
-        final voiceActors = edge['voiceActors'];
-        String? voiceName;
-        if (voiceActors is List && voiceActors.isNotEmpty) {
-          final firstVoiceActor = voiceActors.first;
-          if (firstVoiceActor is Map) {
-            final voiceActorName = firstVoiceActor['name'];
-            if (voiceActorName is Map && voiceActorName['full'] is String) {
-              voiceName = (voiceActorName['full'] as String).trim();
-            }
-          }
-        }
+        final characterRole = (edge['role'] as String?)?.trim();
         castMembers.add(CastMember(
           name: name,
-          role: voiceName == null || voiceName.isEmpty ? null : voiceName,
+          role: characterRole == null || characterRole.isEmpty ? null : characterRole,
           photo: (node['image'] as Map?)?['large'] as String?,
         ));
       }
