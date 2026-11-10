@@ -558,6 +558,7 @@ class _WatchAppState extends State<WatchApp> with WidgetsBindingObserver {
     if (isOnboarded()) {
       // tvOS: Home fetch waits until provider JS is loaded (deferred boot task).
       if (!isAppleTv) sl<HomeCubit>().load();
+    }
     final elapsed = DateTime.now().difference(start);
     // The intro animation is 1600ms, so anything past that is just dead
     // waiting. Give it a hair over (1700) so the logo lands, then go — used
