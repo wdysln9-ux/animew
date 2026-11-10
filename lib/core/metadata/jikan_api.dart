@@ -2,17 +2,62 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 
-/// Shared, rate-limited access to Jikan so detail sections do not burst the
-/// API with several simultaneous requests when one anime page opens.
+/// Shared, rate-limited access to Jikan so detail sections can load in
+/// parallel without exceeding the API's request budget.
 class JikanApi {
   JikanApi._();
 
-  static Future<void> _tail = Future<void>.value();
+  /// Serializes only slot reservation, never the HTTP request itself.
+  /// The old queue held this lock until each response completed, accidentally
+  /// turning independent endpoints into a slow request-by-request chain.
+  static Future<void> _reservationTail = Future<void>.value();
   static DateTime? _lastRequestAt;
   static final List<DateTime> _recentStarts = <DateTime>[];
   static const Duration _minimumGap = Duration(milliseconds: 380);
   static const Duration _window = Duration(minutes: 1);
   static const int _requestsPerWindow = 55;
+
+  static Future<void> _reserveRequestSlot() async {
+    final previous = _reservationTail;
+    final release = Completer<void>();
+    _reservationTail = release.future;
+    await previous;
+
+    try {
+      while (true) {
+        var now = DateTime.now();
+        _recentStarts.removeWhere(
+          (started) => now.difference(started) >= _window,
+        );
+
+        var wait = Duration.zero;
+        if (_recentStarts.length >= _requestsPerWindow) {
+          final untilWindowOpens = _recentStarts.first.add(_window).difference(now);
+          if (untilWindowOpens > wait) wait = untilWindowOpens;
+        }
+
+        final last = _lastRequestAt;
+        if (last != null) {
+          final untilNextSlot = _minimumGap - now.difference(last);
+          if (untilNextSlot > wait) wait = untilNextSlot;
+        }
+
+        if (wait > Duration.zero) {
+          await Future<void>.delayed(wait);
+          continue;
+        }
+
+        now = DateTime.now();
+        _lastRequestAt = now;
+        _recentStarts.add(now);
+        return;
+      }
+    } finally {
+      // Release as soon as this request has a reserved start time. Its network
+      // response is intentionally allowed to overlap the next request.
+      release.complete();
+    }
+  }
 
   static Future<dynamic> get(
     Dio dio,
@@ -20,73 +65,33 @@ class JikanApi {
     Map<String, dynamic>? query,
     Map<String, String>? headers,
   }) async {
-    final previous = _tail;
-    final release = Completer<void>();
-    _tail = release.future;
-    await previous;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      await _reserveRequestSlot();
 
-    try {
-      for (var attempt = 0; attempt < 3; attempt++) {
-        var now = DateTime.now();
-        _recentStarts.removeWhere((started) => now.difference(started) >= _window);
-        if (_recentStarts.length >= _requestsPerWindow) {
-          final waitUntil = _recentStarts.first.add(_window);
-          final wait = waitUntil.difference(now);
-          if (wait > Duration.zero) await Future<void>.delayed(wait);
-          now = DateTime.now();
-          _recentStarts.removeWhere((started) => now.difference(started) >= _window);
-        }
-        final last = _lastRequestAt;
-        if (last != null) {
-          final elapsed = now.difference(last);
-          if (elapsed < _minimumGap) {
-            await Future<void>.delayed(_minimumGap - elapsed);
-            now = DateTime.now();
-          }
-        }
-        _lastRequestAt = now;
-        _recentStarts.add(now);
+      try {
+        final response = await dio.get<dynamic>(
+          url,
+          queryParameters: query,
+          options: Options(
+            headers: headers,
+            validateStatus: (status) => status != null && status < 400,
+          ),
+        );
+        return response.data;
+      } on DioException catch (error) {
+        final status = error.response?.statusCode;
+        final retryable = status == null || status == 429 || status >= 500;
+        if (!retryable || attempt == 2) rethrow;
 
-        try {
-          final response = await dio.get<dynamic>(
-            url,
-            queryParameters: query,
-            options: Options(
-              headers: headers,
-              validateStatus: (status) => status != null && status < 400,
-            ),
-          );
-          final status = response.statusCode ?? 200;
-          if (status == 429 || status >= 500) {
-            if (attempt == 2) {
-              throw DioException(
-                requestOptions: response.requestOptions,
-                response: response,
-                type: DioExceptionType.badResponse,
-              );
-            }
-            final retryAfter = int.tryParse(
-              response.headers.value('retry-after') ?? '',
-            );
-            final waitMs = retryAfter != null
-                ? (retryAfter * 1000).clamp(1200, 6000).toInt()
-                : (status == 429 ? 1200 * (attempt + 1) : 700);
-            await Future<void>.delayed(Duration(milliseconds: waitMs));
-            continue;
-          }
-          return response.data;
-        } on DioException catch (error) {
-          final status = error.response?.statusCode;
-          final retryable = status == null || status == 429 || status >= 500;
-          if (!retryable || attempt == 2) rethrow;
-          await Future<void>.delayed(
-            Duration(milliseconds: status == 429 ? 1200 * (attempt + 1) : 700),
-          );
-        }
+        final retryAfter = int.tryParse(
+          error.response?.headers.value('retry-after') ?? '',
+        );
+        final waitMs = retryAfter != null
+            ? (retryAfter * 1000).clamp(1200, 6000).toInt()
+            : (status == 429 ? 1200 * (attempt + 1) : 700);
+        await Future<void>.delayed(Duration(milliseconds: waitMs));
       }
-      throw StateError('Jikan tidak merespons.');
-    } finally {
-      release.complete();
     }
+    throw StateError('Jikan tidak merespons.');
   }
 }
