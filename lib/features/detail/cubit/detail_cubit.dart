@@ -647,6 +647,13 @@ class DetailCubit extends Cubit<DetailState> {
       );
     }
 
+    // Start franchise discovery alongside cast, relations and recommendations.
+    // These requests are independent; waiting for all three detail endpoints
+    // before beginning the season walk made the section appear much later.
+    if (d.type == ProviderType.anime && d.malId != null) {
+      unawaited(_loadSeasons(d));
+    }
+
     // Episode descriptions are useful but must not delay MAL cast and
     // franchise data. Start this independent enrichment in the background;
     // _enrichEpisodesOnly guards against patching a stale episode list.
@@ -670,15 +677,8 @@ class DetailCubit extends Cubit<DetailState> {
         if (extras.cast.isNotEmpty || extras.relations.isNotEmpty) {
           emit(state.copyWith(cast: extras.cast, relations: extras.relations));
         }
-        // Season discovery is independent of cast availability. A title can
-        // have a franchise chain even when its character endpoint is empty.
-        if (d.type == ProviderType.anime) unawaited(_loadSeasons(d));
         if (extras.cast.isNotEmpty || extras.relations.isNotEmpty) return;
       } catch (_) {/* fall through to source-supplied extras */}
-    }
-    if (d.type == ProviderType.anime && d.malId != null && !isClosed) {
-      // Also attempt the season lookup if the metadata request failed.
-      unawaited(_loadSeasons(d));
     }
     // Fall back to Cast/Relations the source supplied directly (e.g.
     // CloudStream's actors/recommendations) — so the tabs fill even without ids.
