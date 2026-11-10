@@ -431,8 +431,10 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (romaji.isNotEmpty)
             Text(romaji, textAlign: TextAlign.center, maxLines: 2,
@@ -548,7 +550,8 @@ class AnimeDetailTitleBlock extends StatelessWidget {
             ),
           ],
         ],
-        ),
+            ),
+          ),
         ),
         ],
       ),
