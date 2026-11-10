@@ -10,6 +10,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
     required this.coverHeaders,
     required this.sourceLabel,
     required this.animeId,
+    this.onAniListTap,
     this.maxHeight = 376,
   });
 
@@ -18,6 +19,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
   final Map<String, String>? coverHeaders;
   final String sourceLabel;
   final String animeId;
+  final VoidCallback? onAniListTap;
   final double maxHeight;
 
   @override
@@ -29,6 +31,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
       coverHeaders: coverHeaders,
       sourceLabel: sourceLabel,
       animeId: animeId,
+      onAniListTap: onAniListTap,
       maxHeight: maxHeight,
     ),
   );
@@ -42,6 +45,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     required this.sourceLabel,
     required this.animeId,
     required this.maxHeight,
+    this.onAniListTap,
   });
 
   final String coverUrl;
@@ -50,6 +54,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   final String sourceLabel;
   final String animeId;
   final double maxHeight;
+  final VoidCallback? onAniListTap;
 
   Widget _image(
     String url, {
@@ -93,7 +98,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     final poster = posterUrl?.isNotEmpty == true ? posterUrl! : coverUrl;
     final topInset = MediaQuery.paddingOf(context).top;
     final posterWidth = (MediaQuery.sizeOf(context).width * 0.45)
-        .clamp(168.0, 190.0)
+        .clamp(170.0, 194.0)
         .toDouble();
     final posterHeight = posterWidth * 1.5;
 
@@ -156,9 +161,12 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                 Positioned(
                   top: topInset + 8,
                   right: 14,
-                  child: DecoratedBox(
+                  child: InkWell(
+                    onTap: sourceLabel.toUpperCase() == 'ANILIST' ? onAniListTap : null,
+                    borderRadius: BorderRadius.circular(22),
+                    child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: const Color(0x99000000),
+                      color: const Color(0x66000000),
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: SizedBox(
@@ -203,12 +211,13 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         ),
                       ),
                     ),
+                    ),
                   ),
                 ),
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 1,
+                bottom: 19,
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
@@ -372,6 +381,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     required this.title,
     required this.metaLine,
     this.englishTitle,
+    this.backdropUrl,
     this.alternateTitle,
     this.format,
     this.status,
@@ -383,6 +393,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
 
   final String title;
   final String? englishTitle;
+  final String? backdropUrl;
   final String? alternateTitle;
   final String metaLine;
   final String? format;
@@ -394,37 +405,51 @@ class AnimeDetailTitleBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtitle = englishTitle?.trim();
+    final english = (englishTitle?.trim().isNotEmpty == true ? englishTitle : title)!.trim();
+    final translated = english;
     final alternate = alternateTitle?.trim();
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        // Continue the hero fade behind the information instead of ending
-        // it at a hard boundary between the poster and the title section.
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppColors.bg.withValues(alpha: 0.55),
-            AppColors.bg.withValues(alpha: 0.78),
-            AppColors.bg,
-          ],
-          stops: const [0.0, 0.48, 1.0],
+    return Stack(
+      children: [
+        if (backdropUrl?.isNotEmpty == true)
+          Positioned.fill(
+            child: CachedNetworkImage(
+              imageUrl: backdropUrl!,
+              fit: BoxFit.cover,
+              alignment: Alignment.bottomCenter,
+              color: Colors.black.withValues(alpha: 0.12),
+              colorBlendMode: BlendMode.darken,
+              errorWidget: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.bg.withValues(alpha: 0.24),
+                  AppColors.bg.withValues(alpha: 0.62),
+                  AppColors.bg.withValues(alpha: 0.88),
+                  AppColors.bg,
+                ],
+                stops: const [0.0, 0.38, 0.72, 1.0],
+              ),
+            ),
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: Column(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(title, textAlign: TextAlign.center, maxLines: 2,
+          Text(english, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.largeTitle.copyWith(fontSize: 22, height: 1.14)),
-          if (subtitle != null && subtitle.isNotEmpty && subtitle != title) ...[
-            const SizedBox(height: 4),
-            AutoTranslatedText(text: subtitle, textAlign: TextAlign.center, maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 14, color: AppColors.textSecondary)),
-          ],
+            style: AppText.largeTitle.copyWith(fontSize: 23, height: 1.14)),
+          const SizedBox(height: 2),
+          AutoTranslatedText(text: translated, textAlign: TextAlign.center, maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.body.copyWith(fontSize: 15, color: AppColors.textSecondary)),
           if (alternate != null && alternate.isNotEmpty && alternate != title && alternate != subtitle) ...[
             const SizedBox(height: 2),
             Text(alternate, textAlign: TextAlign.center, maxLines: 1,
@@ -432,7 +457,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               style: AppText.body.copyWith(fontSize: 12, color: AppColors.textSecondary)),
           ],
           if (metaLine.isNotEmpty) ...[
-            const SizedBox(height: 7),
+            const SizedBox(height: 3),
             Text.rich(
               TextSpan(children: [
                 for (var i = 0; i < metaLine.split('  ·  ').length; i++) ...[
@@ -462,7 +487,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                         ? metaLine.split('  ·  ')[i].substring(2)
                         : metaLine.split('  ·  ')[i],
                     style: AppText.body.copyWith(
-                      fontSize: 14,
+                      fontSize: 15,
                       color: i == 0 ? AppColors.accent
                           : (metaLine.split('  ·  ')[i].startsWith('★')
                               ? const Color(0xFF24C66A)
@@ -500,7 +525,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                       if (dateLine?.isNotEmpty == true) dateLine!,
                     ][i],
                     style: AppText.body.copyWith(
-                      fontSize: 14,
+                      fontSize: 15,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -534,7 +559,8 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           ],
         ],
         ),
-      ),
+        ),
+      ],
     );
   }
 }
@@ -766,7 +792,8 @@ class _DetailCreditsState extends State<_DetailCredits> {
     final child = Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: color,
+        color: color.withValues(alpha: 0.20),
+        border: Border.all(color: color, width: 1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -776,7 +803,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
         style: AppText.caption.copyWith(
           fontSize: 12,
           height: 1.1,
-          color: Colors.white,
+          color: color,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -926,18 +953,18 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
           ),
         if (_expanded && cast.isNotEmpty) ...[
           const SizedBox(height: 11),
-          SizedBox(height: 130, child: ListView.separated(
+          SizedBox(height: 148, child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(right: 16),
             itemCount: cast.length,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final member = cast[index];
-              return SizedBox(width: 74, child: GestureDetector(
+              return SizedBox(width: 86, child: GestureDetector(
                 onTap: member.person == null || widget.onOpenPerson == null
                     ? null : () => widget.onOpenPerson!(member.person!),
                 child: Column(children: [
-                  ClipOval(child: SizedBox(width: 64, height: 64,
+                  ClipOval(child: SizedBox(width: 77, height: 77,
                     child: member.photo?.isNotEmpty == true
                         ? CachedNetworkImage(imageUrl: member.photo!, fit: BoxFit.cover,
                             placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
