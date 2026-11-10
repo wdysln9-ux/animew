@@ -111,10 +111,9 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               // The artwork is laid out at its original hero dimensions and
               // clipped by the collapsing sliver. Its scale/crop never changes
               // while scrolling, so it cannot look like a camera zoom.
-              // Subtle parallax: the backdrop drifts more slowly than
-              // the foreground as the hero scrolls away.
+              // Keep the backdrop moving with the rest of the page.
               Positioned(
-                top: shrinkOffset * 0.22,
+                top: 0,
                 left: 0,
                 right: 0,
                 bottom: -150,
