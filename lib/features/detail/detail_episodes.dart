@@ -1407,10 +1407,10 @@ class _ChapterRow extends StatelessWidget {
           children: [
             SizedBox(
               key: coverKey,
-              width: 44,
-              height: 62,
+              width: 40,
+              height: 56,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(7),
                 child: Opacity(
                   opacity: isRead ? 0.45 : 1,
                   child: art.isNotEmpty
@@ -1429,7 +1429,7 @@ class _ChapterRow extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1449,7 +1449,7 @@ class _ChapterRow extends StatelessWidget {
                   // Dropped entirely when the source gives us nothing to put
                   // here, so the row shrinks instead of holding blank space.
                   if (meta != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       meta,
                       style: AppText.caption.copyWith(
@@ -1579,7 +1579,7 @@ class _EpisodeRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 3, 16, 3),
       child: Material(
         color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(9),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -1593,8 +1593,8 @@ class _EpisodeRow extends StatelessWidget {
                 child: Row(
                   children: [
                     Container(
-                      width: 36,
-                      height: 38,
+                      width: 32,
+                      height: 34,
                       decoration: BoxDecoration(
                         color: AppColors.accent.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(8),
