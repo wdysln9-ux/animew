@@ -125,17 +125,18 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        // A long, gradual fade: artwork remains visible
-                        // through the upper half and blends into the page
-                        // background without a dense dark band.
+                        // Long, smooth fade matching the reference: keep
+                        // the artwork readable near the top, then gradually
+                        // blend it into the page background across the lower
+                        // half of the hero. Avoid a visible horizontal band.
                         colors: [
-                          Colors.black.withValues(alpha: 0.28),
-                          Colors.black.withValues(alpha: 0.38),
-                          AppColors.bg.withValues(alpha: 0.48),
-                          AppColors.bg.withValues(alpha: 0.82),
+                          Colors.black.withValues(alpha: 0.22),
+                          Colors.black.withValues(alpha: 0.34),
+                          AppColors.bg.withValues(alpha: 0.46),
+                          AppColors.bg.withValues(alpha: 0.78),
                           AppColors.bg,
                         ],
-                        stops: [0.0, 0.16, 0.38, 0.72, 1.0],
+                        stops: [0.0, 0.24, 0.52, 0.82, 1.0],
                       ),
                     ),
                   ),
