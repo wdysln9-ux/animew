@@ -439,7 +439,7 @@ class _DetailView extends StatefulWidget {
 }
 
 class _DetailViewState extends State<_DetailView> {
-  static const double _expandedHeight = 376;
+  static const double _expandedHeight = 381;
 
   // The episode url we've already kicked a background source-prefetch for, so we
   // don't re-fire it on every rebuild (see _maybePrefetch).
@@ -2237,7 +2237,7 @@ class _DetailViewState extends State<_DetailView> {
 
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(
-        textScaler: const TextScaler.linear(1.18),
+        textScaler: const TextScaler.linear(1.0),
       ),
       child: CustomScrollView(
         controller: _scrollController,
