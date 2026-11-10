@@ -478,8 +478,8 @@ class MetadataEnrichment {
       loadRecommendations(),
     ]);
     return (
-      cast: List.unmodifiable(cast),
-      relations: List.unmodifiable(relations),
+      cast: List<CastMember>.unmodifiable(cast),
+      relations: List<MediaRelation>.unmodifiable(relations),
     );
   }
 
