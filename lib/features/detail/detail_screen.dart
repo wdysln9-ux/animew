@@ -2158,7 +2158,9 @@ class _DetailViewState extends State<_DetailView> {
     }
 
     // ── Status label and detail metadata ───────────────────────────────────
-    final statusStr = statusLabel(detail.status);
+    final statusStr = detail.status == MediaStatus.unknown && detail.startDate != null && detail.startDate!.isAfter(DateTime.now())
+        ? 'Segera'
+        : statusLabel(detail.status);
     final rawFormat = detail.format?.trim();
     final formatStr = rawFormat == null || rawFormat.isEmpty
         ? null
@@ -2348,6 +2350,7 @@ class _DetailViewState extends State<_DetailView> {
                     loading: state.episodesLoading,
                     label: isReading ? downloadLabel : (_inMyList ? 'Tersimpan' : 'Simpan'),
                     active: !isReading && _inMyList,
+                    primary: !isReading && !_inMyList,
                     icon: isReading ? Icons.file_download_outlined : (_inMyList ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
                     onPressed: isReading
                         ? (eps.isEmpty
