@@ -141,14 +141,11 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                           Colors.black.withValues(alpha: 0.20),
                           Colors.black.withValues(alpha: 0.32),
                           AppColors.bg.withValues(alpha: 0.58),
-                          Color.alphaBlend(
-                            Colors.black.withValues(alpha: 0.12),
-                            AppColors.bg,
-                          ),
-                          Color.alphaBlend(
-                            Colors.black.withValues(alpha: 0.12),
-                            AppColors.bg,
-                          ),
+                          // End on the exact page surface color so the
+                          // following information gradient continues
+                          // seamlessly without a darker horizontal seam.
+                          AppColors.bg,
+                          AppColors.bg,
                         ],
                         stops: [0.0, 0.25, 0.52, 0.82, 1.0],
                       ),
