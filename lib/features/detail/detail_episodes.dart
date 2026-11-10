@@ -1560,13 +1560,7 @@ class _EpisodeRow extends StatelessWidget {
       return '$day-$month-${parsed.year}';
     }
 
-    final metaLine = unavailable
-        ? ep.unavailable!
-        : [
-            if (ep.runtimeMinutes != null) '${ep.runtimeMinutes} menit',
-            if (ep.date != null && ep.date!.trim().isNotEmpty)
-              formatEpisodeDate(ep.date!),
-          ].join('  ·  ');
+    final metaLine = '';
 
     final srcTitle = displayTitle.trim();
     final titleText =
