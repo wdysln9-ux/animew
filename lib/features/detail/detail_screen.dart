@@ -2518,6 +2518,9 @@ class _DetailViewState extends State<_DetailView> {
             trackerProgress: _trackerProgress,
             nextAiringEpisode: _nextAiringEpisode,
             nextAiringAt: _nextAiringAt,
+            showPopularity: detail.popularity,
+            totalEpisodes: eps.length,
+            isAiring: detail.status == MediaStatus.ongoing,
             onOpen: (fullIndex) {
               if (isReading) {
                 _openPlayer(eps, fullIndex, detail, category);
