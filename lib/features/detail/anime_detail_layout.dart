@@ -92,8 +92,8 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   ) {
     final poster = posterUrl?.isNotEmpty == true ? posterUrl! : coverUrl;
     final topInset = MediaQuery.paddingOf(context).top;
-    final posterWidth = (MediaQuery.sizeOf(context).width * 0.56)
-        .clamp(196.0, 210.0)
+    final posterWidth = (MediaQuery.sizeOf(context).width * 0.38)
+        .clamp(140.0, 156.0)
         .toDouble();
     final posterHeight = posterWidth * 1.5;
 
@@ -673,7 +673,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
                 ? AniListMarkdown(data: data, textStyle: AppText.body.copyWith(
                     fontSize: 14, height: 1.45, color: AppColors.textSecondary))
                 : Text(data, maxLines: 3, overflow: TextOverflow.ellipsis,
-                    style: AppText.body.copyWith(fontSize: 16, height: 1.48, color: AppColors.textSecondary)),
+                    style: AppText.body.copyWith(fontSize: 14, height: 1.45, color: AppColors.textSecondary)),
           ),
           const SizedBox(height: 5),
           GestureDetector(
@@ -996,11 +996,11 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     final tabs = <String>['Semua Musim', 'Terkait', 'Rekomendasi'];
     if (_selected >= tabs.length) _selected = 0;
 
-    final width = posterRowWidth(context);
-    final height = posterRowHeight(context);
+    final width = posterRowWidth(context) * 0.82;
+    final height = posterRowHeight(context) * 0.82;
     final selectedTab = tabs[_selected];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 22, 0, 0),
+      padding: const EdgeInsets.fromLTRB(16, 18, 0, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1020,7 +1020,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                     child: Text(
                       tabs[index],
                       style: AppText.headline.copyWith(
-                        fontSize: 18,
+                        fontSize: 16,
                         color: selected ? AppColors.textPrimary : AppColors.textSecondary,
                         fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                       ),
@@ -1113,7 +1113,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.only(right: 16),
                   itemCount: cards.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
+                  separatorBuilder: (_, _) => const SizedBox(width: 9),
                   itemBuilder: (_, index) => cards[index],
                 );
               },
