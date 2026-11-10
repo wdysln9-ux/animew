@@ -395,6 +395,16 @@ class AniListCatalogue implements AnimeCatalogue {
     final eps = _episodesFor(map, c);
     final t = map['title'] as Map? ?? const {};
     final cover = map['coverImage'] as Map? ?? const {};
+    final trailer = map['trailer'] as Map? ?? const {};
+    final trailerId = trailer['id']?.toString().trim();
+    final trailerSite = trailer['site']?.toString().toLowerCase();
+    final trailerUrl = trailerId == null || trailerId.isEmpty
+        ? null
+        : trailerSite == 'youtube'
+            ? 'https://www.youtube.com/watch?v=$trailerId'
+            : trailerSite == 'dailymotion'
+                ? 'https://www.dailymotion.com/video/$trailerId'
+                : null;
     final castMembers = <CastMember>[];
     final characterEdges = (map['characters'] as Map?)?['edges'];
     if (characterEdges is List) {
@@ -479,6 +489,9 @@ class AniListCatalogue implements AnimeCatalogue {
       type: _providerType(c.kind),
       sourceId: ZmodeIds.sourceId,
       malId: map['idMal'] as int?,
+      anilistId: map['id'] as int?,
+      trailerUrl: trailerUrl,
+      trailerThumbnail: trailer['thumbnail'] as String?,
       score: map['averageScore'] as int?,
       format: _prettyFormat(map['format'] as String?),
       durationMins: map['duration'] as int?,
