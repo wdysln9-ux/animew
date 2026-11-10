@@ -173,9 +173,16 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
       case 'MEDIA_DATA_CHANGE': return 'Informasi media diperbarui';
       case 'MEDIA_MERGE': return 'Media digabungkan';
       case 'MEDIA_DELETION': return 'Media dihapus dari AniList';
-      case 'MEDIA_SUBMISSION_UPDATE': return 'Status pengajuan media diperbarui';
-      case 'STAFF_SUBMISSION_UPDATE': return 'Status pengajuan staf diperbarui';
-      case 'CHARACTER_SUBMISSION_UPDATE': return 'Status pengajuan karakter diperbarui';
+      case 'MEDIA_SUBMISSION_UPDATE':
+        return 'Pengajuan media diperbarui: ' + mediaTitle;
+      case 'STAFF_SUBMISSION_UPDATE':
+        final staff = n['staff'] is Map ? n['staff'] as Map : null;
+        final staffName = staff?['name'] is Map ? (staff!['name'] as Map)['full']?.toString() : null;
+        return 'Pengajuan staf diperbarui: ' + (staffName ?? 'AniList');
+      case 'CHARACTER_SUBMISSION_UPDATE':
+        final character = n['character'] is Map ? n['character'] as Map : null;
+        final characterName = character?['name'] is Map ? (character!['name'] as Map)['full']?.toString() : null;
+        return 'Pengajuan karakter diperbarui: ' + (characterName ?? 'AniList');
       default: return 'Pembaruan AniList';
     }
   }
@@ -315,12 +322,22 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   Widget _tile(Map<String, dynamic> n) {
     final user = n['user'] is Map ? n['user'] as Map : null;
     final media = n['media'] is Map ? n['media'] as Map : null;
+    final staff = n['staff'] is Map ? n['staff'] as Map : null;
+    final character = n['character'] is Map ? n['character'] as Map : null;
     final avatar = user?['avatar'] is Map ? (user!['avatar'] as Map)['large']?.toString() : null;
+    final staffImage = staff?['image'] is Map ? (staff!['image'] as Map)['large']?.toString() : null;
+    final characterImage = character?['image'] is Map ? (character!['image'] as Map)['large']?.toString() : null;
     final cover = media?['coverImage'] is Map ? (media!['coverImage'] as Map)['large']?.toString() : null;
-    final image = avatar ?? cover;
+    final image = avatar ?? staffImage ?? characterImage ?? cover;
     final contextText = n['context']?.toString();
     final contexts = n['contexts'] is List ? (n['contexts'] as List).whereType<String>().join(' · ') : '';
-    final detail = contextText?.isNotEmpty == true ? contextText! : contexts;
+    final detailParts = <String>[
+      if (contextText?.isNotEmpty == true) contextText!,
+      if ((contextText?.isNotEmpty != true) && contexts.isNotEmpty) contexts,
+      if ((n['status']?.toString().isNotEmpty ?? false)) 'Status: ${n['status']}',
+      if ((n['notes']?.toString().isNotEmpty ?? false)) n['notes'].toString(),
+    ];
+    final detail = detailParts.join(' · ');
     final type = (n['type'] ?? '').toString();
     final icon = type == 'AIRING' ? Icons.play_circle_outline_rounded
         : type == 'FOLLOWING' ? Icons.person_add_alt_1_rounded
