@@ -225,7 +225,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 18,
+                bottom: 0,
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
@@ -426,10 +426,22 @@ class AnimeDetailTitleBlock extends StatelessWidget {
       width: double.infinity,
       child: Stack(
         children: [
-        // The hero owns the artwork and its fade. Do not paint a second,
-        // independently-positioned copy of the backdrop here: during
-        // overscroll the two copies can shift differently and create a
-        // bright horizontal seam at the hero/title boundary.
+        // Continue the same artwork softly behind the information block.
+        // The first gradient stop exactly matches the hero's final color, so
+        // the transition has no hard seam; the image then fades back into the
+        // page background across the whole title/metadata area.
+        if (backdropUrl?.isNotEmpty == true)
+          Positioned.fill(
+            child: CachedNetworkImage(
+              imageUrl: backdropUrl!,
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+              memCacheWidth: 900,
+              fadeInDuration: Duration.zero,
+              placeholder: (_, _) => const SizedBox.expand(),
+              errorWidget: (_, _, _) => const SizedBox.expand(),
+            ),
+          ),
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -441,19 +453,17 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                     Colors.black.withValues(alpha: 0.12),
                     AppColors.bg,
                   ),
-                  Color.alphaBlend(
-                    Colors.black.withValues(alpha: 0.06),
-                    AppColors.bg,
-                  ),
+                  AppColors.bg.withValues(alpha: 0.48),
+                  AppColors.bg.withValues(alpha: 0.82),
                   AppColors.bg,
                 ],
-                stops: [0.0, 0.42, 1.0],
+                stops: [0.0, 0.28, 0.72, 1.0],
               ),
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
