@@ -39,7 +39,7 @@ class _AniListTrailerSection extends StatelessWidget {
                             ColoredBox(color: AppColors.surface2),
                       )
                     else
-                      const ColoredBox(color: AppColors.surface2),
+                      ColoredBox(color: AppColors.surface2),
                     Center(
                       child: Container(
                         width: 52,
