@@ -92,8 +92,8 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   ) {
     final poster = posterUrl?.isNotEmpty == true ? posterUrl! : coverUrl;
     final topInset = MediaQuery.paddingOf(context).top;
-    final posterWidth = (MediaQuery.sizeOf(context).width * 0.34)
-        .clamp(132.0, 150.0)
+    final posterWidth = (MediaQuery.sizeOf(context).width * 0.45)
+        .clamp(168.0, 190.0)
         .toDouble();
     final posterHeight = posterWidth * 1.5;
 
@@ -157,7 +157,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                   right: 14,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: const Color(0xB8000000),
+                      color: const Color(0x66000000),
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: SizedBox(
@@ -207,7 +207,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 1,
+                bottom: -22,
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
@@ -405,7 +405,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
             style: AppText.largeTitle.copyWith(fontSize: 22, height: 1.14)),
           if (subtitle != null && subtitle.isNotEmpty && subtitle != title) ...[
             const SizedBox(height: 4),
-            Text(subtitle, textAlign: TextAlign.center, maxLines: 2,
+            AutoTranslatedText(text: subtitle, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: AppText.body.copyWith(fontSize: 14, color: AppColors.textSecondary)),
           ],
@@ -530,13 +530,8 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final value = label.toLowerCase();
-    final background = isFormat
-        ? AppColors.accent
-        : value.contains('selesai') || value.contains('completed')
-        ? const Color(0xFF17365F)
-        : value.contains('tayang') || value.contains('ongoing')
-            ? const Color(0xFF123D2B)
-            : const Color(0xFF3B2918);
+    final isAiring = value.contains('tayang') || value.contains('ongoing');
+    final background = isFormat ? AppColors.accent : (isAiring ? const Color(0x3319A35B) : const Color(0x333B2918));
     final foreground = isFormat
         ? Colors.white
         : value.contains('selesai') || value.contains('completed')
@@ -548,6 +543,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: background,
+        border: isFormat ? null : Border.all(color: isAiring ? const Color(0xFF24A765) : const Color(0xFFB86A2A), width: 1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -581,10 +577,8 @@ class AnimeDetailActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = active ? Colors.white : AppColors.textPrimary;
-    final background = active
-        ? AppColors.accent
-        : (primary ? AppColors.bg : AppColors.surface2);
+    final foreground = AppColors.textPrimary;
+    final background = primary || active ? AppColors.bg : AppColors.surface2;
     return Opacity(
       opacity: onPressed != null || loading ? 1 : 0.42,
       child: Material(
@@ -599,9 +593,7 @@ class AnimeDetailActionButton extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(23),
               border: Border.all(
-                color: active
-                    ? AppColors.accent
-                    : AppColors.textTertiary.withValues(alpha: primary ? 0.48 : 0.34),
+                color: AppColors.textTertiary.withValues(alpha: 0.48),
               ),
             ),
             child: Row(
@@ -917,7 +909,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
           ),
         if (_expanded && cast.isNotEmpty) ...[
           const SizedBox(height: 11),
-          SizedBox(height: 122, child: ListView.separated(
+          SizedBox(height: 130, child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(right: 16),
             itemCount: cast.length,
@@ -928,7 +920,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
                 onTap: member.person == null || widget.onOpenPerson == null
                     ? null : () => widget.onOpenPerson!(member.person!),
                 child: Column(children: [
-                  ClipOval(child: SizedBox(width: 58, height: 58,
+                  ClipOval(child: SizedBox(width: 64, height: 64,
                     child: member.photo?.isNotEmpty == true
                         ? CachedNetworkImage(imageUrl: member.photo!, fit: BoxFit.cover,
                             placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
@@ -943,7 +935,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
                   if (member.role?.isNotEmpty == true)
                     Text(_indonesianCharacterRole(member.role!), maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppText.caption.copyWith(fontSize: 10.5, color: AppColors.accent)),
+                      style: AppText.caption.copyWith(fontSize: 10.5, color: _indonesianCharacterRole(member.role!) == 'Utama' ? AppColors.accent : AppColors.textSecondary)),
                 ]),
               ));
             },
@@ -996,8 +988,8 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     final tabs = <String>['Semua Musim', 'Terkait', 'Rekomendasi'];
     if (_selected >= tabs.length) _selected = 0;
 
-    final width = posterRowWidth(context) * 0.72;
-    final height = posterRowHeight(context) * 0.72;
+    final width = posterRowWidth(context);
+    final height = posterRowHeight(context);
     final selectedTab = tabs[_selected];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 18, 0, 0),
