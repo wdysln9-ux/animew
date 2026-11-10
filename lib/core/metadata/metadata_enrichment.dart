@@ -34,6 +34,7 @@ class MetadataEnrichment {
   final AniListApi _anilist;
   final MetadataProviderPrefs? Function()? _prefs;
   final Map<int, Map<String, dynamic>> _jikanRelationsCache = {};
+  final Map<int, Future<Map<String, dynamic>?>> _jikanRelationsInFlight = {};
   final Map<int, Future<List<SeasonEntry>>> _seasonCache = {};
 
   /// Anime franchise seasons from MAL's prequel/sequel graph. The current
@@ -57,8 +58,17 @@ class MetadataEnrichment {
       // cannot turn opening one detail page into dozens of requests.
       while (result.length < 4) {
         final root = _jikanRelationsCache[cursor] ??
-            await _get('https://api.jikan.moe/v4/anime/$cursor/relations');
-        if (root != null) _jikanRelationsCache[cursor] = root;
+            await _jikanRelationsInFlight.putIfAbsent(cursor, () async {
+              try {
+                final response = await _get(
+                  'https://api.jikan.moe/v4/anime/$cursor/relations',
+                );
+                if (response != null) _jikanRelationsCache[cursor] = response;
+                return response;
+              } finally {
+                _jikanRelationsInFlight.remove(cursor);
+              }
+            });
         final rows = root?['data'];
         if (rows is! List) break;
 
@@ -94,8 +104,14 @@ class MetadataEnrichment {
 
     // Each link points toward the nearest title first. Walk backwards and
     // forwards independently, then reverse the prequels for chronological order.
-    final before = await walk('prequel');
-    final after = await walk('sequel');
+    // Both directions start together. The shared in-flight cache above makes
+    // their first hop reuse the same current-title relations response.
+    final walks = await Future.wait([
+      walk('prequel'),
+      walk('sequel'),
+    ]);
+    final before = walks[0];
+    final after = walks[1];
     final ordered = <({int id, String title})>[
       ...before.reversed,
       ...after,
