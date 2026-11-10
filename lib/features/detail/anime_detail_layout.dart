@@ -453,7 +453,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 54),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
