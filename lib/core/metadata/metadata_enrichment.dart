@@ -11,8 +11,7 @@ import '../zmode/metadata_provider_prefs.dart';
 import '../zmode/season_chain.dart';
 import 'jikan_api.dart';
 
-/// Fetches anime characters and related titles from Jikan (MAL data), while
-/// retaining AniList enrichment only for reading titles and TMDB for movies/TV.
+/// Fetches anime characters and related titles from AniList, with TMDB for movies/TV.
 class MetadataEnrichment {
   /// [anilistToken] supplies the signed-in user's AniList access token. AniList
   /// has disabled UNAUTHENTICATED API access, so anonymous searches (malId
@@ -33,153 +32,103 @@ class MetadataEnrichment {
   final Dio _dio;
   final AniListApi _anilist;
   final MetadataProviderPrefs? Function()? _prefs;
-  final Map<int, Map<String, dynamic>> _jikanRelationsCache = {};
-  final Map<int, Future<Map<String, dynamic>?>> _jikanRelationsInFlight = {};
   final Map<int, Future<List<SeasonEntry>>> _seasonCache = {};
 
-  /// Anime franchise seasons from MAL's prequel/sequel graph. The current
-  /// title is excluded; returned entries are the other TV/ONA seasons, ordered
-  /// from the earliest prequel through the latest sequel.
-  Future<List<SeasonEntry>> seasons(MediaDetail d) {
-    final id = d.malId;
-    if (d.type != ProviderType.anime || id == null || id <= 0) {
-      return Future.value(const []);
+  /// Anime franchise seasons from AniList's prequel/sequel graph.
+  ///
+  /// The currently opened title is included in the rail. Each direction is
+  /// followed independently until the chain ends, with id-based cycle and
+  /// duplicate protection. AniList ids are used so titles without MAL ids are
+  /// not silently dropped.
+  Future<List<SeasonEntry>> seasons(MediaDetail d) async {
+    if (d.type != ProviderType.anime) return const [];
+
+    var currentId = d.anilistId;
+    if (currentId == null && d.malId != null && d.malId! > 0) {
+      final resolved = await _anilist.mediaByMalId(d.malId!);
+      currentId = resolved?.id;
     }
-    return _seasonCache.putIfAbsent(id, () => _fetchSeasons(d, id));
+    if (currentId == null || currentId <= 0) return const [];
+
+    return _seasonCache.putIfAbsent(currentId, () => _fetchAniListSeasons(d, currentId!));
   }
 
-  Future<List<SeasonEntry>> _fetchSeasons(MediaDetail d, int currentId) async {
-    Future<List<({int id, String title})>> walk(String direction) async {
-      final result = <({int id, String title})>[];
+  Future<List<SeasonEntry>> _fetchAniListSeasons(
+    MediaDetail d,
+    int currentId,
+  ) async {
+    const seasonFormats = {'TV', 'TV_SHORT', 'ONA'};
+    bool isSeason(String? format) =>
+        format == null || seasonFormats.contains(format);
+
+    Future<List<({int id, int? malId, String title, String? cover, int? episodes, int? popularity})>>
+        walk(String relation) async {
+      final result = <({int id, int? malId, String title, String? cover, int? episodes, int? popularity})>[];
       final seen = <int>{currentId};
       var cursor = currentId;
-      // A normal anime franchise rarely exceeds four main TV entries in
-      // either direction. Keep the walk bounded so a long-running franchise
-      // cannot turn opening one detail page into dozens of requests.
-      while (result.length < 4) {
-        final root = _jikanRelationsCache[cursor] ??
-            await _jikanRelationsInFlight.putIfAbsent(cursor, () async {
-              try {
-                final response = await _get(
-                  'https://api.jikan.moe/v4/anime/$cursor/relations',
-                );
-                if (response != null) _jikanRelationsCache[cursor] = response;
-                return response;
-              } finally {
-                _jikanRelationsInFlight.remove(cursor);
-              }
-            });
-        final rows = root?['data'];
-        if (rows is! List) break;
-
-        ({int id, String title})? next;
-        for (final row in rows) {
-          if (row is! Map ||
-              row['relation']?.toString().toLowerCase() != direction) {
-            continue;
-          }
-          final entries = row['entry'];
-          if (entries is! List) continue;
-          for (final entry in entries) {
-            if (entry is! Map || entry['type']?.toString() != 'anime') {
-              continue;
-            }
-            final id = (entry['mal_id'] as num?)?.toInt();
-            final title = entry['name']?.toString().trim() ?? '';
-            if (id == null || id <= 0 || title.isEmpty || seen.contains(id)) {
-              continue;
-            }
-            next = (id: id, title: title);
-            break;
-          }
-          if (next != null) break;
+      // Long franchises can exceed the four-title limit used by the old
+      // Jikan path. Keep a generous safety bound without making a loop endless.
+      while (result.length < 24) {
+        List<({String relation, int id, int? idMal, String? format, String title, String? cover, int? episodes, int? popularity})> neighbours;
+        try {
+          neighbours = await _anilist.seasonNeighbours(cursor);
+        } catch (_) {
+          break;
         }
+        final next = neighbours.where((n) =>
+          n.relation == relation && isSeason(n.format) && !seen.contains(n.id)
+        ).firstOrNull;
         if (next == null) break;
         seen.add(next.id);
-        result.add(next);
+        result.add((
+          id: next.id,
+          malId: next.idMal,
+          title: next.title,
+          cover: next.cover,
+          episodes: next.episodes,
+          popularity: next.popularity,
+        ));
         cursor = next.id;
       }
       return result;
     }
 
-    // Each link points toward the nearest title first. Walk backwards and
-    // forwards independently, then reverse the prequels for chronological order.
-    // Both directions start together. The shared in-flight cache above makes
-    // their first hop reuse the same current-title relations response.
     final walks = await Future.wait([
-      walk('prequel'),
-      walk('sequel'),
+      walk('PREQUEL'),
+      walk('SEQUEL'),
     ]);
-    final before = walks[0];
+    final before = walks[0].reversed.toList();
     final after = walks[1];
-    final ordered = <({int id, String title})>[
-      ...before.reversed,
+
+    final ordered = <({int id, int? malId, String title, String? cover, int? episodes, int? popularity})>[
+      ...before,
+      (
+        id: currentId,
+        malId: d.malId,
+        title: d.romajiTitle?.trim().isNotEmpty == true ? d.romajiTitle!.trim() : d.title,
+        cover: d.cover,
+        episodes: d.episodes.isNotEmpty ? d.episodes.length : null,
+        popularity: d.popularity,
+      ),
       ...after,
     ];
+
     final seen = <int>{};
-    final candidates = ordered.where((entry) => seen.add(entry.id)).take(8).toList();
-    if (candidates.isEmpty) return const [];
-
-    // Full records supply each season's poster, episode count and popularity.
-    final details = await Future.wait([
-      for (final entry in candidates)
-        _get('https://api.jikan.moe/v4/anime/${entry.id}/full'),
+    final unique = ordered.where((entry) => seen.add(entry.id)).toList();
+    return List.unmodifiable([
+      for (var i = 0; i < unique.length; i++)
+        SeasonEntry(
+          number: i + 1,
+          title: unique[i].title,
+          anilistId: unique[i].id,
+          malId: unique[i].malId,
+          cover: unique[i].cover,
+          episodes: unique[i].episodes,
+          popularity: unique[i].popularity,
+          isCurrent: unique[i].id == currentId,
+        ),
     ]);
-
-    final prequelIds = before.map((e) => e.id).toSet();
-    final resolved = <({int id, String title, String? cover, int? episodes, int? popularity, bool prequel})>[];
-    for (var i = 0; i < candidates.length; i++) {
-      final raw = details[i]?['data'];
-      final info = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
-      final type = info['type']?.toString();
-      if (type != null && !const {'TV', 'TV Short', 'ONA'}.contains(type)) {
-        continue;
-      }
-      final images = info['images'];
-      final jpg = images is Map ? images['jpg'] : null;
-      final cover = jpg is Map
-          ? (jpg['large_image_url'] ?? jpg['image_url'])?.toString()
-          : null;
-      final entry = candidates[i];
-      resolved.add((
-        id: entry.id,
-        title: (info['title_english'] ?? info['title'] ?? entry.title).toString(),
-        cover: cover,
-        episodes: (info['episodes'] as num?)?.toInt(),
-        popularity: (info['popularity'] as num?)?.toInt(),
-        prequel: prequelIds.contains(entry.id),
-      ));
-    }
-
-    final previous = resolved.where((e) => e.prequel).toList();
-    final next = resolved.where((e) => !e.prequel).toList();
-    final result = <SeasonEntry>[];
-    var number = 1;
-    for (final entry in previous) {
-      result.add(SeasonEntry(
-        number: number++,
-        title: entry.title,
-        malId: entry.id,
-        cover: entry.cover,
-        episodes: entry.episodes,
-        popularity: entry.popularity,
-      ));
-    }
-    // The currently opened title occupies the next number in the chain.
-    number = previous.length + 2;
-    for (final entry in next) {
-      result.add(SeasonEntry(
-        number: number++,
-        title: entry.title,
-        malId: entry.id,
-        cover: entry.cover,
-        episodes: entry.episodes,
-        popularity: entry.popularity,
-      ));
-    }
-    return List.unmodifiable(result);
   }
-
 
   // TMDB v3 — api_key attached by the Dio interceptor (initDependencies).
   static const String _tmdbBase = 'https://api.themoviedb.org/3';
