@@ -566,6 +566,7 @@ class DetailCubit extends Cubit<DetailState> {
       'malId=${detail.malId} tmdbId=${detail.tmdbId} eps=${detail.episodes.length}',
     );
     var d = detail;
+    final isAniListDetail = d.sourceId == ZmodeIds.sourceId;
 
     // TMDB fallback: an id-less movie/series (e.g. some CloudStream sources)
     // can't track on Simkl and can't be id-enriched. Resolve a TMDB id from
@@ -598,7 +599,7 @@ class DetailCubit extends Cubit<DetailState> {
     // Id-less anime (Aniyomi, most CloudStream): resolve the MAL id from title
     // via Jikan and store it, so the player, scrobbler AND the filler-episode
     // lookup all key off a real id instead of nothing.
-    if (d.malId == null && d.type == ProviderType.anime) {
+    if (!isAniListDetail && d.malId == null && d.type == ProviderType.anime) {
       try {
         final resolved = await sl<MetadataEnrichment>().resolveMalId(d);
         if (isClosed) return;
@@ -651,7 +652,6 @@ class DetailCubit extends Cubit<DetailState> {
 
     // Non-AniList sources that do not supply extras can still use the legacy
     // metadata fallback. AniList never falls through to extra requests.
-    final isAniListDetail = d.sourceId == ZmodeIds.sourceId;
     if (!hasInlineExtras && !isAniListDetail &&
         (d.malId != null || d.tmdbId != null ||
          d.type == ProviderType.anime ||
