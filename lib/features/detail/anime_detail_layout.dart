@@ -128,7 +128,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               // then fades it into the page color without leaving a bright
               // strip between the poster, title block, and the rest of page.
               Positioned.fill(
-                child: ColoredBox(color: Color.fromRGBO(0, 0, 0, 0.34)),
+                child: ColoredBox(color: Color.fromRGBO(0, 0, 0, 0.25)),
               ),
               Positioned.fill(
                 child: IgnorePointer(
@@ -138,11 +138,11 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withValues(alpha: 0.28),
-                          Colors.black.withValues(alpha: 0.42),
+                          Colors.black.withValues(alpha: 0.20),
+                          Colors.black.withValues(alpha: 0.32),
                           AppColors.bg.withValues(alpha: 0.58),
                           Color.alphaBlend(
-                            Colors.black.withValues(alpha: 0.18),
+                            Colors.black.withValues(alpha: 0.12),
                             AppColors.bg,
                           ),
                           Color.alphaBlend(
@@ -225,7 +225,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 17,
+                bottom: 18,
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
@@ -456,7 +456,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -465,17 +465,17 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           if (romaji.isNotEmpty)
             Text(romaji, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppText.largeTitle.copyWith(fontSize: 23, height: 1.14)),
+              style: AppText.largeTitle.copyWith(fontSize: 22, height: 1.14)),
           if (romaji.isNotEmpty && english.isNotEmpty) const SizedBox(height: 2),
           if (english.isNotEmpty) ...[
             Text(english, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 15, height: 1.2, color: AppColors.textSecondary)),
+              style: AppText.body.copyWith(fontSize: 13, height: 1.2, color: AppColors.textSecondary)),
             const SizedBox(height: 2),
           ],
           AutoTranslatedText(text: translatedSource, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.body.copyWith(fontSize: 15, color: AppColors.textSecondary)),
+            style: AppText.body.copyWith(fontSize: 13, color: AppColors.textSecondary)),
           if (metaLine.isNotEmpty) ...[
             const SizedBox(height: 3),
             Text.rich(
@@ -1058,60 +1058,56 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
         children: [
           SizedBox(
             height: 30,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(right: 16),
-              itemCount: tabs.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                final selected = index == _selected;
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => setState(() => _selected = index),
-                  child: SizedBox(width: 100, child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        tabs[index],
-                        style: AppText.headline.copyWith(
-                          fontSize: 16,
-                          color: selected ? AppColors.textPrimary : AppColors.textSecondary,
-                          fontWeight: FontWeight.w600,
+            child: Stack(
+              children: [
+                ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.only(right: 16),
+                  itemCount: tabs.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final selected = index == _selected;
+                    return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => setState(() => _selected = index),
+                      child: SizedBox(
+                        width: 100,
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: Text(
+                            tabs[index],
+                            style: AppText.headline.copyWith(
+                              fontSize: 16,
+                              color: selected ? AppColors.textPrimary : AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 3),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
-                        curve: Curves.easeInOutCubic,
-                        width: selected ? 54 : 0,
-                        height: 2,
-                        decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ],
-                  ),),
-                );
-              },
+                    );
+                  },
+                ),
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeInOutCubic,
+                  bottom: 0,
+                  left: _selected * 112.0 + 23,
+                  child: Container(
+                    width: 54,
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
           SizedBox(
             height: height,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 240),
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
-              transitionBuilder: (child, animation) => SlideTransition(
-                position: Tween<Offset>(
-                  begin: Offset(_selected == 0 ? -0.10 : 0.10, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic)),
-                child: child,
-              ),
-              child: Builder(
-                key: ValueKey(selectedTab),
+            child: Builder(
                 builder: (context) {
                 final cards = <Widget>[];
                 if (selectedTab == 'Semua Musim') {
@@ -1201,7 +1197,6 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                 );
                 },
               ),
-            ),
           ),
         ],
       ),
