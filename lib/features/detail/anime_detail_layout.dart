@@ -390,7 +390,6 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     required this.metaLine,
     this.englishTitle,
     this.romajiTitle,
-    this.backdropUrl,
     this.alternateTitle,
     this.format,
     this.status,
@@ -403,7 +402,6 @@ class AnimeDetailTitleBlock extends StatelessWidget {
   final String title;
   final String? englishTitle;
   final String? romajiTitle;
-  final String? backdropUrl;
   final String? alternateTitle;
   final String metaLine;
   final String? format;
