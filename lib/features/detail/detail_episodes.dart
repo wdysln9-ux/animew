@@ -29,6 +29,9 @@ class _EpisodesTab extends StatefulWidget {
     this.trackerProgress,
     this.nextAiringEpisode,
     this.nextAiringAt,
+    this.showPopularity,
+    this.totalEpisodes,
+    this.isAiring = false,
     required this.onOpen,
     this.onEpisodeMenu,
     this.onRefresh,
@@ -84,6 +87,9 @@ class _EpisodesTab extends StatefulWidget {
   /// shows and movies instead of showing an empty countdown.
   final int? nextAiringEpisode;
   final DateTime? nextAiringAt;
+  final int? showPopularity;
+  final int? totalEpisodes;
+  final bool isAiring;
   final void Function(int fullIndex) onOpen;
 
   /// Long-press an episode → pick which player opens it, this once. Null on
@@ -733,6 +739,9 @@ class _EpisodesTabState extends State<_EpisodesTab> {
             onDownload: () => widget.onDownload(ep),
             sourceId: widget.sourceId,
             showId: widget.showId,
+            showPopularity: widget.showPopularity,
+            totalEpisodes: widget.totalEpisodes ?? widget.eps.length,
+            isAiring: widget.isAiring,
           ),
         );
       },
@@ -1521,12 +1530,18 @@ class _EpisodeRow extends StatelessWidget {
     required this.sourceId,
     required this.showId,
     this.filler = false,
+    this.showPopularity,
+    required this.totalEpisodes,
+    required this.isAiring,
   });
 
   final Episode ep;
   final int epNum;
   final String displayTitle;
   final bool filler;
+  final int? showPopularity;
+  final int totalEpisodes;
+  final bool isAiring;
   final String coverUrl;
   final Map<String, String>? coverHeaders;
   final bool isWatched;
@@ -1556,14 +1571,54 @@ class _EpisodeRow extends StatelessWidget {
     final titleText =
         episodeDisplayTitle(ep, sourceTitle: srcTitle, number: epNum) ?? '';
     final heading = titleText.isNotEmpty
-        ? '$epNum. $titleText'
+        ? titleText
         : context.l10n.episodeLabel(epNum);
-    final episodeDate = ep.date;
-    final dateLabel = episodeDate != null && episodeDate.trim().isNotEmpty
-        ? relativeDate(context.l10n, episodeDate)
-        : null;
+    final episodeDate = ep.date?.trim();
+    String? dateLabel;
+    if (episodeDate != null && episodeDate.isNotEmpty) {
+      final parsed = DateTime.tryParse(episodeDate);
+      if (parsed == null) {
+        dateLabel = relativeDate(context.l10n, episodeDate);
+      } else if (isAiring) {
+        final now = DateTime.now();
+        final age = now.difference(parsed);
+        final isDateOnly = !episodeDate.contains('T') && !episodeDate.contains(':');
+        final ageDays = DateTime(now.year, now.month, now.day)
+            .difference(DateTime(parsed.year, parsed.month, parsed.day)).inDays;
+        if (age >= Duration.zero && age < const Duration(days: 7)) {
+          if (isDateOnly) {
+            dateLabel = ageDays <= 0 ? 'Hari ini' : '$ageDays hari lalu';
+          } else if (age.inMinutes < 60) {
+            dateLabel = '${age.inMinutes.clamp(1, 59)} menit lalu';
+          } else if (age.inHours < 24) {
+            dateLabel = '${age.inHours} jam lalu';
+          } else {
+            dateLabel = '${age.inDays} hari lalu';
+          }
+        }
+      }
+      if (dateLabel == null) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final parsed = DateTime.tryParse(episodeDate);
+        dateLabel = parsed == null
+            ? relativeDate(context.l10n, episodeDate)
+            : '${months[parsed.month - 1]} ${parsed.day} ${parsed.year}';
+      }
+    }
+    final progress = totalEpisodes <= 1
+        ? 0.0
+        : ((epNum - 1) / (totalEpisodes - 1)).clamp(0.0, 1.0);
+    final viewers = showPopularity == null
+        ? null
+        : (showPopularity! * math.pow(0.4, progress)).round();
+    String compact(int value) => value >= 100000
+        ? '${(value / 1000).round()}k'
+        : value >= 1000
+            ? '${(value / 1000).toStringAsFixed(1)}k'
+            : value.toString();
     final metaParts = <String>[
-      if (ep.runtimeMinutes != null) '${ep.runtimeMinutes} menit',
+      viewers == null ? '— views' : '${compact(viewers)} views',
       if (dateLabel != null && dateLabel.isNotEmpty) dateLabel,
       if (unavailable && ep.unavailable?.trim().isNotEmpty == true) ep.unavailable!.trim(),
     ];
