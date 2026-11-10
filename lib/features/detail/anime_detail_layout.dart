@@ -407,7 +407,6 @@ class AnimeDetailTitleBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final english = (englishTitle?.trim().isNotEmpty == true ? englishTitle : title)!.trim();
     final translated = english;
-    final alternate = alternateTitle?.trim();
     return Stack(
       children: [
         if (backdropUrl?.isNotEmpty == true)
@@ -428,9 +427,9 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.bg.withValues(alpha: 0.24),
-                  AppColors.bg.withValues(alpha: 0.62),
-                  AppColors.bg.withValues(alpha: 0.88),
+                  AppColors.bg.withValues(alpha: 0.55),
+                  AppColors.bg.withValues(alpha: 0.74),
+                  AppColors.bg.withValues(alpha: 0.93),
                   AppColors.bg,
                 ],
                 stops: const [0.0, 0.38, 0.72, 1.0],
@@ -450,12 +449,6 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           AutoTranslatedText(text: translated, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: AppText.body.copyWith(fontSize: 15, color: AppColors.textSecondary)),
-          if (alternate != null && alternate.isNotEmpty && alternate != title && alternate != subtitle) ...[
-            const SizedBox(height: 2),
-            Text(alternate, textAlign: TextAlign.center, maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 12, color: AppColors.textSecondary)),
-          ],
           if (metaLine.isNotEmpty) ...[
             const SizedBox(height: 3),
             Text.rich(
@@ -503,7 +496,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
             ),
           ],
           if ((ageRating?.isNotEmpty ?? false) || (dateLine?.isNotEmpty ?? false) || rank != null) ...[
-            const SizedBox(height: 7),
+            const SizedBox(height: 4),
             Text.rich(
               TextSpan(children: [
                 for (var i = 0; i < [
@@ -537,7 +530,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
             ),
           ],
           if (broadcastLabel?.isNotEmpty == true) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Icon(Icons.access_time_rounded, size: 16, color: AppColors.accent),
               const SizedBox(width: 5),
