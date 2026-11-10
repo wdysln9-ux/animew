@@ -361,7 +361,6 @@ class MetadataEnrichment {
     Future<void> loadRelations() async {
       try {
         final response = await _get('$base/$id/relations');
-        if (response != null) _jikanRelationsCache[id] = response;
         final rows = response?['data'];
         if (rows is List) {
           for (final row in rows) {
