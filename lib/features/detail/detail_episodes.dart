@@ -1130,10 +1130,10 @@ class _RangeChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 42,
+      height: 38,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
         itemCount: count,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
@@ -1145,7 +1145,7 @@ class _RangeChips extends StatelessWidget {
             child: InkWell(
               onTap: () => onSelect(i),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Center(
                   child: Text(
                     labelFor(i),
