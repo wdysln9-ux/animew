@@ -236,7 +236,30 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                   : _failed
                       ? _message(Icons.cloud_off_rounded, 'Notifikasi AniList gagal dimuat.', retry: true)
                       : rows.isEmpty
-                          ? _message(Icons.notifications_none_rounded, 'Belum ada notifikasi di kategori ini.')
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(28),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.notifications_none_rounded, size: 38, color: AppColors.textSecondary),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _hasMore
+                                          ? 'Belum ada notifikasi di kategori ini pada halaman terbaru.'
+                                          : 'Belum ada notifikasi di kategori ini.',
+                                      textAlign: TextAlign.center,
+                                      style: AppText.body.copyWith(color: AppColors.textSecondary),
+                                    ),
+                                    if (_hasMore)
+                                      TextButton(
+                                        onPressed: _loadMore,
+                                        child: const Text('Cari notifikasi lebih lama'),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            )
                           : RefreshIndicator(
                               onRefresh: _load,
                               child: ListView.separated(
@@ -251,22 +274,22 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                                 ),
                                 itemBuilder: (context, index) {
                                   if (index < rows.length) return _tile(rows[index]);
-                                  if (_loadMoreFailed) {
-                                    return Center(
-                                      child: TextButton(
-                                        onPressed: _loadMore,
-                                        child: const Text('Gagal memuat. Coba lagi'),
+                                  if (_loadingMore) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(18),
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        ),
                                       ),
                                     );
                                   }
-                                  return const Padding(
-                                    padding: EdgeInsets.all(18),
-                                    child: Center(
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      ),
+                                  return Center(
+                                    child: TextButton(
+                                      onPressed: _loadMore,
+                                      child: Text(_loadMoreFailed ? 'Gagal memuat. Coba lagi' : 'Muat notifikasi lebih lama'),
                                     ),
                                   );
                                 },
