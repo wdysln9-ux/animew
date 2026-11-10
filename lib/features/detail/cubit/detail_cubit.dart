@@ -632,37 +632,36 @@ class DetailCubit extends Cubit<DetailState> {
     // The old combined prefetch duplicated both network requests and did not
     // warm either split cache, consuming Jikan's shared rate limit.
 
-    // Start franchise discovery alongside cast, relations and recommendations.
-    // These requests are independent; waiting for all three detail endpoints
-    // before beginning the season walk made the section appear much later.
-    if (d.type == ProviderType.anime && d.malId != null) {
-      unawaited(_loadSeasons(d));
+    // AniList detail already carries cast and franchise relations in its
+    // original GraphQL response. Use that payload directly; do not issue
+    // Jikan enrichment or a second season-chain request for it.
+    final hasInlineExtras =
+        detail.castMembers.isNotEmpty || detail.relations.isNotEmpty;
+    if (hasInlineExtras) {
+      if (isClosed) return;
+      emit(state.copyWith(
+        cast: detail.castMembers,
+        relations: detail.relations,
+      ));
     }
 
-    // Episode descriptions are useful but must not delay MAL cast and
-    // franchise data. Start this independent enrichment in the background;
-    // _enrichEpisodesOnly guards against patching a stale episode list.
+    // Episode descriptions remain a separate player concern, not detail-page
+    // metadata. Keep their existing enrichment behavior.
     unawaited(_enrichEpisodesOnly(d));
 
-    // Prefer id-based enrichment (Jikan/MAL for anime, AniList for reading,
-    // TMDB for movies/TV). Id-less anime (Aniyomi, most
-    // CloudStream) also go through fetch(), which resolves extras by title.
-    // Manga/novel join the id-less title-search path. They resolve no id at
-    // all above (the TMDB step is movie-only, the MAL step anime-only), so
-    // without them named here the gate was false three ways and Cast/Relations
-    // never loaded for a reading title.
-    if (d.malId != null ||
-        d.tmdbId != null ||
-        d.type == ProviderType.anime ||
-        d.type == ProviderType.manga ||
-        d.type == ProviderType.novel) {
+    // Non-AniList sources that do not supply extras can still use the legacy
+    // metadata fallback. AniList never falls through to extra requests.
+    final isAniListDetail = d.sourceId == ZmodeIds.sourceId;
+    if (!hasInlineExtras && !isAniListDetail &&
+        (d.malId != null || d.tmdbId != null ||
+         d.type == ProviderType.anime ||
+         d.type == ProviderType.manga ||
+         d.type == ProviderType.novel)) {
       try {
         final extras = await sl<MetadataEnrichment>().fetch(
           d,
           onAnimeExtras: (cast, relations) {
             if (isClosed) return;
-            // Patch each MAL section independently; do not wait for the
-            // slowest endpoint before showing the data already received.
             emit(state.copyWith(
               cast: cast ?? state.cast,
               relations: relations ?? state.relations,
@@ -673,16 +672,7 @@ class DetailCubit extends Cubit<DetailState> {
         if (extras.cast.isNotEmpty || extras.relations.isNotEmpty) {
           emit(state.copyWith(cast: extras.cast, relations: extras.relations));
         }
-        if (extras.cast.isNotEmpty || extras.relations.isNotEmpty) return;
-      } catch (_) {/* fall through to source-supplied extras */}
-    }
-    // Fall back to Cast/Relations the source supplied directly (e.g.
-    // CloudStream's actors/recommendations) — so the tabs fill even without ids.
-    if (isClosed) return;
-    if (detail.castMembers.isNotEmpty || detail.relations.isNotEmpty) {
-      emit(
-        state.copyWith(cast: detail.castMembers, relations: detail.relations),
-      );
+      } catch (_) {/* source-supplied data remains usable */}
     }
     _log('enrich done ${sw.elapsedMilliseconds}ms');
   }
