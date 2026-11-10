@@ -92,8 +92,8 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   ) {
     final poster = posterUrl?.isNotEmpty == true ? posterUrl! : coverUrl;
     final topInset = MediaQuery.paddingOf(context).top;
-    final posterWidth = (MediaQuery.sizeOf(context).width * 0.38)
-        .clamp(140.0, 156.0)
+    final posterWidth = (MediaQuery.sizeOf(context).width * 0.34)
+        .clamp(132.0, 150.0)
         .toDouble();
     final posterHeight = posterWidth * 1.5;
 
@@ -996,8 +996,8 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     final tabs = <String>['Semua Musim', 'Terkait', 'Rekomendasi'];
     if (_selected >= tabs.length) _selected = 0;
 
-    final width = posterRowWidth(context) * 0.82;
-    final height = posterRowHeight(context) * 0.82;
+    final width = posterRowWidth(context) * 0.72;
+    final height = posterRowHeight(context) * 0.72;
     final selectedTab = tabs[_selected];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 18, 0, 0),
