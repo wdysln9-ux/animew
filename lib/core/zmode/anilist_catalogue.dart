@@ -567,7 +567,7 @@ class AniListCatalogue implements AnimeCatalogue {
       if (t is! Map) continue;
       final name = t['name'] as String?;
       final rank = t['rank'] as int?;
-      if (name == null || name.isEmpty || (rank ?? 0) < 50) continue;
+      if (name == null || name.isEmpty) continue;
       out.add(
         MediaTag(
           name: name,
@@ -577,7 +577,7 @@ class AniListCatalogue implements AnimeCatalogue {
       );
     }
     out.sort((a, b) => (b.rank ?? 0).compareTo(a.rank ?? 0));
-    return out.take(20).toList();
+    return out;
   }
 
   // ── helpers ──────────────────────────────────────────────────────────────
