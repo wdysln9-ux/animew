@@ -469,11 +469,7 @@ class AniListCatalogue implements AnimeCatalogue {
       romajiTitle: (t['romaji'] as String?)?.trim(),
       // Whichever variant the display isn't — sources index by both, and
       // dropping one loses matches.
-      englishTitle: (t['english'] as String?)?.trim().isNotEmpty == true
-          ? (t['english'] as String).trim()
-          : ((t['romaji'] as String?)?.trim().isNotEmpty == true
-              ? (t['romaji'] as String).trim()
-              : null),
+      englishTitle: (t['english'] as String?)?.trim(),
       cover: (cover['extraLarge'] ?? cover['large']) as String?,
       banner: map['bannerImage'] as String?,
       url: ZmodeIds.showUrl(c),
