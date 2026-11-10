@@ -869,7 +869,7 @@ class _EpisodesHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
       child: Row(
         children: [
           // Left: season dropdown pill (multi-season) or a plain label.
@@ -884,7 +884,7 @@ class _EpisodesHeader extends StatelessWidget {
                       child: InkWell(
                         onTap: () => _openSheet(context),
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+                          padding: const EdgeInsets.fromLTRB(13, 8, 10, 8),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -1576,7 +1576,7 @@ class _EpisodeRow extends StatelessWidget {
         : context.l10n.episodeLabel(epNum);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 3, 16, 3),
       child: Material(
         color: AppColors.surface2,
         borderRadius: BorderRadius.circular(10),
@@ -1589,12 +1589,12 @@ class _EpisodeRow extends StatelessWidget {
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
+                padding: const EdgeInsets.fromLTRB(9, 7, 7, 7),
                 child: Row(
                   children: [
                     Container(
-                      width: 39,
-                      height: 42,
+                      width: 36,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: AppColors.accent.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(8),
@@ -1611,7 +1611,7 @@ class _EpisodeRow extends StatelessWidget {
                               ),
                             ),
                     ),
-                    const SizedBox(width: 11),
+                    const SizedBox(width: 9),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1621,7 +1621,7 @@ class _EpisodeRow extends StatelessWidget {
                             text: heading,
                             style: AppText.body.copyWith(
                               color: titleColor,
-                              fontSize: 12.5,
+                              fontSize: 12,
                               fontWeight: isResume ? FontWeight.w800 : FontWeight.w700,
                               height: 1.25,
                             ),
@@ -1634,7 +1634,7 @@ class _EpisodeRow extends StatelessWidget {
                               metaLine,
                               style: AppText.caption.copyWith(
                                 color: AppColors.textSecondary,
-                                fontSize: 10.5,
+                                fontSize: 10,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
