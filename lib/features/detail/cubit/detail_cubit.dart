@@ -11,6 +11,7 @@ import '../../../core/logging/app_logger.dart';
 import '../../../core/lnreader/novel_cloudflare.dart';
 import '../../../core/metadata/episode_metadata_service.dart';
 import '../../../core/metadata/metadata_enrichment.dart';
+import '../../../core/trailer/anime_extras_repository.dart';
 import '../../../core/models/episode.dart';
 import '../../../core/models/episode_title.dart';
 import '../../../core/models/media_detail.dart';
@@ -625,6 +626,25 @@ class DetailCubit extends Cubit<DetailState> {
           );
         }
       } catch (_) {/* stays a movie */}
+    }
+
+    // Start MAL trailer and theme requests as part of the same detail-page
+    // enrichment pass. The section widgets join this repository's shared
+    // in-flight future, so opening/expanding them never starts duplicate work.
+    if (d.type == ProviderType.anime) {
+      unawaited(
+        AnimeExtrasRepository.instance
+            .load(
+              malId: d.malId,
+              title: d.title,
+              englishTitle: d.englishTitle,
+            )
+            .catchError((_) => AnimeExtras(
+                  malId: d.malId ?? 0,
+                  videoError: 'Jikan tidak merespons',
+                  themeError: 'Jikan tidak merespons',
+                )),
+      );
     }
 
     // Episode descriptions are useful but must not delay MAL cast and
