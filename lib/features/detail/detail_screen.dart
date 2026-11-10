@@ -27,6 +27,7 @@ import '../../core/theme/theme_controller.dart';
 import '../../core/ui/app_dialog.dart';
 import '../../core/ui/app_toast.dart';
 import 'open_related.dart';
+import '../trailer/trailer_screen.dart';
 import '../../core/ui/episode_unavailable_dialog.dart';
 import '../../core/zmode/playback_resolver.dart';
 import 'episode_sources_sheet.dart';
