@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../models/episode.dart';
 import '../models/home_section.dart';
 import '../models/media_detail.dart';
+import '../models/media_extras.dart';
 import '../anilist/anilist_network_policy.dart';
 import '../anilist/anilist_title.dart';
 import '../models/media_item.dart';
@@ -73,7 +74,11 @@ class AniListCatalogue implements AnimeCatalogue {
       'isAdult synonyms startDate{year month day} endDate{year month day} '
       // Ranked, so the page can show the ones voters actually agreed on and
       // drop the long tail of 3% tags.
-      'tags{name rank isMediaSpoiler}';
+      'tags{name rank isMediaSpoiler} '
+      'trailer{id site thumbnail} '
+      'characters(sort:ROLE,perPage:25){edges{role node{name{full} image{large}} voiceActors(language:JAPANESE){name{full}}}} '
+      'relations{edges{relationType node{id idMal type title{romaji english} coverImage{large}}}} '
+      'recommendations(sort:RATING_DESC,perPage:10){nodes{mediaRecommendation{id idMal type title{romaji english} coverImage{large}}}}';
 
   /// Exactly what [_item] reads, and nothing else. Home asks for 7 rows of 30
   /// in one request, so every field here is paid for 210 times: carrying the
@@ -390,6 +395,61 @@ class AniListCatalogue implements AnimeCatalogue {
     final eps = _episodesFor(map, c);
     final t = map['title'] as Map? ?? const {};
     final cover = map['coverImage'] as Map? ?? const {};
+    final castMembers = <CastMember>[];
+    final characterEdges = (map['characters'] as Map?)?['edges'];
+    if (characterEdges is List) {
+      for (final edge in characterEdges) {
+        if (edge is! Map) continue;
+        final node = edge['node'];
+        if (node is! Map) continue;
+        final name = ((node['name'] as Map?)?['full'] as String?)?.trim();
+        if (name == null || name.isEmpty) continue;
+        final voiceActors = edge['voiceActors'];
+        final voiceName = voiceActors is List && voiceActors.isNotEmpty
+            ? ((voiceActors.first as Map?)?['name'] as Map?)?['full'] as String?
+            : null;
+        castMembers.add(CastMember(
+          name: name,
+          role: voiceName == null || voiceName.isEmpty ? null : voiceName,
+          photo: (node['image'] as Map?)?['large'] as String?,
+        ));
+      }
+    }
+    final relations = <MediaRelation>[];
+    void addRelation(dynamic raw, String? relationLabel) {
+      if (raw is! Map) return;
+      final title = raw['title'] as Map? ?? const {};
+      final romaji = title['romaji'] as String?;
+      final english = title['english'] as String?;
+      final displayTitle = (english?.trim().isNotEmpty == true)
+          ? english!.trim()
+          : (romaji ?? '').trim();
+      if (displayTitle.isEmpty) return;
+      final id = raw['id'] as int?;
+      final isReading = raw['type'] == 'MANGA';
+      if (relations.any((r) => r.anilistId == id && id != null)) return;
+      relations.add(MediaRelation(
+        title: displayTitle,
+        romaji: romaji,
+        cover: (raw['coverImage'] as Map?)?['large'] as String?,
+        relation: relationLabel,
+        malId: raw['idMal'] as int?,
+        anilistId: id,
+        isReading: isReading,
+      ));
+    }
+    final relationEdges = (map['relations'] as Map?)?['edges'];
+    if (relationEdges is List) {
+      for (final edge in relationEdges) {
+        if (edge is Map) addRelation(edge['node'], _prettyEnum(edge['relationType'] as String?));
+      }
+    }
+    final recommendationNodes = (map['recommendations'] as Map?)?['nodes'];
+    if (recommendationNodes is List) {
+      for (final node in recommendationNodes) {
+        if (node is Map) addRelation(node['mediaRecommendation'], 'Recommended');
+      }
+    }
     return MediaDetail(
       id: c.id,
       title: aniListTitle(t, titleLanguagePref) ?? '',
@@ -427,6 +487,8 @@ class AniListCatalogue implements AnimeCatalogue {
       nativeTitle: t['native'] as String?,
       synonyms: [for (final x in (map['synonyms'] as List? ?? const [])) '$x'],
       isAdult: map['isAdult'] == true,
+      castMembers: castMembers,
+      relations: relations,
     );
   }
 
