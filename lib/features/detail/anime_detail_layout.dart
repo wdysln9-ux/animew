@@ -225,7 +225,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                 bottom: 0,
                 child: Center(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(17),
                     child: SizedBox(
                       width: posterWidth,
                       height: posterHeight,
