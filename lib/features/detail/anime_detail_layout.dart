@@ -1048,10 +1048,11 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     Iterable<MediaRelation> source, {
     required Set<int> anilistIds,
     required Set<int> malIds,
+    required Set<String> seasonTitles,
   }) {
     final seenAniList = <int>{...anilistIds};
     final seenMal = <int>{...malIds};
-    final seenTitles = <String>{};
+    final seenTitles = <String>{...seasonTitles};
     final result = <MediaRelation>[];
     for (final relation in source) {
       if (relation.isReading) continue;
@@ -1060,12 +1061,12 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
       final title = relation.title.trim().toLowerCase();
       if ((aid != null && seenAniList.contains(aid)) ||
           (mid != null && seenMal.contains(mid)) ||
-          (aid == null && mid == null && title.isNotEmpty && seenTitles.contains(title))) {
+          (title.isNotEmpty && seenTitles.contains(title))) {
         continue;
       }
       if (aid != null) seenAniList.add(aid);
       if (mid != null) seenMal.add(mid);
-      if (aid == null && mid == null && title.isNotEmpty) seenTitles.add(title);
+      if (title.isNotEmpty) seenTitles.add(title);
       result.add(relation);
     }
     return result;
@@ -1075,6 +1076,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
   Widget build(BuildContext context) {
     final anilistIds = widget.seasons.map((s) => s.anilistId).whereType<int>().toSet();
     final malIds = widget.seasons.map((s) => s.malId).whereType<int>().toSet();
+    final seasonTitles = widget.seasons.map((s) => s.title.trim().toLowerCase()).where((s) => s.isNotEmpty).toSet();
 
     // AniList's full franchise chain is authoritative. Relations only fill
     // gaps if a linked season could not be resolved into the chain.
@@ -1082,16 +1084,19 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
       widget.relations.where(_isSeasonRelation),
       anilistIds: anilistIds,
       malIds: malIds,
+      seasonTitles: seasonTitles,
     );
     final related = _uniqueAnimeRelations(
       widget.relations.where((r) => !_isRecommended(r) && !_isSeasonRelation(r)),
       anilistIds: anilistIds,
       malIds: malIds,
+      seasonTitles: seasonTitles,
     );
     final recommendations = _uniqueAnimeRelations(
       widget.relations.where(_isRecommended),
       anilistIds: anilistIds,
       malIds: malIds,
+      seasonTitles: seasonTitles,
     );
 
     // Empty categories are omitted entirely, so there is no dead tab.
