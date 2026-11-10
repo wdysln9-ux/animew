@@ -1552,16 +1552,6 @@ class _EpisodeRow extends StatelessWidget {
             ? AppColors.accent
             : (isWatched ? AppColors.textSecondary : AppColors.textPrimary);
 
-    String formatEpisodeDate(String raw) {
-      final parsed = DateTime.tryParse(raw.trim());
-      if (parsed == null) return raw.trim();
-      final day = parsed.day.toString().padLeft(2, '0');
-      final month = parsed.month.toString().padLeft(2, '0');
-      return '$day-$month-${parsed.year}';
-    }
-
-    final metaLine = '';
-
     final srcTitle = displayTitle.trim();
     final titleText =
         episodeDisplayTitle(ep, sourceTitle: srcTitle, number: epNum) ?? '';
@@ -1622,18 +1612,6 @@ class _EpisodeRow extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (metaLine.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              metaLine,
-                              style: AppText.caption.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 10,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
                           if (isResume || filler) ...[
                             const SizedBox(height: 5),
                             Row(
