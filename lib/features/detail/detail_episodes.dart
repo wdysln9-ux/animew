@@ -1587,7 +1587,7 @@ class _EpisodeRow extends StatelessWidget {
             .difference(DateTime(parsedDate.year, parsedDate.month, parsedDate.day)).inDays;
         if (age >= Duration.zero && age < const Duration(days: 7)) {
           if (isDateOnly) {
-            dateLabel = ageDays <= 0 ? 'Hari ini' : '$ageDays hari lalu';
+            dateLabel = ageDays <= 0 ? 'hari ini' : '$ageDays hari lalu';
           } else if (age.inMinutes < 60) {
             dateLabel = '${age.inMinutes.clamp(1, 59)} menit lalu';
           } else if (age.inHours < 24) {
@@ -1598,11 +1598,14 @@ class _EpisodeRow extends StatelessWidget {
         }
       }
       if (dateLabel == null) {
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        dateLabel = parsedDate == null
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+          'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        final absoluteDate = parsedDate == null
             ? relativeDate(context.l10n, episodeDate)
             : '${months[parsedDate.month - 1]} ${parsedDate.day} ${parsedDate.year}';
+        dateLabel = parsedDate != null && isAiring && dateLabel != null
+            ? '$absoluteDate ($dateLabel)'
+            : absoluteDate;
       }
     }
     final progress = totalEpisodes <= 1
@@ -1617,7 +1620,7 @@ class _EpisodeRow extends StatelessWidget {
             ? '${(value / 1000).toStringAsFixed(1)}k'
             : value.toString();
     final metaParts = <String>[
-      viewers == null ? '— views' : '${compact(viewers)} views',
+      viewers == null ? '—' : compact(viewers),
       if (dateLabel != null && dateLabel.isNotEmpty) dateLabel,
       if (unavailable && ep.unavailable?.trim().isNotEmpty == true) ep.unavailable!.trim(),
     ];
@@ -1678,8 +1681,12 @@ class _EpisodeRow extends StatelessWidget {
                           ),
                           if (metaLine.isNotEmpty) ...[
                             const SizedBox(height: 3),
-                            Text(metaLine, maxLines: 1, overflow: TextOverflow.ellipsis,
-                              style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary)),
+                            Row(mainAxisSize: MainAxisSize.min, children: [
+                              const Icon(Icons.visibility_outlined, size: 12, color: AppColors.textSecondary),
+                              const SizedBox(width: 3),
+                              Flexible(child: Text(metaLine, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary))),
+                            ]),
                           ],
                           if (isResume || filler) ...[
                             const SizedBox(height: 5),
