@@ -220,6 +220,87 @@ class AniListApi {
     return d?['SaveMediaListEntry'] is Map;
   }
 
+  /// Fetch the signed-in user's AniList notifications. The API resets the
+  /// unread counter on the first page load, matching AniList's own inbox.
+  Future<List<Map<String, dynamic>>> notifications({int page = 1}) async {
+    const query = r'''
+query($page:Int,$perPage:Int) {
+  Page(page:$page, perPage:$perPage) {
+    notifications(resetNotificationCount:true) {
+      __typename
+      ... on AiringNotification {
+        id type createdAt animeId episode contexts
+        media { id siteUrl title { romaji english } coverImage { large } }
+      }
+      ... on FollowingNotification {
+        id type createdAt user { id name avatar { large } }
+      }
+      ... on ActivityMessageNotification {
+        id type createdAt context user { id name avatar { large } } activityId
+      }
+      ... on ActivityMentionNotification {
+        id type createdAt context user { id name avatar { large } } activityId
+      }
+      ... on ActivityReplyNotification {
+        id type createdAt context user { id name avatar { large } } activityId
+      }
+      ... on ActivityReplySubscribedNotification {
+        id type createdAt context user { id name avatar { large } } activityId
+      }
+      ... on ActivityLikeNotification {
+        id type createdAt context user { id name avatar { large } } activityId
+      }
+      ... on ActivityReplyLikeNotification {
+        id type createdAt context user { id name avatar { large } } activityId
+      }
+      ... on ThreadCommentMentionNotification {
+        id type createdAt context user { id name avatar { large } }
+        thread { id title siteUrl }
+      }
+      ... on ThreadCommentReplyNotification {
+        id type createdAt context user { id name avatar { large } }
+        thread { id title siteUrl }
+      }
+      ... on ThreadCommentSubscribedNotification {
+        id type createdAt context user { id name avatar { large } }
+        thread { id title siteUrl }
+      }
+      ... on ThreadCommentLikeNotification {
+        id type createdAt context user { id name avatar { large } }
+        thread { id title siteUrl }
+      }
+      ... on ThreadLikeNotification {
+        id type createdAt context user { id name avatar { large } }
+        thread { id title siteUrl }
+      }
+      ... on RelatedMediaAdditionNotification {
+        id type createdAt context media { id siteUrl title { romaji english } coverImage { large } }
+      }
+      ... on MediaDataChangeNotification {
+        id type createdAt context media { id siteUrl title { romaji english } coverImage { large } }
+      }
+      ... on MediaMergeNotification {
+        id type createdAt context media { id siteUrl title { romaji english } coverImage { large } }
+      }
+      ... on MediaDeletionNotification {
+        id type createdAt context media { id siteUrl title { romaji english } coverImage { large } }
+      }
+      ... on MediaSubmissionUpdateNotification { id type createdAt context }
+      ... on StaffSubmissionUpdateNotification { id type createdAt context }
+      ... on CharacterSubmissionUpdateNotification { id type createdAt context }
+    }
+  }
+}''';
+    final d = await _gql(
+      query,
+      {'page': page, 'perPage': 30},
+      auth: true,
+    );
+    final rows = (d?['Page'] as Map?)?['notifications'];
+    if (rows is! List) return const [];
+    return rows.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
   Future<AniListViewer?> viewer() async {
     final d = await _gql(
       'query{ Viewer{ id name avatar{ medium large } '
