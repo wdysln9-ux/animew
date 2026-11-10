@@ -17,6 +17,14 @@ class _AniListTrailerSection extends StatefulWidget {
 class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
   bool _expanded = false;
 
+  String? get _videoId {
+    final uri = Uri.tryParse(widget.url);
+    if (uri == null) return null;
+    if (uri.host.contains('youtu.be')) return uri.pathSegments.isEmpty ? null : uri.pathSegments.last;
+    if (uri.host.contains('youtube.com')) return uri.queryParameters['v'] ?? (uri.pathSegments.length > 1 ? uri.pathSegments.last : null);
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -46,12 +54,15 @@ class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
           ),
           if (_expanded) ...[
             const SizedBox(height: 9),
-            GestureDetector(
-              onTap: () => launchUrl(
-                Uri.parse(widget.url),
-                mode: LaunchMode.externalApplication,
+            Align(
+              alignment: Alignment.centerLeft,
+              child: GestureDetector(
+              onTap: _videoId == null ? null : () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => TrailerScreen(videoId: _videoId!)),
               ),
-              child: AspectRatio(
+              child: SizedBox(
+                width: 220,
+                child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
@@ -86,6 +97,8 @@ class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
                   ),
                 ),
               ),
+              ),
+            ),
             ),
           ],
         ],
