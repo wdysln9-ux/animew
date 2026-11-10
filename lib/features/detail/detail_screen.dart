@@ -2235,9 +2235,13 @@ class _DetailViewState extends State<_DetailView> {
       savedFrom: item.savedFrom,
     );
 
-    return CustomScrollView(
-      controller: _scrollController,
-      slivers: [
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: const TextScaler.linear(1.18),
+      ),
+      child: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
 
         // ── 1. Hero: backdrop + overlapping poster + status/total ──────────
         AnimeDetailHeroSliver(
@@ -2579,7 +2583,8 @@ class _DetailViewState extends State<_DetailView> {
             ),
           ),
         ],
-      ],
+        ],
+      ),
     );
   }
 }
