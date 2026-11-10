@@ -407,7 +407,9 @@ class AnimeDetailTitleBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final romaji = (romajiTitle?.trim().isNotEmpty == true ? romajiTitle : title).trim();
+    final romaji = romajiTitle?.trim().isNotEmpty == true
+        ? romajiTitle!.trim()
+        : title.trim();
     final english = (englishTitle?.trim().isNotEmpty == true ? englishTitle : title).trim();
     return SizedBox(
       width: double.infinity,
