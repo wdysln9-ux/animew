@@ -124,8 +124,11 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                 bottom: -150,
                 child: _image(coverUrl, alignment: Alignment.topCenter),
               ),
+              // Darken the complete backdrop evenly first. The gradient
+              // then fades it into the page color without leaving a bright
+              // strip between the poster, title block, and the rest of page.
               Positioned.fill(
-                child: ColoredBox(color: Color.fromRGBO(0, 0, 0, 0.10)),
+                child: ColoredBox(color: Color.fromRGBO(0, 0, 0, 0.34)),
               ),
               Positioned.fill(
                 child: IgnorePointer(
@@ -134,18 +137,14 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        // Long, smooth fade matching the reference: keep
-                        // the artwork readable near the top, then gradually
-                        // blend it into the page background across the lower
-                        // half of the hero. Avoid a visible horizontal band.
                         colors: [
-                          Colors.black.withValues(alpha: 0.32),
+                          Colors.black.withValues(alpha: 0.28),
                           Colors.black.withValues(alpha: 0.42),
-                          AppColors.bg.withValues(alpha: 0.34),
-                          AppColors.bg.withValues(alpha: 0.52),
-                          AppColors.bg.withValues(alpha: 0.68),
+                          AppColors.bg.withValues(alpha: 0.62),
+                          AppColors.bg.withValues(alpha: 0.88),
+                          AppColors.bg,
                         ],
-                        stops: [0.0, 0.24, 0.50, 0.76, 1.0],
+                        stops: [0.0, 0.25, 0.52, 0.82, 1.0],
                       ),
                     ),
                   ),
@@ -427,7 +426,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         // bright horizontal seam at the hero/title boundary.
         Positioned.fill(
           child: ColoredBox(
-            color: Color.alphaBlend(Colors.black.withValues(alpha: 0.08), AppColors.bg),
+            color: Color.alphaBlend(Colors.black.withValues(alpha: 0.18), AppColors.bg),
           ),
         ),
         Padding(
@@ -923,7 +922,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
               const SizedBox(width: 7),
               Text(cast.length.toString(), style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textSecondary)),
               const Spacer(),
-              Icon(_expanded ? Icons.keyboard_arrow_up_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary),
+              Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary),
             ]),
           ),
         ),
