@@ -292,7 +292,7 @@ class _EpisodesTabState extends State<_EpisodesTab> {
       // No CONTINUE badge in the reading row, and the resume index we're
       // handed is the video one — so never claim a resume here.
       resume: false,
-      fraction: inProgress ? (mark.pos / mark.total).clamp(0.0, 1.0) : 0.0,
+      fraction: watched ? 1.0 : (inProgress ? (mark.pos / mark.total).clamp(0.0, 1.0) : 0.0),
     );
   }
 
@@ -317,12 +317,11 @@ class _EpisodesTabState extends State<_EpisodesTab> {
             epNum <= widget.trackerProgress!);
     final resume =
         widget.hasAnyMark && fullIndex == widget.resumeIndex(widget.eps);
-    final fraction = inProgress
-        ? (mark.position.inMilliseconds / mark.duration.inMilliseconds).clamp(
-            0.0,
-            1.0,
-          )
-        : 0.0;
+    final fraction = watched
+        ? 1.0
+        : (inProgress
+            ? (mark.position.inMilliseconds / mark.duration.inMilliseconds).clamp(0.0, 1.0)
+            : 0.0);
     return (
       watched: watched,
       inProgress: inProgress,
@@ -1212,21 +1211,15 @@ class _EpisodeGridTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isResume
-        ? AppColors.accent
-        : (isWatched ? AppColors.surface : AppColors.surface2);
+    final bg = isWatched ? AppColors.surface : AppColors.surface2;
     // Nothing has this one yet — same dimming the list row uses, so the two
     // views agree about which numbers will actually open.
     final fg = !available
         ? AppColors.textTertiary
-        : isResume
-        ? Colors.white
         : (isWatched ? AppColors.textTertiary : AppColors.textPrimary);
     final side = highlight
         ? BorderSide(color: AppColors.accent, width: 2)
-        : (isResume
-              ? BorderSide.none
-              : const BorderSide(color: AppColors.hairline, width: 0.5));
+        : const BorderSide(color: AppColors.hairline, width: 0.5);
 
     return Material(
       color: bg,
@@ -1249,17 +1242,7 @@ class _EpisodeGridTile extends StatelessWidget {
                 ),
               ),
             ),
-            if (isWatched && !isResume)
-              const Positioned(
-                top: 4,
-                right: 4,
-                child: Icon(
-                  Icons.check_rounded,
-                  size: 13,
-                  color: AppColors.textTertiary,
-                ),
-              ),
-            if (isFiller)
+if (isFiller)
               const Positioned(
                 top: 6,
                 left: 6,
@@ -1274,7 +1257,7 @@ class _EpisodeGridTile extends StatelessWidget {
                   ),
                 ),
               ),
-            if (isInProgress)
+            if (isWatched || isInProgress)
               Positioned(
                 left: 0,
                 right: 0,
@@ -1563,9 +1546,7 @@ class _EpisodeRow extends StatelessWidget {
     final unavailable = !ep.available;
     final titleColor = unavailable
         ? AppColors.textTertiary
-        : isResume
-            ? AppColors.accent
-            : (isWatched ? AppColors.textSecondary : AppColors.textPrimary);
+        : (isWatched ? AppColors.textSecondary : AppColors.textPrimary);
 
     final srcTitle = displayTitle.trim();
     final titleText =
@@ -1651,16 +1632,14 @@ class _EpisodeRow extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       alignment: Alignment.center,
-                      child: isWatched && !isResume
-                          ? Icon(Icons.check_rounded, color: AppColors.accent, size: 20)
-                          : Text(
-                              '$epNum',
-                              style: AppText.body.copyWith(
-                                color: unavailable ? AppColors.textTertiary : AppColors.accent,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 14,
-                              ),
-                            ),
+                      child: Text(
+                        '$epNum',
+                        style: AppText.body.copyWith(
+                          color: unavailable ? AppColors.textTertiary : AppColors.accent,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 9),
                     Expanded(
@@ -1673,7 +1652,7 @@ class _EpisodeRow extends StatelessWidget {
                             style: AppText.body.copyWith(
                               color: titleColor,
                               fontSize: 12,
-                              fontWeight: isResume ? FontWeight.w800 : FontWeight.w700,
+                              fontWeight: FontWeight.w700,
                               height: 1.25,
                             ),
                             maxLines: 2,
@@ -1688,12 +1667,10 @@ class _EpisodeRow extends StatelessWidget {
                                 style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary))),
                             ]),
                           ],
-                          if (isResume || filler) ...[
+                          if (filler) ...[
                             const SizedBox(height: 5),
                             Row(
                               children: [
-                                if (isResume) TagBadge(text: context.l10n.continueBadge),
-                                if (isResume && filler) const SizedBox(width: 6),
                                 if (filler) TagBadge(text: context.l10n.fillerBadge),
                               ],
                             ),
@@ -1713,13 +1690,13 @@ class _EpisodeRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isInProgress)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: _ThumbnailProgressBar(fraction: fraction),
-                ),
+              if (isWatched || isInProgress)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _ThumbnailProgressBar(fraction: fraction),
+              ),
             ],
           ),
         ),
