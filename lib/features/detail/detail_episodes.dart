@@ -1559,10 +1559,12 @@ class _EpisodeRow extends StatelessWidget {
         ? '$epNum. $titleText'
         : context.l10n.episodeLabel(epNum);
     final episodeDate = ep.date;
+    final dateLabel = episodeDate != null && episodeDate.trim().isNotEmpty
+        ? relativeDate(context.l10n, episodeDate)
+        : null;
     final metaParts = <String>[
       if (ep.runtimeMinutes != null) '${ep.runtimeMinutes} menit',
-      if (episodeDate != null && episodeDate.trim().isNotEmpty)
-        relativeDate(context.l10n, episodeDate),
+      if (dateLabel != null && dateLabel.isNotEmpty) dateLabel,
       if (unavailable && ep.unavailable?.trim().isNotEmpty == true) ep.unavailable!.trim(),
     ];
     final metaLine = metaParts.join('  ·  ');
