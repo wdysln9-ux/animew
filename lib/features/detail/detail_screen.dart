@@ -66,6 +66,7 @@ import '../../core/models/person.dart';
 import '../home/search_screen.dart';
 import '../people/person_page.dart';
 import '../studio/studio_page.dart';
+import '../tags/anime_tags_page.dart';
 import '../../core/models/video_source.dart';
 import '../../core/models/provider_info.dart';
 import '../../core/models/watch_status.dart';
@@ -2277,18 +2278,21 @@ class _DetailViewState extends State<_DetailView> {
           ),
         ),
 
-        if (detail.genres.isNotEmpty || detail.studios.isNotEmpty || detail.producers.isNotEmpty)
+        if (detail.genres.isNotEmpty || detail.studios.isNotEmpty || detail.tags.isNotEmpty)
           SliverToBoxAdapter(
             child: _DetailCredits(
               genres: detail.genres,
               studios: detail.studios,
-              producers: detail.producers,
+              tags: detail.tags,
               onGenreTap: (genre) => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => SearchScreen(initialFilters: MetaFilters(genres: [genre])),
                 ),
               ),
               onStudioTap: (studio) => Navigator.of(context).push(StudioPage.route(studio)),
+              onTagsTap: () => Navigator.of(context).push(
+                AnimeTagsPage.route(title: detail.title, tags: detail.tags),
+              ),
             ),
           ),
 
