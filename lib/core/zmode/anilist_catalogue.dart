@@ -75,8 +75,6 @@ class AniListCatalogue implements AnimeCatalogue {
       // Ranked, so the page can show the ones voters actually agreed on and
       // drop the long tail of 3% tags.
       'tags{name rank isMediaSpoiler} '
-      // AniList exposes producer credits through staff role labels, not a dedicated producers field.
-      'staff(sort:RELEVANCE,perPage:50){edges{role staff{name{full}}}} '
       'trailer{id site thumbnail} '
       'characters(sort:ROLE,perPage:25){edges{role node{name{full} image{large}} voiceActors(language:JAPANESE){name{full}}}} '
       'relations{edges{relationType node{id idMal type title{romaji english} coverImage{large}}}} '
@@ -486,14 +484,6 @@ class AniListCatalogue implements AnimeCatalogue {
             in ((map['studios'] as Map?)?['nodes'] as List? ?? const []))
           if (n is Map && n['name'] is String) n['name'] as String,
       ],
-      producers: [
-        for (final edge in ((map['staff'] as Map?)?['edges'] as List? ?? const []))
-          if (edge is Map &&
-              (edge['role']?.toString().toLowerCase().contains('producer') ?? false) &&
-              (edge['staff'] as Map?)?['name'] is Map &&
-              (((edge['staff'] as Map)['name'] as Map)['full'] is String))
-            (((edge['staff'] as Map)['name'] as Map)['full'] as String),
-      ].toSet().toList(),
       episodes: eps,
       year: map['seasonYear']?.toString(),
       type: _providerType(c.kind),
