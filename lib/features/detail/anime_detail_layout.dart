@@ -470,7 +470,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           if (english.isNotEmpty) ...[
             Text(english, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppText.largeTitle.copyWith(fontSize: 23, height: 1.14)),
+              style: AppText.body.copyWith(fontSize: 15, height: 1.2, color: AppColors.textSecondary)),
             const SizedBox(height: 2),
           ],
           AutoTranslatedText(text: translatedSource, textAlign: TextAlign.center, maxLines: 2,
@@ -594,19 +594,22 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final value = label.toLowerCase();
     final isAiring = value.contains('tayang') || value.contains('ongoing');
-    final background = isFormat ? AppColors.accent : (isAiring ? const Color(0x3319A35B) : const Color(0x333B2918));
+    final isCompleted = value.contains('selesai') || value.contains('completed');
+    final isUpcoming = value.contains('segera') || value.contains('upcoming');
+    final statusColor = isCompleted ? const Color(0xFF4389E8) : (isAiring ? const Color(0xFF24A765) : const Color(0xFFB86A2A));
+    final background = isFormat ? AppColors.accent : statusColor.withValues(alpha: 0.20);
     final foreground = isFormat
         ? Colors.white
         : value.contains('selesai') || value.contains('completed')
         ? const Color(0xFF9CC7FF)
         : value.contains('tayang') || value.contains('ongoing')
             ? const Color(0xFF8BE0AE)
-            : const Color(0xFFFFC58A);
+            : (isUpcoming ? const Color(0xFFFFC58A) : const Color(0xFFFFC58A));
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: background,
-        border: isFormat ? null : Border.all(color: isAiring ? const Color(0xFF24A765) : const Color(0xFFB86A2A), width: 1),
+        border: isFormat ? null : Border.all(color: statusColor, width: 1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -640,8 +643,8 @@ class AnimeDetailActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = AppColors.textPrimary;
-    final background = primary || active ? AppColors.bg : AppColors.surface2;
+    final foreground = active ? Colors.white : AppColors.textPrimary;
+    final background = active ? AppColors.accent : (primary ? AppColors.bg : AppColors.surface2);
     return Opacity(
       opacity: onPressed != null || loading ? 1 : 0.42,
       child: Material(
@@ -840,7 +843,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-      child: Column(
+      child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (widget.genres.isNotEmpty)
@@ -891,21 +894,14 @@ class _DetailCreditsState extends State<_DetailCredits> {
               ),
             ),
           ],
-          if (_expanded && widget.studios.isNotEmpty) ...[
+          if (_expanded && hasCredits) ...[
             const SizedBox(height: 7),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final studio in widget.studios)
-                  _chip(studio, studioBlue, onTap: () => widget.onStudioTap(studio)),
-              ],
-            ),
-          ],
-          if (_expanded && widget.tags.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            _chip('Tags (${widget.tags.length})', AppColors.accent, onTap: widget.onTagsTap),
+            Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6, children: [
+              for (final studio in widget.studios)
+                _chip(studio, studioBlue, onTap: () => widget.onStudioTap(studio)),
+              if (widget.tags.isNotEmpty)
+                _chip('Tags (${widget.tags.length})', AppColors.accent, onTap: widget.onTagsTap),
+            ]),
           ],
           if (_expanded && hasCredits)
             GestureDetector(
@@ -919,7 +915,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
               ),
             ),
         ],
-      ),
+      )),
     );
   }
 }
@@ -1072,7 +1068,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                 return GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () => setState(() => _selected = index),
-                  child: Column(
+                  child: SizedBox(width: 100, child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
@@ -1080,14 +1076,14 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         style: AppText.headline.copyWith(
                           fontSize: 16,
                           color: selected ? AppColors.textPrimary : AppColors.textSecondary,
-                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 3),
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 220),
                         curve: Curves.easeInOutCubic,
-                        width: selected ? tabs[index].length * 8.2 : 0,
+                        width: selected ? 54 : 0,
                         height: 2,
                         decoration: BoxDecoration(
                           color: AppColors.accent,
@@ -1095,7 +1091,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         ),
                       ),
                     ],
-                  ),
+                  ),),
                 );
               },
             ),
@@ -1107,15 +1103,12 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
               duration: const Duration(milliseconds: 240),
               switchInCurve: Curves.easeOutCubic,
               switchOutCurve: Curves.easeInCubic,
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0.035, 0),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                ),
+              transitionBuilder: (child, animation) => SlideTransition(
+                position: Tween<Offset>(
+                  begin: Offset(_selected == 0 ? -0.10 : 0.10, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic)),
+                child: child,
               ),
               child: Builder(
                 key: ValueKey(selectedTab),
