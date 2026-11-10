@@ -413,7 +413,7 @@ class DetailScreen extends StatelessWidget {
         // saved title is READ from wherever it was saved, so the page and its
         // label agree instead of one naming AniList over MAL's data.
         prefer: item.type == ProviderType.anime
-            ? PreferredProvider.mal
+            ? PreferredProvider.anilist
             : (prefer ?? _preferFromName(item.savedFrom)),
       )..load(),
       child: _DetailView(item: item, prefer: prefer, autoScrollToResume: autoScrollToResume, targetEpisodeId: targetEpisodeId),
@@ -2230,7 +2230,7 @@ class _DetailViewState extends State<_DetailView> {
       item.sourceId,
       url: item.url,
       prefer: item.type == ProviderType.anime
-          ? PreferredProvider.mal
+          ? PreferredProvider.anilist
           : (widget.prefer ?? _preferFromName(item.savedFrom)),
       savedFrom: item.savedFrom,
     );
@@ -2248,8 +2248,8 @@ class _DetailViewState extends State<_DetailView> {
           coverUrl: heroPosterUrl,
           posterUrl: heroPosterUrl,
           coverHeaders: coverHeaders,
-          sourceLabel: (detail.malId ?? item.malId) != null ? 'MAL' : sourceName,
-          animeId: (detail.malId ?? item.malId)?.toString() ?? detail.id,
+          sourceLabel: detail.anilistId != null ? 'AniList' : sourceName,
+          animeId: detail.anilistId?.toString() ?? detail.id,
           maxHeight: _expandedHeight,
         ),
 
@@ -2422,14 +2422,12 @@ class _DetailViewState extends State<_DetailView> {
             ),
           ),
 
-        // ── Supplementary anime metadata: MAL videos/themes + AniList cast/seasons.
-        if (!isReading)
+        // Trailer is part of the same AniList detail response; no follow-up API call.
+        if (!isReading && detail.trailerUrl != null)
           SliverToBoxAdapter(
-            child: _MalTrailerSection(
-              malId: detail.malId ?? item.malId,
-              anilistId: item.anilistId,
-              title: detail.title,
-              englishTitle: detail.englishTitle,
+            child: _AniListTrailerSection(
+              url: detail.trailerUrl!,
+              thumbnail: detail.trailerThumbnail,
             ),
           ),
         if (!isReading)
@@ -2443,15 +2441,6 @@ class _DetailViewState extends State<_DetailView> {
               onOpenPerson: (ref) => Navigator.of(
                 context,
               ).push(PersonPage.route(ref, sourceId: widget.item.sourceId)),
-            ),
-          ),
-        if (!isReading)
-          SliverToBoxAdapter(
-            child: _MalThemeSection(
-              malId: detail.malId ?? item.malId,
-              anilistId: item.anilistId,
-              title: detail.title,
-              englishTitle: detail.englishTitle,
             ),
           ),
         if (!isReading)
