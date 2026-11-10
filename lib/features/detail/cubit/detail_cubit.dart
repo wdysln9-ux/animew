@@ -672,7 +672,18 @@ class DetailCubit extends Cubit<DetailState> {
         d.type == ProviderType.manga ||
         d.type == ProviderType.novel) {
       try {
-        final extras = await sl<MetadataEnrichment>().fetch(d);
+        final extras = await sl<MetadataEnrichment>().fetch(
+          d,
+          onAnimeExtras: (cast, relations) {
+            if (isClosed) return;
+            // Patch each MAL section independently; do not wait for the
+            // slowest endpoint before showing the data already received.
+            emit(state.copyWith(
+              cast: cast ?? state.cast,
+              relations: relations ?? state.relations,
+            ));
+          },
+        );
         if (isClosed) return;
         if (extras.cast.isNotEmpty || extras.relations.isNotEmpty) {
           emit(state.copyWith(cast: extras.cast, relations: extras.relations));
