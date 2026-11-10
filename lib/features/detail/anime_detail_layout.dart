@@ -1032,15 +1032,29 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                 return GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () => setState(() => _selected = index),
-                  child: Center(
-                    child: Text(
-                      tabs[index],
-                      style: AppText.headline.copyWith(
-                        fontSize: 16,
-                        color: selected ? AppColors.textPrimary : AppColors.textSecondary,
-                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        tabs[index],
+                        style: AppText.headline.copyWith(
+                          fontSize: 16,
+                          color: selected ? AppColors.textPrimary : AppColors.textSecondary,
+                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 3),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeInOutCubic,
+                        width: selected ? tabs[index].length * 8.2 : 0,
+                        height: 2,
+                        decoration: BoxDecoration(
+                          color: AppColors.accent,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -1049,8 +1063,23 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
           const SizedBox(height: 8),
           SizedBox(
             height: height,
-            child: Builder(
-              builder: (context) {
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 240),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.035, 0),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              ),
+              child: Builder(
+                key: ValueKey(selectedTab),
+                builder: (context) {
                 final cards = <Widget>[];
                 if (selectedTab == 'Semua Musim') {
                   for (final season in widget.seasons) {
@@ -1132,7 +1161,8 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                   separatorBuilder: (_, _) => const SizedBox(width: 9),
                   itemBuilder: (_, index) => cards[index],
                 );
-              },
+                },
+              ),
             ),
           ),
         ],
