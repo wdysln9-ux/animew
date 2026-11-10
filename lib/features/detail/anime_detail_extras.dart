@@ -29,7 +29,7 @@ class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Column(
+      child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
@@ -102,7 +102,7 @@ class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
             ),
           ],
         ],
-      ),
+      )),
     );
   }
 }
