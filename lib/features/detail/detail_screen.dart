@@ -2189,6 +2189,20 @@ class _DetailViewState extends State<_DetailView> {
         '${dateLabel(detail.startDate!)}${detail.endDate == null ? '' : ' – ${dateLabel(detail.endDate!)}'}',
     ].join(' · ');
 
+    final nextAiring = detail.airingAt;
+    final broadcastSchedule = nextAiring == null
+        ? null
+        : () {
+            final wib = nextAiring.toUtc().add(const Duration(hours: 7));
+            const weekdays = [
+              'Senin', 'Selasa', 'Rabu', 'Kamis',
+              'Jumat', 'Sabtu', 'Minggu',
+            ];
+            final hour = wib.hour.toString().padLeft(2, '0');
+            final minute = wib.minute.toString().padLeft(2, '0');
+            return '${weekdays[wib.weekday - 1]} $hour:$minute WIB';
+          }();
+
     // ── Netflix-style meta line: "2010 · 10 Seasons · Completed" ────────────
     // Join only what we actually HAVE with " · " (no faked rating/HD/CC).
     // Seasons when multi-season, else episode count.
@@ -2271,13 +2285,14 @@ class _DetailViewState extends State<_DetailView> {
             child: AnimeDetailTitleBlock(
               title: detail.title,
               englishTitle: detail.englishTitle,
+              romajiTitle: detail.romajiTitle,
               backdropUrl: heroPosterUrl,
               metaLine: metaLine,
               format: formatStr,
               status: statusStr,
               ageRating: detail.ageRating,
               dateLine: dateLine,
-              broadcastLabel: detail.broadcastLabel,
+              broadcastLabel: detail.broadcastLabel ?? broadcastSchedule,
               rank: detail.rank,
             ),
           ),
