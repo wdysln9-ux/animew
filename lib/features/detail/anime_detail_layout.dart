@@ -130,13 +130,13 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         // blend it into the page background across the lower
                         // half of the hero. Avoid a visible horizontal band.
                         colors: [
-                          Colors.black.withValues(alpha: 0.12),
-                          Colors.black.withValues(alpha: 0.22),
-                          AppColors.bg.withValues(alpha: 0.34),
-                          AppColors.bg.withValues(alpha: 0.72),
+                          Colors.black.withValues(alpha: 0.20),
+                          Colors.black.withValues(alpha: 0.30),
+                          AppColors.bg.withValues(alpha: 0.48),
+                          AppColors.bg.withValues(alpha: 0.82),
                           AppColors.bg,
                         ],
-                        stops: [0.0, 0.30, 0.58, 0.86, 1.0],
+                        stops: [0.0, 0.26, 0.54, 0.84, 1.0],
                       ),
                     ),
                   ),
@@ -439,7 +439,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                         ? metaLine.split('  ·  ')[i].substring(2)
                         : metaLine.split('  ·  ')[i],
                     style: AppText.body.copyWith(
-                      fontSize: 13.5,
+                      fontSize: 14.5,
                       color: i == 0 ? AppColors.accent
                           : (metaLine.split('  ·  ')[i].startsWith('★')
                               ? const Color(0xFF24C66A)
@@ -477,7 +477,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                       if (dateLine?.isNotEmpty == true) dateLine!,
                     ][i],
                     style: AppText.body.copyWith(
-                      fontSize: 12.5,
+                      fontSize: 13.5,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -491,10 +491,10 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           if (broadcastLabel?.isNotEmpty == true) ...[
             const SizedBox(height: 6),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(Icons.access_time_rounded, size: 15, color: AppColors.accent),
+              Icon(Icons.access_time_rounded, size: 16, color: AppColors.accent),
               const SizedBox(width: 5),
               Flexible(child: Text(broadcastLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: AppText.body.copyWith(fontSize: 12.5, color: AppColors.accent))),
+                style: AppText.body.copyWith(fontSize: 13.5, color: AppColors.accent))),
             ]),
           ],
           if ((format?.isNotEmpty ?? false) || (status?.isNotEmpty ?? false)) ...[
@@ -546,7 +546,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
       child: Text(
         label,
         style: AppText.caption.copyWith(
-          fontSize: 12.5,
+          fontSize: 13.5,
           color: foreground,
           fontWeight: FontWeight.w700,
         ),
@@ -600,10 +600,10 @@ class AnimeDetailActionButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 17, color: foreground),
+                Icon(icon, size: 18, color: foreground),
                 const SizedBox(width: 6),
                 Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: AppText.button.copyWith(fontSize: 13, color: foreground))),
+                  style: AppText.button.copyWith(fontSize: 14.5, color: foreground))),
               ],
             ),
           ),
@@ -656,7 +656,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 19)),
+          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 20)),
           const SizedBox(height: 9),
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
@@ -664,7 +664,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
             alignment: Alignment.topCenter,
             child: _expanded
                 ? AniListMarkdown(data: data, textStyle: AppText.body.copyWith(
-                    fontSize: 15, height: 1.48, color: AppColors.textSecondary))
+                    fontSize: 16, height: 1.48, color: AppColors.textSecondary))
                 : Text(data, maxLines: 3, overflow: TextOverflow.ellipsis,
                     style: AppText.body.copyWith(fontSize: 15, height: 1.48, color: AppColors.textSecondary)),
           ),
@@ -676,7 +676,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
               padding: const EdgeInsets.symmetric(vertical: 3),
               child: Text(
                 widget.onMore != null ? 'Selengkapnya' : (_expanded ? 'Lebih sedikit' : 'Selengkapnya'),
-                style: AppText.caption.copyWith(fontSize: 13, color: AppColors.accent, fontWeight: FontWeight.w700),
+                style: AppText.caption.copyWith(fontSize: 14, color: AppColors.accent, fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -713,7 +713,7 @@ class AnimeDetailGenreChips extends StatelessWidget {
                     border: Border.all(color: AppColors.accent.withValues(alpha: 0.72)),
                     borderRadius: BorderRadius.circular(7),
                   ),
-                  child: Text(genre, style: AppText.caption.copyWith(fontSize: 12, color: AppColors.accent)),
+                  child: Text(genre, style: AppText.caption.copyWith(fontSize: 13.5, color: AppColors.accent)),
                 ),
               ),
             ),
@@ -756,7 +756,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: AppText.caption.copyWith(
-          fontSize: 13,
+          fontSize: 13.5,
           height: 1.1,
           color: Colors.white,
           fontWeight: FontWeight.w600,
@@ -820,7 +820,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
                     Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: 2),
                     Text('Selengkapnya', style: AppText.caption.copyWith(
-                      fontSize: 15, color: AppColors.textSecondary, fontWeight: FontWeight.w700,
+                      fontSize: 15.5, color: AppColors.textSecondary, fontWeight: FontWeight.w700,
                     )),
                   ],
                 ),
@@ -891,7 +891,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
             child: Row(children: [
               Text('Karakter', style: AppText.headline.copyWith(fontSize: 18)),
               const SizedBox(width: 7),
-              Text(cast.length.toString(), style: AppText.caption.copyWith(fontSize: 12.5, color: AppColors.textSecondary)),
+              Text(cast.length.toString(), style: AppText.caption.copyWith(fontSize: 13.5, color: AppColors.textSecondary)),
               const Spacer(),
               Icon(_expanded ? Icons.keyboard_arrow_up_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary),
             ]),
@@ -901,7 +901,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
           Padding(padding: const EdgeInsets.only(top: 9, right: 16), child: Text(widget.loading ? 'Memuat karakter...' : 'Informasi karakter belum tersedia.', style: AppText.caption.copyWith(color: AppColors.textSecondary))),
         if (_expanded && cast.isNotEmpty) ...[
           const SizedBox(height: 11),
-          SizedBox(height: 128, child: ListView.separated(
+          SizedBox(height: 134, child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(right: 16),
             itemCount: cast.length,
@@ -923,11 +923,11 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
                   const SizedBox(height: 6),
                   Text(member.name, maxLines: 2, textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
-                    style: AppText.caption.copyWith(fontSize: 12.5, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                    style: AppText.caption.copyWith(fontSize: 13.5, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                   if (member.role?.isNotEmpty == true)
                     Text(_indonesianCharacterRole(member.role!), maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppText.caption.copyWith(fontSize: 10.5, color: AppColors.accent)),
+                      style: AppText.caption.copyWith(fontSize: 11.5, color: AppColors.accent)),
                 ]),
               ));
             },
