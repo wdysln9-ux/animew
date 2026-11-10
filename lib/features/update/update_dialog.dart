@@ -15,7 +15,18 @@ Future<void> maybeShowUpdateDialog(
   bool manual = false,
 }) async {
   final service = UpdateService();
-  final info = await service.checkForUpdate(respectSkip: !manual);
+  UpdateInfo? info;
+  try {
+    info = await service.checkForUpdate(respectSkip: !manual);
+  } on UpdateCheckException catch (e) {
+    if (!context.mounted) return;
+    if (manual) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    }
+    return;
+  }
   if (!context.mounted) return;
   if (info == null) {
     if (manual) {
