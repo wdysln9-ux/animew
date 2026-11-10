@@ -2439,6 +2439,7 @@ class _DetailViewState extends State<_DetailView> {
                   ? state.cast
                   : [for (final name in detail.cast) CastMember(name: name)],
               loading: state.extrasLoading,
+              onRetry: () => context.read<DetailCubit>().retryExtras(),
               onOpenPerson: (ref) => Navigator.of(
                 context,
               ).push(PersonPage.route(ref, sourceId: widget.item.sourceId)),
