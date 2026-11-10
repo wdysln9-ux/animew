@@ -2266,8 +2266,7 @@ class _DetailViewState extends State<_DetailView> {
             child: AnimeDetailTitleBlock(
               title: detail.title,
               englishTitle: detail.englishTitle,
-              alternateTitle: detail.synonyms.isNotEmpty ? detail.synonyms.first : null,
-              metaLine: metaLine,
+                            metaLine: metaLine,
               format: formatStr,
               status: statusStr,
               ageRating: detail.ageRating,
