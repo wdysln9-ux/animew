@@ -126,13 +126,13 @@ class _DescriptionState extends State<_Description> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: () => setState(() => _expanded = !_expanded),
+          onTap: _toggleExpanded,
           behavior: HitTestBehavior.opaque,
           child: _SynopsisTranslation(text: widget.text, expanded: _expanded),
         ),
         const SizedBox(height: 6),
         GestureDetector(
-          onTap: () => setState(() => _expanded = !_expanded),
+          onTap: _toggleExpanded,
           behavior: HitTestBehavior.opaque,
           child: Text(
             _expanded ? 'Lebih sedikit' : context.l10n.readMore,
