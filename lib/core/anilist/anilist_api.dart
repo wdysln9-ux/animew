@@ -302,9 +302,21 @@ query($page:Int,$perPage:Int) {
       {'page': page, 'perPage': 50},
       auth: true,
     );
-    final rows = (d?['Page'] as Map?)?['notifications'];
-    if (rows is! List) return const [];
-    return rows.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    if (d == null) {
+      throw StateError('AniList gagal mengembalikan data notifikasi.');
+    }
+    final pageData = d['Page'];
+    if (pageData is! Map) {
+      throw StateError('Respons halaman notifikasi AniList tidak valid.');
+    }
+    final rows = pageData['notifications'];
+    if (rows is! List) {
+      throw StateError('Daftar notifikasi AniList tidak tersedia.');
+    }
+    return rows
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
   Future<AniListViewer?> viewer() async {
