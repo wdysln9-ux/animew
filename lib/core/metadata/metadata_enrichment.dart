@@ -286,11 +286,13 @@ class MetadataEnrichment {
   /// use TMDB. Provider-specific relation overrides are applied separately
   /// where those providers expose the required data.
   Future<({List<CastMember> cast, List<MediaRelation> relations})> fetch(
-    MediaDetail d,
-  ) async {
+    MediaDetail d, {
+    void Function(List<CastMember>? cast, List<MediaRelation>? relations)?
+        onAnimeExtras,
+  }) async {
     // Both in flight at once: the overlay is a second network round trip and
     // there is no reason to pay for it in series.
-    final baseCall = _base(d);
+    final baseCall = _base(d, onAnimeExtras: onAnimeExtras);
     final ownCall = _providerRelations(d);
     final base = await baseCall;
     final own = await ownCall;
@@ -299,8 +301,10 @@ class MetadataEnrichment {
   }
 
   Future<({List<CastMember> cast, List<MediaRelation> relations})> _base(
-    MediaDetail d,
-  ) async {
+    MediaDetail d, {
+    void Function(List<CastMember>? cast, List<MediaRelation>? relations)?
+        onAnimeExtras,
+  }) async {
     try {
       // Reading kinds are decided FIRST, before any id branch. A manga's MAL
       // id is a MANGA id, and the anime lookup below reads a separate catalogue.
@@ -308,7 +312,7 @@ class MetadataEnrichment {
       if (d.type == ProviderType.anime) {
         final id = d.malId ?? await resolveMalId(d);
         if (id == null) return (cast: <CastMember>[], relations: <MediaRelation>[]);
-        return await _jikanAnimeExtras(id);
+        return await _jikanAnimeExtras(id, onUpdate: onAnimeExtras);
       }
       if (d.type == ProviderType.manga || d.type == ProviderType.novel) {
         if (d.malId != null) {
@@ -359,81 +363,124 @@ class MetadataEnrichment {
     }
   }
 
-  Future<({List<CastMember> cast, List<MediaRelation> relations})> _jikanAnimeExtras(int id) async {
+  Future<({List<CastMember> cast, List<MediaRelation> relations})>
+      _jikanAnimeExtras(
+    int id, {
+    void Function(List<CastMember>? cast, List<MediaRelation>? relations)?
+        onUpdate,
+  }) async {
     const base = 'https://api.jikan.moe/v4/anime';
     final cast = <CastMember>[];
     final relations = <MediaRelation>[];
 
-    // Treat every Jikan endpoint independently. A missing recommendations
-    // response must never erase valid character data or franchise relations.
-    // JikanApi still serializes requests and applies its shared rate limit.
-    Future<dynamic> safe(String url) async {
+    // Each endpoint parses and publishes its own result as soon as it arrives.
+    // The slow recommendations endpoint can no longer hold back characters.
+    Future<void> loadCharacters() async {
       try {
-        return await _get(url);
-      } catch (_) {
-        return null;
-      }
-    }
-    final answers = await Future.wait([
-      safe('$base/$id/characters'),
-      safe('$base/$id/relations'),
-      safe('$base/$id/recommendations'),
-    ]);
-    final characters = answers[0];
-    final related = answers[1];
-    if (related != null) _jikanRelationsCache[id] = related;
-    final recs = answers[2];
-    final rows = characters?['data'];
-    if (rows is List) {
-      for (final row in rows.take(40)) {
-        if (row is! Map) continue;
-        final character = row['character'];
-        if (character is! Map) continue;
-        final name = character['name']?.toString().trim();
-        if (name == null || name.isEmpty) continue;
-        final images = character['images'];
-        final jpg = images is Map ? images['jpg'] : null;
-        final photo = jpg is Map ? (jpg['image_url'] ?? jpg['large_image_url'])?.toString() : null;
-        final role = row['role']?.toString().trim();
-        cast.add(CastMember(name: name, role: role?.isNotEmpty == true ? role : null,
-          photo: photo?.isNotEmpty == true ? photo : null));
-
-      }
-    }
-
-    final relationRows = related?['data'];
-    if (relationRows is List) {
-      for (final row in relationRows) {
-        if (row is! Map) continue;
-        final label = _indonesianMalRelation(row['relation']?.toString());
-        final entries = row['entry'];
-        if (entries is! List) continue;
-        for (final entry in entries) {
-          if (entry is! Map || entry['type']?.toString() != 'anime') continue;
-          final title = entry['name']?.toString().trim();
-          final malId = (entry['mal_id'] as num?)?.toInt();
-          if (title == null || title.isEmpty || malId == null) continue;
-          relations.add(MediaRelation(title: title, relation: label, malId: malId));
+        final response = await _get('$base/$id/characters');
+        final rows = response?['data'];
+        if (rows is List) {
+          for (final row in rows.take(40)) {
+            if (row is! Map) continue;
+            final character = row['character'];
+            if (character is! Map) continue;
+            final name = character['name']?.toString().trim();
+            if (name == null || name.isEmpty) continue;
+            final images = character['images'];
+            final jpg = images is Map ? images['jpg'] : null;
+            final photo = jpg is Map
+                ? (jpg['image_url'] ?? jpg['large_image_url'])?.toString()
+                : null;
+            final role = row['role']?.toString().trim();
+            cast.add(CastMember(
+              name: name,
+              role: role?.isNotEmpty == true ? role : null,
+              photo: photo?.isNotEmpty == true ? photo : null,
+            ));
+          }
         }
+        onUpdate?.call(List.unmodifiable(cast), null);
+      } catch (_) {
+        onUpdate?.call(const [], null);
       }
     }
 
-    final recRows = recs?['data'];
-    if (recRows is List) {
-      for (final row in recRows.take(20)) {
-        if (row is! Map) continue;
-        final entry = row['entry'];
-        if (entry is! Map) continue;
-        final title = entry['title']?.toString().trim();
-        final malId = (entry['mal_id'] as num?)?.toInt();
-        if (title == null || title.isEmpty || malId == null) continue;
-        final images = entry['images'];
-        final jpg = images is Map ? images['jpg'] : null;
-        final cover = jpg is Map ? (jpg['large_image_url'] ?? jpg['image_url'])?.toString() : null;
-        relations.add(MediaRelation(title: title, cover: cover, relation: 'Recommended', malId: malId));
+    Future<void> loadRelations() async {
+      try {
+        final response = await _get('$base/$id/relations');
+        if (response != null) _jikanRelationsCache[id] = response;
+        final rows = response?['data'];
+        if (rows is List) {
+          for (final row in rows) {
+            if (row is! Map) continue;
+            final label = _indonesianMalRelation(
+              row['relation']?.toString(),
+            );
+            final entries = row['entry'];
+            if (entries is! List) continue;
+            for (final entry in entries) {
+              if (entry is! Map ||
+                  entry['type']?.toString() != 'anime') {
+                continue;
+              }
+              final title = entry['name']?.toString().trim();
+              final malId = (entry['mal_id'] as num?)?.toInt();
+              if (title == null || title.isEmpty || malId == null) continue;
+              relations.add(MediaRelation(
+                title: title,
+                relation: label,
+                malId: malId,
+              ));
+            }
+          }
+        }
+        onUpdate?.call(null, List.unmodifiable(relations));
+      } catch (_) {
+        onUpdate?.call(null, const []);
       }
     }
-    return (cast: cast, relations: relations);
+
+    Future<void> loadRecommendations() async {
+      try {
+        final response = await _get('$base/$id/recommendations');
+        final rows = response?['data'];
+        if (rows is List) {
+          for (final row in rows.take(20)) {
+            if (row is! Map) continue;
+            final entry = row['entry'];
+            if (entry is! Map) continue;
+            final title = entry['title']?.toString().trim();
+            final malId = (entry['mal_id'] as num?)?.toInt();
+            if (title == null || title.isEmpty || malId == null) continue;
+            final images = entry['images'];
+            final jpg = images is Map ? images['jpg'] : null;
+            final cover = jpg is Map
+                ? (jpg['large_image_url'] ?? jpg['image_url'])?.toString()
+                : null;
+            relations.add(MediaRelation(
+              title: title,
+              cover: cover,
+              relation: 'Recommended',
+              malId: malId,
+            ));
+          }
+        }
+        onUpdate?.call(null, List.unmodifiable(relations));
+      } catch (_) {
+        // Keep any relations already delivered by the other endpoint.
+        onUpdate?.call(null, List.unmodifiable(relations));
+      }
+    }
+
+    await Future.wait([
+      loadCharacters(),
+      loadRelations(),
+      loadRecommendations(),
+    ]);
+    return (
+      cast: List.unmodifiable(cast),
+      relations: List.unmodifiable(relations),
+    );
   }
 
   static String? _indonesianMalRelation(String? value) {
