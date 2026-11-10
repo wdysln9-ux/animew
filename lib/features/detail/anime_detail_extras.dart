@@ -45,7 +45,7 @@ class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
                 )),
                 const Spacer(),
                 Icon(
-                  _expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                  _expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded,
                   color: AppColors.textSecondary,
                   size: 21,
                 ),
