@@ -74,6 +74,16 @@ class MediaDetail extends Equatable {
   /// (AniList/MAL/Simkl) — the scrobble target and the list-import match key.
   final int? malId;
 
+  /// AniList's numeric media id, distinct from the optional MAL cross-reference.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final int? anilistId;
+
+  /// AniList's single canonical trailer, when available.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? trailerUrl;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? trailerThumbnail;
+
   /// TMDB id (movies/series), when the source exposes it. Drives Simkl tracking
   /// for non-anime content; [tmdbIsTv] selects TMDB's movie vs tv namespace.
   final int? tmdbId;
@@ -176,6 +186,9 @@ class MediaDetail extends Equatable {
     this.subCount,
     this.dubCount,
     this.malId,
+    this.anilistId,
+    this.trailerUrl,
+    this.trailerThumbnail,
     this.tmdbId,
     this.tmdbIsTv = false,
     this.imdbId,
@@ -227,6 +240,9 @@ class MediaDetail extends Equatable {
     int? subCount,
     int? dubCount,
     int? malId,
+    int? anilistId,
+    String? trailerUrl,
+    String? trailerThumbnail,
     int? tmdbId,
     bool? tmdbIsTv,
     String? imdbId,
@@ -272,6 +288,9 @@ class MediaDetail extends Equatable {
     subCount: subCount ?? this.subCount,
     dubCount: dubCount ?? this.dubCount,
     malId: malId ?? this.malId,
+    anilistId: anilistId ?? this.anilistId,
+    trailerUrl: trailerUrl ?? this.trailerUrl,
+    trailerThumbnail: trailerThumbnail ?? this.trailerThumbnail,
     tmdbId: tmdbId ?? this.tmdbId,
     tmdbIsTv: tmdbIsTv ?? this.tmdbIsTv,
     imdbId: imdbId ?? this.imdbId,
@@ -320,6 +339,9 @@ class MediaDetail extends Equatable {
     subCount,
     dubCount,
     malId,
+    anilistId,
+    trailerUrl,
+    trailerThumbnail,
     tmdbId,
     tmdbIsTv,
     imdbId,
