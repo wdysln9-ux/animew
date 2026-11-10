@@ -439,7 +439,7 @@ class _DetailView extends StatefulWidget {
 }
 
 class _DetailViewState extends State<_DetailView> {
-  static const double _expandedHeight = 360;
+  static const double _expandedHeight = 404;
 
   // The episode url we've already kicked a background source-prefetch for, so we
   // don't re-fire it on every rebuild (see _maybePrefetch).
@@ -2327,7 +2327,7 @@ class _DetailViewState extends State<_DetailView> {
                     loading: state.episodesLoading,
                     label: isReading ? downloadLabel : (_inMyList ? 'Tersimpan' : 'Simpan'),
                     active: !isReading && _inMyList,
-                    icon: isReading ? Icons.file_download_outlined : Icons.bookmark_border_rounded,
+                    icon: isReading ? Icons.file_download_outlined : (_inMyList ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
                     onPressed: isReading
                         ? (eps.isEmpty
                             ? null
@@ -2345,8 +2345,8 @@ class _DetailViewState extends State<_DetailView> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: AppColors.surface2,
-                    border: Border.all(color: Colors.white24),
+                    color: AppColors.bg,
+                    border: Border.all(color: AppColors.textTertiary.withValues(alpha: 0.48)),
                     borderRadius: BorderRadius.circular(28),
                   ),
                   child: PopupMenuButton<String>(
