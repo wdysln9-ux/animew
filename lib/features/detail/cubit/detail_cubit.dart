@@ -361,6 +361,15 @@ class DetailCubit extends Cubit<DetailState> {
     }
   }
 
+  /// Retry MAL/AniList supplementary data without reloading the anime page.
+  /// This is intentionally independent from episode and synopsis loading.
+  Future<void> retryExtras() async {
+    final current = state.detail;
+    if (current == null || isClosed || state.extrasLoading) return;
+    _log('manual extras retry title="' + current.title + '" malId=' + current.malId.toString());
+    await _enrich(current, force: true);
+  }
+
   /// Re-fetch. Drops the source's HTTP cache first so the re-fetch is genuinely
   /// fresh (new chapters show now instead of after the 10-min cache expires),
   /// then reloads detail+chapters for the current category. Keeps the current
