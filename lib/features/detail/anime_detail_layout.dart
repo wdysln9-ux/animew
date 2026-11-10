@@ -409,33 +409,12 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     final translated = english;
     return Stack(
       children: [
-        if (backdropUrl?.isNotEmpty == true)
-          Positioned.fill(
-            child: CachedNetworkImage(
-              imageUrl: backdropUrl!,
-              fit: BoxFit.cover,
-              alignment: Alignment.bottomCenter,
-              color: Colors.black.withValues(alpha: 0.12),
-              colorBlendMode: BlendMode.darken,
-              errorWidget: (_, _, _) => const SizedBox.shrink(),
-            ),
-          ),
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.bg.withValues(alpha: 0.55),
-                  AppColors.bg.withValues(alpha: 0.74),
-                  AppColors.bg.withValues(alpha: 0.93),
-                  AppColors.bg,
-                ],
-                stops: const [0.0, 0.38, 0.72, 1.0],
-              ),
-            ),
-          ),
+        // The hero owns the artwork and its fade. Do not paint a second,
+        // independently-positioned copy of the backdrop here: during
+        // overscroll the two copies can shift differently and create a
+        // bright horizontal seam at the hero/title boundary.
+        const Positioned.fill(
+          child: ColoredBox(color: AppColors.bg),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
