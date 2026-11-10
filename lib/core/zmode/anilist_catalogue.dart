@@ -77,8 +77,8 @@ class AniListCatalogue implements AnimeCatalogue {
       'tags{name rank isMediaSpoiler} '
       'trailer{id site thumbnail} '
       'characters(sort:ROLE,perPage:25){edges{role node{name{full} image{large}}}} '
-      'relations{edges{relationType node{id idMal type title{romaji english} coverImage{large}}}} '
-      'recommendations(sort:RATING_DESC,perPage:10){nodes{mediaRecommendation{id idMal type title{romaji english} coverImage{large}}}}';
+      'relations{edges{relationType node{id idMal type title{romaji english} coverImage{large} averageScore popularity format status episodes seasonYear genres}}} '
+      'recommendations(sort:RATING_DESC,perPage:10){nodes{mediaRecommendation{id idMal type title{romaji english} coverImage{large} averageScore popularity format status episodes seasonYear genres}}}';
 
   /// Exactly what [_item] reads, and nothing else. Home asks for 7 rows of 30
   /// in one request, so every field here is paid for 210 times: carrying the
@@ -446,6 +446,13 @@ class AniListCatalogue implements AnimeCatalogue {
         romaji: romaji,
         cover: (raw['coverImage'] as Map?)?['large'] as String?,
         relation: relationLabel,
+        score: raw['averageScore'] as int?,
+        popularity: raw['popularity'] as int?,
+        format: _prettyFormat(raw['format'] as String?),
+        status: switch (raw['status']) { 'RELEASING' => 'Tayang', 'FINISHED' => 'Selesai', 'NOT_YET_RELEASED' => 'Segera', _ => null },
+        episodes: raw['episodes'] as int?,
+        year: raw['seasonYear'] as int?,
+        genres: [for (final g in (raw['genres'] as List? ?? const [])) '$g'],
         malId: raw['idMal'] as int?,
         anilistId: id,
         isReading: isReading,
