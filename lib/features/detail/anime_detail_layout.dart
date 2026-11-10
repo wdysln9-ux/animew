@@ -92,8 +92,8 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   ) {
     final poster = posterUrl?.isNotEmpty == true ? posterUrl! : coverUrl;
     final topInset = MediaQuery.paddingOf(context).top;
-    final posterWidth = (MediaQuery.sizeOf(context).width * 0.62)
-        .clamp(216.0, 232.0)
+    final posterWidth = (MediaQuery.sizeOf(context).width * 0.56)
+        .clamp(196.0, 210.0)
         .toDouble();
     final posterHeight = posterWidth * 1.5;
 
@@ -396,24 +396,24 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     final subtitle = englishTitle?.trim();
     final alternate = alternateTitle?.trim();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(title, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.largeTitle.copyWith(fontSize: 25, height: 1.14)),
+            style: AppText.largeTitle.copyWith(fontSize: 22, height: 1.14)),
           if (subtitle != null && subtitle.isNotEmpty && subtitle != title) ...[
             const SizedBox(height: 4),
             Text(subtitle, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 16, color: AppColors.textSecondary)),
+              style: AppText.body.copyWith(fontSize: 14, color: AppColors.textSecondary)),
           ],
           if (alternate != null && alternate.isNotEmpty && alternate != title && alternate != subtitle) ...[
             const SizedBox(height: 2),
             Text(alternate, textAlign: TextAlign.center, maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 15, color: AppColors.textSecondary)),
+              style: AppText.body.copyWith(fontSize: 12, color: AppColors.textSecondary)),
           ],
           if (metaLine.isNotEmpty) ...[
             const SizedBox(height: 7),
@@ -446,7 +446,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                         ? metaLine.split('  ·  ')[i].substring(2)
                         : metaLine.split('  ·  ')[i],
                     style: AppText.body.copyWith(
-                      fontSize: 14.5,
+                      fontSize: 12.5,
                       color: i == 0 ? AppColors.accent
                           : (metaLine.split('  ·  ')[i].startsWith('★')
                               ? const Color(0xFF24C66A)
@@ -484,7 +484,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                       if (dateLine?.isNotEmpty == true) dateLine!,
                     ][i],
                     style: AppText.body.copyWith(
-                      fontSize: 13.5,
+                      fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -501,7 +501,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               Icon(Icons.access_time_rounded, size: 16, color: AppColors.accent),
               const SizedBox(width: 5),
               Flexible(child: Text(broadcastLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: AppText.body.copyWith(fontSize: 13.5, color: AppColors.accent))),
+                style: AppText.body.copyWith(fontSize: 12, color: AppColors.accent))),
             ]),
           ],
           if ((format?.isNotEmpty ?? false) || (status?.isNotEmpty ?? false)) ...[
@@ -553,7 +553,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
       child: Text(
         label,
         style: AppText.caption.copyWith(
-          fontSize: 13.5,
+          fontSize: 12,
           color: foreground,
           fontWeight: FontWeight.w700,
         ),
@@ -594,8 +594,8 @@ class AnimeDetailActionButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: BorderRadius.circular(23),
           child: Container(
-            height: 44,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(23),
               border: Border.all(
@@ -610,7 +610,7 @@ class AnimeDetailActionButton extends StatelessWidget {
                 Icon(icon, size: 18, color: foreground),
                 const SizedBox(width: 6),
                 Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: AppText.button.copyWith(fontSize: 14.5, color: foreground))),
+                  style: AppText.button.copyWith(fontSize: 13, color: foreground))),
               ],
             ),
           ),
@@ -659,11 +659,11 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
   Widget build(BuildContext context) {
     final data = _translated ?? widget.text;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 20)),
+          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 16)),
           const SizedBox(height: 9),
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
@@ -671,7 +671,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
             alignment: Alignment.topCenter,
             child: _expanded
                 ? AniListMarkdown(data: data, textStyle: AppText.body.copyWith(
-                    fontSize: 16, height: 1.48, color: AppColors.textSecondary))
+                    fontSize: 14, height: 1.45, color: AppColors.textSecondary))
                 : Text(data, maxLines: 3, overflow: TextOverflow.ellipsis,
                     style: AppText.body.copyWith(fontSize: 16, height: 1.48, color: AppColors.textSecondary)),
           ),
@@ -683,7 +683,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
               padding: const EdgeInsets.symmetric(vertical: 3),
               child: Text(
                 widget.onMore != null ? 'Selengkapnya' : (_expanded ? 'Lebih sedikit' : 'Selengkapnya'),
-                style: AppText.caption.copyWith(fontSize: 14, color: AppColors.accent, fontWeight: FontWeight.w700),
+                style: AppText.caption.copyWith(fontSize: 12.5, color: AppColors.accent, fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -715,7 +715,7 @@ class AnimeDetailGenreChips extends StatelessWidget {
                 borderRadius: BorderRadius.circular(7),
                 onTap: () => onTap(genre),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     border: Border.all(color: AppColors.accent.withValues(alpha: 0.72)),
                     borderRadius: BorderRadius.circular(7),
@@ -828,7 +828,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
                     Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: 2),
                     Text('Selengkapnya', style: AppText.caption.copyWith(
-                      fontSize: 15.5, color: AppColors.textSecondary, fontWeight: FontWeight.w700,
+                      fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w700,
                     )),
                   ],
                 ),
@@ -858,7 +858,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
               child: Padding(
                 padding: const EdgeInsets.only(top: 6, bottom: 1),
                 child: Text('Lebih sedikit', style: AppText.caption.copyWith(
-                  fontSize: 15, color: AppColors.textSecondary, fontWeight: FontWeight.w600,
+                  fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600,
                 )),
               ),
             ),
@@ -883,7 +883,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
   Widget build(BuildContext context) {
     final cast = widget.cast;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 22, 0, 0),
+      padding: const EdgeInsets.fromLTRB(16, 18, 0, 0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -917,18 +917,18 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
           ),
         if (_expanded && cast.isNotEmpty) ...[
           const SizedBox(height: 11),
-          SizedBox(height: 134, child: ListView.separated(
+          SizedBox(height: 122, child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(right: 16),
             itemCount: cast.length,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final member = cast[index];
-              return SizedBox(width: 82, child: GestureDetector(
+              return SizedBox(width: 74, child: GestureDetector(
                 onTap: member.person == null || widget.onOpenPerson == null
                     ? null : () => widget.onOpenPerson!(member.person!),
                 child: Column(children: [
-                  ClipOval(child: SizedBox(width: 68, height: 68,
+                  ClipOval(child: SizedBox(width: 58, height: 58,
                     child: member.photo?.isNotEmpty == true
                         ? CachedNetworkImage(imageUrl: member.photo!, fit: BoxFit.cover,
                             placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
@@ -939,11 +939,11 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
                   const SizedBox(height: 6),
                   Text(member.name, maxLines: 2, textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
-                    style: AppText.caption.copyWith(fontSize: 13.5, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                    style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                   if (member.role?.isNotEmpty == true)
                     Text(_indonesianCharacterRole(member.role!), maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppText.caption.copyWith(fontSize: 11.5, color: AppColors.accent)),
+                      style: AppText.caption.copyWith(fontSize: 10.5, color: AppColors.accent)),
                 ]),
               ));
             },
@@ -1005,12 +1005,12 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 34,
+            height: 30,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.only(right: 16),
               itemCount: tabs.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 16),
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
                 final selected = index == _selected;
                 return GestureDetector(
@@ -1030,7 +1030,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
               },
             ),
           ),
-          const SizedBox(height: 11),
+          const SizedBox(height: 8),
           SizedBox(
             height: height,
             child: Builder(
