@@ -285,15 +285,21 @@ query($page:Int,$perPage:Int) {
       ... on MediaDeletionNotification {
         id type createdAt context media { id siteUrl title { romaji english } coverImage { large } }
       }
-      ... on MediaSubmissionUpdateNotification { id type createdAt context }
-      ... on StaffSubmissionUpdateNotification { id type createdAt context }
-      ... on CharacterSubmissionUpdateNotification { id type createdAt context }
+      ... on MediaSubmissionUpdateNotification {
+        id type createdAt contexts status notes
+      }
+      ... on StaffSubmissionUpdateNotification {
+        id type createdAt contexts status notes
+      }
+      ... on CharacterSubmissionUpdateNotification {
+        id type createdAt contexts status notes
+      }
     }
   }
 }''';
     final d = await _gql(
       query,
-      {'page': page, 'perPage': 30},
+      {'page': page, 'perPage': 50},
       auth: true,
     );
     final rows = (d?['Page'] as Map?)?['notifications'];
