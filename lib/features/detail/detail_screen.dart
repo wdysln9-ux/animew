@@ -439,7 +439,7 @@ class _DetailView extends StatefulWidget {
 }
 
 class _DetailViewState extends State<_DetailView> {
-  static const double _expandedHeight = 381;
+  static const double _expandedHeight = 360;
 
   // The episode url we've already kicked a background source-prefetch for, so we
   // don't re-fire it on every rebuild (see _maybePrefetch).
@@ -2307,7 +2307,7 @@ class _DetailViewState extends State<_DetailView> {
         // shared wrapper would double that indent.
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: Row(
               children: [
                 Expanded(
