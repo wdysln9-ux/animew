@@ -2240,7 +2240,6 @@ class _DetailViewState extends State<_DetailView> {
               title: detail.title,
               englishTitle: detail.englishTitle,
               romajiTitle: detail.romajiTitle,
-              backdropUrl: heroPosterUrl,
               metaLine: metaLine,
               format: formatStr,
               status: statusStr,
