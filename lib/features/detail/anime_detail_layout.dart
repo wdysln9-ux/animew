@@ -663,7 +663,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 16)),
+          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 15)),
           const SizedBox(height: 9),
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
@@ -720,7 +720,7 @@ class AnimeDetailGenreChips extends StatelessWidget {
                     border: Border.all(color: AppColors.accent.withValues(alpha: 0.72)),
                     borderRadius: BorderRadius.circular(7),
                   ),
-                  child: Text(genre, style: AppText.caption.copyWith(fontSize: 13.5, color: AppColors.accent)),
+                  child: Text(genre, style: AppText.caption.copyWith(fontSize: 12, color: AppColors.accent)),
                 ),
               ),
             ),
@@ -765,7 +765,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: AppText.caption.copyWith(
-          fontSize: 13.5,
+          fontSize: 12,
           height: 1.1,
           color: Colors.white,
           fontWeight: FontWeight.w600,
@@ -806,7 +806,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
                       child: Text(
                         genre,
                         style: AppText.caption.copyWith(
-                          fontSize: 13.5,
+                          fontSize: 12,
                           color: genreColor,
                           fontWeight: FontWeight.w600,
                         ),
@@ -883,7 +883,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
   Widget build(BuildContext context) {
     final cast = widget.cast;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 0, 0),
+      padding: const EdgeInsets.fromLTRB(16, 14, 0, 0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -891,9 +891,9 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
           child: Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Row(children: [
-              Text('Karakter', style: AppText.headline.copyWith(fontSize: 18)),
+              Text('Karakter', style: AppText.headline.copyWith(fontSize: 16)),
               const SizedBox(width: 7),
-              Text(cast.length.toString(), style: AppText.caption.copyWith(fontSize: 13.5, color: AppColors.textSecondary)),
+              Text(cast.length.toString(), style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textSecondary)),
               const Spacer(),
               Icon(_expanded ? Icons.keyboard_arrow_up_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary),
             ]),
