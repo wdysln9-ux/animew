@@ -111,11 +111,13 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               // The artwork is laid out at its original hero dimensions and
               // clipped by the collapsing sliver. Its scale/crop never changes
               // while scrolling, so it cannot look like a camera zoom.
+              // Subtle parallax: the backdrop drifts more slowly than
+              // the foreground as the hero scrolls away.
               Positioned(
-                top: 0,
+                top: shrinkOffset * 0.22,
                 left: 0,
                 right: 0,
-                bottom: -50,
+                bottom: -150,
                 child: _image(coverUrl, alignment: Alignment.topCenter),
               ),
               Positioned.fill(
@@ -130,13 +132,13 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         // blend it into the page background across the lower
                         // half of the hero. Avoid a visible horizontal band.
                         colors: [
-                          Colors.black.withValues(alpha: 0.24),
-                          Colors.black.withValues(alpha: 0.34),
-                          AppColors.bg.withValues(alpha: 0.58),
-                          AppColors.bg.withValues(alpha: 0.88),
-                          AppColors.bg,
+                          Colors.black.withValues(alpha: 0.18),
+                          Colors.black.withValues(alpha: 0.28),
+                          AppColors.bg.withValues(alpha: 0.22),
+                          AppColors.bg.withValues(alpha: 0.40),
+                          AppColors.bg.withValues(alpha: 0.55),
                         ],
-                        stops: [0.0, 0.26, 0.54, 0.84, 1.0],
+                        stops: [0.0, 0.24, 0.50, 0.76, 1.0],
                       ),
                     ),
                   ),
@@ -395,9 +397,24 @@ class AnimeDetailTitleBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final subtitle = englishTitle?.trim();
     final alternate = alternateTitle?.trim();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Column(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        // Continue the hero fade behind the information instead of ending
+        // it at a hard boundary between the poster and the title section.
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.bg.withValues(alpha: 0.55),
+            AppColors.bg.withValues(alpha: 0.78),
+            AppColors.bg,
+          ],
+          stops: const [0.0, 0.48, 1.0],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(title, textAlign: TextAlign.center, maxLines: 2,
@@ -517,6 +534,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
             ),
           ],
         ],
+        ),
       ),
     );
   }
