@@ -52,7 +52,84 @@ class AnimeExtrasRepository {
   ));
 
   final Map<int, Future<AnimeExtras>> _cache = {};
+  final Map<int, Future<AnimeExtras>> _videoCache = {};
+  final Map<int, Future<AnimeExtras>> _themeCache = {};
   final Map<String, Future<int?>> _idLookupCache = {};
+
+  /// Fetch trailer/PV independently from themes. The detail page uses
+  /// these split calls so a slow endpoint never blocks the other section.
+  Future<AnimeExtras> loadVideos({
+    int? malId,
+    required String title,
+    String? englishTitle,
+    bool forceRefresh = false,
+  }) async {
+    final id = await _resolveId(malId, title, englishTitle);
+    if (id == null) throw StateError('ID MAL belum ditemukan.');
+    if (forceRefresh) _videoCache.remove(id);
+    final existing = _videoCache[id];
+    if (existing != null) return existing;
+    final request = _fetchVideos(id);
+    _videoCache[id] = request;
+    try {
+      return await request;
+    } catch (_) {
+      _videoCache.remove(id);
+      rethrow;
+    }
+  }
+
+  /// Fetch opening/ending themes independently from trailer/PV.
+  Future<AnimeExtras> loadThemes({
+    int? malId,
+    required String title,
+    String? englishTitle,
+    bool forceRefresh = false,
+  }) async {
+    final id = await _resolveId(malId, title, englishTitle);
+    if (id == null) throw StateError('ID MAL belum ditemukan.');
+    if (forceRefresh) _themeCache.remove(id);
+    final existing = _themeCache[id];
+    if (existing != null) return existing;
+    final request = _fetchThemes(id);
+    _themeCache[id] = request;
+    try {
+      return await request;
+    } catch (_) {
+      _themeCache.remove(id);
+      rethrow;
+    }
+  }
+
+  Future<int?> _resolveId(
+    int? malId,
+    String title,
+    String? englishTitle,
+  ) async {
+    if (malId != null && malId > 0) return malId;
+    final titles = <String>{
+      if (englishTitle?.trim().isNotEmpty == true) englishTitle!.trim(),
+      title.trim(),
+    };
+    for (final candidate in titles) {
+      if (candidate.isEmpty) continue;
+      final key = candidate.toLowerCase().replaceAll(
+        RegExp(r'[^\\p{L}\\p{N}]', unicode: true),
+        '',
+      );
+      final lookup = _idLookupCache.putIfAbsent(
+        key,
+        () => _searchJikanId(candidate),
+      );
+      try {
+        final id = await lookup;
+        if (id != null && id > 0) return id;
+      } catch (_) {
+        _idLookupCache.remove(key);
+      }
+    }
+    return null;
+  }
 
   Future<AnimeExtras> load({
     int? malId,
@@ -137,6 +214,55 @@ class AnimeExtrasRepository {
       }
     }
     return null;
+  }
+
+  Future<AnimeExtras> _fetchVideos(int malId) async {
+    final (response, error) = await _safeGet('$_jikan/anime/$malId/videos');
+    final root = _map(response);
+    final data = _map(root?['data']);
+    final promo = _list(data?['promo']) ?? const [];
+    final musicVideos = _list(data?['music_videos']) ?? const [];
+    final videos = <AnimeExtraVideo>[];
+    for (final raw in [...promo, ...musicVideos]) {
+      final entry = _map(raw);
+      final trailer = _map(entry?['trailer']);
+      final id = trailer?['youtube_id']?.toString();
+      if (id == null || id.isEmpty) continue;
+      final images = _map(trailer?['images']);
+      final jpg = _map(images?['jpg']);
+      final image = (jpg?['maximum_image_url'] ??
+              jpg?['large_image_url'] ??
+              jpg?['image_url'])
+          ?.toString();
+      videos.add(AnimeExtraVideo(
+        title: entry?['title']?.toString().trim().isNotEmpty == true
+            ? entry!['title'].toString().trim()
+            : 'Trailer / PV',
+        youtubeId: id,
+        imageUrl: image ?? 'https://img.youtube.com/vi/$id/hqdefault.jpg',
+      ));
+    }
+    return AnimeExtras(
+      malId: malId,
+      videos: List.unmodifiable(videos),
+      videoError: error,
+    );
+  }
+
+  Future<AnimeExtras> _fetchThemes(int malId) async {
+    final (response, error) = await _safeGet('$_jikan/anime/$malId/themes');
+    final root = _map(response);
+    final data = _map(root?['data']);
+    List<String> readSongs(String key) => (_list(data?[key]) ?? const [])
+        .map((value) => value.toString().trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+    return AnimeExtras(
+      malId: malId,
+      openings: readSongs('openings'),
+      endings: readSongs('endings'),
+      themeError: error,
+    );
   }
 
   Future<AnimeExtras> _fetch(int malId) async {
