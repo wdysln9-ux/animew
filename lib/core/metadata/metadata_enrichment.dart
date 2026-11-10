@@ -48,6 +48,10 @@ class MetadataEnrichment {
       final resolved = await _anilist.mediaByMalId(d.malId!);
       currentId = resolved?.id;
     }
+    if (currentId == null) {
+      final resolved = await _anilist.mediaBySearch(d.title);
+      currentId = resolved?.id;
+    }
     if (currentId == null || currentId <= 0) return const [];
 
     return _seasonCache.putIfAbsent(currentId, () => _fetchAniListSeasons(d, currentId!));
@@ -105,7 +109,7 @@ class MetadataEnrichment {
       (
         id: currentId,
         malId: d.malId,
-        title: d.romajiTitle?.trim().isNotEmpty == true ? d.romajiTitle!.trim() : d.title,
+        title: d.title,
         cover: d.cover,
         episodes: d.episodes.isNotEmpty ? d.episodes.length : null,
         popularity: d.popularity,
