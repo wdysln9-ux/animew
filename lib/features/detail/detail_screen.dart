@@ -424,6 +424,2261 @@ class DetailScreen extends StatelessWidget {
 // _DetailView — one continuous, single-scroll anime detail page.
 // ─────────────────────────────────────────────────────────────────────────────
 
+String _compactDecimal(double value) {
+  final rounded = (value * 10).round() / 10;
+  return rounded.toStringAsFixed(1).replaceFirst(RegExp(r'\\.0
+  const _DetailView({required this.item, this.prefer, this.autoScrollToResume = false, this.targetEpisodeId});
+  final MediaItem item;
+
+  /// The catalogue this title was opened from, so the name matches the data.
+  final PreferredProvider? prefer;
+  final bool autoScrollToResume;
+  final String? targetEpisodeId;
+
+  @override
+  State<_DetailView> createState() => _DetailViewState();
+}
+
+class _DetailViewState extends State<_DetailView> {
+  static const double _expandedHeight = 404;
+
+  // The episode url we've already kicked a background source-prefetch for, so we
+  // don't re-fire it on every rebuild (see _maybePrefetch).
+  String? _prefetchedEpUrl;
+  final Map<(String, String), Future<ReadEntry?>> _cloudReadHistoryLookups = {};
+  final Set<(String, String)> _cloudReadHistoryChecked = {};
+
+  /// How long the viewer must stay on the screen before a source resolve is
+  /// started for them. Long enough that a back-and-forth browse never starts
+  /// one, short enough that a viewer reading the page still gets the warm menu.
+  static const Duration _prefetchStayDelay = Duration(milliseconds: 700);
+
+  Timer? _prefetchTimer;
+
+  // Filler episode numbers (from Jikan by MAL id), for the "Filler" badge in the
+  // episode list. Fetched once per malId; empty for non-anime / unlisted shows.
+  Set<int> _fillerEps = const {};
+  int? _fillerForMal;
+  void _ensureFiller(int? malId) {
+    if (malId == null || malId == _fillerForMal) return;
+    _fillerForMal = malId;
+    FillerService.instance.fillerEpisodes(malId).then((s) {
+      if (mounted && s.isNotEmpty) setState(() => _fillerEps = s);
+    });
+  }
+
+  late final ScrollController _scrollController = ScrollController();
+
+  // ── My List (status-organised library) ────────────────────────────────────
+  final MyListStore _myList = sl<MyListStore>();
+  final ListStatusStore _listStatus = sl<ListStatusStore>();
+  late WatchStatus? _status = _listStatus.statusOf(widget.item);
+  late bool _inMyList = _status != null || _myList.contains(widget.item);
+
+  /// Poster-tinted background colour for the adaptive wash (null → normal
+  /// theme background). Extraction runs once per hero-art URL.
+  final ValueNotifier<Color?> _tint = ValueNotifier(null);
+  String? _tintUrl;
+
+
+  @override
+  void initState() {
+    super.initState();
+    _tint.addListener(_onTintChanged);
+    // Discord Rich Presence: "Looking at <title>" while this detail is open.
+    if (sl.isRegistered<DiscordRpc>()) {
+      sl<DiscordRpc>().setBrowsing(
+        title: widget.item.title,
+        posterUrl: widget.item.cover,
+      );
+    }
+  }
+
+  /// Repaint the pinned app bar in the new tint: it paints the same wash as the
+  /// body, so the bar must follow the extracted colour to stay opaque.
+  void _onTintChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    // Leaving before the stay-delay elapsed: no viewer is here to warm a menu
+    // for, so the pending resolve never starts.
+    _prefetchTimer?.cancel();
+    // Back to generic "Browsing" when leaving the detail.
+    if (sl.isRegistered<DiscordRpc>()) sl<DiscordRpc>().setBrowsing();
+    _scrollController.dispose();
+    _tint.removeListener(_onTintChanged);
+    _tint.dispose();
+    super.dispose();
+  }
+
+  /// Background-resolve [epUrl]'s sources once for this title, so the next Play
+  /// reuses the work.
+  ///
+  /// Only start after the viewer has demonstrably stayed on the page. The
+  /// prefetch is scoped to the selected source; Z Mode only prefetches when a
+  /// source is already matched, so opening a detail page never starts an
+  /// Auto Resolve sweep across every installed provider.
+  void _maybePrefetch(String epUrl, String sourceId) {
+    if (_prefetchedEpUrl == epUrl) return;
+    final zMode = sourceId == ZmodeIds.sourceId;
+    if (zMode && _zModeMatchedSource() == null) return;
+    _prefetchedEpUrl = epUrl;
+    _prefetchTimer?.cancel();
+    _prefetchTimer = Timer(_prefetchStayDelay, () {
+      if (!mounted) return;
+      if (zMode) {
+        final matched = _zModeMatchedSource();
+        ProviderManager.inBackground(
+          () => sl<CatalogueRepository>().sources(
+            epUrl,
+            sourceId: matched?.sourceId ?? sourceId,
+            fast: true,
+          ),
+        ).catchError((_) => <VideoSource>[]);
+        return;
+      }
+
+      sl<SourceRepository>().prefetch(epUrl, sourceId: sourceId);
+    });
+  }
+
+  /// The source already matched to this title, or null when none is — a local
+  /// lookup, no network.
+  SourceMatch? _zModeMatchedSource() {
+    if (!sl.isRegistered<MatchStore>()) return null;
+    final c = ZmodeIds.parseShow(widget.item.url);
+    if (c == null) return null;
+    return sl<MatchStore>().bestFor(c);
+  }
+
+  // ── The 5-icon action row wiring ──────────────────────────────────────────
+
+  /// Open the "Add to List" status sheet (Plan / Watching / Completed / Paused
+  /// / Dropped / Remove). Works locally for any title; for anime with a MAL id
+  /// and AniList connected, the choice is also pushed to AniList.
+  Future<void> _openListSheet(MediaDetail detail) async {
+    await showListStatusSheet(
+      context,
+      item: widget.item,
+      malId: detail.malId ?? widget.item.malId,
+      tmdbId: detail.tmdbId ?? widget.item.tmdbId,
+      tmdbIsTv: detail.tmdbIsTv,
+      imdbId: detail.imdbId ?? widget.item.imdbId,
+      onChanged: () {
+        if (!mounted) return;
+        setState(() {
+          _status = _listStatus.statusOf(widget.item);
+          _inMyList = _status != null || _myList.contains(widget.item);
+        });
+      },
+    );
+  }
+
+  // Tracker-driven episode grey-out: the connected tracker's watched-episode
+  // count, fetched once after the detail loads (null until then / no match).
+  int? _trackerProgress;
+
+  /// Whether any connected tracker has this title on a list. Drives the
+  /// Tracking action's icon — separate from [_trackerProgress] because a title
+  /// can be tracked at episode 0 (Planning), which is still "tracked".
+  bool _tracked = false;
+
+  /// Next episode to air, from the tracker entry fetched for progress. Null
+  /// for a finished show, a movie, or a title with no tracker match — the row
+  /// hides rather than claiming it doesn't know.
+  int? _nextAiringEpisode;
+  DateTime? _nextAiringAt;
+  bool _trackerFetchStarted = false;
+
+  /// Fetch the connected tracker's episode progress once, so episodes already
+  /// watched on AniList/MAL/Simkl grey out even if never played in-app.
+  /// Best-effort and additive — a null result changes nothing on screen.
+  void _maybeFetchTrackerProgress(MediaDetail detail) {
+    if (_trackerFetchStarted) return;
+    _trackerFetchStarted = true;
+    final hub = sl<TrackerHub>();
+    if (!hub.anyConnected) return;
+    final isAnime = detail.type == ProviderType.anime;
+    final reading =
+        detail.type == ProviderType.manga || detail.type == ProviderType.novel;
+    final pins = sl<TrackerBindingStore>().get(
+      TrackerBindingStore.keyOf(widget.item.sourceId, widget.item.url),
+    );
+    hub
+        .fetchEntry(
+          malId: detail.malId ?? widget.item.malId,
+          title: (isAnime || reading) ? detail.title : null,
+          tmdbId: detail.tmdbId ?? widget.item.tmdbId,
+          tmdbIsTv: detail.tmdbIsTv,
+          imdbId: detail.imdbId ?? widget.item.imdbId,
+          pinnedIds: pins.isEmpty ? null : pins,
+          kind: reading ? MediaKind.manga : MediaKind.anime,
+          novel: detail.type == ProviderType.novel,
+        )
+        .then((e) {
+          if (!mounted) return;
+          // Same response the progress comes from — the airing fields were already
+          // being fetched and thrown away, so showing them costs no extra request.
+          // Both null for a finished show, a movie, or a title we couldn't match.
+          final ep = e?.nextAiringEpisode;
+          final at = e?.nextAiringAt;
+          final p = e?.progress;
+          final onList = e?.onList ?? false;
+          if (p == null || p <= 0) {
+            setState(() {
+              _tracked = onList;
+              if (ep != null && at != null) {
+                _nextAiringEpisode = ep;
+                _nextAiringAt = at;
+              }
+            });
+            return;
+          }
+          setState(() {
+            _tracked = onList;
+            _trackerProgress = p;
+            _nextAiringEpisode = ep;
+            _nextAiringAt = at;
+          });
+        });
+  }
+
+  /// Whether the Tracking button should show for [detail]. Only when a tracker
+  /// is connected AND it can actually track this title: anime/manga/novel →
+  /// always (AniList/MAL resolve by malId or title regardless); movies &
+  /// live-action TV → only Simkl, and only with a tmdb/imdb id to key on.
+  /// Keeps the button out of the way for everyone else.
+  bool _trackingAvailable(MediaDetail detail) {
+    final hub = sl<TrackerHub>();
+    if (!hub.anyConnected) return false;
+    if (detail.type == ProviderType.anime ||
+        detail.type == ProviderType.manga ||
+        detail.type == ProviderType.novel) {
+      return true;
+    }
+    final simklOn = hub.connected.any((t) => t.displayName == 'Simkl');
+    final hasId =
+        (detail.tmdbId ?? widget.item.tmdbId) != null ||
+        ((detail.imdbId ?? widget.item.imdbId)?.isNotEmpty ?? false);
+    return simklOn && hasId;
+  }
+
+  /// Open the tracker list — one row per connected tracker, showing what each
+  /// one matched, with "Sync all at once" for the original write-to-everything
+  /// editor. Anime resolves by MAL id or title; movies/TV via Simkl's
+  /// tmdb/imdb id; manga/novel by malId or title (AniList/MAL manga lists).
+  /// Returns the applied progress so grey-out can update immediately.
+  Future<void> _openTrackingSheet(MediaDetail detail) async {
+    final reading =
+        detail.type == ProviderType.manga || detail.type == ProviderType.novel;
+    final applied = await showTrackerListSheet(
+      context,
+      title: detail.title,
+      isAnime: detail.type == ProviderType.anime,
+      reading: reading,
+      malId: detail.malId ?? widget.item.malId,
+      tmdbId: detail.tmdbId ?? widget.item.tmdbId,
+      tmdbIsTv: detail.tmdbIsTv,
+      imdbId: detail.imdbId ?? widget.item.imdbId,
+      bindingKey: TrackerBindingStore.keyOf(
+        widget.item.sourceId,
+        widget.item.url,
+      ),
+    );
+    if (applied != null && mounted && applied > (_trackerProgress ?? 0)) {
+      setState(() => _trackerProgress = applied);
+    }
+    // The sheet can add tracking or remove it, so the icon has to be re-read
+    // rather than inferred from [applied] (a removal applies nothing).
+    if (!mounted) return;
+    _trackerFetchStarted = false;
+    _maybeFetchTrackerProgress(detail);
+  }
+
+  /// Open a related title.
+  ///
+  /// Used to search the CURRENT source for it, always. That works for a
+  /// sequel, and never for a manga's anime adaptation: the manga source it
+  /// asked has no anime in it, so the tap answered "not on this source" for
+  /// exactly the links people most want to follow. [openRelatedTitle] picks
+  /// the source or the metadata page by what the relation actually is.
+  Future<void> _openRelation(MediaRelation r) => openRelatedTitle(
+    context,
+    title: r.title,
+    romaji: r.romaji,
+    cover: r.cover,
+    isReading: r.isReading,
+    malId: r.malId,
+    anilistId: r.anilistId,
+    tmdbId: r.tmdbId,
+    tmdbIsTv: r.tmdbIsTv,
+    sourceId: widget.item.sourceId,
+    fromReadingPage:
+        widget.item.type == ProviderType.manga ||
+        widget.item.type == ProviderType.novel,
+  );
+
+  void _share(MediaDetail detail, String sourceName) {
+    // Native OS share sheet with a Zangetsu deep link: on tap it opens the app
+    // straight to this title (on its source) if installed, else the Zangetsu
+    // site to download. The link carries the item, so sourceName is unused now.
+    SharePlus.instance.share(
+      ShareParams(text: ShareLink.shareText(widget.item)),
+    );
+  }
+
+  /// Globe — open the source's web page in the system browser. Falls back to
+  /// a snackbar when no usable URL can be derived.
+  Future<void> _openSourceSite() async {
+    final url = _sourceWebUrl();
+    if (url == null) {
+      _snack(context.l10n.noWebPageForThisSource);
+      return;
+    }
+    final ok = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!ok && mounted) _snack(context.l10n.couldNotOpenSourceSite);
+  }
+
+  /// Best-effort web URL for the title. Absolute item URLs (CloudStream/JS)
+  /// pass through; Aniyomi items store a relative path, so join it onto the
+  /// source's base site (mirroring the native `baseUrl + anime.url`).
+  String? _sourceWebUrl() {
+    final u = widget.item.url.trim();
+    if (u.isEmpty) return null;
+    if (u.startsWith('http://') || u.startsWith('https://')) return u;
+    // Z Mode: the item is a metadata title (`zm://anime/mal:123`) and its
+    // sourceId is the pseudo id `zm`, so the join below found no base URL and
+    // the globe only ever said "no web page for this source". The title does
+    // live on a real source — the one Auto Resolve matched — so open that.
+    final c = ZmodeIds.parseShow(u);
+    if (c != null) return _matchedSourceWebUrl(c);
+    final base = sl<SourceRepository>().baseUrlFor(widget.item.sourceId).trim();
+    if (base.isEmpty) return null;
+    if (base.endsWith('/') && u.startsWith('/')) return base + u.substring(1);
+    return base + u;
+  }
+
+  /// The matched source's own page for a Z Mode title, or null when nothing
+  /// has matched it yet — in which case the existing snackbar is the honest
+  /// answer, because there genuinely is no page to open.
+  ///
+  /// The join is [source_actions.joinChapterUrl] rather than a second copy of
+  /// the one above: it is already tested, and it refuses a `showUrl` carrying
+  /// javascript:/file:/intent:, which matters because that value comes from a
+  /// third-party extension.
+  String? _matchedSourceWebUrl(ZCanonical c) {
+    if (!sl.isRegistered<MatchStore>()) return null;
+    final m = sl<MatchStore>().bestFor(c);
+    if (m == null) return null;
+    return source_actions.joinChapterUrl(
+      sl<SourceRepository>().baseUrlFor(m.sourceId),
+      m.showUrl,
+    );
+  }
+
+  /// Every transient message on this screen. A toast rather than a SnackBar:
+  /// the bar docks to the bottom edge under the floating dock, pushes the
+  /// layout around, and one is still on screen while the next arrives.
+  void _snack(String msg) {
+    if (!mounted) return;
+    showAppToast(context, msg);
+  }
+
+  // ── Cross-source player launch — PRESERVED EXACTLY ────────────────────────
+
+  /// Resolve every mirror for an episode, behind a blocking spinner.
+  ///
+  /// Deliberately not the fast path. Fast returns on the first usable link and
+  /// leaves the rest resolving in the background, so a chooser built from it
+  /// often shows one server out of several — you'd be picking from a list that
+  /// isn't finished. Waiting costs a few seconds and shows the real choice.
+  Future<List<VideoSource>> _resolveWithProgress(Episode ep) async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      // Through the router, like every other playback path on this screen.
+      // Asking SourceRepository directly worked on a source page and could
+      // never work on a metadata one: `zm` is a pseudo source with nothing to
+      // resolve, so Play mirror always reported "no sources" for a title that
+      // played perfectly from the same row. The router hands a zm:// url to
+      // MetadataRepository, which resolves it to the real source's episode
+      // first — exactly what Play already does.
+      return await sl<CatalogueRepository>().sources(
+        ep.url,
+        sourceId: widget.item.sourceId,
+        fast: false,
+      );
+    } catch (_) {
+      // A dead source shouldn't leave a spinner on screen; the caller reports
+      // the empty result as "no sources found".
+      return const [];
+    } finally {
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
+
+  /// Push a manual watched mark out to whichever trackers are connected.
+  ///
+  /// Only whole episode numbers: tracker progress is an integer, so a "12.5"
+  /// recap or special would either round into a real episode or be rejected.
+  /// Same fan-out the player uses when you finish an episode normally.
+  Future<void> _scrobbleUpTo(Episode ep, MediaDetail detail) async {
+    final n = ep.number;
+    if (n == null || n <= 0 || n != n.truncateToDouble()) return;
+    // Same kind mapping as the entry fetch above: a manga/novel mark must go
+    // out as manga (plus the novel flag), with the title attached. Omitting
+    // either made manual manga marks resolve as anime with no title fallback,
+    // so AniList missed and MangaBaka refused while Simkl logged a false ok.
+    final reading =
+        detail.type == ProviderType.manga || detail.type == ProviderType.novel;
+    await sl<TrackerHub>().scrobble(
+      malId: detail.malId ?? widget.item.malId,
+      title: detail.title,
+      tmdbId: widget.item.tmdbId,
+      tmdbIsTv: widget.item.tmdbIsTv,
+      imdbId: widget.item.imdbId,
+      episode: n.toInt(),
+      season: ep.season,
+      seasonEpisode: seasonEpisodeOf(detail.episodes, ep),
+      kind: reading ? MediaKind.manga : MediaKind.anime,
+      novel: detail.type == ProviderType.novel,
+      // Asked for by hand, so it goes out even with auto-tracking off.
+      auto: false,
+    );
+  }
+
+  /// Open the source picker for this title from the empty episode list.
+  ///
+  /// A source that has gone quiet leaves a catalogue title with no episodes
+  /// and a dimmed Play, and the only way out was knowing that the source name
+  /// above is tappable. Same picker, same effect — [SourceMatcher.chooseSource]
+  /// is what the source row itself calls.
+  Future<void> _switchSource() async {
+    final c = ZmodeIds.parseShow(widget.item.url);
+    if (c == null || !sl.isRegistered<SourceMatcher>()) return;
+    final matcher = sl<SourceMatcher>();
+    final cubit = context.read<DetailCubit>();
+    SourceSwitcher(
+      currentId: matcher.sourceForTitle(c) ?? '',
+      onChanged: (_) {},
+      onInstallSources: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const ZangetsuSourcesScreen(openToRepos: true),
+        ),
+      ),
+    ).showPicker(
+      context,
+      onPick: (id) async {
+        await matcher.chooseSource(c, id);
+        // dropCache: false — the source just switched TO was never in it.
+        cubit.refresh(dropCache: false);
+      },
+    );
+  }
+
+  /// Long-press an episode or chapter → the actions menu.
+  ///
+  /// Streaming gets the player rows too (choosing where it plays, this once —
+  /// Settings keeps owning the standing default, so trying VLC on one episode
+  /// doesn't quietly rewire every later tap). Reading gets only the marking
+  /// rows, because a chapter resolves to the reader.
+  ///
+  /// Dismissing does nothing — a long-press that started playback on its own
+  /// would be a trap.
+  Future<void> _pickPlayerFor(
+    List<Episode> episodes,
+    int index,
+    MediaDetail detail,
+    String category,
+  ) async {
+    if (index < 0 || index >= episodes.length) return;
+    final ep = episodes[index];
+    final label = ep.title.trim().isNotEmpty
+        ? ep.title.trim()
+        : context.l10n.episodeLabel(ep.number?.toInt() ?? index + 1);
+    final prefs = sl<PlaybackPrefs>();
+
+    final resume = sl<ResumeStore>();
+    final hub = sl<TrackerHub>();
+    final isReading =
+        detail.type == ProviderType.novel || detail.type == ProviderType.manga;
+    final read = sl<ReadStore>();
+    // Chapters keep their read state in ReadStore, episodes in ResumeStore —
+    // and the two are keyed DIFFERENTLY. Reading keys by item.id (what the
+    // chapter list and the reader both use), video by item.url. Writing a
+    // chapter under the video key stored it somewhere nothing reads, so the
+    // row never dimmed.
+    final readShowId = widget.item.id;
+    // Same pairing as the chapter list: the real source, not `zm`.
+    final readSource = detail.sourceId.isNotEmpty
+        ? detail.sourceId
+        : widget.item.sourceId;
+    bool markedDone(Episode e) => isReading
+        ? read.finished(readSource, readShowId, e.id)
+        : (resume.get(widget.item.sourceId, widget.item.url, e.id)?.finished ??
+              false);
+    final action = await showEpisodeActionSheet(
+      context,
+      reading: isReading,
+      canOpenInBrowser:
+          isReading &&
+          source_actions.canOpenInBrowser(widget.item.sourceId, ep.url),
+      episodeLabel: label,
+      // Only meaningful for streaming, and the reading sheet has no row to
+      // put it on — so don't go asking which external player is configured
+      // for something that opens the reader.
+      currentPlayerLabel: isReading
+          ? ''
+          : (prefs.externalPlayerPackage.isEmpty
+                ? context.l10n.builtIn
+                : (prefs.externalPlayerLabel.isEmpty
+                      ? context.l10n.external
+                      : prefs.externalPlayerLabel)),
+      isWatched: markedDone(ep),
+      tracksToServices: hub.anyConnected,
+      // Metadata titles only, and only when there is something to survey: a
+      // source-backed title already IS one source, and a row that opens an
+      // empty dialog is worse than no row.
+      canSurveySources:
+          ZmodeIds.isZ(ep.url) &&
+          sl<PlaybackResolver>().candidatesForEpisode(ep.url).isNotEmpty,
+    );
+    if (action == null || !mounted) return;
+
+    switch (action) {
+      case EpisodeAction.pickPlayer:
+        final choice = await showEpisodePlayerSheet(
+          context,
+          episodeLabel: label,
+          defaultPackage: prefs.externalPlayerPackage,
+        );
+        if (choice == null || !mounted) return;
+        await _openPlayer(
+          episodes,
+          index,
+          detail,
+          category,
+          playerOverride: choice,
+        );
+      case EpisodeAction.reloadLinks:
+        // Drop the prefetch too, or the next fast resolve consumes it before
+        // it ever looks at the resolved cache and hands back the same dead
+        // links — the reload would look like it did nothing.
+        sl<SourceRepository>().invalidateSources(
+          ep.url,
+          sourceId: widget.item.sourceId,
+          includePrefetch: true,
+        );
+        // Deliberately no playback: you reload because the links died, and the
+        // next thing you usually want is a different mirror. Auto-playing
+        // takes that choice away and tends to fail again on the same source.
+        // Re-primes in the background so the play you do make is still quick.
+        // (SourceRepository.prefetch has no metadata-catalogue equivalent and
+        // throws for the zm pseudo source, so skip it there.)
+        if (widget.item.sourceId != ZmodeIds.sourceId) {
+          sl<SourceRepository>().prefetch(
+            ep.url,
+            sourceId: widget.item.sourceId,
+          );
+        }
+        if (!mounted) return;
+        showAppToast(context, context.l10n.linksReloaded);
+
+      case EpisodeAction.playMirror:
+        // Scraping takes seconds, unlike every other row here, so the wait is
+        // shown rather than left as a dead long-press.
+        final sources = await _resolveWithProgress(ep);
+        if (!mounted) return;
+        if (sources.isEmpty) {
+          showAppToast(context, context.l10n.noSourcesFoundForThisEpisode);
+          return;
+        }
+        final picked = await showMirrorSheet(
+          context,
+          episodeLabel: label,
+          sources: sources,
+        );
+        if (picked == null || !mounted) return;
+        // The pick applies to this episode and nothing else — no label saved.
+        // Remembering it meant re-finding the mirror by label on the next
+        // open, and when that list came back without it the language fallback
+        // quietly started a different server: pick vidplay, get vidstream.
+        // Choosing again per episode is the honest trade.
+        await _openPlayer(
+          episodes,
+          index,
+          detail,
+          category,
+          initialSource: picked,
+        );
+
+      case EpisodeAction.whereToWatch:
+        // Same sheet the "not on <source>" row opens, reachable for ANY
+        // episode: knowing which of your sources carries an episode is useful
+        // long before one of them comes up short.
+        if (!await _sweepForEpisode(ep)) return;
+        if (!mounted) return;
+        await _openPlayer(episodes, index, detail, category);
+
+      case EpisodeAction.openInBrowser:
+        // Ask the source where this chapter lives; falls back to the plain
+        // join when it can't say (see resolveChapterWebUrl).
+        await source_actions.openUrlInSourceWebView(
+          await source_actions.resolveChapterWebUrl(
+                widget.item.sourceId,
+                ep.url,
+              ) ??
+              '',
+          title: detail.title,
+        );
+
+      case EpisodeAction.toggleWatched:
+        final nowWatched = !markedDone(ep);
+        if (isReading) {
+          // readSource, not item.sourceId: for a metadata title item.sourceId
+          // is the `zm` pseudo-source while the chapter list and reader key by
+          // the real source — writing under `zm` stored the mark where nothing
+          // reads, so the row never dimmed until tracker progress arrived.
+          await read.setRead(readSource, readShowId, ep.id, read: nowWatched);
+        } else {
+          await resume.setWatched(
+            widget.item.sourceId,
+            widget.item.url,
+            ep.id,
+            watched: nowWatched,
+          );
+        }
+        // Only forward when marking. Trackers store a high-water mark, not a
+        // set, so there's no "unwatch episode 12" to send — dropping progress
+        // back would be a guess at what the user wanted their list to say.
+        if (!mounted) return;
+        // Repaint FIRST from the already-saved mark. The tracker fan-out below
+        // can stall on retries/backoff, and awaiting it here is what left the
+        // row un-dimmed until the next rebuild.
+        setState(() {});
+        // Fire-and-forget: _scrobbleUpTo touches no context/setState, and
+        // TrackerHub._fan already swallows per-tracker errors.
+        if (nowWatched) unawaited(_scrobbleUpTo(ep, detail));
+        showAppToast(
+          context,
+          isReading
+              ? (nowWatched
+                    ? context.l10n.markedAsRead
+                    : context.l10n.markedUnread)
+              : (nowWatched
+                    ? context.l10n.markedAsWatched
+                    : context.l10n.markedUnwatched),
+        );
+
+      case EpisodeAction.markAboveWatched:
+        // Everything up to and including the one held: you came back
+        // mid-season and want the backlog cleared, and excluding the episode
+        // you pressed would mean marking it separately every time.
+        for (var i = 0; i <= index; i++) {
+          if (isReading) {
+            // Same key pairing as toggleWatched above: the real source.
+            await read.setRead(
+              readSource,
+              readShowId,
+              episodes[i].id,
+              read: true,
+            );
+          } else {
+            await resume.setWatched(
+              widget.item.sourceId,
+              widget.item.url,
+              episodes[i].id,
+              watched: true,
+            );
+          }
+        }
+        // One tracker write for the highest episode, not one per episode —
+        // progress is a high-water mark, so the rest are implied and firing
+        // twelve updates would just rate-limit the account.
+        if (!mounted) return;
+        // Same repaint-first reasoning as toggleWatched above: the mark is
+        // saved, so paint it now and let the tracker write finish behind.
+        setState(() {});
+        unawaited(_scrobbleUpTo(ep, detail));
+        showAppToast(
+          context,
+          isReading
+              ? context.l10n.markedChaptersAsRead(index + 1)
+              : context.l10n.markedEpisodesAsWatched(index + 1),
+        );
+    }
+  }
+
+  Future<void> _openPlayer(
+    List<Episode> episodes,
+    int index,
+    MediaDetail detail,
+    String category, {
+
+    /// Set only by the long-press sheet: play this one episode in this player,
+    /// ignoring the Settings default. Null keeps the existing behaviour.
+    PlayerChoice? playerOverride,
+
+    /// A mirror picked from the long-press menu, opened instead of the
+    /// adaptive default. One-shot — the cubit clears it after this episode.
+    VideoSource? initialSource,
+  }) async {
+    // A finished download of this exact episode plays from disk — no sweep,
+    // no links, no waiting. Exact keys first, then the source episode URL,
+    // then MAL id + number — so a file saved from a source page is still
+    // found from the metadata page and back.
+    if (initialSource == null && index >= 0 && index < episodes.length) {
+      final ep = episodes[index];
+      final dl = await sl<DownloadManager>().finishedForEpisode(
+        sourceId: widget.item.sourceId,
+        showId: widget.item.id,
+        episodeId: ep.id,
+        episodeUrl: ep.url,
+        malId: detail.malId ?? widget.item.malId,
+        episodeNumber: ep.number,
+      );
+      if (dl != null) {
+        if (!mounted) return;
+        await launchDownloadedEpisode(
+          context,
+          dl,
+          episodes: episodes,
+          startIndex: index,
+          fallbackResolveSources: (url) => sl<CatalogueRepository>().sources(
+            url,
+            sourceId: widget.item.sourceId,
+            fast: true,
+          ),
+          pollSources: (url) => sl<CatalogueRepository>().polledSources(
+            url,
+            sourceId: widget.item.sourceId,
+          ),
+          playerOverride: playerOverride?.package,
+        );
+        return;
+      }
+    }
+    if (!mounted) return;
+    // The catalogue lists this episode but the one source we checked stops
+    // short of it (see [Episode.unavailable]). Say which source, and let the
+    // viewer decide whether to spend the sweep — asking every installed
+    // source in turn is what measured 23 seconds of frozen UI, so it is
+    // offered rather than imposed. Falling through means they asked for it.
+    //
+    // Every play path funnels through this method, so this one check covers
+    // the row tap, the grid tile, the Play button and resume.
+    if (index >= 0 && index < episodes.length && !episodes[index].available) {
+      final sweep = await showEpisodeUnavailable(
+        context,
+        episodes[index],
+        reading:
+            detail.type == ProviderType.novel ||
+            detail.type == ProviderType.manga,
+      );
+      if (!sweep || !mounted) return;
+      // They asked for it, so do it HERE rather than by dropping them into
+      // the player and letting it find out. Falling through only happens once
+      // something playable is known to exist — and the resolver caches that
+      // winner, so the player then opens straight onto it.
+      if (!await _sweepForEpisode(episodes[index])) return;
+      if (!mounted) return;
+    }
+
+    // Opening something other than where they left off? Offer to look at it
+    // without moving their place. Asked here, before the reading/video split,
+    // so all three kinds behave the same. Dismissing means "never mind" —
+    // neither answer is assumed, and nothing opens.
+    final reading =
+        detail.type == ProviderType.novel ||
+        detail.type == ProviderType.manga ||
+        widget.item.type == ProviderType.novel ||
+        widget.item.type == ProviderType.manga;
+    final readingSourceId = _readingSourceId(detail);
+    if (reading) {
+      await _loadCloudReadHistory(readingSourceId);
+      if (!mounted) return;
+    }
+    final resume = reading
+        ? _readResumeIndex(episodes, sourceId: readingSourceId)
+        : (index: _resumeIndex(episodes), hasResume: _hasVideoResume(episodes));
+    var peek = false;
+    if (shouldAskBeforeJump(
+      resumeIndex: resume.index,
+      targetIndex: index,
+      hasResume: resume.hasResume,
+      askEnabled: jumpPromptEnabled,
+    )) {
+      final choice = await showJumpPrompt(context, reading: reading);
+      if (choice == null || !mounted) return; // dismissed — open nothing
+      peek = choice == JumpChoice.peek;
+    }
+
+    // Reading types never touch the player — route to the reader instead.
+    // Both tap paths (Play button + episode-row onTap) call this same
+    // function, so gating it here covers both in one place. Safety-critical:
+    // a manga/novel title must never try to resolve video sources. Checks
+    // BOTH the loaded detail's type and the search-result item's type —
+    // provider JSON isn't normalized, so a source that disagrees between the
+    // two still can't reach the player.
+    final t = detail.type;
+    final it = widget.item.type;
+    if (t == ProviderType.novel ||
+        t == ProviderType.manga ||
+        it == ProviderType.novel ||
+        it == ProviderType.manga) {
+      // Same auto-add as the video path below — reading titles route out
+      // through this early return, so without this they never got it.
+      if (sl<AuthCubit>().state.isLoggedIn &&
+          sl<PlaybackPrefs>().autoAddToMyList &&
+          !IncognitoMode.on &&
+          !_myList.contains(widget.item)) {
+        _myList.add(widget.item);
+        _listStatus.setStatus(widget.item, WatchStatus.watching);
+      }
+      _openReader(episodes, index, detail, peek: peek);
+      return;
+    }
+
+    // Auto-add this title to My List (as Watching) on play, if the user opted
+    // in — mirrors the tracker auto-scrobble. Skipped in incognito and when it's
+    // already listed; fire-and-forget so it never delays playback.
+    if (sl<AuthCubit>().state.isLoggedIn &&
+        sl<PlaybackPrefs>().autoAddToMyList &&
+        !IncognitoMode.on &&
+        !_myList.contains(widget.item)) {
+      _myList.add(widget.item);
+      _listStatus.setStatus(widget.item, WatchStatus.watching);
+    }
+
+    // Available sub/dub categories from the detail — lets the PLAYER offer the
+    // Sub/Dub switch (the Detail no longer does). Empty/single → treated as a
+    // single-category source by the player (no Version section).
+    final available = <String>[
+      if ((detail.subCount ?? 0) > 0) 'sub',
+      if ((detail.dubCount ?? 0) > 0) 'dub',
+    ];
+    final availableCategories = available.isEmpty ? [category] : available;
+
+    // Fresh play: prefer a saved per-title sub/dub choice, else the global
+    // default category, else fall back to the incoming category. Constrain to
+    // what's actually offered so single-category titles are a harmless no-op.
+    final preferred =
+        sl<TitlePrefsStore>().category(widget.item.sourceId, widget.item.url) ??
+        sl<PlaybackPrefs>().defaultCategory;
+    final launchCategory = availableCategories.contains(preferred)
+        ? preferred
+        : category;
+
+    // Scrobble ids. A movie-typed title from a movie source (e.g. MovieBox) may
+    // actually be anime — resolve its MAL id here so AniList/MAL scrobble. We
+    // await the detail's in-flight promotion (started on load); if Play beat it,
+    // resolve inline. Best-effort — a miss just leaves it a movie.
+    var malId = detail.malId ?? widget.item.malId;
+    var scrobbleTitle = detail.type == ProviderType.anime ? detail.title : null;
+    if (malId == null && detail.type == ProviderType.movie) {
+      try {
+        final promoted =
+            await (context.read<DetailCubit>().animePromotion ??
+                sl<MetadataEnrichment>().promoteMovieToAnimeMalId(detail));
+        if (promoted != null) {
+          malId = promoted;
+          scrobbleTitle = detail.title;
+        }
+      } catch (_) {
+        /* leave as a movie */
+      }
+    }
+    if (!mounted) return;
+
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => PlayerScreen(
+              episodeDetailMode: true,
+              onSaveToFolder: (_) => _openListSheet(detail),
+              onDownloadEpisode: (episode) =>
+                  _downloadSingle(episode, detail, launchCategory),
+              playerOverride: playerOverride?.package,
+              initialSource: initialSource,
+              sourceId: widget.item.sourceId,
+              episodes: episodes,
+              startIndex: index,
+              resume: sl<ResumeStore>(),
+              resolveSources: (u) => sl<CatalogueRepository>().sources(
+                u,
+                sourceId: widget.item.sourceId,
+                fast: true,
+              ),
+              // The resolve above returns on the first usable link so playback
+              // starts fast; the remaining mirrors keep resolving natively. This
+              // lets the Sources sheet pick them up once they land.
+              pollSources: (u) => sl<CatalogueRepository>().polledSources(
+                u,
+                sourceId: widget.item.sourceId,
+              ),
+              history: sl<WatchHistory>(),
+              showTitle: detail.title,
+              cover: detail.cover ?? widget.item.cover,
+              coverHeaders: detail.coverHeaders ?? widget.item.coverHeaders,
+              showUrl: widget.item.url,
+              category: launchCategory,
+              malId: malId,
+              scrobbleTitle: scrobbleTitle,
+              tmdbId: detail.tmdbId ?? widget.item.tmdbId,
+              tmdbIsTv: detail.tmdbIsTv,
+              imdbId: detail.imdbId ?? widget.item.imdbId,
+              availableCategories: availableCategories,
+              peek: peek,
+            ),
+          ),
+          // Same reason as the reader's [_refreshAfterReading]: ResumeStore has no
+          // change notification and this push was fire-and-forget, so a finished
+          // episode stayed un-greyed until something else rebuilt the screen.
+          //
+          // Unlike the reader there is no key mismatch here — the player writes
+          // under (item.sourceId, item.url) and the list reads the same pair — so
+          // this is the whole fix. The list is a SliverList.builder, so the
+          // rebuild touches the visible rows, not the full episode count.
+        )
+        .then(_refreshAfterReading);
+  }
+
+  /// Asks every installed source for this episode and shows them answering.
+  /// True once the viewer has picked one that can play it.
+  ///
+  /// A sheet rather than a spinner: the sweep takes seconds on a real library,
+  /// and if someone is going to wait they should see who is being asked, which
+  /// sources have it, and get to take one — rather than watch a spinner and be
+  /// handed whichever source happened to answer first.
+  Future<bool> _sweepForEpisode(Episode ep) async {
+    final picked = await showEpisodeSourcesSheet(context, episode: ep);
+    if (picked == null || !mounted) return false;
+    // Hand the resolver the result the sheet already has, so opening the
+    // player doesn't repeat the work the viewer just watched happen.
+    await sl<PlaybackResolver>().useProbed(ep.url, picked);
+    return mounted;
+  }
+
+  /// Routes a reading-type title (manga/novel) to its reader instead of the
+  /// player. [chapters] mirrors [_openPlayer]'s `episodes` list; [index] is
+  /// the tapped/resume chapter. Prefers `detail.type`; falls back to
+  /// `widget.item.type` for the disagreeing-provider-JSON case the guard
+  /// above also covers, so a mismatch still lands on the right reader
+  /// instead of silently doing nothing.
+  /// Re-read the chapter list's state after the reader closes.
+  ///
+  /// [ReadStore] is a plain Hive box with no change notification, and the push
+  /// below was fire-and-forget, so a chapter finished in the reader stayed
+  /// un-dimmed until something else happened to rebuild this screen — leaving
+  /// on the app and coming back showed it correctly, which is what made it
+  /// look like the read was not being saved. It always was.
+  ///
+  /// Deliberately scoped to the READER only. The video player push has the
+  /// same shape, but episodes read their state from [ResumeStore] through a
+  /// different path; changing that is a separate job and not worth risking
+  /// here.
+  void _refreshAfterReading(Object? _) {
+    if (mounted) setState(() {});
+  }
+
+  void _openReader(
+    List<Episode> chapters,
+    int index,
+    MediaDetail detail, {
+    bool peek = false,
+  }) {
+    final readingType =
+        (detail.type == ProviderType.novel || detail.type == ProviderType.manga)
+        ? detail.type
+        : widget.item.type;
+    switch (readingType) {
+      case ProviderType.novel:
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                builder: (_) => NovelReaderScreen(
+                  sourceId: _readingSourceId(detail),
+                  // item.id, NOT detail.id: the chapter list and the action
+                  // sheet both read this title's marks under item.id, so writing
+                  // them under the source's own id put them where nothing looks.
+                  // In Z Mode the two differ (canonical `mal:…` vs the matched
+                  // source's show id), which is why a chapter dimmed on some
+                  // titles and never on others.
+                  showId: widget.item.id,
+                  showUrl: widget.item.url,
+                  showTitle: detail.title,
+                  cover: detail.cover ?? widget.item.cover,
+                  chapters: chapters,
+                  startIndex: index,
+                  malId: detail.malId ?? widget.item.malId,
+                  peek: peek,
+                ),
+              ),
+            )
+            .then(_refreshAfterReading);
+        return;
+      case ProviderType.manga:
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                builder: (_) => MangaReaderScreen(
+                  sourceId: _readingSourceId(detail),
+                  // item.id, NOT detail.id: the chapter list and the action
+                  // sheet both read this title's marks under item.id, so writing
+                  // them under the source's own id put them where nothing looks.
+                  // In Z Mode the two differ (canonical `mal:…` vs the matched
+                  // source's show id), which is why a chapter dimmed on some
+                  // titles and never on others.
+                  showId: widget.item.id,
+                  showUrl: widget.item.url,
+                  showTitle: detail.title,
+                  cover: detail.cover ?? widget.item.cover,
+                  chapters: chapters,
+                  startIndex: index,
+                  malId: detail.malId ?? widget.item.malId,
+                  peek: peek,
+                ),
+              ),
+            )
+            .then(_refreshAfterReading);
+        return;
+      case ProviderType.anime:
+      case ProviderType.movie:
+        return; // unreachable — _openPlayer only calls this for reading types
+    }
+  }
+
+  /// Netflix-style download label for the FIRST episode of the current season,
+  /// e.g. "Download S1:E1". Falls back to a plain "Download" when there are no
+  /// episodes to reference. (No downloads yet — label only; the button snacks.)
+  String _downloadLabel(
+    AppLocalizations l10n,
+    List<Episode> seasonEps,
+    bool hasMultipleSeasons,
+    int currentSeason,
+  ) {
+    if (seasonEps.isEmpty) return l10n.download;
+    final first = seasonEps.first;
+    final epNum = first.number?.toInt() ?? 1;
+    if (hasMultipleSeasons) {
+      return l10n.downloadSeasonEpisode(currentSeason, epNum);
+    }
+    return l10n.downloadEpisodeLabel(epNum);
+  }
+
+  /// Whether video progress exists at all for this title — the jump prompt has
+  /// nothing to protect on a title that's never been opened, and
+  /// [_resumeIndex] alone can't say, since it returns 0 both for "start over"
+  /// and for "you stopped in episode 1".
+  bool _hasVideoResume(List<Episode> eps) {
+    final store = sl<ResumeStore>();
+    for (final e in eps) {
+      if (store.get(widget.item.sourceId, widget.item.url, e.id) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Walk episodes and return the best resume target index. PRESERVED.
+  int _resumeIndex(List<Episode> eps) {
+    final store = sl<ResumeStore>();
+    int? highestMarked;
+    for (int j = 0; j < eps.length; j++) {
+      final mark = store.get(widget.item.sourceId, widget.item.url, eps[j].id);
+      if (mark != null) {
+        highestMarked = j;
+      }
+    }
+    if (highestMarked == null) return 0;
+    final mark = store.get(
+      widget.item.sourceId,
+      widget.item.url,
+      eps[highestMarked].id,
+    )!;
+    if (!mark.finished) return highestMarked;
+    if (highestMarked + 1 < eps.length) return highestMarked + 1;
+    return highestMarked;
+  }
+
+  /// Which episode Play opens, and whether that reads as "Continue". Local
+  /// playback wins when present (unchanged behaviour); with NO local marks it
+  /// falls back to the connected tracker's watched count — resume the first
+  /// episode beyond it — so a title you've only progressed on AniList/MAL/Simkl
+  /// still says "Continue". Single-season only, same limit as the grey-out.
+  ({int index, bool hasResume}) _resumeTarget(List<Episode> eps) {
+    if (eps.isEmpty) return (index: 0, hasResume: false);
+    final store = sl<ResumeStore>();
+    final hasLocal = eps.any(
+      (e) => store.get(widget.item.sourceId, widget.item.url, e.id) != null,
+    );
+    if (hasLocal) return (index: _resumeIndex(eps), hasResume: true);
+    final p = _trackerProgress;
+    if (p != null && p > 0 && seasonsOf(eps).length <= 1) {
+      for (var j = 0; j < eps.length; j++) {
+        final n = eps[j].number?.toInt();
+        if (n != null && n > p) return (index: j, hasResume: true);
+      }
+    }
+    return (index: 0, hasResume: false);
+  }
+
+  /// Reading counterpart of [_resumeTarget]: walks the chapters for the
+  /// highest one carrying a saved reading position (per-chapter, from
+  /// [ReadStore] — the reader's own scroll/page progress), advancing past it
+  /// once it's finished — same rule [_resumeIndex] applies to video resume
+  /// marks. Keyed the same way [NovelReaderScreen] saves them: showId is
+  /// [MediaItem.id], not the show url (see `_openReader`).
+  ///
+  /// With NO local mark (e.g. this device never opened a chapter, or the
+  /// reader's per-chapter position was never saved) it falls back to
+  /// [ReadHistory] — the cloud-synced last-read chapter — the same way
+  /// [_resumeTarget] falls back to the tracker's watched count for video.
+  /// Only when both come up empty does this say "start over" (chapter 0).
+  String _readingSourceId(MediaDetail detail) =>
+      detail.sourceId.isNotEmpty ? detail.sourceId : widget.item.sourceId;
+
+  ({int index, bool hasResume}) _readResumeIndex(
+    List<Episode> chapters, {
+    required String sourceId,
+  }) {
+    if (chapters.isEmpty) return (index: 0, hasResume: false);
+    final store = sl<ReadStore>();
+    int? highestMarked;
+    for (var j = 0; j < chapters.length; j++) {
+      if (store.get(sourceId, widget.item.id, chapters[j].id) != null) {
+        highestMarked = j;
+      }
+    }
+    if (highestMarked != null) {
+      if (!store.finished(
+        sourceId,
+        widget.item.id,
+        chapters[highestMarked].id,
+      )) {
+        return (index: highestMarked, hasResume: true);
+      }
+      // Not highestMarked + 1: a multi-group source lists every group's
+      // release in one list, so the next ROW is the same chapter again from
+      // another group. Stay with the group that was read.
+      final next =
+          adjacentChapterIndex(chapters, highestMarked, step: 1) ??
+          highestMarked;
+      return (index: next, hasResume: true);
+    }
+    final entry = sl<ReadHistory>().get(sourceId, widget.item.id);
+    if (entry != null) {
+      var idx = chapters.indexWhere((c) => c.id == entry.chapterId);
+      if (idx < 0) idx = chapters.indexWhere((c) => c.url == entry.chapterUrl);
+      if (idx >= 0) {
+        if (entry.finished) {
+          idx = adjacentChapterIndex(chapters, idx, step: 1) ?? idx;
+        }
+        return (index: idx, hasResume: true);
+      }
+    }
+    return (index: 0, hasResume: false);
+  }
+
+  Future<ReadEntry?> _loadCloudReadHistory(String sourceId) {
+    final history = sl<ReadHistory>();
+    final showId = widget.item.id;
+    final key = (sourceId, showId);
+    final pending = _cloudReadHistoryLookups[key];
+    if (pending != null) return pending;
+    if (!_cloudReadHistoryChecked.add(key)) {
+      return Future.value(history.get(sourceId, showId));
+    }
+
+    final future = () async {
+      try {
+        final entry = await history.refreshFromCloud(sourceId, showId);
+        if (entry != null && mounted) setState(() {});
+        return entry;
+      } catch (_) {
+        return null;
+      } finally {
+        _cloudReadHistoryLookups.remove(key);
+      }
+    }();
+    _cloudReadHistoryLookups[key] = future;
+    return future;
+  }
+
+  // ── Downloads ─────────────────────────────────────────────────────────────
+
+  /// The main Download button. A single movie/episode goes straight to the
+  /// server picker; a multi-episode title opens the batch sheet (season chips +
+  /// tappable episode selection + quality).
+  Future<void> _openDownloadSheet({
+    required MediaDetail detail,
+    required String category,
+    required Map<int, List<Episode>> episodesBySeason,
+    required int initialSeason,
+  }) async {
+    final total = episodesBySeason.values.fold<int>(0, (a, b) => a + b.length);
+    if (total == 0) {
+      _snack(context.l10n.noEpisodesToDownload);
+      return;
+    }
+    if (total == 1) {
+      await _pickSourceAndDownload(
+        episodesBySeason.values.first.first,
+        detail,
+        category,
+      );
+      return;
+    }
+    // Sub/Dub the title actually offers; the sheet only shows the toggle when
+    // there's more than one. Defaults to the page's current category (seeded
+    // from the per-title remembered choice).
+    final availableCategories = <String>[
+      if ((detail.subCount ?? 0) > 0) 'sub',
+      if ((detail.dubCount ?? 0) > 0) 'dub',
+    ];
+    final res =
+        await showModalBottomSheet<
+          ({String quality, String category, List<Episode> episodes})
+        >(
+          context: context,
+          backgroundColor: AppColors.surface,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (_) => _DownloadSheet(
+            // Phone-only Minimal wheel (Settings → Interface). TV stays on the
+            // well-tested Classic grid regardless of the pref.
+            minimal:
+                !sl<AppMode>().isTv &&
+                sl<PlaybackPrefs>().batchDownloadStyle == 'minimal',
+            title: detail.title,
+            episodesBySeason: episodesBySeason,
+            initialSeason: initialSeason,
+            initialCategory: category,
+            availableCategories: availableCategories,
+            coverUrl: detail.cover ?? widget.item.cover ?? '',
+            coverHeaders: detail.coverHeaders ?? widget.item.coverHeaders,
+            resolve: (ep) => sl<CatalogueRepository>().sources(
+              ep.url,
+              sourceId: widget.item.sourceId,
+            ),
+            resolveEpisodes: _episodesByCategory,
+          ),
+        );
+    if (res == null || !mounted) return;
+    _startDownload(detail, res.category, res.quality, res.episodes);
+  }
+
+  /// Re-resolve a title's episodes for a given sub/dub [category] (without
+  /// touching the detail page's own toggle), grouped by season.
+  Future<Map<int, List<Episode>>> _episodesByCategory(String category) async {
+    final d = await sl<CatalogueRepository>().detail(
+      widget.item.url,
+      category: category,
+      sourceId: widget.item.sourceId,
+    );
+    // Best-effort per-episode descriptions on a category switch. Prefer the
+    // cubit's resolved detail (promoted malId for movie-source anime).
+    var eps = d.episodes;
+    if (mounted) {
+      final cd = context.read<DetailCubit>().state.detail ?? d;
+      eps = await sl<EpisodeMetadataService>().enrich(
+        episodes: eps,
+        type: cd.type,
+        malId: cd.malId,
+        tmdbId: cd.tmdbId,
+        tmdbIsTv: cd.tmdbIsTv,
+      );
+    }
+    final byS = <int, List<Episode>>{};
+    for (final e in eps) {
+      (byS[seasonOf(e) ?? 1] ??= <Episode>[]).add(e);
+    }
+    if (byS.isEmpty) byS[1] = eps;
+    return byS;
+  }
+
+  /// Per-episode / movie download → resolve sources, let the user pick a
+  /// server/mirror, then download that exact url + headers.
+  Future<void> _saveTitleToFolder() async {
+    final categories = sl<CategoryStore>().all();
+    if (categories.isEmpty) {
+      _snack('Belum ada folder. Buat folder terlebih dahulu di My List.');
+      return;
+    }
+    final selected = await showModalBottomSheet<ListCategory>(
+      context: context,
+      backgroundColor: const Color(0xFF171717),
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(4, 8, 4, 12),
+              child: Text('Simpan ke folder', style: TextStyle(
+                color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700,
+              )),
+            ),
+            for (final folder in categories)
+              ListTile(
+                leading: const Icon(Icons.folder_outlined, color: Colors.white70),
+                title: Text(folder.name, style: const TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(sheetContext, folder),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+    final list = sl<MyListStore>();
+    if (!list.contains(widget.item)) {
+      await list.add(widget.item);
+    }
+    await sl<CategoryStore>().setMembership(widget.item, selected.id, true);
+    if (mounted) _snack('Disimpan ke folder ${selected.name}');
+  }
+
+  Future<void> _downloadSingle(
+    Episode ep,
+    MediaDetail detail,
+    String category,
+  ) => _pickSourceAndDownload(ep, detail, category);
+
+  /// Manga/novel chapter → straight to the chapter downloader. No source
+  /// picker here: a chapter has one url, not a list of mirrors to choose from.
+  Future<void> _downloadChapter(Episode ep, MediaDetail detail) =>
+      _downloadChapters([ep], detail);
+
+  /// Same thing for a batch — one queue write for the lot rather than one per
+  /// chapter, which is what a "download all" on a long series needs.
+  Future<void> _downloadChapters(List<Episode> eps, MediaDetail detail) {
+    final item = widget.item;
+    // The SOURCE that owns these chapters, not the item's id. A metadata
+    // title's item is the `zm` pseudo-source, and the queue later asks
+    // `pages(chapterUrl, sourceId:)` — with `zm` that reaches the source
+    // registry, which has no such source, so every manga download failed.
+    // The reader already opens with `detail.sourceId` for the same reason.
+    final sourceId = detail.sourceId.isNotEmpty
+        ? detail.sourceId
+        : item.sourceId;
+    return sl<ChapterDownloader>().enqueueMany(
+      chapters: eps,
+      sourceId: sourceId,
+      showId: item.id,
+      showTitle: detail.title,
+      cover: detail.cover ?? item.cover,
+      mode: detail.type == ProviderType.novel
+          ? ContentMode.novel
+          : ContentMode.manga,
+    );
+  }
+
+  Future<void> _pickSourceAndDownload(
+    Episode ep,
+    MediaDetail detail,
+    String category,
+  ) async {
+    final item = widget.item;
+    final res =
+        await showModalBottomSheet<
+          ({VideoSource chosen, List<VideoSource> all})
+        >(
+          context: context,
+          backgroundColor: AppColors.surface,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (_) => _SourcePickerSheet(
+            title: ep.title.trim().isNotEmpty ? ep.title : detail.title,
+            category: category,
+            resolve: () => sl<CatalogueRepository>().sources(
+              ep.url,
+              sourceId: item.sourceId,
+            ),
+          ),
+        );
+    if (res == null || !mounted) return;
+    unawaited(
+      sl<DownloadManager>().enqueueSource(
+        sourceId: item.sourceId,
+        showId: item.id,
+        showTitle: detail.title,
+        cover: detail.cover ?? item.cover,
+        coverHeaders: detail.coverHeaders ?? item.coverHeaders,
+        showUrl: item.url,
+        category: category,
+        episode: ep,
+        source: res.chosen,
+        qualityLabel: res.chosen.quality ?? 'auto',
+        fallbacks: res.all,
+        nowMs: DateTime.now().millisecondsSinceEpoch,
+        malId: detail.malId ?? item.malId,
+      ),
+    );
+    _snack(context.l10n.addedToDownloads);
+  }
+
+  void _startDownload(
+    MediaDetail detail,
+    String category,
+    String quality,
+    List<Episode> episodes,
+  ) {
+    final item = widget.item;
+    unawaited(
+      sl<DownloadManager>().enqueueEpisodes(
+        sourceId: item.sourceId,
+        showId: item.id,
+        showTitle: detail.title,
+        cover: detail.cover ?? item.cover,
+        coverHeaders: detail.coverHeaders ?? item.coverHeaders,
+        showUrl: item.url,
+        category: category,
+        quality: quality,
+        episodes: episodes,
+        nowMs: DateTime.now().millisecondsSinceEpoch,
+        malId: detail.malId ?? item.malId,
+      ),
+    );
+    _snack(
+      episodes.length == 1
+          ? context.l10n.addedToDownloads
+          : context.l10n.downloadingNEpisodes(episodes.length),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (sl<AppMode>().isTv) return DetailScreenTv(item: widget.item);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        body: SafeArea(
+          top: false,
+          child: Stack(
+          children: [
+          // Adaptive colour stays behind the single scrolling detail page.
+          if (ThemeController.adaptiveColour) PosterTintLayer(notifier: _tint),
+          Material(
+            type: MaterialType.transparency,
+            child: BlocBuilder<DetailCubit, DetailState>(
+              builder: (context, state) {
+                if (state.status == DetailStatus.loading) {
+                  // The row that was tapped already carried a title, a cover and a
+                  // year, and a full-screen skeleton throws all of that away to
+                  // animate a blank page. Frames prove the app is NOT stuck here -
+                  // 18ms median, 90th 23ms, while tapping through screens - it is
+                  // responsive and simply showing nothing new, because the episodes
+                  // are a source resolve that has not come back yet. The perceived
+                  // hang is the empty screen, not the wait.
+                  //
+                  // So paint what we already know, immediately, and let the episode
+                  // tab carry its own loading skeleton for the part genuinely still
+                  // in flight. A viewer who backs out before the resolve returns sees
+                  // the title they tapped either way, and nobody stares at a
+                  // placeholder for a source sweep.
+                  final partial = _detailFromItem(widget.item);
+                  if (partial != null) {
+                    return _buildBody(
+                      context,
+                      state.copyWith(
+                        status: DetailStatus.success,
+                        detail: partial,
+                        // Nothing is known yet, so the episode tab shows its skeleton
+                        // rather than an empty list reading as "this source has no
+                        // episodes".
+                        episodesLoading: true,
+                      ),
+                      partial,
+                      sourceMetadataReady: false,
+                    );
+                  }
+                  return const _DetailSkeleton(heroHeight: _expandedHeight);
+                }
+                if (state.cloudflareUrl != null) {
+                  return _DetailCloudflareBlocked(
+                    url: state.cloudflareUrl!,
+                    isMangayomi:
+                        widget.item.sourceId.startsWith('mg:') ||
+                        (state.detail?.sourceId.startsWith('mg:') ?? false),
+                  );
+                }
+                if (state.status == DetailStatus.error ||
+                    state.detail == null) {
+                  // The row you tapped already carried a title and a cover, so a
+                  // failed fetch does not have to blank the page — keep what we
+                  // have and say what is missing over it. A rate limit especially:
+                  // it passes on its own, and the wait is the useful part.
+                  final fallback = _detailFromItem(widget.item);
+                  if (fallback != null) {
+                    return Stack(
+                      children: [
+                        _buildBody(
+                          context,
+                          state,
+                          fallback,
+                          sourceMetadataReady: false,
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: _LoadFailureBanner(
+                            service: _sourceLabel(
+                              widget.item.sourceId,
+                              url: widget.item.url,
+                              savedFrom: widget.item.savedFrom,
+                            ),
+                            // Same distinction Home draws: a metadata catalogue and
+                            // an installed source fail alike but read differently.
+                            isMetadataProvider:
+                                widget.item.sourceId == ZmodeIds.sourceId,
+                            error: state.error,
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  // Offline is not the title failing: saying "failed to load this
+                  // title" over a dropped connection sends people hunting a
+                  // problem that isn't there.
+                  final offline = state.error == 'offline';
+                  return EmptyState(
+                    icon: offline
+                        ? Icons.wifi_off_rounded
+                        : Icons.error_outline,
+                    message: offline
+                        ? '${context.l10n.offlineTitle}\n${context.l10n.offlineBody}'
+                        : _limitSeconds(state.error) != null
+                        ? context.l10n.providerNeedsBreatherBody(
+                            _limitSeconds(state.error)!,
+                          )
+                        : context.l10n.failedToLoadThisTitle,
+                  );
+                }
+                return _buildBody(context, state, state.detail!);
+              },
+            ),
+          ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Seconds left on a rate limit, or null when [error] is anything else.
+  static int? _limitSeconds(String? error) =>
+      error != null && error.startsWith('rate_limited:')
+      ? int.tryParse(error.substring('rate_limited:'.length))
+      : null;
+
+  /// A page built from the row that was tapped, so a failed fetch keeps the
+  /// cover and title instead of blanking. Null when the item itself is too
+  /// thin to render anything worth keeping.
+  MediaDetail? _detailFromItem(MediaItem item) {
+    if (item.title.isEmpty) return null;
+    return MediaDetail(
+      id: item.id,
+      title: item.title,
+      englishTitle: item.englishTitle,
+      cover: item.cover,
+      coverHeaders: item.coverHeaders,
+      banner: item.banner,
+      url: item.url,
+      type: item.type,
+      sourceId: item.sourceId,
+      malId: item.malId,
+      tmdbId: item.tmdbId,
+      tmdbIsTv: item.tmdbIsTv,
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    DetailState state,
+    MediaDetail detail, {
+    bool sourceMetadataReady = true,
+  }) {
+    final item = widget.item;
+    final cubit = context.read<DetailCubit>();
+    final category = state.category;
+    final selectedSeason = state.selectedSeason;
+    final eps = detail.episodes;
+    final store = sl<ResumeStore>();
+    // Manga/novel: no player, no sub/dub, no video downloads — drives the
+    // Play→Read relabel and hides the download affordances below.
+    final isReading =
+        detail.type == ProviderType.novel || detail.type == ProviderType.manga;
+    // Kick the (cached, once-per-malId) filler lookup for the "Filler" badge.
+    if (detail.sourceId != ZmodeIds.sourceId) {
+      _ensureFiller(detail.malId ?? item.malId);
+    }
+    // Kick the (once-per-detail) tracker-progress lookup for grey-out.
+    _maybeFetchTrackerProgress(detail);
+
+    // Resume / play button logic. Local playback first; else fall back to the
+    // tracker's watched count (see _resumeTarget). Local case is unchanged.
+    // Reading titles use their OWN progress store instead — _resumeTarget's
+    // ResumeStore never carries a mark for a chapter, so it would always
+    // (harmlessly but wrongly) say "start over".
+    final resume = _resumeTarget(eps);
+    final readingSourceId = _readingSourceId(detail);
+    if (isReading) unawaited(_loadCloudReadHistory(readingSourceId));
+    final readResume = isReading
+        ? _readResumeIndex(eps, sourceId: readingSourceId)
+        : null;
+    final resumeIdx = isReading ? readResume!.index : resume.index;
+    // Warm the episode Play/Continue will start, but only after the viewer has
+    // remained on the detail page. Reading providers do not resolve video.
+    if (!isReading && eps.isNotEmpty) {
+      _maybePrefetch(eps[resumeIdx].url, item.sourceId);
+    }
+    final hasAnyMark = eps.any(
+      (e) => store.get(item.sourceId, item.url, e.id) != null,
+    );
+    final episodeNum = eps.isNotEmpty
+        ? (eps[resumeIdx].number?.toInt() ?? resumeIdx + 1)
+        : 1;
+    final buttonLabel = isReading
+        ? (readResume!.hasResume
+              ? context.l10n.continueLabel
+              : context.l10n.read)
+        : (resume.hasResume
+              ? context.l10n.continueEpisode(episodeNum)
+              : context.l10n.play);
+
+    // Tall phone hero: prefer TMDB's portrait art; other sources stay as-is.
+    final coverUrl =
+        mobileHeroArt(
+          detail.cover ?? item.cover,
+          detail.banner ?? item.banner,
+        ) ??
+        '';
+    // The poster is intentionally reused as the backdrop; do not use the
+    // wide AniList banner for this page's reference design.
+    final heroPosterUrl = detail.cover ?? item.cover ?? coverUrl;
+    final coverHeaders = detail.coverHeaders ?? item.coverHeaders;
+    final hasCover = coverUrl.isNotEmpty;
+
+    if (ThemeController.adaptiveColour && hasCover && _tintUrl != coverUrl) {
+      _tintUrl = coverUrl;
+      unawaited(
+        extractDominantColor(coverUrl, coverHeaders).then((c) {
+          if (!mounted || _tintUrl != coverUrl) return;
+          _tint.value = c == null ? null : tintFromDominant(c);
+        }),
+      );
+    }
+
+    // Season data. PRESERVED.
+    final seasonSet = seasonsOf(eps);
+    final hasMultipleSeasons = seasonSet.length > 1;
+    final currentSeason = hasMultipleSeasons
+        ? (seasonSet.contains(selectedSeason)
+              ? selectedSeason
+              : seasonSet.first)
+        : 1;
+    final seasonEps = hasMultipleSeasons
+        ? episodesInSeason(eps, currentSeason)
+        : eps;
+
+    // Episodes grouped by season for the download sheet's season chips.
+    final episodesBySeason = <int, List<Episode>>{};
+    if (hasMultipleSeasons) {
+      for (final e in eps) {
+        (episodesBySeason[seasonOf(e) ?? 1] ??= <Episode>[]).add(e);
+      }
+    } else {
+      episodesBySeason[1] = eps;
+    }
+
+    // ── Status label and detail metadata ───────────────────────────────────
+    final statusStr = detail.status == MediaStatus.unknown && detail.startDate != null && detail.startDate!.isAfter(DateTime.now())
+        ? 'Segera'
+        : statusLabel(detail.status);
+    final rawFormat = detail.format?.trim();
+    final formatStr = rawFormat == null || rawFormat.isEmpty
+        ? null
+        : switch (rawFormat.toLowerCase().replaceAll('_', ' ').trim()) {
+            'tv' => 'TV',
+            'tv short' => 'TV Short',
+            'tv special' => 'TV Special',
+            'ova' => 'OVA',
+            'ona' => 'ONA',
+            'movie' => 'Movie',
+            'special' => 'Special',
+            'music' => 'Music',
+            _ => rawFormat,
+          };
+    String dateLabel(DateTime date) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    }
+    final countryLabel = switch (detail.country?.toUpperCase()) {
+      'JP' => 'Jepang',
+      'KR' => 'Korea',
+      'CN' => 'China',
+      'TW' => 'Taiwan',
+      _ => detail.country,
+    };
+    final dateLine = [
+      if (countryLabel?.isNotEmpty == true) countryLabel!,
+      if (detail.startDate != null)
+        '${dateLabel(detail.startDate!)}${detail.endDate == null ? '' : ' – ${dateLabel(detail.endDate!)}'}',
+    ].join(' · ');
+
+    final nextAiring = detail.airingAt;
+    final broadcastSchedule = nextAiring == null
+        ? null
+        : () {
+            final wib = nextAiring.toUtc().add(const Duration(hours: 7));
+            const weekdays = [
+              'Senin', 'Selasa', 'Rabu', 'Kamis',
+              'Jumat', 'Sabtu', 'Minggu',
+            ];
+            final hour = wib.hour.toString().padLeft(2, '0');
+            final minute = wib.minute.toString().padLeft(2, '0');
+            return '${weekdays[wib.weekday - 1]} $hour:$minute WIB';
+          }();
+
+    // ── Netflix-style meta line: "2010 · 10 Seasons · Completed" ────────────
+    // Join only what we actually HAVE with " · " (no faked rating/HD/CC).
+    // Seasons when multi-season, else episode count.
+    //
+    // Three items, and that is the whole line. It is ONE line with an
+    // ellipsis, so a fourth does not add anything — it pushes the end off the
+    // edge and shows less than three did. Score, format and per-episode
+    // duration each got a turn here and each cost more than it paid; they
+    // live in the Details tab now, where there is room to read them.
+    final metaParts = <String>[];
+    if ((detail.year ?? '').isNotEmpty) {
+      metaParts.add(_yearWithSeason(detail.year!, detail.startDate));
+    }
+    if (detail.score != null) {
+      metaParts.add('★ ${(detail.score! / 10).toStringAsFixed(2)}');
+    }
+    if (detail.popularity != null) {
+      final count = detail.popularity!;
+      final compact = count >= 1000000
+          ? '${_compactDecimal(count / 1000000)}JT'
+          : count >= 100000
+              ? '${(count / 1000).round()}K'
+              : count >= 1000
+                  ? '${_compactDecimal(count / 1000)}K'
+                  : _thousands(count);
+      metaParts.add('◉ $compact');
+    }
+    final metaLine = metaParts.join('  ·  ');
+
+    // ── Download button label: "Download S{season}:E{n}" when we can derive
+    // the first episode of the current season, else a plain "Download". ──────
+    final downloadLabel = _downloadLabel(
+      context.l10n,
+      seasonEps,
+      hasMultipleSeasons,
+      currentSeason,
+    );
+
+    // Detail sections are rendered sequentially below in the same scroll view.
+
+    // Friendly provider name + its origin repo, so the user can tell which repo
+    // a source came from. JS providers live in the registry; CloudStream sources
+    // live in the CS manager — without the CS lookup this fell back to the raw
+    // sourceId ("cs:Provider@31@tag"), leaking the file-id suffix.
+    final sourceName = _sourceLabel(
+      item.sourceId,
+      url: item.url,
+      prefer: item.type == ProviderType.anime
+          ? PreferredProvider.anilist
+          : (widget.prefer ?? _preferFromName(item.savedFrom)),
+      savedFrom: item.savedFrom,
+    );
+
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: const TextScaler.linear(1.0),
+      ),
+      child: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+
+        // ── 1. Hero: backdrop + overlapping poster + status/total ──────────
+        AnimeDetailHeroSliver(
+          coverUrl: heroPosterUrl,
+          posterUrl: heroPosterUrl,
+          coverHeaders: coverHeaders,
+          sourceLabel: detail.anilistId != null ? 'AniList' : sourceName,
+          animeId: detail.anilistId?.toString() ?? detail.id,
+          onAniListTap: detail.anilistId == null ? null : () => launchUrl(
+            Uri.parse('https://anilist.co/anime/${detail.anilistId}'),
+            mode: LaunchMode.externalApplication,
+          ),
+          maxHeight: _expandedHeight,
+        ),
+
+        // ── New independent title and metadata block.
+        SliverToBoxAdapter(
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SearchScreen(initialQuery: detail.title),
+              ),
+            ),
+            child: AnimeDetailTitleBlock(
+              title: detail.title,
+              englishTitle: detail.englishTitle,
+              romajiTitle: detail.romajiTitle,
+              metaLine: metaLine,
+              format: formatStr,
+              status: statusStr,
+              ageRating: detail.ageRating,
+              dateLine: dateLine,
+              broadcastLabel: detail.broadcastLabel ?? broadcastSchedule,
+              rank: detail.rank,
+            ),
+          ),
+        ),
+
+        if (detail.genres.isNotEmpty || detail.studios.isNotEmpty || detail.tags.isNotEmpty)
+          SliverToBoxAdapter(
+            child: _DetailCredits(
+              genres: detail.genres,
+              studios: detail.studios,
+              tags: detail.tags,
+              onGenreTap: (genre) => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => SearchScreen(initialFilters: MetaFilters(genres: [genre])),
+                ),
+              ),
+              onStudioTap: (studio) => Navigator.of(context).push(StudioPage.route(studio)),
+              onTagsTap: () => Navigator.of(context).push(
+                AnimeTagsPage.route(title: detail.title, tags: detail.tags),
+              ),
+            ),
+          ),
+
+
+        // ── 3. White Play + gray Download buttons (full-width, stacked) ─────
+        // The trailer section below opens the native in-app trailer player.
+        //
+        // Each button carries its own 16px side padding (rather than one
+        // Padding wrapping the whole Column) so the Z Mode selector below
+        // can sit as a plain last child: it already supplies its own 16px
+        // side padding (it's normally a top-level sliver child), and a
+        // shared wrapper would double that indent.
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: AnimeDetailActionButton(
+                    primary: true,
+                    loading: state.episodesLoading,
+                    label: buttonLabel,
+                    icon: isReading ? Icons.menu_book_rounded : Icons.play_arrow_rounded,
+                    onPressed: eps.isNotEmpty
+                        ? () => _openPlayer(eps, resumeIdx, detail, category)
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: AnimeDetailActionButton(
+                    loading: state.episodesLoading,
+                    label: isReading ? downloadLabel : (_inMyList ? 'Tersimpan' : 'Simpan'),
+                    active: !isReading && _inMyList,
+                    primary: !isReading && !_inMyList,
+                    icon: isReading ? Icons.file_download_outlined : (_inMyList ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
+                    onPressed: isReading
+                        ? (eps.isEmpty
+                            ? null
+                            : () => _openDownloadSheet(
+                                detail: detail,
+                                category: category,
+                                episodesBySeason: episodesBySeason,
+                                initialSeason: currentSeason,
+                              ))
+                        : () => unawaited(_openListSheet(detail)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.bg,
+                    border: Border.all(color: AppColors.textTertiary.withValues(alpha: 0.48)),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: PopupMenuButton<String>(
+                    tooltip: 'Lainnya',
+                    icon: const Icon(Icons.more_horiz_rounded, color: AppColors.textPrimary, size: 21),
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'save':
+                          unawaited(_openListSheet(detail));
+                          break;
+                        case 'resolve':
+                          if (eps.isNotEmpty) _sweepForEpisode(eps[resumeIdx]);
+                          break;
+                        case 'download':
+                          unawaited(_openDownloadSheet(
+                            detail: detail,
+                            category: category,
+                            episodesBySeason: episodesBySeason,
+                            initialSeason: currentSeason,
+                          ));
+                          break;
+                        case 'tracking':
+                          unawaited(_openTrackingSheet(detail));
+                          break;
+                        case 'share':
+                          _share(detail, sourceName);
+                          break;
+                        case 'web':
+                          unawaited(_openSourceSite());
+                          break;
+                        case 'epub':
+                          showEpubExportSheet(
+                            context,
+                            sourceId: detail.sourceId.isNotEmpty ? detail.sourceId : item.sourceId,
+                            showTitle: detail.title,
+                            chapters: eps,
+                          );
+                          break;
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      if (!isReading)
+                        const PopupMenuItem(value: 'resolve', child: Text('Auto Resolve Sumber')),
+                      PopupMenuItem(
+                        value: 'save',
+                        child: Text(_inMyList ? 'Ubah status daftar' : 'Simpan anime'),
+                      ),
+                      PopupMenuItem(
+                        value: 'download',
+                        child: Text(isReading ? 'Unduh bab' : 'Unduh episode'),
+                      ),
+                      if (_trackingAvailable(detail))
+                        const PopupMenuItem(value: 'tracking', child: Text('Sinkronkan progres')),
+                      const PopupMenuItem(value: 'share', child: Text('Bagikan')),
+                      const PopupMenuItem(value: 'web', child: Text('Buka halaman sumber')),
+                      if (detail.type == ProviderType.novel)
+                        const PopupMenuItem(value: 'epub', child: Text('Ekspor EPUB')),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        if ((cleanSynopsis(detail.description) ?? '').isNotEmpty)
+          SliverToBoxAdapter(
+            child: AnimeDetailSynopsisSection(
+              text: cleanSynopsis(detail.description) ?? '',
+            ),
+          ),
+
+        // Trailer is part of the same AniList detail response; no follow-up API call.
+        if (!isReading && detail.trailerUrl != null)
+          SliverToBoxAdapter(
+            child: _AniListTrailerSection(
+              url: detail.trailerUrl!,
+              thumbnail: detail.trailerThumbnail,
+            ),
+          ),
+        if (!isReading)
+          SliverToBoxAdapter(
+            child: AnimeDetailCharacterRail(
+              cast: state.cast.isNotEmpty
+                  ? state.cast
+                  : [for (final name in detail.cast) CastMember(name: name)],
+              loading: state.extrasLoading,
+              onRetry: () => context.read<DetailCubit>().retryExtras(),
+              onOpenPerson: (ref) => Navigator.of(
+                context,
+              ).push(PersonPage.route(ref, sourceId: widget.item.sourceId)),
+            ),
+          ),
+        if (!isReading)
+          SliverToBoxAdapter(
+            child: AnimeDetailSeasonRail(
+              seasons: state.seasons,
+              relations: state.relations.isNotEmpty ? state.relations : detail.relations,
+              loading: state.seasonsLoading,
+              onOpenSeason: (season) => _openRelation(
+                MediaRelation(
+                  title: season.title,
+                  cover: season.cover,
+                  relation: 'Season ${season.number}',
+                  malId: season.malId,
+                  anilistId: season.anilistId,
+                ),
+              ),
+              onOpenRelation: _openRelation,
+            ),
+          ),
+
+
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: _EpisodesTab(
+            loading: state.episodesLoading,
+            eps: eps,
+            seasonEps: seasonEps,
+            fillerEps: _fillerEps,
+            hasMultipleSeasons: hasMultipleSeasons,
+            seasonSet: seasonSet,
+            currentSeason: currentSeason,
+            onSelectSeason: cubit.selectSeason,
+            coverUrl: coverUrl,
+            coverHeaders: coverHeaders,
+            sourceId: item.sourceId,
+            // Downloads name the source that has the files; progress above
+            // stays on the canonical id.
+            downloadSourceId: detail.sourceId.isNotEmpty
+                ? detail.sourceId
+                : item.sourceId,
+            showId: item.id,
+            showUrl: item.url,
+            resumeIndex: _resumeIndex,
+            hasAnyMark: hasAnyMark,
+            autoScrollToResume: widget.autoScrollToResume,
+            targetEpisodeId: widget.targetEpisodeId,
+            trackerProgress: _trackerProgress,
+            nextAiringEpisode: _nextAiringEpisode,
+            nextAiringAt: _nextAiringAt,
+            showPopularity: detail.popularity,
+            totalEpisodes: eps.length,
+            isAiring: detail.status == MediaStatus.ongoing,
+            onOpen: (fullIndex) {
+              if (isReading) {
+                _openPlayer(eps, fullIndex, detail, category);
+                return;
+              }
+              // Open the player directly; do not show the extra episode landing page.
+              _openPlayer(eps, fullIndex, detail, category);
+            },
+            // Reading has no player to pick, but it does have the marking
+            // rows — gating the whole menu on the player is what hid them.
+            onEpisodeMenu: (fullIndex) =>
+                _pickPlayerFor(eps, fullIndex, detail, category),
+            onRefresh: cubit.refresh,
+            onDownload: (ep) => isReading
+                ? _downloadChapter(ep, detail)
+                : _downloadSingle(ep, detail, category),
+            onDownloadMany: isReading
+                ? (eps) => _downloadChapters(eps, detail)
+                : null,
+            resumeChapter: readResume == null || eps.isEmpty
+                ? null
+                : eps[readResume.index],
+            // Only a catalogue title has another source to fall back on.
+            onSwitchSource: ZmodeIds.isZ(item.url) ? _switchSource : null,
+            isReading: isReading,
+          ),
+          ),
+        ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The bar shown when a detail page only half-loaded.
+///
+/// Named after the service that actually failed, not the app: "couldn't load"
+/// on its own reads as Zangetsu being broken, when the usual causes are
+/// AniList rate-limiting or a source being down. It sits over the page rather
+/// than replacing it — the row you tapped already had a cover and a title, and
+/// throwing those away to show an error helps nobody.
+///
+/// It tells you and gets out of the way. No retry button: the page has two
+/// recoveries already — switching source re-runs the fetch, and reopening it
+/// starts clean — and a button that mostly cannot help (a rate limit rejects
+/// it before it leaves the device) is worse than no button.
+class _LoadFailureBanner extends StatefulWidget {
+  const _LoadFailureBanner({
+    required this.service,
+    required this.isMetadataProvider,
+    required this.error,
+  });
+
+  /// What failed, in the user's terms — "AniList", "Simkl", "AniKoto".
+  final String service;
+
+  /// A metadata catalogue rather than an installed source.
+  final bool isMetadataProvider;
+
+  final String? error;
+
+  @override
+  State<_LoadFailureBanner> createState() => _LoadFailureBannerState();
+}
+
+class _LoadFailureBannerState extends State<_LoadFailureBanner> {
+  /// It sits over the scroll view, so it hides the last of the page while it
+  /// is up. Long enough to read, short enough not to be in the way.
+  static const Duration _visibleFor = Duration(seconds: 4);
+
+  bool _dismissed = false;
+  Timer? _hide;
+
+  @override
+  void initState() {
+    super.initState();
+    _armAutoHide();
+  }
+
+  @override
+  void didUpdateWidget(_LoadFailureBanner old) {
+    super.didUpdateWidget(old);
+    if (old.error != widget.error) _armAutoHide(); // a new failure, shown again
+  }
+
+  @override
+  void dispose() {
+    _hide?.cancel();
+    super.dispose();
+  }
+
+  void _armAutoHide() {
+    _hide?.cancel();
+    _dismissed = false;
+    _hide = Timer(_visibleFor, () {
+      if (mounted) setState(() => _dismissed = true);
+    });
+  }
+
+  int? get _limitSeconds {
+    final e = widget.error;
+    return e != null && e.startsWith('rate_limited:')
+        ? int.tryParse(e.substring('rate_limited:'.length))
+        : null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final secs = _limitSeconds;
+    final offline = widget.error == 'offline';
+    // Same words Home uses for the same failure — one voice, so the app does
+    // not describe an AniList outage two different ways depending on where you
+    // happen to be standing.
+    final (icon, title, body) = offline
+        ? (Icons.wifi_off_rounded, l10n.offlineTitle, l10n.offlineBody)
+        : secs != null
+        ? (
+            Icons.hourglass_bottom_rounded,
+            l10n.providerNeedsBreather(widget.service),
+            l10n.providerNeedsBreatherBody(secs),
+          )
+        : (
+            Icons.cloud_off_rounded,
+            widget.isMetadataProvider
+                ? l10n.providerHavingAMoment(widget.service)
+                : l10n.sourceNotAnswering(widget.service),
+            l10n.showingWhatWeHave,
+          );
+    return IgnorePointer(
+      ignoring: _dismissed,
+      child: AnimatedOpacity(
+        opacity: _dismissed ? 0 : 1,
+        duration: const Duration(milliseconds: 220),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.settingsCard,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.hairline),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x66000000),
+                    blurRadius: 16,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+                child: Row(
+                  // Centred against the whole text block. Top-aligned, the
+                  // icon sat level with the title and looked adrift once the
+                  // body wrapped to a second line.
+                  children: [
+                    Icon(icon, size: 20, color: AppColors.accent),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.body.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(body, style: AppText.caption),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: l10n.dismiss,
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 32,
+                        height: 32,
+                      ),
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      color: AppColors.textTertiary,
+                      onPressed: () {
+                        _hide?.cancel();
+                        setState(() => _dismissed = true);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+), '');
+}
+
 class _DetailView extends StatefulWidget {
   const _DetailView({required this.item, this.prefer, this.autoScrollToResume = false, this.targetEpisodeId});
   final MediaItem item;
@@ -2175,9 +4430,13 @@ class _DetailViewState extends State<_DetailView> {
     }
     if (detail.popularity != null) {
       final count = detail.popularity!;
-      final compact = count >= 1000
-          ? '${(count / 1000).toStringAsFixed(1)}K'
-          : _thousands(count);
+      final compact = count >= 1000000
+          ? '${_compactDecimal(count / 1000000)}JT'
+          : count >= 100000
+              ? '${(count / 1000).round()}K'
+              : count >= 1000
+                  ? '${_compactDecimal(count / 1000)}K'
+                  : _thousands(count);
       metaParts.add('◉ $compact');
     }
     final metaLine = metaParts.join('  ·  ');
