@@ -25,14 +25,9 @@ import 'core/logging/crash_reports.dart';
 import 'core/platform/apple_tv.dart';
 import 'core/platform/android_mpv.dart';
 import 'core/platform/trusted_certificates.dart';
-import 'core/notify/cs_notify.dart';
-import 'core/notify/notification_service.dart';
-import 'core/notify/push_service.dart';
 import 'core/ui/home_rows_prefs.dart';
 import 'core/ui/route_observer.dart';
 import 'core/ui/poster_card.dart';
-import 'core/notify/subscription_checker.dart';
-import 'core/notify/subscription_store.dart';
 import 'core/playback/category_store.dart';
 import 'core/playback/my_list.dart';
 import 'core/playback/history_merge.dart';
@@ -286,12 +281,7 @@ class _WatchAppState extends State<WatchApp> with WidgetsBindingObserver {
               }
             });
           }
-          if (!_handledLaunchTaps) {
-            _handledLaunchTaps = true;
-            WidgetsBinding.instance.addPostFrameCallback(
-              (_) => NotificationService.instance.handleLaunch(),
-            );
-          }
+
         })
         .catchError((Object e, StackTrace st) {
           if (!mounted) return;
@@ -342,7 +332,6 @@ class _WatchAppState extends State<WatchApp> with WidgetsBindingObserver {
       _bootFailed = false;
       _bootError = null;
       _bootStack = null;
-      _handledLaunchTaps = false;
       _boot = _startBoot();
     });
     _tvShellGate.value = false;
@@ -350,7 +339,6 @@ class _WatchAppState extends State<WatchApp> with WidgetsBindingObserver {
   }
 
   bool? _onboardedOverride; // set true once onboarding finishes this session
-  bool _handledLaunchTaps = false; // route a notification-tap launch once
   DateTime? _lastSubscriptionCheck;
   DateTime? _lastAppUpdateCheck;
   bool _appUpdateCheckRunning = false;
@@ -358,30 +346,7 @@ class _WatchAppState extends State<WatchApp> with WidgetsBindingObserver {
   /// Maximum age of the local cloud snapshot before a launch/resume pull.
   /// This balances cross-device freshness against repeated database reads.
   static const Duration _syncFreshness = Duration(minutes: 10);
-  static const Duration _subscriptionCheckCooldown = Duration(minutes: 15);
 
-  Future<void> _checkSubscriptions({bool syncCloudStream = false}) async {
-    if (!Platform.isAndroid ||
-        !sl.isRegistered<SubscriptionChecker>() ||
-        !sl.isRegistered<SubscriptionStore>()) {
-      return;
-    }
-    final now = DateTime.now();
-    if (_lastSubscriptionCheck != null &&
-        now.difference(_lastSubscriptionCheck!) < _subscriptionCheckCooldown) {
-      return;
-    }
-    _lastSubscriptionCheck = now;
-    try {
-      if (syncCloudStream) {
-        await CsNotify.sync(sl<SubscriptionStore>().all());
-      }
-      await sl<SubscriptionChecker>().checkAll();
-      await CsNotify.checkNow();
-    } catch (e) {
-      AppLogger.instance.log('[notify] foreground check failed · $e');
-    }
-  }
 
   void _onThemeChanged() {
     if (mounted) {
@@ -468,7 +433,6 @@ class _WatchAppState extends State<WatchApp> with WidgetsBindingObserver {
         unawaited(sl<AuthCubit>().revalidateIfFlagged());
       }
       _syncOnResume();
-      unawaited(_checkSubscriptions());
       unawaited(_checkForkUpdate());
       // The wallpaper may have changed while we were away. No-op unless
       // Material You is on, and only rebuilds if the colours actually moved.
@@ -594,22 +558,6 @@ class _WatchAppState extends State<WatchApp> with WidgetsBindingObserver {
     if (isOnboarded()) {
       // tvOS: Home fetch waits until provider JS is loaded (deferred boot task).
       if (!isAppleTv) sl<HomeCubit>().load();
-      // CloudStream-style "new episode" check: once the app is up, re-fetch
-      // each subscribed show's episodes (JS or CS) and notify on any increase.
-      // Fire-and-forget + delayed so it doesn't compete with the splash/home.
-      Future.delayed(const Duration(seconds: 6), () async {
-        try {
-          await NotificationService.instance.init();
-          // Mirror CS subs to native + (re)schedule the background worker, then
-          // run the launch/resume sweep: JS sources here, CS via native worker.
-          await _checkSubscriptions(syncCloudStream: true);
-        } catch (_) {}
-      });
-    }
-    // FCM broadcasts: subscribe every device to the `all` topic so we can push
-    // a custom notification to all users from the Firebase Console. Independent
-    // of onboarding + fire-and-forget so it never delays launch.
-    unawaited(PushService.instance.init());
     final elapsed = DateTime.now().difference(start);
     // The intro animation is 1600ms, so anything past that is just dead
     // waiting. Give it a hair over (1700) so the logo lands, then go — used
