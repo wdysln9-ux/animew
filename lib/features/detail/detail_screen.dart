@@ -46,9 +46,6 @@ import '../../core/mihon/mihon_extension_service.dart';
 import '../../core/mangayomi/mangayomi_cloudflare.dart';
 import '../../core/metadata/episode_metadata_service.dart';
 import '../../core/metadata/metadata_enrichment.dart';
-import '../../core/notify/cs_notify.dart';
-import '../../core/notify/notification_service.dart';
-import '../../core/notify/subscription_store.dart';
 import '../../core/share/share_link.dart';
 import '../../core/download/chapter_download.dart';
 import '../../core/download/chapter_download_store.dart';
@@ -780,52 +777,6 @@ class _DetailViewState extends State<_DetailView> {
       sl<SourceRepository>().baseUrlFor(m.sourceId),
       m.showUrl,
     );
-  }
-
-  bool get _subscribed =>
-      sl<SubscriptionStore>().contains(widget.item.sourceId, widget.item.url);
-
-  /// Toggle new-episode (or new-chapter) alerts for this show. On subscribe we
-  /// seed the baseline to the current count so only FUTURE ones alert.
-  Future<void> _toggleSubscribe(MediaDetail detail) async {
-    final store = sl<SubscriptionStore>();
-    final item = widget.item;
-    final reading =
-        detail.type == ProviderType.manga || detail.type == ProviderType.novel;
-    // Read before the first await: nothing below needs a fresh BuildContext,
-    // and grabbing it up front avoids holding context across the async gaps.
-    final l10n = context.l10n;
-    if (_subscribed) {
-      await store.remove(item.sourceId, item.url);
-      _snack(l10n.notificationsOffFor(item.title));
-    } else {
-      await store.add(
-        Subscription(
-          sourceId: item.sourceId,
-          url: item.url,
-          title: item.title.isNotEmpty ? item.title : detail.title,
-          cover: item.cover,
-          coverHeaders: item.coverHeaders,
-          lastCount: detail.episodes.length,
-          mode: detail.type == ProviderType.novel
-              ? ContentMode.novel
-              : detail.type == ProviderType.manga
-              ? ContentMode.manga
-              : ContentMode.anime,
-        ),
-      );
-      await NotificationService.instance.init(); // ask for permission now
-      _snack(
-        await NotificationService.instance.canShowAlerts
-            ? reading
-                  ? l10n.youllBeNotifiedOfNewChaptersFor(item.title)
-                  : l10n.youllBeNotifiedOfNewEpisodesFor(item.title)
-            : l10n.allowNotificationsForAlerts,
-      );
-    }
-    // Mirror CS subs to native so the background worker picks up the change.
-    await CsNotify.sync(store.all());
-    if (mounted) setState(() {});
   }
 
   /// Every transient message on this screen. A toast rather than a SnackBar:
@@ -2392,9 +2343,6 @@ class _DetailViewState extends State<_DetailView> {
                             initialSeason: currentSeason,
                           ));
                           break;
-                        case 'notify':
-                          unawaited(_toggleSubscribe(detail));
-                          break;
                         case 'tracking':
                           unawaited(_openTrackingSheet(detail));
                           break;
@@ -2425,11 +2373,6 @@ class _DetailViewState extends State<_DetailView> {
                         value: 'download',
                         child: Text(isReading ? 'Unduh bab' : 'Unduh episode'),
                       ),
-                      if (Platform.isAndroid)
-                        PopupMenuItem(
-                          value: 'notify',
-                          child: Text(_subscribed ? 'Matikan notifikasi' : 'Aktifkan notifikasi'),
-                        ),
                       if (_trackingAvailable(detail))
                         const PopupMenuItem(value: 'tracking', child: Text('Sinkronkan progres')),
                       const PopupMenuItem(value: 'share', child: Text('Bagikan')),
