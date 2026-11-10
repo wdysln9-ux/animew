@@ -51,6 +51,13 @@ class UpdateInfo {
   final String? deltaMetadataUrl;
 }
 
+class UpdateCheckException implements Exception {
+  const UpdateCheckException(this.message);
+  final String message;
+  @override
+  String toString() => message;
+}
+
 /// In-app updater: checks the public GitHub Releases of this fork, compares
 /// the newest successful build tag to the running build, downloads the matching
 /// ARM64 APK and hands it to the Android package installer.
@@ -59,7 +66,7 @@ class UpdateService {
   static const String _latestUrl =
       'https://api.github.com/repos/$_repo/releases/latest';
   static const String _releasesUrl =
-      'https://api.github.com/repos/$_repo/releases?per_page=10';
+      'https://api.github.com/repos/$_repo/releases?per_page=100';
   static const String _boxName = 'updates';
   static const String _skipKey = 'skippedVersion';
   static const String _betaKey = 'betaOptIn';
@@ -104,8 +111,13 @@ class UpdateService {
         deltaPatchSize: delta?.$3 ?? 0,
         deltaMetadataUrl: delta?.$5,
       );
-    } catch (_) {
-      return null;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      throw UpdateCheckException(status == null
+          ? 'Tidak bisa terhubung ke GitHub. Periksa koneksi internet.'
+          : 'GitHub gagal memeriksa pembaruan (HTTP $status). Coba lagi nanti.');
+    } catch (e) {
+      throw UpdateCheckException('Gagal memeriksa pembaruan: $e');
     }
   }
 
@@ -115,9 +127,9 @@ class UpdateService {
     final res = await _dio.get<Map<String, dynamic>>(
       _latestUrl,
       options: Options(
-        headers: const {'Accept': 'application/vnd.github+json'},
-        receiveTimeout: const Duration(seconds: 12),
-        sendTimeout: const Duration(seconds: 12),
+        headers: const {'Accept': 'application/vnd.github+json', 'User-Agent': 'AnimeW-Android-Updater', 'Cache-Control': 'no-cache'},
+        receiveTimeout: const Duration(seconds: 20),
+        sendTimeout: const Duration(seconds: 20),
       ),
     );
     return res.data;
