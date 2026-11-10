@@ -1029,83 +1029,127 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     return value == 'recommended' || value == 'recommendation';
   }
 
+  bool _isSeasonRelation(MediaRelation relation) {
+    final value = relation.relation?.trim().toLowerCase().replaceAll('_', ' ');
+    return value == 'prequel' || value == 'sequel' || value == 'prekuel';
+  }
+
+  List<MediaRelation> _uniqueAnimeRelations(
+    Iterable<MediaRelation> source, {
+    required Set<int> anilistIds,
+    required Set<int> malIds,
+  }) {
+    final seenAniList = <int>{...anilistIds};
+    final seenMal = <int>{...malIds};
+    final seenTitles = <String>{};
+    final result = <MediaRelation>[];
+    for (final relation in source) {
+      if (relation.isReading) continue;
+      final aid = relation.anilistId;
+      final mid = relation.malId;
+      final title = relation.title.trim().toLowerCase();
+      if ((aid != null && seenAniList.contains(aid)) ||
+          (mid != null && seenMal.contains(mid)) ||
+          (aid == null && mid == null && title.isNotEmpty && seenTitles.contains(title))) {
+        continue;
+      }
+      if (aid != null) seenAniList.add(aid);
+      if (mid != null) seenMal.add(mid);
+      if (aid == null && mid == null && title.isNotEmpty) seenTitles.add(title);
+      result.add(relation);
+    }
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final allSeasonRelations = widget.relations.where((r) {
-      final value = r.relation?.toLowerCase();
-      return value == 'prekuel' || value == 'sequel';
-    }).toList();
-    final seasonIds = widget.seasons.map((s) => s.malId).whereType<int>().toSet();
-    final seasonRelations = allSeasonRelations
-        .where((r) => r.malId == null || !seasonIds.contains(r.malId))
-        .toList();
-    final related = widget.relations.where((r) =>
-      !_isRecommended(r) && !allSeasonRelations.contains(r)).toList();
-    final recommendations = widget.relations.where(_isRecommended).toList();
-    final tabs = <String>['Semua Musim', 'Terkait', 'Rekomendasi'];
+    final anilistIds = widget.seasons.map((s) => s.anilistId).whereType<int>().toSet();
+    final malIds = widget.seasons.map((s) => s.malId).whereType<int>().toSet();
+
+    // AniList's full franchise chain is authoritative. Relations only fill
+    // gaps if a linked season could not be resolved into the chain.
+    final seasonRelations = _uniqueAnimeRelations(
+      widget.relations.where(_isSeasonRelation),
+      anilistIds: anilistIds,
+      malIds: malIds,
+    );
+    final related = _uniqueAnimeRelations(
+      widget.relations.where((r) => !_isRecommended(r) && !_isSeasonRelation(r)),
+      anilistIds: anilistIds,
+      malIds: malIds,
+    );
+    final recommendations = _uniqueAnimeRelations(
+      widget.relations.where(_isRecommended),
+      anilistIds: anilistIds,
+      malIds: malIds,
+    );
+
+    // Empty categories are omitted entirely, so there is no dead tab.
+    final tabs = <String>[
+      'Semua Musim',
+      if (related.isNotEmpty) 'Terkait',
+      if (recommendations.isNotEmpty) 'Rekomendasi',
+    ];
     if (_selected >= tabs.length) _selected = 0;
 
     final width = posterRowWidth(context);
     final height = posterRowHeight(context);
     final selectedTab = tabs[_selected];
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 0, 0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 0, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 30,
-            child: Stack(
-              children: [
-                ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.only(right: 16),
-                  itemCount: tabs.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final selected = index == _selected;
-                    return GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => setState(() => _selected = index),
-                      child: SizedBox(
-                        width: 100,
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          child: Text(
-                            tabs[index],
-                            style: AppText.headline.copyWith(
-                              fontSize: 16,
-                              color: selected ? AppColors.textPrimary : AppColors.textSecondary,
-                              fontWeight: FontWeight.w600,
-                            ),
+            height: 27,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: 16),
+              itemCount: tabs.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 9),
+              itemBuilder: (context, index) {
+                final selected = index == _selected;
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => setState(() => _selected = index),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          tabs[index],
+                          style: AppText.headline.copyWith(
+                            fontSize: 13,
+                            height: 1.2,
+                            color: selected ? AppColors.textPrimary : AppColors.textSecondary,
+                            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 260),
-                  curve: Curves.easeInOutCubic,
-                  bottom: 0,
-                  left: _selected * 112.0 + 23,
-                  child: Container(
-                    width: 54,
-                    height: 2,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(2),
+                        const Spacer(),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeInOut,
+                          width: selected ? 26 : 0,
+                          height: 2,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           SizedBox(
             height: height,
             child: Builder(
-                builder: (context) {
+              builder: (context) {
                 final cards = <Widget>[];
                 if (selectedTab == 'Semua Musim') {
                   for (final season in widget.seasons) {
@@ -1115,7 +1159,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         title: season.title,
                         imageUrl: season.cover,
                         cellWidth: width,
-                        seriesBadge: 'Seri ${season.number}',
+                        seriesBadge: season.isCurrent ? 'Sedang dibuka' : 'Seri ${season.number}',
                         viewsBadge: season.popularity,
                         metaLine: season.episodes == null ? null : 'TV · ${season.episodes} eps',
                         onTap: () => widget.onOpenSeason(season),
@@ -1133,7 +1177,11 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         scoreBadge: relation.score,
                         statusBadge: relation.status,
                         genres: relation.genres,
-                        metaLine: [if (relation.year != null) '${relation.year}', if (relation.format != null) relation.format!, if (relation.episodes != null) '${relation.episodes} eps'].join(' · '),
+                        metaLine: [
+                          if (relation.year != null) '${relation.year}',
+                          if (relation.format != null) relation.format!,
+                          if (relation.episodes != null) '${relation.episodes} eps',
+                        ].join(' · '),
                         viewsBadge: relation.popularity,
                         onTap: () => widget.onOpenRelation(relation),
                       ),
@@ -1154,6 +1202,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                     ));
                   }
                 }
+
                 if (cards.isEmpty) {
                   return Align(
                     alignment: Alignment.centerLeft,
@@ -1175,11 +1224,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                               ],
                             )
                           : Text(
-                              selectedTab == 'Terkait'
-                                  ? 'Belum ada anime terkait.'
-                                  : selectedTab == 'Rekomendasi'
-                                      ? 'Belum ada rekomendasi.'
-                                      : 'Belum ada musim lain.',
+                              'Belum ada musim lain.',
                               style: AppText.caption.copyWith(color: AppColors.textSecondary),
                             ),
                     ),
@@ -1192,8 +1237,8 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                   separatorBuilder: (_, _) => const SizedBox(width: 9),
                   itemBuilder: (_, index) => cards[index],
                 );
-                },
-              ),
+              },
+            ),
           ),
         ],
       ),
