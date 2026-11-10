@@ -466,6 +466,7 @@ class AniListCatalogue implements AnimeCatalogue {
     return MediaDetail(
       id: c.id,
       title: aniListTitle(t, titleLanguagePref) ?? '',
+      romajiTitle: (t['romaji'] as String?)?.trim(),
       // Whichever variant the display isn't — sources index by both, and
       // dropping one loses matches.
       englishTitle: (t['english'] as String?)?.trim().isNotEmpty == true
