@@ -40,9 +40,8 @@ class _MalTrailerSectionState extends State<_MalTrailerSection> {
   }
 
   void _load({bool retry = false}) {
-    _future = AnimeExtrasRepository.instance.load(
+    _future = AnimeExtrasRepository.instance.loadVideos(
       malId: widget.malId,
-      anilistId: widget.anilistId,
       title: widget.title,
       englishTitle: widget.englishTitle,
       forceRefresh: retry,
@@ -232,9 +231,8 @@ class _MalThemeSectionState extends State<_MalThemeSection> {
   }
 
   void _load({bool retry = false}) {
-    _future = AnimeExtrasRepository.instance.load(
+    _future = AnimeExtrasRepository.instance.loadThemes(
       malId: widget.malId,
-      anilistId: widget.anilistId,
       title: widget.title,
       englishTitle: widget.englishTitle,
       forceRefresh: retry,
