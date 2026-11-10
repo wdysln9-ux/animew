@@ -407,8 +407,10 @@ class AnimeDetailTitleBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final english = (englishTitle?.trim().isNotEmpty == true ? englishTitle : title)!.trim();
     final translated = english;
-    return Stack(
-      children: [
+    return SizedBox(
+      width: double.infinity,
+      child: Stack(
+        children: [
         // The hero owns the artwork and its fade. Do not paint a second,
         // independently-positioned copy of the backdrop here: during
         // overscroll the two copies can shift differently and create a
@@ -532,7 +534,8 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         ],
         ),
         ),
-      ],
+        ],
+      ),
     );
   }
 }
