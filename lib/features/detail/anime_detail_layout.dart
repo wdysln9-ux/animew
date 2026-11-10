@@ -146,7 +146,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                             AppColors.bg,
                           ),
                           Color.alphaBlend(
-                            Colors.black.withValues(alpha: 0.18),
+                            Colors.black.withValues(alpha: 0.12),
                             AppColors.bg,
                           ),
                         ],
@@ -438,19 +438,16 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: [
                   Color.alphaBlend(
-                    Colors.black.withValues(alpha: 0.18),
+                    Colors.black.withValues(alpha: 0.12),
                     AppColors.bg,
                   ),
                   Color.alphaBlend(
-                    Colors.black.withValues(alpha: 0.24),
+                    Colors.black.withValues(alpha: 0.06),
                     AppColors.bg,
                   ),
-                  Color.alphaBlend(
-                    Colors.black.withValues(alpha: 0.24),
-                    AppColors.bg,
-                  ),
+                  AppColors.bg,
                 ],
-                stops: [0.0, 0.55, 1.0],
+                stops: [0.0, 0.42, 1.0],
               ),
             ),
           ),
