@@ -61,7 +61,7 @@ class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
                 MaterialPageRoute<void>(builder: (_) => TrailerScreen(videoId: _videoId!)),
               ),
               child: SizedBox(
-                width: 220,
+                width: 187,
                 child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: ClipRRect(
