@@ -157,7 +157,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                   right: 14,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: const Color(0x66000000),
+                      color: const Color(0x99000000),
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: SizedBox(
@@ -207,7 +207,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: -22,
+                bottom: 1,
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
@@ -446,7 +446,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                         ? metaLine.split('  ·  ')[i].substring(2)
                         : metaLine.split('  ·  ')[i],
                     style: AppText.body.copyWith(
-                      fontSize: 12.5,
+                      fontSize: 14,
                       color: i == 0 ? AppColors.accent
                           : (metaLine.split('  ·  ')[i].startsWith('★')
                               ? const Color(0xFF24C66A)
@@ -484,7 +484,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                       if (dateLine?.isNotEmpty == true) dateLine!,
                     ][i],
                     style: AppText.body.copyWith(
-                      fontSize: 12,
+                      fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -501,7 +501,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               Icon(Icons.access_time_rounded, size: 16, color: AppColors.accent),
               const SizedBox(width: 5),
               Flexible(child: Text(broadcastLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: AppText.body.copyWith(fontSize: 12, color: AppColors.accent))),
+                style: AppText.body.copyWith(fontSize: 14, color: AppColors.accent))),
             ]),
           ],
           if ((format?.isNotEmpty ?? false) || (status?.isNotEmpty ?? false)) ...[
