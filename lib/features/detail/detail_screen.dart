@@ -2252,6 +2252,10 @@ class _DetailViewState extends State<_DetailView> {
           coverHeaders: coverHeaders,
           sourceLabel: detail.anilistId != null ? 'AniList' : sourceName,
           animeId: detail.anilistId?.toString() ?? detail.id,
+          onAniListTap: detail.anilistId == null ? null : () => launchUrl(
+            Uri.parse('https://anilist.co/anime/${detail.anilistId}'),
+            mode: LaunchMode.externalApplication,
+          ),
           maxHeight: _expandedHeight,
         ),
 
@@ -2266,7 +2270,8 @@ class _DetailViewState extends State<_DetailView> {
             child: AnimeDetailTitleBlock(
               title: detail.title,
               englishTitle: detail.englishTitle,
-                            metaLine: metaLine,
+              backdropUrl: heroPosterUrl,
+              metaLine: metaLine,
               format: formatStr,
               status: statusStr,
               ageRating: detail.ageRating,
@@ -2297,7 +2302,7 @@ class _DetailViewState extends State<_DetailView> {
 
 
         // ── 3. White Play + gray Download buttons (full-width, stacked) ─────
-        // (The hero banner autoplays the trailer; tap it for fullscreen.)
+        // The trailer section below opens the native in-app trailer player.
         //
         // Each button carries its own 16px side padding (rather than one
         // Padding wrapping the whole Column) so the Z Mode selector below
