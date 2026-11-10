@@ -868,10 +868,11 @@ class _DetailCreditsState extends State<_DetailCredits> {
 }
 
 class AnimeDetailCharacterRail extends StatefulWidget {
-  const AnimeDetailCharacterRail({required this.cast, this.loading = false, this.onOpenPerson});
+  const AnimeDetailCharacterRail({required this.cast, this.loading = false, this.onOpenPerson, this.onRetry});
   final List<CastMember> cast;
   final bool loading;
   final ValueChanged<PersonRef>? onOpenPerson;
+  final VoidCallback? onRetry;
   @override
   State<AnimeDetailCharacterRail> createState() => _AnimeDetailCharacterRailState();
 }
@@ -898,7 +899,21 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
           ),
         ),
         if (_expanded && cast.isEmpty)
-          Padding(padding: const EdgeInsets.only(top: 9, right: 16), child: Text(widget.loading ? 'Memuat karakter...' : 'Informasi karakter belum tersedia.', style: AppText.caption.copyWith(color: AppColors.textSecondary))),
+          Padding(
+            padding: const EdgeInsets.only(top: 9, right: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.loading ? 'Memuat karakter...' : 'Karakter belum bisa dimuat.',
+                    style: AppText.caption.copyWith(color: AppColors.textSecondary),
+                  ),
+                ),
+                if (!widget.loading && widget.onRetry != null)
+                  TextButton(onPressed: widget.onRetry, child: const Text('Coba lagi')),
+              ],
+            ),
+          ),
         if (_expanded && cast.isNotEmpty) ...[
           const SizedBox(height: 11),
           SizedBox(height: 134, child: ListView.separated(
