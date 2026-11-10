@@ -26,6 +26,9 @@ enum MediaStatus {
 class MediaDetail extends Equatable {
   final String id;
   final String title;
+  /// AniList's canonical Romaji title, kept separate from the selected display title.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? romajiTitle;
   final String? englishTitle;
   final String? cover;
   final Map<String, String>? coverHeaders;
@@ -168,6 +171,7 @@ class MediaDetail extends Equatable {
   const MediaDetail({
     required this.id,
     required this.title,
+    this.romajiTitle,
     this.englishTitle,
     this.cover,
     this.coverHeaders,
@@ -222,6 +226,7 @@ class MediaDetail extends Equatable {
   MediaDetail copyWith({
     String? id,
     String? title,
+    String? romajiTitle,
     String? englishTitle,
     String? cover,
     Map<String, String>? coverHeaders,
@@ -270,6 +275,7 @@ class MediaDetail extends Equatable {
   }) => MediaDetail(
     id: id ?? this.id,
     title: title ?? this.title,
+    romajiTitle: romajiTitle ?? this.romajiTitle,
     englishTitle: englishTitle ?? this.englishTitle,
     cover: cover ?? this.cover,
     coverHeaders: coverHeaders ?? this.coverHeaders,
@@ -321,6 +327,7 @@ class MediaDetail extends Equatable {
   List<Object?> get props => [
     id,
     title,
+    romajiTitle,
     englishTitle,
     cover,
     coverHeaders,
