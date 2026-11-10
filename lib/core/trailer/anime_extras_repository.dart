@@ -114,7 +114,7 @@ class AnimeExtrasRepository {
     for (final candidate in titles) {
       if (candidate.isEmpty) continue;
       final key = candidate.toLowerCase().replaceAll(
-        RegExp(r'[^\\p{L}\\p{N}]', unicode: true),
+        RegExp(r'[^\p{L}\p{N}]', unicode: true),
         '',
       );
       final lookup = _idLookupCache.putIfAbsent(
@@ -146,7 +146,7 @@ class AnimeExtrasRepository {
       };
       for (final candidate in titles) {
         if (candidate.isEmpty) continue;
-        final key = candidate.toLowerCase().replaceAll(RegExp(r'[^\\p{L}\\p{N}]', unicode: true), '');
+        final key = candidate.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
         final lookup = _idLookupCache.putIfAbsent(key, () => _searchJikanId(candidate));
         try {
           resolvedId = await lookup;
