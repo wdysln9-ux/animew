@@ -433,27 +433,22 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color.alphaBlend(
-                    Colors.black.withValues(alpha: 0.12),
-                    AppColors.bg,
-                  ),
-                  Color.alphaBlend(
-                    Colors.black.withValues(alpha: 0.075),
-                    AppColors.bg,
-                  ),
-                  Color.alphaBlend(
-                    Colors.black.withValues(alpha: 0.035),
-                    AppColors.bg,
-                  ),
+                  // Let the artwork/background behind the top edge show
+                  // through, then gradually restore the page surface over a
+                  // much longer distance.
+                  AppColors.bg.withValues(alpha: 0.08),
+                  AppColors.bg.withValues(alpha: 0.20),
+                  AppColors.bg.withValues(alpha: 0.42),
+                  AppColors.bg.withValues(alpha: 0.72),
                   AppColors.bg,
                 ],
-                stops: [0.0, 0.38, 0.76, 1.0],
+                stops: [0.0, 0.22, 0.48, 0.78, 1.0],
               ),
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 54),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
