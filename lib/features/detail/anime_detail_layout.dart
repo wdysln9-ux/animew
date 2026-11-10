@@ -495,7 +495,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                         ? metaLine.split('  ·  ')[i].substring(2)
                         : metaLine.split('  ·  ')[i],
                     style: AppText.body.copyWith(
-                      fontSize: 15,
+                      fontSize: 13,
                       color: i == 0 ? AppColors.accent
                           : (metaLine.split('  ·  ')[i].startsWith('★')
                               ? const Color(0xFF24C66A)
@@ -532,7 +532,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                       if (dateLine?.isNotEmpty == true) dateLine!,
                     ][i],
                     style: AppText.body.copyWith(
-                      fontSize: 15,
+                      fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -549,7 +549,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               Icon(Icons.access_time_rounded, size: 16, color: AppColors.accent),
               const SizedBox(width: 5),
               Flexible(child: Text(broadcastLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: AppText.body.copyWith(fontSize: 14, color: AppColors.accent))),
+                style: AppText.body.copyWith(fontSize: 13, color: AppColors.accent))),
             ]),
           ],
           if ((format?.isNotEmpty ?? false) || (status?.isNotEmpty ?? false)) ...[
@@ -707,34 +707,26 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
     final data = _translated ?? widget.text;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 15)),
-          const SizedBox(height: 9),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            alignment: Alignment.topCenter,
-            child: _expanded
-                ? AniListMarkdown(data: data, textStyle: AppText.body.copyWith(
-                    fontSize: 14, height: 1.45, color: AppColors.textSecondary))
-                : Text(data, maxLines: 3, overflow: TextOverflow.ellipsis,
-                    style: AppText.body.copyWith(fontSize: 14, height: 1.45, color: AppColors.textSecondary)),
-          ),
-          const SizedBox(height: 5),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: widget.onMore ?? () => setState(() => _expanded = !_expanded),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Text(
-                widget.onMore != null ? 'Selengkapnya' : (_expanded ? 'Lebih sedikit' : 'Selengkapnya'),
-                style: AppText.caption.copyWith(fontSize: 12.5, color: AppColors.accent, fontWeight: FontWeight.w700),
-              ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onMore ?? () => setState(() => _expanded = !_expanded),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 15)),
+            const SizedBox(height: 9),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOutCubic,
+              alignment: Alignment.topCenter,
+              child: _expanded
+                  ? AniListMarkdown(data: data, textStyle: AppText.body.copyWith(
+                      fontSize: 14, height: 1.45, color: AppColors.textSecondary))
+                  : Text(data, maxLines: 3, overflow: TextOverflow.ellipsis,
+                      style: AppText.body.copyWith(fontSize: 14, height: 1.45, color: AppColors.textSecondary)),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -969,7 +961,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
                 onTap: member.person == null || widget.onOpenPerson == null
                     ? null : () => widget.onOpenPerson!(member.person!),
                 child: Column(children: [
-                  ClipOval(child: SizedBox(width: 77, height: 77,
+                  ClipOval(child: SizedBox(width: 69.3, height: 69.3,
                     child: member.photo?.isNotEmpty == true
                         ? CachedNetworkImage(imageUrl: member.photo!, fit: BoxFit.cover,
                             placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
@@ -1100,46 +1092,69 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
         children: [
           SizedBox(
             height: 27,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(right: 16),
-              itemCount: tabs.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 9),
-              itemBuilder: (context, index) {
-                final selected = index == _selected;
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => setState(() => _selected = index),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 3),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          tabs[index],
-                          style: AppText.headline.copyWith(
-                            fontSize: 13,
-                            height: 1.2,
-                            color: selected ? AppColors.textPrimary : AppColors.textSecondary,
-                            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Row(
+                  children: [
+                    for (var index = 0; index < tabs.length; index++)
+                      Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => setState(() => _selected = index),
+                          child: Center(
+                            child: Text(
+                              tabs[index],
+                              textAlign: TextAlign.center,
+                              style: AppText.headline.copyWith(
+                                fontSize: 13,
+                                height: 1.2,
+                                color: index == _selected
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
+                                fontWeight: index == _selected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
                           ),
                         ),
-                        const Spacer(),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeInOut,
-                          width: selected ? 26 : 0,
-                          height: 2,
-                          decoration: BoxDecoration(
-                            color: AppColors.accent,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+                      ),
+                  ],
+                ),
+                // One continuous indicator slides between tabs instead of
+                // fading individual underlines in and out.
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 4,
+                  child: IgnorePointer(
+                    child: AnimatedAlign(
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeInOutCubic,
+                      alignment: tabs.length <= 1
+                          ? Alignment.center
+                          : tabs.length == 2
+                              ? (_selected == 0
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight)
+                              : _selected == 0
+                                  ? Alignment.centerLeft
+                                  : _selected == 1
+                                      ? Alignment.center
+                                      : Alignment.centerRight,
+                      child: Container(
+                        width: 34,
+                        height: 2,
+                        decoration: BoxDecoration(
+                          color: AppColors.accent,
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 6),
