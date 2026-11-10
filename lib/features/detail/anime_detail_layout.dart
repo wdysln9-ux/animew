@@ -1137,6 +1137,11 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         imageUrl: relation.cover,
                         cellWidth: width,
                         seriesBadge: relation.relation,
+                        scoreBadge: relation.score,
+                        statusBadge: relation.status,
+                        genres: relation.genres,
+                        metaLine: [if (relation.year != null) '${relation.year}', if (relation.format != null) relation.format!, if (relation.episodes != null) '${relation.episodes} eps'].join(' · '),
+                        viewsBadge: relation.popularity,
                         onTap: () => widget.onOpenRelation(relation),
                       ),
                     ));
