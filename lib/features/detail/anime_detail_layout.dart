@@ -400,7 +400,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
             const SizedBox(height: 4),
             Text(subtitle, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 15, color: AppColors.textSecondary)),
+              style: AppText.body.copyWith(fontSize: 16, color: AppColors.textSecondary)),
           ],
           if (alternate != null && alternate.isNotEmpty && alternate != title && alternate != subtitle) ...[
             const SizedBox(height: 2),
@@ -587,8 +587,8 @@ class AnimeDetailActionButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: BorderRadius.circular(23),
           child: Container(
-            height: 42,
-            padding: const EdgeInsets.symmetric(horizontal: 11),
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(23),
               border: Border.all(
@@ -666,7 +666,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
                 ? AniListMarkdown(data: data, textStyle: AppText.body.copyWith(
                     fontSize: 16, height: 1.48, color: AppColors.textSecondary))
                 : Text(data, maxLines: 3, overflow: TextOverflow.ellipsis,
-                    style: AppText.body.copyWith(fontSize: 15, height: 1.48, color: AppColors.textSecondary)),
+                    style: AppText.body.copyWith(fontSize: 16, height: 1.48, color: AppColors.textSecondary)),
           ),
           const SizedBox(height: 5),
           GestureDetector(
@@ -798,7 +798,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
                       child: Text(
                         genre,
                         style: AppText.caption.copyWith(
-                          fontSize: 13,
+                          fontSize: 13.5,
                           color: genreColor,
                           fontWeight: FontWeight.w600,
                         ),
