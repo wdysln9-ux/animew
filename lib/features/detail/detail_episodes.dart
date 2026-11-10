@@ -1576,15 +1576,15 @@ class _EpisodeRow extends StatelessWidget {
     final episodeDate = ep.date?.trim();
     String? dateLabel;
     if (episodeDate != null && episodeDate.isNotEmpty) {
-      final parsed = DateTime.tryParse(episodeDate);
-      if (parsed == null) {
+      final parsedDate = DateTime.tryParse(episodeDate);
+      if (parsedDate == null) {
         dateLabel = relativeDate(context.l10n, episodeDate);
       } else if (isAiring) {
         final now = DateTime.now();
-        final age = now.difference(parsed);
+        final age = now.difference(parsedDate);
         final isDateOnly = !episodeDate.contains('T') && !episodeDate.contains(':');
         final ageDays = DateTime(now.year, now.month, now.day)
-            .difference(DateTime(parsed.year, parsed.month, parsed.day)).inDays;
+            .difference(DateTime(parsedDate.year, parsedDate.month, parsedDate.day)).inDays;
         if (age >= Duration.zero && age < const Duration(days: 7)) {
           if (isDateOnly) {
             dateLabel = ageDays <= 0 ? 'Hari ini' : '$ageDays hari lalu';
@@ -1600,10 +1600,9 @@ class _EpisodeRow extends StatelessWidget {
       if (dateLabel == null) {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        final parsed = DateTime.tryParse(episodeDate);
-        dateLabel = parsed == null
+        dateLabel = parsedDate == null
             ? relativeDate(context.l10n, episodeDate)
-            : '${months[parsed.month - 1]} ${parsed.day} ${parsed.year}';
+            : '${months[parsedDate.month - 1]} ${parsedDate.day} ${parsedDate.year}';
       }
     }
     final progress = totalEpisodes <= 1
