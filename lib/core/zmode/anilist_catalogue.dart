@@ -414,7 +414,13 @@ class AniListCatalogue implements AnimeCatalogue {
         if (node is! Map) continue;
         final name = ((node['name'] as Map?)?['full'] as String?)?.trim();
         if (name == null || name.isEmpty) continue;
-        final characterRole = (edge['role'] as String?)?.trim();
+        final rawCharacterRole = (edge['role'] as String?)?.trim();
+        final characterRole = switch (rawCharacterRole?.toUpperCase()) {
+          'MAIN' => 'Main',
+          'SUPPORTING' => 'Supporting',
+          'BACKGROUND' => 'Background',
+          _ => rawCharacterRole,
+        };
         castMembers.add(CastMember(
           name: name,
           role: characterRole == null || characterRole.isEmpty ? null : characterRole,
