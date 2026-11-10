@@ -734,15 +734,17 @@ class _DetailCredits extends StatefulWidget {
   const _DetailCredits({
     required this.genres,
     required this.studios,
-    required this.producers,
+    required this.tags,
     required this.onGenreTap,
     required this.onStudioTap,
+    required this.onTagsTap,
   });
   final List<String> genres;
   final List<String> studios;
-  final List<String> producers;
+  final List<MediaTag> tags;
   final ValueChanged<String> onGenreTap;
   final ValueChanged<String> onStudioTap;
+  final VoidCallback onTagsTap;
 
   @override
   State<_DetailCredits> createState() => _DetailCreditsState();
@@ -777,9 +779,8 @@ class _DetailCreditsState extends State<_DetailCredits> {
   @override
   Widget build(BuildContext context) {
     const studioBlue = Color(0xFF2864B7);
-    const producerPink = Color(0xFFB94B83);
     final genreColor = AppColors.accent;
-    final hasCredits = widget.studios.isNotEmpty || widget.producers.isNotEmpty;
+    final hasCredits = widget.studios.isNotEmpty || widget.tags.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
@@ -846,16 +847,9 @@ class _DetailCreditsState extends State<_DetailCredits> {
               ],
             ),
           ],
-          if (_expanded && widget.producers.isNotEmpty) ...[
+          if (_expanded && widget.tags.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final producer in widget.producers) _chip(producer, producerPink),
-              ],
-            ),
+            _chip('Tags (${widget.tags.length})', AppColors.accent, onTap: widget.onTagsTap),
           ],
           if (_expanded && hasCredits)
             GestureDetector(
