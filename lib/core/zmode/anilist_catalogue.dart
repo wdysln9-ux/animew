@@ -405,9 +405,16 @@ class AniListCatalogue implements AnimeCatalogue {
         final name = ((node['name'] as Map?)?['full'] as String?)?.trim();
         if (name == null || name.isEmpty) continue;
         final voiceActors = edge['voiceActors'];
-        final voiceName = voiceActors is List && voiceActors.isNotEmpty
-            ? ((voiceActors.first as Map?)?['name'] as Map?)?['full'] as String?
-            : null;
+        String? voiceName;
+        if (voiceActors is List && voiceActors.isNotEmpty) {
+          final firstVoiceActor = voiceActors.first;
+          if (firstVoiceActor is Map) {
+            final voiceActorName = firstVoiceActor['name'];
+            if (voiceActorName is Map && voiceActorName['full'] is String) {
+              voiceName = (voiceActorName['full'] as String).trim();
+            }
+          }
+        }
         castMembers.add(CastMember(
           name: name,
           role: voiceName == null || voiceName.isEmpty ? null : voiceName,
