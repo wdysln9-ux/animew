@@ -12,11 +12,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestClient;
 import 'package:zangetsu_source_bridge/zangetsu_source_bridge.dart';
 
-import '../announce/announcement.dart';
 import '../backup/backup_cloud.dart';
 import '../logging/log_report_service.dart';
 import '../mangayomi/mangayomi_manager.dart';
-import '../announce/announcement_service.dart';
 import '../cache/app_image_cache.dart';
 import '../platform/apple_tv.dart';
 import '../platform/app_paths.dart';
@@ -102,8 +100,6 @@ import '../download/download_service.dart';
 import '../torrent/torrent_download_service.dart';
 import '../torrent/torrent_prefs.dart';
 import '../torrent/torrent_service.dart';
-import '../notify/subscription_store.dart';
-import '../notify/subscription_checker.dart';
 import '../discord/discord_rpc.dart';
 import '../aniyomi/aniyomi_extension_service.dart';
 import '../aniyomi/aniyomi_provider.dart';
@@ -1115,24 +1111,6 @@ Future<void> initDependencies() async {
   // and for any already-correct pick. Mihon (manga) loads async and is handled
   // by its own reapply step below; lnr (novel) is already loaded here.
   sl<ContentModeCubit>().ensureSourceForMode();
-
-  // "New episode" subscriptions (CloudStream-style): the store + the checker
-  // that re-fetches subscribed episodes through the catalogue router (so Z
-  // Mode titles resolve too) and notifies on an increase. Triggered on app
-  // launch/resume.
-  await SubscriptionStore.init();
-  sl.registerSingleton<SubscriptionStore>(SubscriptionStore());
-  sl.registerSingleton<SubscriptionChecker>(
-    SubscriptionChecker(sl<CatalogueRepository>(), sl<SubscriptionStore>()),
-  );
-
-  // Developer announcements: read a public JSON feed on launch and surface new
-  // messages as a bottom sheet + a Notifications-screen history entry.
-  await AnnouncementStore.init();
-  sl.registerSingleton<AnnouncementStore>(AnnouncementStore());
-  sl.registerSingleton<AnnouncementService>(
-    AnnouncementService(sl<Dio>(), sl<AnnouncementStore>()),
-  );
 
   // Offline downloads (background_downloader). setup() restores persisted
   // records and starts listening for task progress/status updates.
