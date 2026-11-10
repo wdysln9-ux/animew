@@ -426,7 +426,9 @@ class DetailScreen extends StatelessWidget {
 
 String _compactDecimal(double value) {
   final rounded = (value * 10).round() / 10;
-  return rounded.toStringAsFixed(1).replaceFirst(RegExp(r'\\.0
+  return rounded.toStringAsFixed(1).replaceFirst(RegExp(r'[.]0$'), '');
+}
+
   const _DetailView({required this.item, this.prefer, this.autoScrollToResume = false, this.targetEpisodeId});
   final MediaItem item;
 
