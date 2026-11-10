@@ -55,6 +55,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     String url, {
     int width = 900,
     Alignment alignment = Alignment.center,
+    BoxFit fit = BoxFit.cover,
   }) {
     if (url.isEmpty) return ColoredBox(color: AppColors.surface2);
     final aniSource = coverHeaders?['x-ani-src'];
@@ -67,7 +68,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
           aniId != null ? AniyomiImage(aniId, url) : MihonImage(mihonId!, url),
           width: width,
         ),
-        fit: BoxFit.cover,
+        fit: fit,
         alignment: alignment,
         errorBuilder: (_, _, _) => ColoredBox(color: AppColors.surface2),
       );
@@ -75,7 +76,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     return CachedNetworkImage(
       imageUrl: url,
       httpHeaders: coverHeaders,
-      fit: BoxFit.cover,
+      fit: fit,
       alignment: alignment,
       memCacheWidth: width,
       placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
@@ -94,7 +95,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     final posterWidth = (MediaQuery.sizeOf(context).width * 0.48)
         .clamp(164.0, 184.0)
         .toDouble();
-    final posterHeight = posterWidth * 1.58;
+    final posterHeight = posterWidth * 1.5;
 
     return ClipRect(
       child: OverflowBox(
@@ -128,13 +129,13 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         // through the upper half and blends into the page
                         // background without a dense dark band.
                         colors: [
-                          AppColors.bg.withValues(alpha: 0.0),
-                          AppColors.bg.withValues(alpha: 0.06),
-                          AppColors.bg.withValues(alpha: 0.24),
-                          AppColors.bg.withValues(alpha: 0.62),
+                          Colors.black.withValues(alpha: 0.28),
+                          Colors.black.withValues(alpha: 0.38),
+                          AppColors.bg.withValues(alpha: 0.48),
+                          AppColors.bg.withValues(alpha: 0.82),
                           AppColors.bg,
                         ],
-                        stops: [0.0, 0.18, 0.40, 0.70, 1.0],
+                        stops: [0.0, 0.16, 0.38, 0.72, 1.0],
                       ),
                     ),
                   ),
@@ -159,9 +160,9 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: SizedBox(
-                      height: 38,
+                      height: 32,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -185,7 +186,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                               style: AppText.caption.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 11.5,
+                                fontSize: 10.5,
                                 height: 1,
                               ),
                             ),
@@ -198,14 +199,14 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 0,
+                bottom: 1,
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
                     child: SizedBox(
                       width: posterWidth,
                       height: posterHeight,
-                      child: _image(poster, width: 528),
+                      child: _image(poster, width: 528, fit: BoxFit.contain),
                     ),
                   ),
                 ),
@@ -344,23 +345,15 @@ class _MalTextWordmark extends StatelessWidget {
   const _MalTextWordmark();
 
   @override
-  Widget build(BuildContext context) => Image.network(
-    'https://cdn.myanimelist.net/images/mal-logo-xsmall@2x.png?v=160803001',
-    width: 68,
-    height: 12,
-    fit: BoxFit.contain,
-    color: Colors.white,
-    colorBlendMode: BlendMode.srcIn,
-    errorBuilder: (_, _, _) => Text(
-      'MyAnimeList',
-      style: AppText.caption.copyWith(
-        color: Colors.white,
-        fontSize: 10,
-        fontWeight: FontWeight.w800,
-        fontStyle: FontStyle.italic,
-        letterSpacing: -0.35,
-        height: 1,
-      ),
+  Widget build(BuildContext context) => Text(
+    'MAL',
+    style: AppText.caption.copyWith(
+      color: Colors.white,
+      fontSize: 11,
+      fontWeight: FontWeight.w900,
+      fontStyle: FontStyle.italic,
+      letterSpacing: -0.5,
+      height: 1,
     ),
   );
 }
@@ -401,18 +394,18 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         children: [
           Text(title, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.largeTitle.copyWith(fontSize: 24, height: 1.14)),
+            style: AppText.largeTitle.copyWith(fontSize: 22, height: 1.14)),
           if (subtitle != null && subtitle.isNotEmpty && subtitle != title) ...[
             const SizedBox(height: 4),
             Text(subtitle, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 14, color: AppColors.textSecondary)),
+              style: AppText.body.copyWith(fontSize: 13, color: AppColors.textSecondary)),
           ],
           if (alternate != null && alternate.isNotEmpty && alternate != title && alternate != subtitle) ...[
             const SizedBox(height: 2),
             Text(alternate, textAlign: TextAlign.center, maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontSize: 12, color: AppColors.textTertiary)),
+              style: AppText.body.copyWith(fontSize: 13, color: AppColors.textSecondary)),
           ],
           if (metaLine.isNotEmpty) ...[
             const SizedBox(height: 7),
@@ -445,7 +438,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                         ? metaLine.split('  ·  ')[i].substring(2)
                         : metaLine.split('  ·  ')[i],
                     style: AppText.body.copyWith(
-                      fontSize: 13,
+                      fontSize: 11.5,
                       color: i == 0 ? AppColors.accent
                           : (metaLine.split('  ·  ')[i].startsWith('★')
                               ? const Color(0xFF24C66A)
@@ -483,7 +476,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                       if (dateLine?.isNotEmpty == true) dateLine!,
                     ][i],
                     style: AppText.body.copyWith(
-                      fontSize: 12,
+                      fontSize: 10.5,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -500,7 +493,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               Icon(Icons.access_time_rounded, size: 15, color: AppColors.accent),
               const SizedBox(width: 5),
               Flexible(child: Text(broadcastLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: AppText.body.copyWith(fontSize: 12, color: AppColors.accent))),
+                style: AppText.body.copyWith(fontSize: 10.5, color: AppColors.accent))),
             ]),
           ],
           if ((format?.isNotEmpty ?? false) || (status?.isNotEmpty ?? false)) ...[
@@ -552,7 +545,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
       child: Text(
         label,
         style: AppText.caption.copyWith(
-          fontSize: 11.5,
+          fontSize: 10.5,
           color: foreground,
           fontWeight: FontWeight.w700,
         ),
@@ -593,7 +586,7 @@ class AnimeDetailActionButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: BorderRadius.circular(23),
           child: Container(
-            height: 46,
+            height: 42,
             padding: const EdgeInsets.symmetric(horizontal: 11),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(23),
@@ -606,10 +599,10 @@ class AnimeDetailActionButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 18, color: foreground),
+                Icon(icon, size: 17, color: foreground),
                 const SizedBox(width: 6),
                 Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: AppText.button.copyWith(fontSize: 12, color: foreground))),
+                  style: AppText.button.copyWith(fontSize: 11, color: foreground))),
               ],
             ),
           ),
@@ -820,9 +813,16 @@ class _DetailCreditsState extends State<_DetailCredits> {
               onTap: () => setState(() => _expanded = true),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: Text('Selengkapnya', style: AppText.caption.copyWith(
-                  fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w700,
-                )),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppColors.textSecondary),
+                    const SizedBox(width: 2),
+                    Text('Selengkapnya', style: AppText.caption.copyWith(
+                      fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w700,
+                    )),
+                  ],
+                ),
               ),
             ),
           ],
