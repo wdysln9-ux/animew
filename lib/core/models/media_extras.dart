@@ -40,6 +40,13 @@ class MediaRelation extends Equatable {
     this.tmdbId,
     this.tmdbIsTv = false,
     this.isReading = false,
+    this.score,
+    this.popularity,
+    this.format,
+    this.status,
+    this.episodes,
+    this.year,
+    this.genres = const [],
   });
 
   final String title;
@@ -60,6 +67,13 @@ class MediaRelation extends Equatable {
   /// from AniList's `type` on the node, which was read for filtering and then
   /// dropped.
   final bool isReading;
+  final int? score;
+  final int? popularity;
+  final String? format;
+  final String? status;
+  final int? episodes;
+  final int? year;
+  final List<String> genres;
 
   /// MAL's id, in the catalogue [isReading] names — MAL numbers its manga and
   /// its anime separately, so this means nothing without that flag.
@@ -83,5 +97,12 @@ class MediaRelation extends Equatable {
     tmdbId,
     tmdbIsTv,
     isReading,
+    score,
+    popularity,
+    format,
+    status,
+    episodes,
+    year,
+    genres,
   ];
 }
