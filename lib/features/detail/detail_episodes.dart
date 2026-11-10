@@ -1560,7 +1560,7 @@ class _EpisodeRow extends StatelessWidget {
         : context.l10n.episodeLabel(epNum);
     final metaParts = <String>[
       if (ep.runtimeMinutes != null) '${ep.runtimeMinutes} menit',
-      if (ep.date?.trim().isNotEmpty == true) relativeDate(context.l10n, ep.date),
+      if (ep.date?.trim().isNotEmpty == true) relativeDate(context.l10n, ep.date!),
       if (unavailable && ep.unavailable?.trim().isNotEmpty == true) ep.unavailable!.trim(),
     ];
     final metaLine = metaParts.join('  ·  ');
