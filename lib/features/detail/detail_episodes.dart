@@ -1558,6 +1558,12 @@ class _EpisodeRow extends StatelessWidget {
     final heading = titleText.isNotEmpty
         ? '$epNum. $titleText'
         : context.l10n.episodeLabel(epNum);
+    final metaParts = <String>[
+      if (ep.runtimeMinutes != null) '${ep.runtimeMinutes} menit',
+      if (ep.date?.trim().isNotEmpty == true) relativeDate(context.l10n, ep.date),
+      if (unavailable && ep.unavailable?.trim().isNotEmpty == true) ep.unavailable!.trim(),
+    ];
+    final metaLine = metaParts.join('  ·  ');
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 3, 16, 3),
@@ -1612,6 +1618,11 @@ class _EpisodeRow extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          if (metaLine.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(metaLine, maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary)),
+                          ],
                           if (isResume || filler) ...[
                             const SizedBox(height: 5),
                             Row(
