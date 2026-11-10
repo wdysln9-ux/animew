@@ -35,22 +35,103 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   List<Map<String, dynamic>> _items = const [];
   bool _loading = true;
   bool _failed = false;
+  bool _loadingMore = false;
+  bool _loadMoreFailed = false;
+  bool _hasMore = true;
+  int _page = 1;
+  final ScrollController _scroll = ScrollController();
+
   AniListService get _aniList => sl<AniListService>();
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+    _aniList.addListener(_onAniListChanged);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _scroll
+      ..removeListener(_onScroll)
+      ..dispose();
+    _aniList.removeListener(_onAniListChanged);
+    super.dispose();
+  }
+
+  void _onAniListChanged() {
+    if (_aniList.isConnected && !_loading) _load();
+    if (mounted) setState(() {});
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients || _loading || _loadingMore || !_hasMore) return;
+    if (_scroll.position.extentAfter < 480) _loadMore();
+  }
 
   Future<void> _load() async {
     if (!_aniList.isConnected) {
-      if (mounted) setState(() { _loading = false; _failed = false; _items = const []; });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _failed = false;
+          _items = const [];
+          _page = 1;
+          _hasMore = false;
+        });
+      }
       return;
     }
-    if (mounted) setState(() { _loading = true; _failed = false; });
+    if (mounted) setState(() {
+      _loading = true;
+      _failed = false;
+      _loadMoreFailed = false;
+      _page = 1;
+      _hasMore = true;
+    });
     try {
-      final rows = await _aniList.api.notifications();
-      if (mounted) setState(() { _items = rows; _loading = false; });
+      final rows = await _aniList.api.notifications(page: 1);
+      if (!mounted) return;
+      setState(() {
+        _items = rows;
+        _page = 1;
+        _hasMore = rows.length >= 50;
+        _loading = false;
+      });
     } catch (_) {
-      if (mounted) setState(() { _loading = false; _failed = true; });
+      if (mounted) setState(() {
+        _loading = false;
+        _failed = true;
+      });
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (!_aniList.isConnected || _loading || _loadingMore || !_hasMore) return;
+    setState(() {
+      _loadingMore = true;
+      _loadMoreFailed = false;
+    });
+    final nextPage = _page + 1;
+    try {
+      final rows = await _aniList.api.notifications(page: nextPage);
+      if (!mounted) return;
+      final ids = _items.map((n) => n['id']?.toString()).whereType<String>().toSet();
+      setState(() {
+        _items = [
+          ..._items,
+          ...rows.where((n) => n['id'] == null || ids.add(n['id'].toString())),
+        ];
+        _page = nextPage;
+        _hasMore = rows.length >= 50;
+        _loadingMore = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() {
+        _loadingMore = false;
+        _loadMoreFailed = true;
+      });
     }
   }
 
@@ -92,7 +173,10 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
       case 'MEDIA_DATA_CHANGE': return 'Informasi media diperbarui';
       case 'MEDIA_MERGE': return 'Media digabungkan';
       case 'MEDIA_DELETION': return 'Media dihapus dari AniList';
-      default: return 'Pembaruan submission AniList';
+      case 'MEDIA_SUBMISSION_UPDATE': return 'Status pengajuan media diperbarui';
+      case 'STAFF_SUBMISSION_UPDATE': return 'Status pengajuan staf diperbarui';
+      case 'CHARACTER_SUBMISSION_UPDATE': return 'Status pengajuan karakter diperbarui';
+      default: return 'Pembaruan AniList';
     }
   }
 
@@ -156,11 +240,36 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                           : RefreshIndicator(
                               onRefresh: _load,
                               child: ListView.separated(
+                                controller: _scroll,
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 padding: const EdgeInsets.symmetric(vertical: 8),
-                                itemCount: rows.length,
-                                separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
-                                itemBuilder: (context, index) => _tile(rows[index]),
+                                itemCount: rows.length + (_hasMore || _loadMoreFailed ? 1 : 0),
+                                separatorBuilder: (_, index) => Divider(
+                                  height: 1,
+                                  indent: 72,
+                                  color: index == rows.length - 1 ? Colors.transparent : AppColors.hairline,
+                                ),
+                                itemBuilder: (context, index) {
+                                  if (index < rows.length) return _tile(rows[index]);
+                                  if (_loadMoreFailed) {
+                                    return Center(
+                                      child: TextButton(
+                                        onPressed: _loadMore,
+                                        child: const Text('Gagal memuat. Coba lagi'),
+                                      ),
+                                    );
+                                  }
+                                  return const Padding(
+                                    padding: EdgeInsets.all(18),
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
         ),
