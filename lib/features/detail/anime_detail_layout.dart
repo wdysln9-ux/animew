@@ -140,9 +140,15 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         colors: [
                           Colors.black.withValues(alpha: 0.28),
                           Colors.black.withValues(alpha: 0.42),
-                          AppColors.bg.withValues(alpha: 0.62),
-                          AppColors.bg.withValues(alpha: 0.88),
-                          AppColors.bg,
+                          AppColors.bg.withValues(alpha: 0.58),
+                          Color.alphaBlend(
+                            Colors.black.withValues(alpha: 0.18),
+                            AppColors.bg,
+                          ),
+                          Color.alphaBlend(
+                            Colors.black.withValues(alpha: 0.18),
+                            AppColors.bg,
+                          ),
                         ],
                         stops: [0.0, 0.25, 0.52, 0.82, 1.0],
                       ),
@@ -425,8 +431,28 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         // overscroll the two copies can shift differently and create a
         // bright horizontal seam at the hero/title boundary.
         Positioned.fill(
-          child: ColoredBox(
-            color: Color.alphaBlend(Colors.black.withValues(alpha: 0.18), AppColors.bg),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.alphaBlend(
+                    Colors.black.withValues(alpha: 0.18),
+                    AppColors.bg,
+                  ),
+                  Color.alphaBlend(
+                    Colors.black.withValues(alpha: 0.24),
+                    AppColors.bg,
+                  ),
+                  Color.alphaBlend(
+                    Colors.black.withValues(alpha: 0.24),
+                    AppColors.bg,
+                  ),
+                ],
+                stops: [0.0, 0.55, 1.0],
+              ),
+            ),
           ),
         ),
         Padding(
