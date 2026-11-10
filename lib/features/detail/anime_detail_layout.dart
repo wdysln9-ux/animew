@@ -92,8 +92,8 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   ) {
     final poster = posterUrl?.isNotEmpty == true ? posterUrl! : coverUrl;
     final topInset = MediaQuery.paddingOf(context).top;
-    final posterWidth = (MediaQuery.sizeOf(context).width * 0.58)
-        .clamp(196.0, 220.0)
+    final posterWidth = (MediaQuery.sizeOf(context).width * 0.62)
+        .clamp(216.0, 232.0)
         .toDouble();
     final posterHeight = posterWidth * 1.5;
 
@@ -130,10 +130,10 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         // blend it into the page background across the lower
                         // half of the hero. Avoid a visible horizontal band.
                         colors: [
-                          Colors.black.withValues(alpha: 0.20),
-                          Colors.black.withValues(alpha: 0.30),
-                          AppColors.bg.withValues(alpha: 0.48),
-                          AppColors.bg.withValues(alpha: 0.82),
+                          Colors.black.withValues(alpha: 0.24),
+                          Colors.black.withValues(alpha: 0.34),
+                          AppColors.bg.withValues(alpha: 0.58),
+                          AppColors.bg.withValues(alpha: 0.88),
                           AppColors.bg,
                         ],
                         stops: [0.0, 0.26, 0.54, 0.84, 1.0],
