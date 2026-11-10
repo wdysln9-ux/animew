@@ -2524,59 +2524,6 @@ class _DetailViewState extends State<_DetailView> {
           ),
           ),
         ),
-        if (!isReading) ...[
-          SliverToBoxAdapter(
-            child: _CastTab(
-              cast: state.cast.isNotEmpty
-                  ? state.cast
-                  : [for (final name in detail.cast) CastMember(name: name)],
-              onOpenPerson: (ref) => Navigator.of(context).push(
-                PersonPage.route(ref, sourceId: widget.item.sourceId),
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: _RelationsTab(
-              loading: state.extrasLoading,
-              relations: state.relations.isNotEmpty
-                  ? state.relations
-                  : detail.relations,
-              seasons: state.seasons,
-              onOpen: _openRelation,
-            ),
-          ),
-
-          SliverToBoxAdapter(
-            child: _DetailsTab(
-              sourceName: sourceName,
-              statusStr: statusStr,
-              genres: detail.genres,
-              studios: detail.studios,
-              episodeCount: eps.length,
-              year: detail.year,
-              detail: detail,
-              description: cleanSynopsis(detail.description),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: AnimeCommunityTab(
-              title: detail.title,
-              anilistId: item.anilistId,
-              malId: detail.malId ?? item.malId,
-              reviews: true,
-              inline: true,
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: AnimeCommunityTab(
-              title: detail.title,
-              anilistId: item.anilistId,
-              malId: detail.malId ?? item.malId,
-              reviews: false,
-              inline: true,
-            ),
-          ),
-        ],
         ],
       ),
     );
