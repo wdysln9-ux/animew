@@ -130,13 +130,13 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         // blend it into the page background across the lower
                         // half of the hero. Avoid a visible horizontal band.
                         colors: [
+                          Colors.black.withValues(alpha: 0.12),
                           Colors.black.withValues(alpha: 0.22),
-                          Colors.black.withValues(alpha: 0.34),
-                          AppColors.bg.withValues(alpha: 0.46),
-                          AppColors.bg.withValues(alpha: 0.78),
+                          AppColors.bg.withValues(alpha: 0.34),
+                          AppColors.bg.withValues(alpha: 0.72),
                           AppColors.bg,
                         ],
-                        stops: [0.0, 0.24, 0.52, 0.82, 1.0],
+                        stops: [0.0, 0.30, 0.58, 0.86, 1.0],
                       ),
                     ),
                   ),
