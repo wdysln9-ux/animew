@@ -246,6 +246,12 @@ class PlaybackPrefs {
   Future<void> setAutoplayTrailer(bool value) =>
       _box.put('autoplayTrailer', value);
 
+  /// Remember the synopsis expand/collapse choice globally across anime pages.
+  bool get synopsisExpanded =>
+      _box.get('synopsisExpanded', defaultValue: false) as bool;
+  Future<void> setSynopsisExpanded(bool value) =>
+      _box.put('synopsisExpanded', value);
+
   /// Play the fullscreen trailer in HD (up to 1080p) instead of the light 360p
   /// stream. Off by default: 1080p is only offered as separate video+audio
   /// streams (joined at playback) and uses noticeably more data. The
