@@ -42,9 +42,11 @@ Future<void> maybeShowUpdateDialog(
     }
     return;
   }
+  final updateInfo = info;
+  if (updateInfo == null) return;
   await showDialog<void>(
     context: context,
-    builder: (_) => _UpdateDialog(info: info, service: service),
+    builder: (_) => _UpdateDialog(info: updateInfo, service: service),
   );
 }
 
