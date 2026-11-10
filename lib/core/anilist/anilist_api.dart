@@ -287,12 +287,15 @@ query($page:Int,$perPage:Int) {
       }
       ... on MediaSubmissionUpdateNotification {
         id type createdAt contexts status notes
+        media { id siteUrl title { romaji english } coverImage { large } }
       }
       ... on StaffSubmissionUpdateNotification {
         id type createdAt contexts status notes
+        staff { id siteUrl name { full } image { large } }
       }
       ... on CharacterSubmissionUpdateNotification {
         id type createdAt contexts status notes
+        character { id siteUrl name { full } image { large } }
       }
     }
   }
