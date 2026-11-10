@@ -52,6 +52,7 @@ class AnimeExtrasRepository {
   ));
 
   final Map<int, Future<AnimeExtras>> _cache = {};
+  final Map<String, Future<int?>> _idLookupCache = {};
 
   Future<AnimeExtras> load({
     int? malId,
@@ -68,10 +69,13 @@ class AnimeExtrasRepository {
       };
       for (final candidate in titles) {
         if (candidate.isEmpty) continue;
+        final key = candidate.toLowerCase().replaceAll(RegExp(r'[^\\p{L}\\p{N}]', unicode: true), '');
+        final lookup = _idLookupCache.putIfAbsent(key, () => _searchJikanId(candidate));
         try {
-          resolvedId = await _searchJikanId(candidate);
+          resolvedId = await lookup;
         } catch (_) {
-          // Keep trying the alternate title if Jikan is temporarily unavailable.
+          _idLookupCache.remove(key);
+          // Keep trying the alternate title before giving up.
         }
         if (resolvedId != null) break;
       }
