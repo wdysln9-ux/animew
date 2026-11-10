@@ -1,7 +1,7 @@
 // AniList trailer presentation. Trailer data is read from the main detail query.
 part of 'detail_screen.dart';
 
-class _AniListTrailerSection extends StatelessWidget {
+class _AniListTrailerSection extends StatefulWidget {
   const _AniListTrailerSection({
     required this.url,
     this.thumbnail,
@@ -11,55 +11,83 @@ class _AniListTrailerSection extends StatelessWidget {
   final String? thumbnail;
 
   @override
+  State<_AniListTrailerSection> createState() => _AniListTrailerSectionState();
+}
+
+class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Trailer', style: AppText.headline.copyWith(fontSize: 17)),
-          const SizedBox(height: 12),
           GestureDetector(
-            onTap: () => launchUrl(
-              Uri.parse(url),
-              mode: LaunchMode.externalApplication,
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Row(
+              children: [
+                Text('Trailer & PV', style: AppText.headline.copyWith(fontSize: 16)),
+                const SizedBox(width: 7),
+                Text('1', style: AppText.caption.copyWith(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                )),
+                const Spacer(),
+                Icon(
+                  _expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.textSecondary,
+                  size: 21,
+                ),
+              ],
             ),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (thumbnail != null && thumbnail!.isNotEmpty)
-                      CachedNetworkImage(
-                        imageUrl: thumbnail!,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, _, _) =>
-                            ColoredBox(color: AppColors.surface2),
-                      )
-                    else
-                      ColoredBox(color: AppColors.surface2),
-                    Center(
-                      child: Container(
-                        width: 52,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: 32,
+          ),
+          if (_expanded) ...[
+            const SizedBox(height: 9),
+            GestureDetector(
+              onTap: () => launchUrl(
+                Uri.parse(widget.url),
+                mode: LaunchMode.externalApplication,
+              ),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (widget.thumbnail != null && widget.thumbnail!.isNotEmpty)
+                        CachedNetworkImage(
+                          imageUrl: widget.thumbnail!,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, _, _) =>
+                              ColoredBox(color: AppColors.surface2),
+                        )
+                      else
+                        ColoredBox(color: AppColors.surface2),
+                      Center(
+                        child: Container(
+                          width: 48,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 30,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
