@@ -171,14 +171,21 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                           if (sourceLabel.isNotEmpty)
                             sourceLabel.toUpperCase() == 'MAL'
                                 ? const _MalTextWordmark()
-                                : Text(
-                                    sourceLabel,
-                                    style: AppText.caption.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 12,
-                                    ),
-                                  ),
+                                : sourceLabel.toUpperCase() == 'ANILIST'
+                                    ? Image.asset(
+                                        'assets/icon/providers/anilist.png',
+                                        width: 19,
+                                        height: 19,
+                                        fit: BoxFit.contain,
+                                      )
+                                    : Text(
+                                        sourceLabel,
+                                        style: AppText.caption.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                           if (sourceLabel.isNotEmpty && animeId.isNotEmpty)
                             const SizedBox(width: 6),
                           if (animeId.isNotEmpty)
