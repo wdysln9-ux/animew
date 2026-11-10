@@ -129,84 +129,21 @@ class _EpisodesTabState extends State<_EpisodesTab> {
   /// — picking a group is what makes it a single readable run.
   String? _scanlator;
   int _rangeIndex = 0;
-  String? _highlightEpId; // outlines a grid tile right after a jump
-  final GlobalKey _resumeEpisodeKey = GlobalKey();
-  bool _autoScrollAttempted = false;
 
   @override
   void initState() {
     super.initState();
     _rangeIndex = _initialRange();
-    _highlightEpId = widget.targetEpisodeId;
-    if (widget.autoScrollToResume) _scheduleResumeAutoScroll();
   }
 
-  void _scheduleResumeAutoScroll() {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted || _autoScrollAttempted) return;
-
-      final episodes = _displayEps;
-      final targetId = widget.targetEpisodeId ??
-          widget.eps[widget.resumeIndex(widget.eps)].id;
-      final targetIndex = episodes.indexWhere((ep) => ep.id == targetId);
-      if (targetIndex < 0) return;
-
-      final slice = episodeRangeSlice(
-        _rangeIndex,
-        episodes.length,
-        reversed: _reverseList,
-      );
-      final indexInRange = targetIndex - slice.start;
-      if (indexInRange < 0 || targetIndex >= slice.end) return;
-
-      // Lazy slivers only create the target widget once the scroll position
-      // approaches it. Seek in small stages so the page has time to build and
-      // load each batch instead of overshooting and snapping back to the top.
-      final controller = PrimaryScrollController.maybeOf(context);
-      if (controller == null || !controller.hasClients) return;
-
-      for (var attempt = 0; attempt < 24 && mounted; attempt++) {
-        final target = _resumeEpisodeKey.currentContext;
-        if (target != null) {
-          _autoScrollAttempted = true;
-          await Scrollable.ensureVisible(
-            target,
-            alignment: 0.18,
-            duration: const Duration(milliseconds: 900),
-            curve: Curves.easeInOutCubic,
-          );
-          return;
-        }
-
-        if (!controller.hasClients) return;
-        final position = controller.position;
-        if (position.pixels >= position.maxScrollExtent) return;
-
-        final step = _grid ? 300.0 : 420.0;
-        final nextOffset = (position.pixels + step)
-            .clamp(0.0, position.maxScrollExtent)
-            .toDouble();
-        await controller.animateTo(
-          nextOffset,
-          duration: const Duration(milliseconds: 420),
-          curve: Curves.easeOutCubic,
-        );
-        if (!mounted) return;
-        await WidgetsBinding.instance.endOfFrame;
-        await Future<void>.delayed(const Duration(milliseconds: 120));
-      }
-    });
-  }
 
   @override
   void didUpdateWidget(covariant _EpisodesTab old) {
     super.didUpdateWidget(old);
-    if (widget.autoScrollToResume && old.loading && !widget.loading) _scheduleResumeAutoScroll();
     // Season switched (or the episode set changed) → reset to the resume chunk.
     if (old.currentSeason != widget.currentSeason ||
         old.seasonEps.length != widget.seasonEps.length) {
       _rangeIndex = _initialRange();
-      _highlightEpId = null;
     }
   }
 
@@ -719,8 +656,7 @@ class _EpisodesTabState extends State<_EpisodesTab> {
           );
         }
         return RepaintBoundary(
-          key: widget.autoScrollToResume && ep.id == (widget.targetEpisodeId ?? widget.eps[widget.resumeIndex(widget.eps)].id) ? _resumeEpisodeKey : null,
-          child: _EpisodeRow(
+                    child: _EpisodeRow(
             ep: ep,
             epNum: epNum,
             displayTitle: displayTitle,
@@ -781,7 +717,8 @@ class _EpisodesTabState extends State<_EpisodesTab> {
             isInProgress: st.inProgress,
             isResume: st.resume,
             isFiller: ep.filler,
-            highlight: _highlightEpId == ep.id,
+            highlight: false,
+            isResume: st.resume,
             fraction: st.fraction,
             available: ep.available,
             onTap: () => widget.onOpen(fullIndex),
@@ -1198,6 +1135,7 @@ class _EpisodeGridTile extends StatelessWidget {
   final bool isResume;
   final bool isFiller;
   final bool highlight;
+  final bool isResume;
   final double fraction;
 
   /// False when no matched source has this episode — see [Episode.available].
@@ -1242,6 +1180,14 @@ class _EpisodeGridTile extends StatelessWidget {
                 ),
               ),
             ),
+            if (isResume)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: _EpisodeProgressOutlinePainter(fraction: fraction),
+                  ),
+                ),
+              ),
 if (isFiller)
               const Positioned(
                 top: 6,
@@ -1979,4 +1925,34 @@ class _EpisodeDownloadIcon extends StatelessWidget {
       ),
     );
   }
+}
+
+
+class _EpisodeProgressOutlinePainter extends CustomPainter {
+  const _EpisodeProgressOutlinePainter({required this.fraction});
+
+  final double fraction;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        rect.deflate(1),
+        const Radius.circular(10),
+      ));
+    final metric = path.computeMetrics().first;
+    final progress = fraction.clamp(0.0, 1.0);
+    if (progress <= 0) return;
+    final paint = Paint()
+      ..color = AppColors.accent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(metric.extractPath(0, metric.length * progress), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _EpisodeProgressOutlinePainter oldDelegate) =>
+      oldDelegate.fraction != fraction;
 }
