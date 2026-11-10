@@ -1130,7 +1130,6 @@ class _EpisodeGridTile extends StatelessWidget {
   final bool isInProgress;
   final bool isResume;
   final bool isFiller;
-  final bool isResume;
   final double fraction;
 
   /// False when no matched source has this episode — see [Episode.available].
