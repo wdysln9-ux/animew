@@ -1222,7 +1222,7 @@ class _TvEpisodeListState extends State<_TvEpisodeList> {
               ? cleanTitle(ep.title)
               : ep.title;
           final heading = displayTitle.isNotEmpty
-              ? '$epNum. $displayTitle'
+              ? displayTitle
               : 'Episode $epNum';
           return TvListFocusable(
             key: ValueKey('tv-ep-$fullIndex'),
@@ -1251,6 +1251,9 @@ class _TvEpisodeListState extends State<_TvEpisodeList> {
                   onDownload: () => widget.onDownload(ep),
                   sourceId: widget.sourceId,
                   showId: widget.showId,
+                  showPopularity: null,
+                  totalEpisodes: eps.length,
+                  isAiring: false,
                 ),
               ),
             ),
