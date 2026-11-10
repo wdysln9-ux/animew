@@ -589,7 +589,7 @@ class AniListCatalogue implements AnimeCatalogue {
 
   static ZCanonical _canonical(Map<String, dynamic> m, ZKind kind) {
     final mal = m['idMal'] as int?;
-    return ZCanonical(kind, mal != null ? 'mal:$mal' : 'al:${m['id']}');
+    return ZCanonical(kind, 'al:${m['id']}');
   }
 
   static List<MediaItem> _items(Map<String, dynamic>? data, ZKind kind) =>
