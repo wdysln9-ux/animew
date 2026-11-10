@@ -99,7 +99,6 @@ import '../../core/repository/source_actions.dart' as source_actions;
 import '../../core/repository/source_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
-import '../../core/trailer/anime_extras_repository.dart';
 import '../../core/tv/tv_back_button.dart';
 import '../../core/tv/tv_focusable.dart';
 import '../../core/tv/tv_list_focusable.dart';
@@ -2073,7 +2072,9 @@ class _DetailViewState extends State<_DetailView> {
     final isReading =
         detail.type == ProviderType.novel || detail.type == ProviderType.manga;
     // Kick the (cached, once-per-malId) filler lookup for the "Filler" badge.
-    _ensureFiller(detail.malId ?? item.malId);
+    if (detail.sourceId != ZmodeIds.sourceId) {
+      _ensureFiller(detail.malId ?? item.malId);
+    }
     // Kick the (once-per-detail) tracker-progress lookup for grey-out.
     _maybeFetchTrackerProgress(detail);
 
