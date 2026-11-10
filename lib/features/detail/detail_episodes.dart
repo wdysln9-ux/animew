@@ -710,15 +710,12 @@ class _EpisodesTabState extends State<_EpisodesTab> {
               : offset + i + 1;
           final epNum = ep.number?.toInt() ?? fallbackNumber;
           return RepaintBoundary(
-            key: widget.autoScrollToResume && ep.id == (widget.targetEpisodeId ?? widget.eps[widget.resumeIndex(widget.eps)].id) ? _resumeEpisodeKey : null,
             child: _EpisodeGridTile(
             number: epNum,
             isWatched: st.watched,
             isInProgress: st.inProgress,
             isResume: st.resume,
             isFiller: ep.filler,
-            highlight: false,
-            isResume: st.resume,
             fraction: st.fraction,
             available: ep.available,
             onTap: () => widget.onOpen(fullIndex),
@@ -1122,7 +1119,6 @@ class _EpisodeGridTile extends StatelessWidget {
     required this.isInProgress,
     required this.isResume,
     required this.isFiller,
-    required this.highlight,
     required this.fraction,
     required this.onTap,
     this.onLongPress,
@@ -1134,7 +1130,6 @@ class _EpisodeGridTile extends StatelessWidget {
   final bool isInProgress;
   final bool isResume;
   final bool isFiller;
-  final bool highlight;
   final bool isResume;
   final double fraction;
 
@@ -1155,9 +1150,7 @@ class _EpisodeGridTile extends StatelessWidget {
     final fg = !available
         ? AppColors.textTertiary
         : (isWatched ? AppColors.textTertiary : AppColors.textPrimary);
-    final side = highlight
-        ? BorderSide(color: AppColors.accent, width: 2)
-        : const BorderSide(color: AppColors.hairline, width: 0.5);
+    const side = BorderSide(color: AppColors.hairline, width: 0.5);
 
     return Material(
       color: bg,
