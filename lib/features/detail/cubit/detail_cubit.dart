@@ -628,24 +628,9 @@ class DetailCubit extends Cubit<DetailState> {
       } catch (_) {/* stays a movie */}
     }
 
-    // Start MAL trailer and theme requests as part of the same detail-page
-    // enrichment pass. The section widgets join this repository's shared
-    // in-flight future, so opening/expanding them never starts duplicate work.
-    if (d.type == ProviderType.anime) {
-      unawaited(
-        AnimeExtrasRepository.instance
-            .load(
-              malId: d.malId,
-              title: d.title,
-              englishTitle: d.englishTitle,
-            )
-            .catchError((_) => AnimeExtras(
-                  malId: d.malId ?? 0,
-                  videoError: 'Jikan tidak merespons',
-                  themeError: 'Jikan tidak merespons',
-                )),
-      );
-    }
+    // Trailer and theme widgets load through their own independent caches.
+    // The old combined prefetch duplicated both network requests and did not
+    // warm either split cache, consuming Jikan's shared rate limit.
 
     // Start franchise discovery alongside cast, relations and recommendations.
     // These requests are independent; waiting for all three detail endpoints
