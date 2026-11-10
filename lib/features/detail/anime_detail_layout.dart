@@ -1144,7 +1144,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                                       ? Alignment.center
                                       : Alignment.centerRight,
                       child: Container(
-                        width: 34,
+                        width: 30,
                         height: 2,
                         decoration: BoxDecoration(
                           color: AppColors.accent,
