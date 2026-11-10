@@ -125,6 +125,9 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                 child: _image(coverUrl, alignment: Alignment.topCenter),
               ),
               Positioned.fill(
+                child: ColoredBox(color: Color.fromRGBO(0, 0, 0, 0.10)),
+              ),
+              Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
@@ -410,7 +413,10 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     final romaji = romajiTitle?.trim().isNotEmpty == true
         ? romajiTitle!.trim()
         : title.trim();
-    final english = (englishTitle?.trim().isNotEmpty == true ? englishTitle : title).trim();
+    final english = englishTitle?.trim().isNotEmpty == true
+        ? englishTitle!.trim()
+        : '';
+    final translatedSource = english.isNotEmpty ? english : romaji;
     return SizedBox(
       width: double.infinity,
       child: Stack(
@@ -419,8 +425,10 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         // independently-positioned copy of the backdrop here: during
         // overscroll the two copies can shift differently and create a
         // bright horizontal seam at the hero/title boundary.
-        const Positioned.fill(
-          child: ColoredBox(color: AppColors.bg),
+        Positioned.fill(
+          child: ColoredBox(
+            color: Color.alphaBlend(Colors.black.withValues(alpha: 0.08), AppColors.bg),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 5, 16, 0),
@@ -432,11 +440,13 @@ class AnimeDetailTitleBlock extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AppText.largeTitle.copyWith(fontSize: 23, height: 1.14)),
           if (romaji.isNotEmpty && english.isNotEmpty) const SizedBox(height: 2),
-          Text(english, textAlign: TextAlign.center, maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.largeTitle.copyWith(fontSize: 23, height: 1.14)),
-          const SizedBox(height: 2),
-          AutoTranslatedText(text: english, textAlign: TextAlign.center, maxLines: 2,
+          if (english.isNotEmpty) ...[
+            Text(english, textAlign: TextAlign.center, maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.largeTitle.copyWith(fontSize: 23, height: 1.14)),
+            const SizedBox(height: 2),
+          ],
+          AutoTranslatedText(text: translatedSource, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: AppText.body.copyWith(fontSize: 15, color: AppColors.textSecondary)),
           if (metaLine.isNotEmpty) ...[
