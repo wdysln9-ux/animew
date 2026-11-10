@@ -2184,7 +2184,7 @@ class _DetailViewState extends State<_DetailView> {
           : count >= 100000
               ? '${(count / 1000).round()}K'
               : count >= 1000
-                  ? '${_compactDecimal(count / 1000)}K'
+                  ? '${(count / 1000).toStringAsFixed(1)}K'
                   : _thousands(count);
       metaParts.add('◉ $compact');
     }
