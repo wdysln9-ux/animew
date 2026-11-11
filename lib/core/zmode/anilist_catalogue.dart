@@ -309,6 +309,7 @@ class AniListCatalogue implements AnimeCatalogue {
           'genre_in:[${f.genres.map((g) => '"$g"').join(',')}]',
         if (f.tags.isNotEmpty)
           'tag_in:[${f.tags.map((t) => '"$t"').join(',')}]',
+        if (f.minTagRank > 0) 'minimumTagRank:${f.minTagRank}',
         if (years.length == 1)
           'seasonYear:${years.single}'
         else if (years.length > 1)
