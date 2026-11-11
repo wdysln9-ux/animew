@@ -424,7 +424,6 @@ class _HomeViewState extends State<_HomeView>
       final updated = await ExtensionAutoUpdater.run();
       if (!mounted) return;
       if (updated > 0) {
-        final title = context.l10n.extensionsUpdated;
 
       }
       return;
@@ -432,21 +431,19 @@ class _HomeViewState extends State<_HomeView>
 
     try {
       final csManager = sl<CloudStreamManager>();
-      final csCount = await csManager.checkAllUpdates();
+      await csManager.checkAllUpdates();
 
-      var aniCount = 0;
       try {
         final repoUrls = Hive.isBoxOpen(kAniyomiReposBoxName)
             ? Hive.box<String>(kAniyomiReposBoxName).values.toList()
             : const <String>[];
         if (repoUrls.isNotEmpty) {
-          aniCount = await sl<AniyomiManager>().checkAllUpdates(repoUrls);
+          await sl<AniyomiManager>().checkAllUpdates(repoUrls);
         }
       } catch (_) {
         /* aniyomi check must never break the CS check or startup */
       }
 
-      final total = csCount + aniCount;
 
     } catch (_) {
       /* never affects startup */
@@ -1096,9 +1093,9 @@ class _HomeViewState extends State<_HomeView>
         : GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: openNotifications,
-            child: const Padding(
-              padding: EdgeInsets.all(4),
-              child: DockIcon(DockGlyph.bell, size: 22),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: icon,
             ),
           );
   }
