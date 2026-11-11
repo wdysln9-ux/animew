@@ -95,10 +95,11 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   ),
                   onChanged: (value) {
                     final raw = value.trim().replaceFirst('#', '');
-                    if (RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(raw)) {
-                      setDialogState(() {
-                        temp = Color(0xFF000000 | int.parse(raw, radix: 16));
-                      });
+                    final parsed = raw.length == 6
+                        ? int.tryParse(raw, radix: 16)
+                        : null;
+                    if (parsed != null) {
+                      setDialogState(() => temp = Color(0xFF000000 | parsed));
                     }
                   },
                 ),
@@ -126,8 +127,11 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
             TextButton(
               onPressed: () {
                 final raw = hexController.text.trim().replaceFirst('#', '');
-                if (!RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(raw)) return;
-                Navigator.pop(ctx, Color(0xFF000000 | int.parse(raw, radix: 16)));
+                final parsed = raw.length == 6
+                    ? int.tryParse(raw, radix: 16)
+                    : null;
+                if (parsed == null) return;
+                Navigator.pop(ctx, Color(0xFF000000 | parsed));
               },
               child: Text(
                 context.l10n.apply,
