@@ -302,7 +302,7 @@ class _PosterCardState extends State<PosterCard> {
         ? widget.wideImageUrl
         : widget.imageUrl;
     final artHeaders = artUrl == widget.imageUrl ? widget.headers : null;
-    final artFit = BoxFit.cover;
+    final artFit = BoxFit.contain;
     final dpr = MediaQuery.devicePixelRatioOf(context);
     final memW = (widget.cellWidth * dpr).round();
     final aniSrcId = artUrl == widget.imageUrl ? _aniSrcId : null;
