@@ -153,34 +153,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
     }
   }
-
-
-
-  List<Map<String, dynamic>> _groupActivityLikes(List<Map<String, dynamic>> items) {
-    final groups = <String, List<Map<String, dynamic>>>{};
-    final out = <Map<String, dynamic>>[];
-    for (final item in items) {
-      final type = (item['type'] ?? '').toString();
-      if (type == 'ACTIVITY_LIKE' || type == 'ACTIVITY_REPLY_LIKE') {
-        final user = item['user'] is Map ? item['user'] as Map : const {};
-        final key = (user['id'] ?? user['name'] ?? 'unknown').toString();
-        if (!groups.containsKey(key)) {
-          groups[key] = [];
-          out.add({'__groupKey': key});
-        }
-        groups[key]!.add(item);
-      } else {
-        out.add(item);
-      }
-    }
-    return out.map((row) {
-      final key = row['__groupKey'];
-      if (key == null) return row;
-      final likes = groups[key]!;
-      return {...likes.first, '__groupedLikes': likes};
-    }).toList();
-  }
-
   String _mediaTitle(Map? media) {
     final titles = media?['title'] is Map ? media!['title'] as Map : null;
     return (titles?['romaji'] ?? titles?['english'] ?? 'Media AniList').toString();
@@ -215,14 +187,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final type = (n['type'] ?? '').toString();
     final media = n['media'] is Map ? n['media'] as Map : null;
     switch (type) {
-      case 'AIRING': return 'Episode ' + (n['episode'] ?? '').toString() + ' baru tayang';
-      case 'RELATED_MEDIA_ADDITION': return _mediaKind(media);
+      case 'AIRING': return 'Episode ' + (n['episode'] ?? '').toString();
+      case 'RELATED_MEDIA_ADDITION': return 'Ditambahkan ke database';
       case 'MEDIA_DATA_CHANGE': return 'Informasi ' + _mediaKind(media).toLowerCase() + ' diperbarui';
       case 'MEDIA_SUBMISSION_UPDATE':
       case 'STAFF_SUBMISSION_UPDATE':
       case 'CHARACTER_SUBMISSION_UPDATE': return _submissionStatus(n);
       case 'THREAD_COMMENT_REPLY': return 'Membalas komentarmu dalam utas';
-      case 'THREAD_SUBSCRIBED': return 'Ada komentar baru di utas yang kamu ikuti';
+      case 'THREAD_SUBSCRIBED': return '';
       case 'THREAD_COMMENT_MENTION': return 'Menyebutmu dalam utas';
       case 'ACTIVITY_MENTION': return 'Menyebutmu dalam aktivitas';
       case 'ACTIVITY_REPLY':
@@ -263,11 +235,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'THREAD_SUBSCRIBED': return name + ' berkomentar di utas: ' + (thread?['title'] ?? 'Forum').toString();
       case 'THREAD_COMMENT_LIKE': return name + ' menyukai komentarmu di utas: ' + (thread?['title'] ?? 'Forum').toString();
       case 'THREAD_LIKE': return name + ' menyukai utas: ' + (thread?['title'] ?? 'Forum').toString();
-      case 'RELATED_MEDIA_ADDITION': return mediaTitle + ' baru ditambahkan';
+      case 'RELATED_MEDIA_ADDITION': return mediaTitle + ' ditambahkan ke database';
       case 'MEDIA_DATA_CHANGE': return mediaTitle + ' diperbarui';
       case 'MEDIA_MERGE': return mediaTitle + ' digabungkan';
       case 'MEDIA_DELETION': return 'Media dihapus';
-      case 'MEDIA_SUBMISSION_UPDATE': return 'Pengajuan media: ' + mediaTitle + ' — ' + _submissionStatus(n);
+      case 'MEDIA_SUBMISSION_UPDATE': return mediaTitle;
       case 'STAFF_SUBMISSION_UPDATE': return 'Pengajuan staf — ' + _submissionStatus(n);
       case 'CHARACTER_SUBMISSION_UPDATE': return 'Pengajuan karakter — ' + _submissionStatus(n);
       default: return 'Pembaruan AniList';
@@ -282,10 +254,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     String suffix = '';
     if (type == 'AIRING') {
       subject = _mediaTitle(n['media'] is Map ? n['media'] as Map : null);
-    } else if (type == 'RELATED_MEDIA_ADDITION' || type == 'MEDIA_DATA_CHANGE' || type == 'MEDIA_MERGE') {
+    } else if (type == 'RELATED_MEDIA_ADDITION' || type == 'MEDIA_DATA_CHANGE' || type == 'MEDIA_MERGE' || type == 'MEDIA_SUBMISSION_UPDATE') {
       subject = _mediaTitle(n['media'] is Map ? n['media'] as Map : null);
-      suffix = type == 'RELATED_MEDIA_ADDITION' ? ' baru ditambahkan'
-          : type == 'MEDIA_DATA_CHANGE' ? ' diperbarui' : ' digabungkan';
+      suffix = type == 'RELATED_MEDIA_ADDITION' ? ' ditambahkan ke database'
+          : type == 'MEDIA_DATA_CHANGE' ? ' diperbarui'
+          : type == 'MEDIA_MERGE' ? ' digabungkan' : '';
     } else if (_forum.contains(type)) {
       final user = n['user'] is Map ? n['user'] as Map : const {};
       final action = switch (type) {
@@ -310,22 +283,31 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       style: AppText.body.copyWith(fontSize: 13, fontWeight: FontWeight.w600));
   }
 
+  static const _weekdays = [
+    'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu',
+  ];
+  static const _months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  ];
+
   String _time(Map<String, dynamic> n) {
     final raw = n['createdAt'];
     if (raw is! num) return '';
     final date = DateTime.fromMillisecondsSinceEpoch(raw.toInt() * 1000).toLocal();
+    final day = _weekdays[date.weekday - 1];
     final diff = DateTime.now().difference(date);
-    if (diff.inMinutes < 1) return 'Baru saja';
-    if (diff.inHours < 1) return diff.inMinutes.toString() + ' menit lalu';
-    if (diff.inDays < 1) return diff.inHours.toString() + ' jam lalu';
-    if (diff.inDays < 7) return diff.inDays.toString() + ' hari lalu';
-    return date.day.toString() + '/' + date.month.toString() + '/' + date.year.toString();
+    if (diff.inMinutes < 1) return '$day, Baru saja';
+    if (diff.inHours < 1) return '$day, ${diff.inMinutes} menit lalu';
+    if (diff.inDays < 1) return '$day, ${diff.inHours} jam lalu';
+    if (diff.inDays < 7) return '$day, ${diff.inDays} hari lalu';
+    return '$day, ${date.day} ${_months[date.month - 1]} ${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
     final connected = _aniList.isConnected;
-    final rows = _selected == _NotificationTab.activity ? _groupActivityLikes(_items) : _items;
+    final rows = _items;
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: settingsAppBar(context.l10n.notifications),
@@ -454,22 +436,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   );
 
   Widget _tile(Map<String, dynamic> n) {
-    final groupedLikes = n['__groupedLikes'] is List ? (n['__groupedLikes'] as List).whereType<Map<String, dynamic>>().toList() : null;
-    if (groupedLikes != null) {
-      final groupUser = n['user'] is Map ? n['user'] as Map : const {};
-      final groupName = (groupUser['name'] ?? 'AniList').toString();
-      return ExpansionTile(
-        leading: Icon(Icons.favorite_rounded, color: AppColors.accent),
-        title: Text(groupName + ' menyukai ' + groupedLikes.length.toString() + ' aktivitasmu',
-          style: AppText.body.copyWith(fontSize: 13, fontWeight: FontWeight.w600)),
-        subtitle: Text(_time(groupedLikes.first), style: AppText.caption.copyWith(fontSize: 11)),
-        children: groupedLikes.map((like) => ListTile(
-          dense: true,
-          title: Text(_activityDescription(like), style: AppText.body.copyWith(fontSize: 12)),
-          onTap: () => _openNotification(like),
-        )).toList(),
-      );
-    }
     final user = n['user'] is Map ? n['user'] as Map : null;
     final media = n['media'] is Map ? n['media'] as Map : null;
     final staff = n['staff'] is Map ? n['staff'] as Map : null;
@@ -488,22 +454,37 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       onTap: () => _openNotification(n),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       leading: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(
+          (!_activity.contains(type) && !_forum.contains(type) && cover != null) ? 8 : 22,
+        ),
         child: SizedBox(
-          width: 44, height: 44,
+          width: 44,
+          height: (!_activity.contains(type) && !_forum.contains(type) && cover != null) ? 58 : 44,
           child: image != null && image.isNotEmpty
               ? CachedNetworkImage(imageUrl: image, fit: BoxFit.cover,
                   errorWidget: (_, _, _) => _fallback(icon))
               : _fallback(icon),
         ),
       ),
-      title: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (_submissions.contains(type) && _submissionColor(n) != null)
-          Padding(padding: const EdgeInsets.only(top: 5, right: 7), child: Container(width: 7, height: 7, decoration: BoxDecoration(color: _submissionColor(n), shape: BoxShape.circle))),
-        Expanded(child: _notificationTitle(n)),
-      ]),
+      title: _notificationTitle(n),
       subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (detail.isNotEmpty) Text(detail, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(fontSize: 11.5)),
+        if (detail.isNotEmpty)
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (_submissions.contains(type) && _submissionColor(n) != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, right: 6),
+                child: Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: _submissionColor(n),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            Expanded(child: Text(detail, maxLines: 2, overflow: TextOverflow.ellipsis,
+              style: AppText.caption.copyWith(fontSize: 11.5))),
+          ]),
         const SizedBox(height: 3),
         Text(_time(n), style: AppText.caption.copyWith(fontSize: 11, color: AppColors.textSecondary)),
       ]),
