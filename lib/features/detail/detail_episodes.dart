@@ -1591,7 +1591,6 @@ class _EpisodeRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isWatched || isInProgress || isResume)
               Positioned(
                 left: 0,
                 right: 0,
