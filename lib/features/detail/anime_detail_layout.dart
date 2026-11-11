@@ -445,7 +445,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -677,7 +677,7 @@ class AnimeDetailSynopsisSection extends StatefulWidget {
 }
 
 class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection> {
-  bool _expanded = false;
+  late bool _expanded = sl<PlaybackPrefs>().synopsisExpanded;
   String? _translated;
 
   @override
@@ -686,12 +686,20 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
     _translate();
   }
 
+  void _toggleExpanded() {
+    if (widget.onMore != null) {
+      widget.onMore!();
+      return;
+    }
+    setState(() => _expanded = !_expanded);
+    unawaited(sl<PlaybackPrefs>().setSynopsisExpanded(_expanded));
+  }
+
   @override
   void didUpdateWidget(covariant AnimeDetailSynopsisSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.text != widget.text) {
       _translated = null;
-      _expanded = false;
       _translate();
     }
   }
@@ -707,15 +715,15 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
     final data = _translated ?? widget.text;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onMore ?? () => setState(() => _expanded = !_expanded),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 15)),
-            const SizedBox(height: 9),
-            AnimatedSize(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 15)),
+          const SizedBox(height: 9),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _toggleExpanded,
+            child: AnimatedSize(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeInOutCubic,
               alignment: Alignment.topCenter,
@@ -725,8 +733,23 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
                   : Text(data, maxLines: 3, overflow: TextOverflow.ellipsis,
                       style: AppText.body.copyWith(fontSize: 14, height: 1.45, color: AppColors.textSecondary)),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 6),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _toggleExpanded,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Text(
+                _expanded ? 'Lebih sedikit' : 'Selengkapnya',
+                style: AppText.caption.copyWith(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
