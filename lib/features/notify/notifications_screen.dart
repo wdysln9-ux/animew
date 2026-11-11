@@ -258,10 +258,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'ACTIVITY_REPLY_SUBSCRIBED': return name + ' membalas aktivitasmu';
       case 'ACTIVITY_LIKE':
       case 'ACTIVITY_REPLY_LIKE': return name + ' menyukai aktivitasmu';
-      case 'THREAD_COMMENT_MENTION': return name + ' menyebutmu di forum';
-      case 'THREAD_COMMENT_REPLY': return name + ' membalas komentarmu di forum';
-      case 'THREAD_SUBSCRIBED': return name + ' berkomentar di utas yang kamu ikuti';
-      case 'THREAD_COMMENT_LIKE':
+      case 'THREAD_COMMENT_MENTION': return name + ' menyebutmu di utas: ' + (thread?['title'] ?? 'Forum').toString();
+      case 'THREAD_COMMENT_REPLY': return name + ' membalas di utas: ' + (thread?['title'] ?? 'Forum').toString();
+      case 'THREAD_SUBSCRIBED': return name + ' berkomentar di utas: ' + (thread?['title'] ?? 'Forum').toString();
+      case 'THREAD_COMMENT_LIKE': return name + ' menyukai komentarmu di utas: ' + (thread?['title'] ?? 'Forum').toString();
       case 'THREAD_LIKE': return name + ' menyukai utas: ' + (thread?['title'] ?? 'Forum').toString();
       case 'RELATED_MEDIA_ADDITION': return mediaTitle + ' baru ditambahkan';
       case 'MEDIA_DATA_CHANGE': return mediaTitle + ' diperbarui';
@@ -286,9 +286,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       subject = _mediaTitle(n['media'] is Map ? n['media'] as Map : null);
       suffix = type == 'RELATED_MEDIA_ADDITION' ? ' baru ditambahkan'
           : type == 'MEDIA_DATA_CHANGE' ? ' diperbarui' : ' digabungkan';
-    } else if (type == 'THREAD_COMMENT_LIKE' || type == 'THREAD_LIKE') {
+    } else if (_forum.contains(type)) {
       final user = n['user'] is Map ? n['user'] as Map : const {};
-      prefix = (user['name'] ?? 'AniList').toString() + ' menyukai utas: ';
+      final action = switch (type) {
+        'THREAD_COMMENT_MENTION' => ' menyebutmu di utas: ',
+        'THREAD_COMMENT_REPLY' => ' membalas di utas: ',
+        'THREAD_SUBSCRIBED' => ' berkomentar di utas: ',
+        'THREAD_COMMENT_LIKE' => ' menyukai komentarmu di utas: ',
+        _ => ' menyukai utas: ',
+      };
+      prefix = (user['name'] ?? 'AniList').toString() + action;
       subject = (thread?['title'] ?? 'Forum').toString();
     }
     if (subject == null) {
