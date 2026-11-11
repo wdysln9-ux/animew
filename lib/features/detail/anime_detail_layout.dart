@@ -217,15 +217,13 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 8,
+                bottom: 15,
                 child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(17),
-                      child: SizedBox(
-                        width: posterWidth,
-                        height: posterHeight - 4,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: posterWidth,
+                      height: posterHeight,
                         child: _image(poster, width: 528, fit: BoxFit.contain),
                       ),
                     ),
@@ -425,7 +423,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           child: ColoredBox(color: AppColors.bg),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -828,7 +826,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
     final hasCredits = widget.studios.isNotEmpty || widget.tags.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -946,7 +944,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
               const SizedBox(width: 7),
               Text(cast.length.toString(), style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textSecondary)),
               const Spacer(),
-              Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary),
+              Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 21),
             ]),
           ),
         ),
@@ -1125,10 +1123,10 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                   insets: const EdgeInsets.only(bottom: 1),
                 ),
                 labelStyle: AppText.headline.copyWith(
-                  fontSize: 13, height: 1.2, fontWeight: FontWeight.w700,
+                  fontSize: 16, height: 1.2, fontWeight: FontWeight.w700,
                 ),
                 unselectedLabelStyle: AppText.headline.copyWith(
-                  fontSize: 13, height: 1.2, fontWeight: FontWeight.w500,
+                  fontSize: 16, height: 1.2, fontWeight: FontWeight.w500,
                 ),
                 labelColor: AppColors.textPrimary,
                 unselectedLabelColor: AppColors.textSecondary,
@@ -1168,6 +1166,14 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         imageUrl: relation.cover,
                         cellWidth: width,
                         seriesBadge: relation.relation,
+                        scoreBadge: relation.score,
+                        viewsBadge: relation.popularity,
+                        statusBadge: relation.status,
+                        metaLine: [
+                          if (relation.format?.isNotEmpty == true) relation.format!,
+                          if (relation.episodes != null) '${relation.episodes} eps',
+                          if (relation.year != null) '${relation.year}',
+                        ].join(' · '),
                         onTap: () => widget.onOpenRelation(relation),
                       ),
                     ));
