@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/metadata/synopsis_translator.dart';
 import '../../core/models/media_detail.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text.dart';
 
 Future<void> showAnimeTitleSheet(
   BuildContext context,
