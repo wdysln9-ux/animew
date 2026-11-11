@@ -674,7 +674,10 @@ class DetailCubit extends Cubit<DetailState> {
         }
       } catch (_) {/* source-supplied data remains usable */}
     }
-    _log('enrich done ${sw.elapsedMilliseconds}ms');
+    // Load the franchise rail independently of cast/relations. Previously
+    // the loader existed but was never invoked, leaving every season list empty.
+    if (d.type == ProviderType.anime) unawaited(_loadSeasons(d));
+        _log('enrich done ${sw.elapsedMilliseconds}ms');
   }
 
   /// Walks the franchise so the Relations tab can show its seasons in order.
