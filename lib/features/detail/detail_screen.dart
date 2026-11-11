@@ -11,6 +11,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/anilist/anilist_service.dart';
 import '../../core/zmode/season_chain.dart';
 import '../../core/zmode/metadata_provider_prefs.dart';
 import '../../core/ui/auto_translated_text.dart';
