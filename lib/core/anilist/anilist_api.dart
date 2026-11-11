@@ -276,9 +276,11 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
       }
       ... on ActivityLikeNotification {
         id type createdAt context user { id name avatar { large } } activityId
+        activity { ... on ListActivity { status progress media { title { romaji english } type format } } }
       }
       ... on ActivityReplyLikeNotification {
         id type createdAt context user { id name avatar { large } } activityId
+        activity { ... on ListActivity { status progress media { title { romaji english } type format } } }
       }
       ... on ThreadCommentMentionNotification {
         id type createdAt context user { id name siteUrl avatar { large } }
@@ -302,10 +304,10 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
         thread { id title siteUrl }
       }
       ... on RelatedMediaAdditionNotification {
-        id type createdAt context media { id siteUrl title { romaji english } coverImage { large } }
+        id type createdAt context media { id siteUrl type format title { romaji english } coverImage { large } }
       }
       ... on MediaDataChangeNotification {
-        id type createdAt context media { id siteUrl title { romaji english } coverImage { large } }
+        id type createdAt context media { id siteUrl type format title { romaji english } coverImage { large } }
       }
       ... on MediaMergeNotification {
         id type createdAt context reason deletedMediaTitles
@@ -350,6 +352,12 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
         .whereType<Map>()
         .map((e) => Map<String, dynamic>.from(e))
         .toList();
+  }
+
+  Future<int> unreadNotificationCount() async {
+    final d = await _gql('query{ Viewer{ unreadNotificationCount } }', const {}, auth: true);
+    final viewer = d?['Viewer'];
+    return viewer is Map ? (viewer['unreadNotificationCount'] as num?)?.toInt() ?? 0 : 0;
   }
 
   Future<AniListViewer?> viewer() async {
