@@ -41,6 +41,7 @@ import '../../core/repository/source_repository.dart';
 import '../../core/privacy/incognito_mode.dart';
 import '../../core/state/active_source_cubit.dart';
 import '../../core/tracker/tracker.dart';
+import '../../core/anilist/anilist_service.dart';
 import '../../core/tracker/tracker_item_url.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
@@ -156,6 +157,7 @@ class _HomeViewState extends State<_HomeView>
   // blade, the mode swaps hidden at that peak, then it reveals. Self-contained —
   // see [_enterMode] / [_slashOverlay].
   late final AnimationController _slashCtrl;
+  late Future<int> _notificationCountFuture;
   bool _slashing = false;
   bool _slashSwapped = false;
   ContentMode? _slashTarget;
@@ -167,6 +169,7 @@ class _HomeViewState extends State<_HomeView>
   @override
   void initState() {
     super.initState();
+    _notificationCountFuture = sl<AniListService>().api.unreadNotificationCount();
     _sourceCatalogueSelection = HomeCataloguePrefs.sourceSelection;
     _sourceCatalogueSelection.addListener(_onSourceCatalogueSelectionChanged);
     _sourceCatalogueModeSubscription = sl<ContentModeCubit>().stream.listen((
@@ -1068,30 +1071,34 @@ class _HomeViewState extends State<_HomeView>
   /// Bell opens the AniList notifications inbox. No AnimeW-local
   /// announcement or device-notification state is used for its badge.
   Widget _notificationBell(BuildContext context, {bool edgeBanner = false}) {
-    void openNotifications() => Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const NotificationsScreen()),
-    );
+    Future<void> openNotifications() async {
+      await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NotificationsScreen()));
+      if (!mounted) return;
+      setState(() => _notificationCountFuture = sl<AniListService>().api.unreadNotificationCount());
+    }
 
-    final icon = DockIcon(
-      DockGlyph.bell,
-      color: edgeBanner ? Colors.white : AppColors.textSecondary,
-      size: 22,
+    return FutureBuilder<int>(
+      future: _notificationCountFuture,
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        final icon = Stack(clipBehavior: Clip.none, children: [
+          DockIcon(DockGlyph.bell, color: edgeBanner ? Colors.white : AppColors.textSecondary, size: 22),
+          if (count > 0) Positioned(right: -7, top: -6,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(color: Color(0xFFE53945), shape: BoxShape.circle),
+              child: Text(count > 99 ? '99+' : count.toString(),
+                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800)),
+            )),
+        ]);
+        return edgeBanner
+            ? IconButton(tooltip: context.l10n.notifications, style: _edgeHeaderButtonStyle(), onPressed: openNotifications, icon: icon)
+            : GestureDetector(behavior: HitTestBehavior.opaque, onTap: openNotifications,
+                child: Padding(padding: const EdgeInsets.all(4), child: icon));
+      },
     );
-    return edgeBanner
-        ? IconButton(
-            tooltip: context.l10n.notifications,
-            style: _edgeHeaderButtonStyle(),
-            onPressed: openNotifications,
-            icon: icon,
-          )
-        : GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: openNotifications,
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: icon,
-            ),
-          );
   }
 
   /// Builds one provider-defined browse row (poster cards). The section is
