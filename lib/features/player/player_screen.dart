@@ -511,6 +511,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// landscape, as it always has.
   bool _portraitMode = false;
   bool _showEpisodeDetails = false;
+  bool _minimized = false;
 
   int? _showPopularity;
   bool _showPopularityLoaded = false;
@@ -616,7 +617,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
     setState(() {
       _portraitMode = true;
-      // The minimized shell renders the episode detail content in its Home tab.
+      _minimized = true;
+      // Keep this route mounted, but let the page underneath remain visible.
       // Keep this route's player surface mounted but avoid attaching the same
       // detail ScrollController to two scroll views.
       _showEpisodeDetails = false;
@@ -636,14 +638,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     void returnToPlayer() {
       if (!mounted) return;
       MiniPlayerState.clear();
-      // Remove only the mini-player shell. The original player route stays
-      // mounted and its state (including the source and episode) is preserved.
-      nav.popUntil(
-        (route) => route.settings.name == 'animew-mini-player-shell',
-      );
-      if (nav.canPop()) nav.pop();
+      // Reveal the original route underneath. Search filters, anime detail
+      // state, and the existing navigation stack were never replaced.
       final showDetails = widget.episodeDetailMode;
       setState(() {
+        _minimized = false;
         _portraitMode = showDetails;
         _showEpisodeDetails = showDetails;
       });
@@ -692,34 +691,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
         onClose: stopPlayback,
       ),
     );
-    nav.push<void>(
-      PageRouteBuilder<void>(
-        settings: const RouteSettings(name: 'animew-mini-player-shell'),
-        transitionDuration: const Duration(milliseconds: 380),
-        reverseTransitionDuration: const Duration(milliseconds: 320),
-        pageBuilder: (_, __, ___) => const RootShell(),
-        transitionsBuilder: (_, animation, secondaryAnimation, child) {
-          final curved = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-            reverseCurve: Curves.easeInCubic,
-          );
-          return FadeTransition(
-            opacity: curved,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.025),
-                end: Offset.zero,
-              ).animate(curved),
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.985, end: 1).animate(curved),
-                child: child,
-              ),
-            ),
-          );
-        },
-      ),
-    );
+    // No replacement shell is pushed: the route below this player remains
+    // the exact page the viewer was browsing before playback.
   }
 
   /// Hide both system bars in fullscreen. Android's immersive-sticky mode
@@ -3817,6 +3790,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // While minimized, keep the native player route and cubit alive without
+    // covering or intercepting the page underneath it.
+    if (_minimized) return const SizedBox.expand();
+
     // A Watch Together join that couldn't resolve the room's source — explain
     // it clearly instead of a blank/bouncing screen.
     if (_loadError != null) {
