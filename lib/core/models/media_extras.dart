@@ -42,6 +42,7 @@ class MediaRelation extends Equatable {
     this.isReading = false,
     this.score,
     this.popularity,
+    this.recommendationRating,
     this.format,
     this.status,
     this.episodes,
@@ -69,6 +70,10 @@ class MediaRelation extends Equatable {
   final bool isReading;
   final int? score;
   final int? popularity;
+
+  /// AniList's signed community vote total for a recommendation. Positive
+  /// values are upvotes; negative values are downvotes.
+  final int? recommendationRating;
   final String? format;
   final String? status;
   final int? episodes;
@@ -99,6 +104,7 @@ class MediaRelation extends Equatable {
     isReading,
     score,
     popularity,
+    recommendationRating,
     format,
     status,
     episodes,
