@@ -683,6 +683,7 @@ class _PosterCardTitleState extends State<PosterCardTitle> {
 
   double _measuredTitleHeight(BuildContext context) {
     final style = (widget.textStyle ?? AppText.caption.copyWith(
+          fontFamily: 'Urbanist',
           color: AppColors.textPrimary,
           fontWeight: widget.inside ? FontWeight.w700 : null,
         )).copyWith(
