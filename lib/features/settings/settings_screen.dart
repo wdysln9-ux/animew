@@ -78,7 +78,7 @@ import '../watch_together/ui/watch_party_lobby_screen.dart';
 import '../watch_together/watch_together_controller.dart';
 import '../profiles/viewer_profiles_screen.dart';
 import '../onboarding/how_it_works.dart';
-import '../notify/subscriptions_screen.dart';
+import '../notify/notifications_screen.dart';
 import 'tracker_settings_screen.dart';
 import '../sources/source_health_screen.dart';
 import '../sources/sources_screen.dart';
@@ -1275,7 +1275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: l10n.notifications,
         subtitle: l10n.notificationsSubtitle,
         keywords: 'notifications alerts new episode subscribe airing',
-        onTap: () => _push(const SubscriptionsScreen()),
+        onTap: () => _push(const NotificationsScreen()),
       ),
     // Advanced
     if (Platform.isAndroid)
