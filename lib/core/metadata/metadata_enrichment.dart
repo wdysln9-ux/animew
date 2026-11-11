@@ -65,7 +65,7 @@ class MetadataEnrichment {
     bool isSeason(String? format) =>
         format == null || seasonFormats.contains(format);
 
-    Future<List<({int id, int? malId, String title, String? cover, int? episodes, int? popularity})>>
+    Future<List<({int id, int? malId, String title, String? cover, int? episodes, int? popularity, int? score, String? status})>>
         walk(String relation) async {
       final result = <({
         int id,
@@ -74,6 +74,8 @@ class MetadataEnrichment {
         String? cover,
         int? episodes,
         int? popularity,
+        int? score,
+        String? status,
         int depth,
       })>[];
       final seen = <int>{currentId};
@@ -95,6 +97,8 @@ class MetadataEnrichment {
           String? cover,
           int? episodes,
           int? popularity,
+          int? score,
+          String? status,
         })> neighbours;
         try {
           neighbours = await _anilist.seasonNeighbours(node.id);
@@ -114,6 +118,8 @@ class MetadataEnrichment {
             cover: next.cover,
             episodes: next.episodes,
             popularity: next.popularity,
+            score: next.score,
+            status: next.status,
             depth: node.depth + 1,
           ));
           queue.add((id: next.id, depth: node.depth + 1));
@@ -134,6 +140,8 @@ class MetadataEnrichment {
             cover: entry.cover,
             episodes: entry.episodes,
             popularity: entry.popularity,
+            score: entry.score,
+            status: entry.status,
           ),
       ];
     }
@@ -145,7 +153,7 @@ class MetadataEnrichment {
     final before = walks[0];
     final after = walks[1];
 
-    final ordered = <({int id, int? malId, String title, String? cover, int? episodes, int? popularity})>[
+    final ordered = <({int id, int? malId, String title, String? cover, int? episodes, int? popularity, int? score, String? status})>[
       ...before,
       (
         id: currentId,
@@ -154,6 +162,14 @@ class MetadataEnrichment {
         cover: d.cover,
         episodes: d.episodes.isNotEmpty ? d.episodes.length : null,
         popularity: d.popularity,
+        score: d.score,
+        status: switch (d.status) {
+          MediaStatus.completed => 'FINISHED',
+          MediaStatus.ongoing => 'RELEASING',
+          MediaStatus.hiatus => 'HIATUS',
+          MediaStatus.cancelled => 'CANCELLED',
+          MediaStatus.unknown => null,
+        },
       ),
       ...after,
     ];
@@ -170,6 +186,15 @@ class MetadataEnrichment {
           cover: unique[i].cover,
           episodes: unique[i].episodes,
           popularity: unique[i].popularity,
+          score: unique[i].score,
+          status: switch (unique[i].status) {
+            'FINISHED' => 'Selesai',
+            'RELEASING' => 'Tayang',
+            'NOT_YET_RELEASED' => 'Segera',
+            'HIATUS' => 'Hiatus',
+            'CANCELLED' => 'Dibatalkan',
+            _ => null,
+          },
           isCurrent: unique[i].id == currentId,
         ),
     ]);
