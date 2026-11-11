@@ -90,7 +90,7 @@ class MalCatalogue implements AnimeCatalogue {
   static List<String> rowTitles(ZKind k) => [for (final r in _rows(k)) r.$1];
 
   static List<(String, String)> _rows(ZKind k) => k == ZKind.anime
-      ? const [
+      ? [
           // Both seasonal rows come from ONE request (see [home]) — MAL has no
           // per-season ranking, so the season endpoint is fetched once and
           // read two ways: newest first, and most-listed first.
