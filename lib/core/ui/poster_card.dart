@@ -442,24 +442,29 @@ class _PosterCardState extends State<PosterCard> {
                               if (widget.seriesBadge != null) ...[
                                 if (widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
-                                Text(
-                                  widget.seriesBadge!,
-                                  style: TextStyle(
+                                Container(
+                                  padding: const EdgeInsets.fromLTRB(6, 3, 6, 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.62),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    widget.seriesBadge!,
+                                    style: TextStyle(
                                     fontFamily: AppText.fontFamily,
                                     fontFamilyFallback: AppText.fontFamilyFallback,
                                     fontSize: 10,
-                                    height: 1,
-                                    fontWeight: FontWeight.w600,
+                                    height: 1.1,
+                                    fontWeight: FontWeight.w700,
                                     color: Colors.white,
-                                    backgroundColor: Colors.black.withValues(alpha: 0.55),
-                                    shadows: [Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0)],
+                                    ),
                                   ),
                                 ),
                               ],
                               if (showViews) ...[
                                 if (widget.seriesBadge != null || widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
-                                const Icon(Icons.visibility_rounded, size: 14, color: Colors.white, shadows: [Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0)]),
+                                const Icon(Icons.visibility_rounded, size: 14, color: Colors.white, shadows: [Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0)]),
                                 const SizedBox(width: 3),
                                 Text(
                                   _compactPopularity(widget.viewsBadge!),
@@ -470,7 +475,7 @@ class _PosterCardState extends State<PosterCard> {
                                     height: 1,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
-                                    shadows: [Shadow(color: Colors.black, offset: Offset(1.5, 1.5), blurRadius: 0)],
+                                    shadows: [Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0)],
                                   ),
                                 ),
                               ],
