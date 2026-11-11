@@ -260,7 +260,7 @@ query($page:Int,$perPage:Int,$reset:Boolean) {
       }
       ... on ActivityMessageNotification {
         id type createdAt context user { id name siteUrl avatar { large } } activityId
-        message { id message }
+        message { id message(asHtml:false) }
       }
       ... on ActivityMentionNotification {
         id type createdAt context user { id name siteUrl avatar { large } } activityId
@@ -309,7 +309,7 @@ query($page:Int,$perPage:Int,$reset:Boolean) {
         media { id siteUrl title { romaji english } coverImage { large } }
       }
       ... on MediaDeletionNotification {
-        id type createdAt mediaId context reason deletedMediaTitle
+        id type createdAt context reason deletedMediaTitle
       }
       ... on MediaSubmissionUpdateNotification {
         id type createdAt contexts status notes
@@ -510,12 +510,13 @@ query($page:Int,$perPage:Int,$reset:Boolean) {
   /// season 1 from season 3 means asking again per hop; keeping the selection
   /// this small is what makes that affordable.
   Future<List<({String relation, int id, int? idMal, String? format,
-      String title, String? cover, int? episodes, int? popularity})>> seasonNeighbours(
+      String title, String? cover, int? episodes, int? popularity,
+      int? score, String? status})>> seasonNeighbours(
     int anilistId,
   ) async {
     final d = await _gql(
       'query(\$id:Int){ Media(id:\$id,type:ANIME){ relations{ edges{ '
-      'relationType node{ id idMal format episodes popularity '
+      'relationType node{ id idMal format episodes popularity averageScore status '
       'title{romaji english native} coverImage{large} } } } } }',
       {'id': anilistId},
     );
@@ -523,7 +524,8 @@ query($page:Int,$perPage:Int,$reset:Boolean) {
     final list = (edges is Map) ? edges['edges'] : null;
     if (list is! List) return const [];
     final out = <({String relation, int id, int? idMal, String? format,
-        String title, String? cover, int? episodes, int? popularity})>[];
+        String title, String? cover, int? episodes, int? popularity,
+        int? score, String? status})>[];
     for (final e in list) {
       if (e is! Map) continue;
       final node = e['node'];
@@ -542,6 +544,8 @@ query($page:Int,$perPage:Int,$reset:Boolean) {
             : null,
         episodes: (node['episodes'] as num?)?.toInt(),
         popularity: (node['popularity'] as num?)?.toInt(),
+        score: (node['averageScore'] as num?)?.toInt(),
+        status: node['status'] as String?,
       ));
     }
     return out;
