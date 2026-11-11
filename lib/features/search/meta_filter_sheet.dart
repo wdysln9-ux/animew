@@ -254,6 +254,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                         max: 100,
                         value: f.minTagRank.toDouble(),
                         activeColor: AppColors.accent,
+                        inactiveColor: AppColors.hairline,
                         onChanged: (value) => setState(
                           () => f = f.copyWith(minTagRank: value.round()),
                         ),
