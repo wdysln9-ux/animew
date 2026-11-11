@@ -445,8 +445,10 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [tint ?? AppColors.bg, AppColors.bg],
-                  stops: const [0.0, 0.82],
+                  // Keep the adaptive poster tint through the bottom edge.
+                  // Fading to AppColors.bg here caused the lower half of the
+                  // detail header to lose its poster-derived colour.
+                  colors: [tint ?? AppColors.bg, tint ?? AppColors.bg],
                 ),
               ),
             ),
