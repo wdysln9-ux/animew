@@ -49,9 +49,9 @@ class _ContinueInfoPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.72), borderRadius: BorderRadius.circular(6.5)),
-    child: Padding(padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 3.5),
+    child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis,
-        style: AppText.caption.copyWith(color: Colors.white, fontSize: 8.2))),
+        style: AppText.caption.copyWith(color: Colors.white, fontSize: 9.4))),
   );
 }
 
@@ -169,18 +169,13 @@ class _ContinueCardState extends State<ContinueCard> {
                   right: 0,
                   bottom: 0,
                   height: 3.6,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ColoredBox(
-                        color: Colors.white.withValues(alpha: 0.25),
-                      ),
-                      FractionallySizedBox(
-                        alignment: AlignmentDirectional.centerStart,
-                        widthFactor: p,
-                        child: ColoredBox(color: AppColors.accent),
-                      ),
-                    ],
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: FractionallySizedBox(
+                      widthFactor: p,
+                      heightFactor: 1,
+                      child: ColoredBox(color: AppColors.accent),
+                    ),
                   ),
                 ),
               ],
