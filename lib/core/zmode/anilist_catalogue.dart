@@ -85,7 +85,7 @@ class AniListCatalogue implements AnimeCatalogue {
   /// detail-only half of [_fields] (description, studios, airing schedule)
   /// through it more than doubled the response for data no list cell shows.
   static const _listFields =
-      'id idMal title{romaji english native} coverImage{large} bannerImage '
+      'id idMal title{romaji english native} coverImage{large color} bannerImage '
       // One int, for the poster's score badge. The rest of the detail fields
       // stay out for the reason above; this one is a number, not a payload.
       'averageScore popularity format episodes status genres seasonYear '
@@ -629,6 +629,7 @@ class AniListCatalogue implements AnimeCatalogue {
       // dropping one loses matches.
       englishTitle: aniListAltTitle(t, aniListTitle(t, titleLanguagePref)),
       cover: (m['coverImage'] as Map?)?['large'] as String?,
+      coverColor: (m['coverImage'] as Map?)?['color'] as String?,
       banner: m['bannerImage'] as String?,
       url: ZmodeIds.showUrl(c),
       type: _providerType(kind),
