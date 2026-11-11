@@ -576,6 +576,14 @@ class _EpisodesTabState extends State<_EpisodesTab> {
     showAppToast(context, context.l10n.queuedChapters(chapters.length));
   }
 
+  int get _latestEpisodeNumber {
+    final numbers = widget.eps
+        .map((episode) => episode.number?.toInt())
+        .whereType<int>()
+        .toList();
+    return numbers.isEmpty ? widget.eps.length : numbers.reduce(math.max);
+  }
+
   Widget _buildList(
     ResumeStore store,
     List<Episode> visible,
@@ -641,6 +649,7 @@ class _EpisodesTabState extends State<_EpisodesTab> {
             showPopularity: widget.showPopularity,
             totalEpisodes: widget.totalEpisodes ?? widget.eps.length,
             isAiring: widget.isAiring,
+            isLatestEpisode: widget.isAiring && epNum == _latestEpisodeNumber,
           ),
         );
       },
@@ -1419,6 +1428,7 @@ class _EpisodeRow extends StatelessWidget {
     this.showPopularity,
     required this.totalEpisodes,
     required this.isAiring,
+    this.isLatestEpisode = false,
   });
 
   final Episode ep;
@@ -1428,6 +1438,7 @@ class _EpisodeRow extends StatelessWidget {
   final int? showPopularity;
   final int totalEpisodes;
   final bool isAiring;
+  final bool isLatestEpisode;
   final String coverUrl;
   final Map<String, String>? coverHeaders;
   final bool isWatched;
@@ -1445,6 +1456,12 @@ class _EpisodeRow extends StatelessWidget {
   final String showId;
 
   @override
+  String _absoluteEpisodeDate(DateTime date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
   Widget build(BuildContext context) {
     final unavailable = !ep.available;
     final titleColor = unavailable
@@ -1463,6 +1480,8 @@ class _EpisodeRow extends StatelessWidget {
       final parsedDate = DateTime.tryParse(episodeDate);
       if (parsedDate == null) {
         dateLabel = relativeDate(context.l10n, episodeDate);
+      } else if (isAiring && isLatestEpisode) {
+        dateLabel = _absoluteEpisodeDate(parsedDate);
       } else if (isAiring) {
         final now = DateTime.now();
         final age = now.difference(parsedDate);
@@ -1568,6 +1587,24 @@ class _EpisodeRow extends StatelessWidget {
                               const SizedBox(width: 3),
                               Flexible(child: Text(metaLine, maxLines: 1, overflow: TextOverflow.ellipsis,
                                 style: AppText.caption.copyWith(fontSize: 10, color: AppColors.textSecondary))),
+                              if (isLatestEpisode) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent.withValues(alpha: 0.16),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Baru',
+                                    style: AppText.caption.copyWith(
+                                      color: AppColors.accent,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ]),
                           ],
                           if (filler) ...[
