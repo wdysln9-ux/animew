@@ -1038,7 +1038,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
                 _chip('Tags (${widget.tags.length})', AppColors.accent, onTap: widget.onTagsTap),
             ]),
           ],
-          if (_expanded && onNakamaTap != null) ...[
+          if (_expanded && widget.onNakamaTap != null) ...[
             const SizedBox(height: 8),
             _nakamaChip(),
           ],
