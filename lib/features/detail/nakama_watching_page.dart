@@ -64,7 +64,16 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
       _page = 1;
     });
     try {
-      final result = await sl<AniListService>().api.nakamaWatching(
+      final anilist = sl<AniListService>();
+      if (!anilist.isConnected) {
+        if (!mounted) return;
+        setState(() {
+          _error = 'Hubungkan akun AniList terlebih dahulu untuk melihat daftar nakama.';
+          _loading = false;
+        });
+        return;
+      }
+      final result = await anilist.api.nakamaWatching(
         widget.mediaId,
         page: 1,
       );
