@@ -119,6 +119,7 @@ class AniListApi {
     String query,
     Map<String, dynamic> variables, {
     bool auth = false,
+    bool throwOnError = false,
   }) async {
     final headers = Map<String, String>.from(AniListGraphql.headers);
     if (auth) {
@@ -143,10 +144,31 @@ class AniListApi {
         ),
       );
       final data = res.data;
-      if (data is Map && data['data'] is Map) {
-        return Map<String, dynamic>.from(data['data'] as Map);
+      if (data is Map) {
+        final errors = data['errors'];
+        if (errors is List && errors.isNotEmpty) {
+          final message = errors
+              .whereType<Map>()
+              .map((e) => e['message']?.toString())
+              .whereType<String>()
+              .where((e) => e.isNotEmpty)
+              .join(' · ');
+          if (throwOnError) {
+            throw StateError(
+              message.isEmpty ? 'AniList GraphQL mengembalikan kesalahan.' : message,
+            );
+          }
+        }
+        if (data['data'] is Map) {
+          return Map<String, dynamic>.from(data['data'] as Map);
+        }
       }
-    } catch (_) {}
+      if (throwOnError) {
+        throw StateError('Respons AniList tidak berisi data yang valid (HTTP ${res.statusCode}).');
+      }
+    } catch (error) {
+      if (throwOnError) rethrow;
+    }
     return null;
   }
 
@@ -224,16 +246,17 @@ class AniListApi {
   /// unread counter on the first page load, matching AniList's own inbox.
   Future<List<Map<String, dynamic>>> notifications({int page = 1}) async {
     const query = r'''
-query($page:Int,$perPage:Int) {
+query($page:Int,$perPage:Int,$reset:Boolean) {
   Page(page:$page, perPage:$perPage) {
-    notifications(resetNotificationCount:true) {
+    pageInfo { hasNextPage }
+    notifications(resetNotificationCount:$reset) {
       __typename
       ... on AiringNotification {
         id type createdAt animeId episode contexts
         media { id siteUrl title { romaji english } coverImage { large } }
       }
       ... on FollowingNotification {
-        id type createdAt user { id name avatar { large } }
+        id type createdAt user { id name siteUrl avatar { large } }
       }
       ... on ActivityMessageNotification {
         id type createdAt context user { id name avatar { large } } activityId
@@ -302,8 +325,9 @@ query($page:Int,$perPage:Int) {
 }''';
     final d = await _gql(
       query,
-      {'page': page, 'perPage': 50},
+      {'page': page, 'perPage': 50, 'reset': page == 1},
       auth: true,
+      throwOnError: true,
     );
     if (d == null) {
       throw StateError('AniList gagal mengembalikan data notifikasi.');
