@@ -600,6 +600,7 @@ class AnimeDetailActionButton extends StatelessWidget {
     this.loading = false,
     this.primary = false,
     this.active = false,
+    this.progress = 0,
   });
 
   final String label;
@@ -608,6 +609,7 @@ class AnimeDetailActionButton extends StatelessWidget {
   final bool loading;
   final bool primary;
   final bool active;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
@@ -621,29 +623,70 @@ class AnimeDetailActionButton extends StatelessWidget {
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(23),
-          child: Container(
-            height: 42,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(23),
-              border: Border.all(
-                color: AppColors.textTertiary.withValues(alpha: 0.48),
-              ),
+          child: CustomPaint(
+            foregroundPainter: _ActionProgressOutlinePainter(
+              progress: progress.clamp(0.0, 1.0),
+              color: AppColors.accent,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 18, color: foreground),
-                const SizedBox(width: 6),
-                Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: AppText.button.copyWith(fontSize: 13, color: foreground))),
-              ],
+            child: Container(
+              height: 42,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(23),
+                border: Border.all(
+                  color: AppColors.textTertiary.withValues(alpha: 0.48),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 18, color: foreground),
+                  const SizedBox(width: 6),
+                  Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: AppText.button.copyWith(fontSize: 13, color: foreground))),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+class _ActionProgressOutlinePainter extends CustomPainter {
+  const _ActionProgressOutlinePainter({
+    required this.progress,
+    required this.color,
+  });
+
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress <= 0) return;
+    final rect = Offset.zero & size;
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        rect.deflate(1.25),
+        const Radius.circular(22),
+      ));
+    final metric = path.computeMetrics().first;
+    final progressPath = metric.extractPath(0, metric.length * progress);
+    canvas.drawPath(
+      progressPath,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ActionProgressOutlinePainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color;
 }
 
 class AnimeDetailSynopsisSection extends StatefulWidget {
