@@ -300,6 +300,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (diff.inMinutes < 1) return '$day, Baru saja';
     if (diff.inHours < 1) return '$day, ${diff.inMinutes} menit lalu';
     if (diff.inDays < 1) return '$day, ${diff.inHours} jam lalu';
+    if (diff.inDays == 1) return '$day, Kemarin';
     if (diff.inDays < 7) return '$day, ${diff.inDays} hari lalu';
     return '$day, ${date.day} ${_months[date.month - 1]} ${date.year}';
   }
