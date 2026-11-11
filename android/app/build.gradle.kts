@@ -46,7 +46,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.wdysln9.animew"
+        applicationId = "id.animew"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
