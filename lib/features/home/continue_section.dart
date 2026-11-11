@@ -148,7 +148,7 @@ class ContinueWatchingRow extends StatelessWidget {
             progress: e.progress,
             cellWidth: 173,
             subtitle: e.episodeNumber != null
-                ? 'EP ${e.episodeNumber!.toInt()}'
+                ? 'EP ${e.episodeNumber!.toInt()}${e.totalEpisodes != null && e.totalEpisodes! > 0 ? '/${e.totalEpisodes}' : ''}'
                 : null,
             recentlyWatched: _recentLabel(e.updatedAt),
             onTap: () => onResume(e),
