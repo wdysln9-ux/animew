@@ -20,6 +20,8 @@ class SeasonEntry {
     this.cover,
     this.episodes,
     this.popularity,
+    this.score,
+    this.status,
     this.isCurrent = false,
   });
 
@@ -33,6 +35,8 @@ class SeasonEntry {
   final String? cover;
   final int? episodes;
   final int? popularity;
+  final int? score;
+  final String? status;
 
   /// The title the viewer is looking at right now.
   final bool isCurrent;
