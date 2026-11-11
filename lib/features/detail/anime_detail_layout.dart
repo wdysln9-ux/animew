@@ -1024,6 +1024,30 @@ class AnimeDetailCharacterRail extends StatefulWidget {
 }
 class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
   late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('characters', defaultValue: true);
+
+  @override
+  void initState() {
+    super.initState();
+    _warmMissingPeople(widget.cast);
+  }
+
+  @override
+  void didUpdateWidget(covariant AnimeDetailCharacterRail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.cast, widget.cast)) {
+      _warmMissingPeople(widget.cast);
+    }
+  }
+
+  void _warmMissingPeople(List<CastMember> cast) {
+    final people = sl<PeopleService>();
+    for (final member in cast) {
+      if (member.person == null) {
+        unawaited(people.findCharacter(member.name));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cast = widget.cast;
