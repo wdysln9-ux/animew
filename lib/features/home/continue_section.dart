@@ -147,7 +147,7 @@ class ContinueWatchingRow extends StatelessWidget {
             progress: e.progress,
             cellWidth: 173,
             subtitle: e.episodeNumber != null
-                ? 'Episode ${e.episodeNumber!.toInt()}'
+                ? 'EP ${e.episodeNumber!.toInt()}'
                 : null,
             recentlyWatched: _recentLabel(e.updatedAt),
             onTap: () => onResume(e),
@@ -162,9 +162,10 @@ class ContinueWatchingRow extends StatelessWidget {
 String _recentLabel(int timestamp) {
   final elapsed = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(timestamp));
   if (elapsed.inMinutes < 1) return 'Baru saja';
-  if (elapsed.inHours < 1) return '${elapsed.inMinutes} menit lalu';
-  if (elapsed.inDays < 1) return '${elapsed.inHours} jam lalu';
-  return '${elapsed.inDays} hari lalu';
+  if (elapsed.inHours < 1) return '${elapsed.inMinutes}m lalu';
+  if (elapsed.inDays < 1) return '${elapsed.inHours}j lalu';
+  if (elapsed.inDays < 7) return '${elapsed.inDays}h lalu';
+  return '${elapsed.inDays ~/ 7}mgg lalu';
 }
 
 /// Continue Reading row content, given an already-resolved [history] list —
