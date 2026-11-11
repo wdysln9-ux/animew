@@ -1,6 +1,7 @@
 name: Build AnimeW ARM64 APK
 
 on:
+  push:
   workflow_dispatch:
 
 permissions:
