@@ -48,7 +48,7 @@ import '../../core/zmode/zmode_prefs.dart';
 import '../../l10n/l10n.dart';
 import '../community/community_sheet.dart';
 import '../downloads/downloads_screen.dart';
-import '../notify/subscriptions_screen.dart';
+import '../notify/notifications_screen.dart';
 import '../reader/manga_reader_screen.dart';
 import '../reader/novel_reader_screen.dart';
 import '../settings/streaming_services_screen.dart';
@@ -1075,7 +1075,7 @@ class _HomeViewState extends State<_HomeView>
   /// announcement or device-notification state is used for its badge.
   Widget _notificationBell(BuildContext context, {bool edgeBanner = false}) {
     void openNotifications() => Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const SubscriptionsScreen()),
+      MaterialPageRoute<void>(builder: (_) => const NotificationsScreen()),
     );
 
     final icon = DockIcon(
