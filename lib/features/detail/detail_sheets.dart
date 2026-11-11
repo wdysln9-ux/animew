@@ -1561,7 +1561,7 @@ class _ThumbnailProgressBar extends StatelessWidget {
             alignment: AlignmentDirectional.centerStart,
             child: FractionallySizedBox(
               widthFactor: fraction.clamp(0.0, 1.0),
-              child: const ColoredBox(color: AppColors.accent),
+              child: ColoredBox(color: AppColors.accent),
             ),
           ),
         ],
