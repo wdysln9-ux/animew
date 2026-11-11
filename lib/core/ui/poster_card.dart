@@ -442,24 +442,7 @@ class _PosterCardState extends State<PosterCard> {
                               if (widget.seriesBadge != null) ...[
                                 if (widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
-                                Container(
-                                  padding: const EdgeInsets.fromLTRB(6, 3, 6, 3),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.62),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    widget.seriesBadge!,
-                                    style: TextStyle(
-                                    fontFamily: AppText.fontFamily,
-                                    fontFamilyFallback: AppText.fontFamilyFallback,
-                                    fontSize: 10,
-                                    height: 1.1,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    ),
-                                  ),
-                                ),
+                                _PosterInfoTag(widget.seriesBadge!),
                               ],
                               if (showViews) ...[
                                 if (widget.seriesBadge != null || widget.latestEpisodeBadge != null)
@@ -797,10 +780,10 @@ String _compactPopularity(int value) {
   return '$value';
 }
 
-class _EpisodeTag extends StatelessWidget {
-  const _EpisodeTag(this.episode);
+class _PosterInfoTag extends StatelessWidget {
+  const _PosterInfoTag(this.label);
 
-  final int episode;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -811,7 +794,7 @@ class _EpisodeTag extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        'Ep $episode',
+        label,
         style: TextStyle(
           fontFamily: AppText.fontFamily,
           fontFamilyFallback: AppText.fontFamilyFallback,
@@ -822,6 +805,17 @@ class _EpisodeTag extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _EpisodeTag extends StatelessWidget {
+  const _EpisodeTag(this.episode);
+
+  final int episode;
+
+  @override
+  Widget build(BuildContext context) {
+    return _PosterInfoTag('Ep $episode');
   }
 }
 
