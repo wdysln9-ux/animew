@@ -459,7 +459,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       final groupUser = n['user'] is Map ? n['user'] as Map : const {};
       final groupName = (groupUser['name'] ?? 'AniList').toString();
       return ExpansionTile(
-        leading: const Icon(Icons.favorite_rounded, color: AppColors.accent),
+        leading: Icon(Icons.favorite_rounded, color: AppColors.accent),
         title: Text(groupName + ' menyukai ' + groupedLikes.length.toString() + ' aktivitasmu',
           style: AppText.body.copyWith(fontSize: 13, fontWeight: FontWeight.w600)),
         subtitle: Text(_time(groupedLikes.first), style: AppText.caption.copyWith(fontSize: 11)),
