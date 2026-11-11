@@ -81,22 +81,6 @@ class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
                         )
                       else
                         ColoredBox(color: AppColors.surface2),
-                      Center(
-                        child: Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.52),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
-                          ),
-                          child: const Icon(
-                            Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 29,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
