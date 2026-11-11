@@ -1163,7 +1163,9 @@ if (isFiller)
               left: 0,
               right: 0,
               bottom: 0,
-              child: _ThumbnailProgressBar(fraction: fraction),
+              child: fraction > 0
+                    ? _ThumbnailProgressBar(fraction: fraction)
+                    : const SizedBox.shrink(),
             ),
           ],
         ),
@@ -1526,8 +1528,8 @@ class _EpisodeRow extends StatelessWidget {
                 child: Row(
                   children: [
                     Container(
-                      width: 32,
-                      height: 34,
+                      width: 34,
+                      height: 36,
                       decoration: BoxDecoration(
                         color: AppColors.accent.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(8),
@@ -1538,7 +1540,7 @@ class _EpisodeRow extends StatelessWidget {
                         style: AppText.body.copyWith(
                           color: unavailable ? AppColors.textTertiary : AppColors.accent,
                           fontWeight: FontWeight.w800,
-                          fontSize: 14,
+                          fontSize: 15,
                         ),
                       ),
                     ),
@@ -1552,7 +1554,7 @@ class _EpisodeRow extends StatelessWidget {
                             text: heading,
                             style: AppText.body.copyWith(
                               color: titleColor,
-                              fontSize: 12,
+                              fontSize: 13,
                               fontWeight: FontWeight.w700,
                               height: 1.25,
                             ),
