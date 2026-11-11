@@ -2314,6 +2314,7 @@ class _DetailViewState extends State<_DetailView> {
               onTagsTap: () => Navigator.of(context).push(
                 AnimeTagsPage.route(title: detail.title, tags: detail.tags),
               ),
+              nakamaMediaId: detail.anilistId,
               onNakamaTap: detail.anilistId == null
                   ? null
                   : () => Navigator.of(context).push(

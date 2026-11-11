@@ -51,6 +51,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   int _page = 1;
   int _loadGeneration = 0;
   final ScrollController _scroll = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   AniListService get _aniList => sl<AniListService>();
 
@@ -67,6 +69,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _scroll
       ..removeListener(_onScroll)
       ..dispose();
+    _searchController.dispose();
     _aniList.removeListener(_onAniListChanged);
     super.dispose();
   }
@@ -316,11 +319,59 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final connected = _aniList.isConnected;
-    final rows = _items;
+    final query = _searchQuery.trim().toLowerCase();
+    final rows = query.isEmpty
+        ? _items
+        : _items.where((item) {
+            final searchable = [
+              _title(item),
+              _detail(item),
+              item['user'] is Map ? (item['user'] as Map)['name'] : '',
+            ].join(' ').toLowerCase();
+            return searchable.contains(query);
+          }).toList();
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: settingsAppBar(context.l10n.notifications),
       body: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) => setState(() => _searchQuery = value),
+            style: AppText.body.copyWith(fontSize: 13, color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'Cari notifikasi...',
+              hintStyle: AppText.caption.copyWith(color: AppColors.textSecondary),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+              suffixIcon: _searchQuery.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Hapus pencarian',
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    ),
+              filled: true,
+              fillColor: AppColors.surface,
+              contentPadding: const EdgeInsets.symmetric(vertical: 11),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppColors.hairline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppColors.hairline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppColors.accent),
+              ),
+            ),
+          ),
+        ),
         SizedBox(
           height: 56,
           child: ListView.separated(

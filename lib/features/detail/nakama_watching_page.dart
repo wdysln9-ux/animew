@@ -132,6 +132,40 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
     _ => AppColors.textSecondary,
   };
 
+  Widget _ratingWidget(double score, String format) {
+    final color = AppColors.accent;
+    if (format == 'POINT_5') {
+      final stars = score.round().clamp(0, 5);
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(
+          stars,
+          (_) => Icon(Icons.star_rounded, size: 15, color: color),
+        ),
+      );
+    }
+    if (format == 'POINT_3') {
+      final value = score.round().clamp(0, 3);
+      final icon = switch (value) {
+        1 => Icons.sentiment_dissatisfied_rounded,
+        2 => Icons.sentiment_neutral_rounded,
+        _ => Icons.sentiment_satisfied_rounded,
+      };
+      return Icon(icon, size: 19, color: color);
+    }
+    final text = format == 'POINT_10_DECIMAL'
+        ? score.toStringAsFixed(1)
+        : score.toStringAsFixed(0);
+    return Text(
+      text,
+      style: AppText.caption.copyWith(
+        fontSize: 13,
+        fontWeight: FontWeight.w800,
+        color: AppColors.textPrimary,
+      ),
+    );
+  }
+
   Widget _entryCard(Map<String, dynamic> entry) {
     final user = entry['user'] is Map
         ? Map<String, dynamic>.from(entry['user'] as Map)
@@ -142,6 +176,10 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
     final name = user['name']?.toString() ?? 'Pengguna AniList';
     final progress = (entry['progress'] as num?)?.toInt() ?? 0;
     final score = (entry['score'] as num?)?.toDouble() ?? 0;
+    final options = user['mediaListOptions'] is Map
+        ? Map<String, dynamic>.from(user['mediaListOptions'] as Map)
+        : <String, dynamic>{};
+    final scoreFormat = options['scoreFormat']?.toString() ?? 'POINT_10';
     final status = entry['status']?.toString();
     final statusColor = _statusColor(status);
 
@@ -224,20 +262,7 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
               ),
             ),
             const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Icon(Icons.star_rounded, color: AppColors.accent, size: 17),
-                Text(
-                  score <= 0 ? '—' : score.toStringAsFixed(score == score.roundToDouble() ? 0 : 1),
-                  style: AppText.caption.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
+            if (score > 0) _ratingWidget(score, scoreFormat),
           ],
         ),
       ),

@@ -357,18 +357,23 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
   /// Entries for the selected anime made by accounts the viewer follows.
   /// AniList filters these server-side, so this is one paginated request rather
   /// than one request per followed account.
-  Future<({List<Map<String, dynamic>> entries, bool hasNextPage})>
+  Future<({List<Map<String, dynamic>> entries, bool hasNextPage, int totalCount})>
   nakamaWatching(int mediaId, {int page = 1}) async {
     const query = r'''
 query($page:Int,$mediaId:Int) {
   Page(page:$page, perPage:50) {
-    pageInfo { hasNextPage }
+    pageInfo { hasNextPage total }
     mediaList(mediaId:$mediaId, type:ANIME, isFollowing:true, sort:UPDATED_TIME_DESC) {
       id
       status
       progress
-      score(format:POINT_10)
-      user { id name avatar { large } }
+      score
+      user {
+        id
+        name
+        avatar { large }
+        mediaListOptions { scoreFormat }
+      }
     }
   }
 }''';
@@ -392,6 +397,7 @@ query($page:Int,$mediaId:Int) {
     return (
       entries: entries,
       hasNextPage: pageInfo is Map && pageInfo['hasNextPage'] == true,
+      totalCount: pageInfo is Map ? (pageInfo['total'] as num?)?.toInt() ?? entries.length : entries.length,
     );
   }
 

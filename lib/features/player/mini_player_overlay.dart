@@ -180,10 +180,13 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                         children: [
                           const ColoredBox(color: Colors.black),
                           Positioned.fill(
-                            child: Video(
-                              controller: session.controller,
-                              controls: NoVideoControls,
-                              fit: BoxFit.cover,
+                            child: IgnorePointer(
+                              ignoring: true,
+                              child: Video(
+                                controller: session.controller,
+                                controls: NoVideoControls,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                           Positioned(

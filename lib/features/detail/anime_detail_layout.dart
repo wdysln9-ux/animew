@@ -882,6 +882,7 @@ class _DetailCredits extends StatefulWidget {
     required this.onStudioTap,
     required this.onTagsTap,
     this.onNakamaTap,
+    this.nakamaMediaId,
   });
   final List<String> genres;
   final List<String> studios;
@@ -890,6 +891,7 @@ class _DetailCredits extends StatefulWidget {
   final ValueChanged<String> onStudioTap;
   final VoidCallback onTagsTap;
   final VoidCallback? onNakamaTap;
+  final int? nakamaMediaId;
 
   @override
   State<_DetailCredits> createState() => _DetailCreditsState();
@@ -897,6 +899,35 @@ class _DetailCredits extends StatefulWidget {
 
 class _DetailCreditsState extends State<_DetailCredits> {
   late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('credits');
+  int? _nakamaCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNakamaCount();
+  }
+
+  @override
+  void didUpdateWidget(covariant _DetailCredits oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.nakamaMediaId != widget.nakamaMediaId) {
+      _nakamaCount = null;
+      _loadNakamaCount();
+    }
+  }
+
+  Future<void> _loadNakamaCount() async {
+    final mediaId = widget.nakamaMediaId;
+    if (mediaId == null) return;
+    try {
+      final result = await sl<AniListService>().api.nakamaWatching(mediaId, page: 1);
+      if (mounted && widget.nakamaMediaId == mediaId) {
+        setState(() => _nakamaCount = result.totalCount);
+      }
+    } catch (_) {
+      // Keep the chip usable even if the count endpoint is temporarily unavailable.
+    }
+  }
 
   Widget _nakamaChip() {
     final color = AppColors.accent;
@@ -915,7 +946,9 @@ class _DetailCreditsState extends State<_DetailCredits> {
             Icon(Icons.groups_rounded, size: 13, color: color),
             const SizedBox(width: 5),
             Text(
-              'Nakama Menonton',
+              _nakamaCount == null
+                  ? 'Nakama Menonton'
+                  : 'Nakama Menonton ($_nakamaCount)',
               style: AppText.caption.copyWith(
                 fontSize: 12,
                 color: color,
