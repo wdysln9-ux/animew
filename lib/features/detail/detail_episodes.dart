@@ -1593,12 +1593,13 @@ class _EpisodeRow extends StatelessWidget {
                   ],
                 ),
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _ThumbnailProgressBar(fraction: fraction),
-              ),
+              if (fraction > 0)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _ThumbnailProgressBar(fraction: fraction),
+                ),
             ],
           ),
         ),
