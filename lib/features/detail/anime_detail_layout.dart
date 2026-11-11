@@ -1040,10 +1040,14 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
   }
 
   void _warmMissingPeople(List<CastMember> cast) {
+    unawaited(_loadMissingPeople(cast));
+  }
+
+  Future<void> _loadMissingPeople(List<CastMember> cast) async {
     final people = sl<PeopleService>();
     for (final member in cast) {
       if (member.person == null) {
-        unawaited(people.findCharacter(member.name));
+        await people.findCharacter(member.name);
       }
     }
   }
