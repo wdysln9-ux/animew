@@ -452,14 +452,14 @@ class _PosterCardState extends State<PosterCard> {
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
                                     backgroundColor: Colors.black.withValues(alpha: 0.55),
-                                    shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)],
+                                    shadows: [Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0)],
                                   ),
                                 ),
                               ],
                               if (showViews) ...[
                                 if (widget.seriesBadge != null || widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
-                                const Icon(Icons.visibility_rounded, size: 14, color: Colors.white, shadows: [Shadow(color: Colors.black, offset: Offset(1.5, 1.5), blurRadius: 0)]),
+                                const Icon(Icons.visibility_rounded, size: 14, color: Colors.white, shadows: [Shadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0)]),
                                 const SizedBox(width: 3),
                                 Text(
                                   _compactPopularity(widget.viewsBadge!),
@@ -682,11 +682,12 @@ class _PosterCardTitleState extends State<PosterCardTitle> {
   }
 
   double _measuredTitleHeight(BuildContext context) {
-    final style = widget.textStyle ??
-        AppText.caption.copyWith(
-          fontFamily: 'Urbanist',
+    final style = (widget.textStyle ?? AppText.caption.copyWith(
           color: AppColors.textPrimary,
           fontWeight: widget.inside ? FontWeight.w700 : null,
+        )).copyWith(
+          fontFamily: 'Urbanist',
+          fontFamilyFallback: AppText.fontFamilyFallback,
         );
     final painter = TextPainter(
       text: TextSpan(text: widget.title, style: style),
@@ -720,12 +721,12 @@ class _PosterCardTitleState extends State<PosterCardTitle> {
     widget.title,
     maxLines: widget.maxLines,
     overflow: TextOverflow.ellipsis,
-    style:
-        widget.textStyle ??
-        AppText.caption.copyWith(
-          fontFamily: 'Urbanist',
+    style: (widget.textStyle ?? AppText.caption.copyWith(
           color: AppColors.textPrimary,
           fontWeight: widget.inside ? FontWeight.w700 : null,
+        )).copyWith(
+          fontFamily: 'Urbanist',
+          fontFamilyFallback: AppText.fontFamilyFallback,
         ),
   );
 }
