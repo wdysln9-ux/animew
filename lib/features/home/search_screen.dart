@@ -888,11 +888,7 @@ class _SearchViewState extends State<_SearchView>
                 (!sl.isRegistered<ViewerProfileStore>() ||
                     sl<ViewerProfileStore>().adultMetadataAllowed))
               _controlRow(modeSources),
-            // What the catalogue is currently narrowed to, spelled out.
-            // Arriving here from a genre or tag chip, the results are already
-            // filtered before you have typed anything — without this the
-            // screen just looks like a browse that picked those titles.
-            if (widget.scope == SearchScope.library) _activeFilterChips(),
+            if (widget.scope == SearchScope.library) _metaQuickControls(),
             // Per-source result pills — direct jump to one source's results.
             // Only meaningful once the scope is Sources.
             if (widget.scope == SearchScope.sources) _sourcePillsRow(),
@@ -940,6 +936,83 @@ class _SearchViewState extends State<_SearchView>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Compact metadata sort / clear controls directly under the search field.
+  // Clearing filters intentionally preserves the selected sort.
+  Widget _metaQuickControls() {
+    final sortLabels = <MetaSort, String>{
+      MetaSort.popularity: 'Populer',
+      MetaSort.score: 'Rating',
+      MetaSort.newest: 'Terbaru',
+      MetaSort.trending: 'Trending',
+      MetaSort.title: 'Judul',
+    };
+    final currentLabel = sortLabels[_metaFilters.sort] ?? 'Populer';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
+      child: Row(
+        children: [
+          const Spacer(),
+          ActionChip(
+            onPressed: () {
+              setState(() {
+                _metaFilters = MetaFilters(
+                  sort: _metaFilters.sort,
+                  sortAscending: _metaFilters.sortAscending,
+                  adult: _metaFilters.adult,
+                );
+              });
+              _applyMetaFilters(browseDefaults: true);
+            },
+            avatar: const Icon(Icons.close_rounded, size: 15, color: Color(0xFFFF5364)),
+            label: const SizedBox.shrink(),
+            padding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+            backgroundColor: const Color(0x1AFF5364),
+            side: const BorderSide(color: Color(0x66FF5364)),
+            shape: const CircleBorder(),
+          ),
+          const SizedBox(width: 8),
+          PopupMenuButton<MetaSort>(
+            tooltip: 'Urutkan hasil',
+            onSelected: (sort) {
+              setState(() => _metaFilters = _metaFilters.copyWith(sort: sort));
+              _applyMetaFilters(browseDefaults: true);
+            },
+            itemBuilder: (context) => [
+              for (final entry in sortLabels.entries)
+                PopupMenuItem<MetaSort>(
+                  value: entry.key,
+                  child: Row(children: [
+                    Expanded(child: Text(entry.value)),
+                    if (_metaFilters.sort == entry.key)
+                      const Icon(Icons.check_rounded, size: 17, color: AppColors.accent),
+                  ]),
+                ),
+            ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: AppColors.surface2,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: AppColors.hairline),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.sort_rounded, size: 15, color: AppColors.accent),
+                const SizedBox(width: 5),
+                Text(currentLabel, style: AppText.caption.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                )),
+                const SizedBox(width: 3),
+                const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppColors.textSecondary),
+              ]),
+            ),
+          ),
+        ],
       ),
     );
   }
