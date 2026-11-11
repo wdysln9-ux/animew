@@ -76,9 +76,9 @@ class AniListCatalogue implements AnimeCatalogue {
       // drop the long tail of 3% tags.
       'tags{name rank isMediaSpoiler} '
       'trailer{id site thumbnail} '
-      'characters(sort:ROLE,perPage:25){edges{role node{name{full} image{large}}}} '
+      'characters(sort:ROLE,perPage:50){edges{role node{name{full} image{large}}}} '
       'relations{edges{relationType node{id idMal type title{romaji english} coverImage{large} averageScore popularity format status episodes seasonYear genres}}} '
-      'recommendations(sort:RATING_DESC,perPage:10){nodes{mediaRecommendation{id idMal type title{romaji english} coverImage{large} averageScore popularity format status episodes seasonYear genres}}}';
+      'recommendations(sort:RATING_DESC,perPage:50){edges{node{rating mediaRecommendation{id idMal type title{romaji english} coverImage{large} averageScore popularity format status episodes seasonYear genres}}}}';
 
   /// Exactly what [_item] reads, and nothing else. Home asks for 7 rows of 30
   /// in one request, so every field here is paid for 210 times: carrying the
@@ -430,7 +430,7 @@ class AniListCatalogue implements AnimeCatalogue {
       }
     }
     final relations = <MediaRelation>[];
-    void addRelation(dynamic raw, String? relationLabel) {
+    void addRelation(dynamic raw, String? relationLabel, {int? recommendationRating}) {
       if (raw is! Map) return;
       final title = raw['title'] as Map? ?? const {};
       final romaji = title['romaji'] as String?;
@@ -449,6 +449,7 @@ class AniListCatalogue implements AnimeCatalogue {
         relation: relationLabel,
         score: raw['averageScore'] as int?,
         popularity: raw['popularity'] as int?,
+        recommendationRating: recommendationRating,
         format: _prettyFormat(raw['format'] as String?),
         status: switch (raw['status']) { 'RELEASING' => 'Tayang', 'FINISHED' => 'Selesai', 'NOT_YET_RELEASED' => 'Segera', _ => null },
         episodes: raw['episodes'] as int?,
@@ -465,10 +466,18 @@ class AniListCatalogue implements AnimeCatalogue {
         if (edge is Map) addRelation(edge['node'], _prettyEnum(edge['relationType'] as String?));
       }
     }
-    final recommendationNodes = (map['recommendations'] as Map?)?['nodes'];
-    if (recommendationNodes is List) {
-      for (final node in recommendationNodes) {
-        if (node is Map) addRelation(node['mediaRecommendation'], 'Recommended');
+    final recommendationEdges = (map['recommendations'] as Map?)?['edges'];
+    if (recommendationEdges is List) {
+      for (final edge in recommendationEdges) {
+        if (edge is! Map) continue;
+        final node = edge['node'];
+        if (node is Map) {
+          addRelation(
+            node['mediaRecommendation'],
+            'Recommended',
+            recommendationRating: (node['rating'] as num?)?.toInt(),
+          );
+        }
       }
     }
     return MediaDetail(
