@@ -1556,24 +1556,16 @@ class _ThumbnailProgressBar extends StatelessWidget {
         final value = fraction.clamp(0.0, 1.0);
         final filledWidth = constraints.maxWidth * value;
         return SizedBox(
-          height: 4,
+          height: 2,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ColoredBox(
-                  color: AppColors.textTertiary.withValues(alpha: 0.32),
-                ),
-                if (filledWidth > 0)
-                  PositionedDirectional(
-                    start: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: filledWidth,
-                    child: ColoredBox(color: AppColors.accent),
-                  ),
-              ],
+            borderRadius: BorderRadius.circular(2),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: SizedBox(
+                width: filledWidth,
+                height: 2,
+                child: const ColoredBox(color: AppColors.accent),
+              ),
             ),
           ),
         );
