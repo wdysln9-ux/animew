@@ -8,17 +8,19 @@ class _DetailMoreMenuAction extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.color = AppColors.accent,
+    this.color,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  final Color color;
+  final Color? color;
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) {
+    final iconColor = color ?? AppColors.accent;
+    return Padding(
     padding: const EdgeInsets.symmetric(vertical: 3),
     child: Material(
       color: AppColors.surface2,
@@ -33,10 +35,10 @@ class _DetailMoreMenuAction extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.14),
+                color: iconColor.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -63,6 +65,7 @@ class _DetailMoreMenuAction extends StatelessWidget {
       ),
     ),
   );
+  }
 }
 
 
