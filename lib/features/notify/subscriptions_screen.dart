@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
@@ -35,6 +36,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   List<Map<String, dynamic>> _items = const [];
   bool _loading = true;
   bool _failed = false;
+  String? _errorMessage;
   bool _loadingMore = false;
   bool _loadMoreFailed = false;
   bool _hasMore = true;
@@ -86,6 +88,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
     if (mounted) setState(() {
       _loading = true;
       _failed = false;
+      _errorMessage = null;
       _loadMoreFailed = false;
       _page = 1;
       _hasMore = true;
@@ -99,10 +102,11 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
         _hasMore = rows.length >= 50;
         _loading = false;
       });
-    } catch (_) {
+    } catch (error) {
       if (mounted) setState(() {
         _loading = false;
         _failed = true;
+        _errorMessage = error.toString().replaceFirst('Bad state: ', '');
       });
     }
   }
@@ -172,7 +176,8 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
       case 'RELATED_MEDIA_ADDITION': return 'Media terkait baru ditambahkan';
       case 'MEDIA_DATA_CHANGE': return 'Informasi media diperbarui';
       case 'MEDIA_MERGE': return 'Media digabungkan';
-      case 'MEDIA_DELETION': return 'Media dihapus dari AniList';
+      case 'MEDIA_DELETION':
+        return 'Media dihapus: ${n['deletedMediaTitle'] ?? 'entri AniList'}';
       case 'MEDIA_SUBMISSION_UPDATE':
         return 'Pengajuan media diperbarui: ' + mediaTitle;
       case 'STAFF_SUBMISSION_UPDATE':
@@ -331,7 +336,10 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
     final image = avatar ?? staffImage ?? characterImage ?? cover;
     final contextText = n['context']?.toString();
     final contexts = n['contexts'] is List ? (n['contexts'] as List).whereType<String>().join(' · ') : '';
+    final message = n['message'] is Map ? n['message'] as Map : null;
+    final messageText = message?['message']?.toString();
     final detailParts = <String>[
+      if (messageText?.isNotEmpty == true) messageText!,
       if (contextText?.isNotEmpty == true) contextText!,
       if ((contextText?.isNotEmpty != true) && contexts.isNotEmpty) contexts,
       if ((n['status']?.toString().isNotEmpty ?? false)) 'Status: ${n['status']}',
@@ -343,6 +351,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
         : type == 'FOLLOWING' ? Icons.person_add_alt_1_rounded
         : _forum.contains(type) ? Icons.forum_outlined : Icons.notifications_none_rounded;
     return ListTile(
+      onTap: () => _openNotification(n),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       leading: ClipRRect(
         borderRadius: BorderRadius.circular(22),
@@ -362,6 +371,46 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
         Text(_time(n), style: AppText.caption.copyWith(color: AppColors.textSecondary)),
       ]),
     );
+  }
+
+  Future<void> _openNotification(Map<String, dynamic> n) async {
+    final type = (n['type'] ?? '').toString();
+    final user = n['user'] is Map ? n['user'] as Map : null;
+    final media = n['media'] is Map ? n['media'] as Map : null;
+    final thread = n['thread'] is Map ? n['thread'] as Map : null;
+    final staff = n['staff'] is Map ? n['staff'] as Map : null;
+    final character = n['character'] is Map ? n['character'] as Map : null;
+
+    String? target;
+    if (type == 'AIRING' || _media.contains(type) ||
+        type == 'MEDIA_SUBMISSION_UPDATE') {
+      target = media?['siteUrl']?.toString();
+      if ((target == null || target.isEmpty) && media?['id'] != null) {
+        target = 'https://anilist.co/anime/${media!['id']}';
+      }
+    } else if (type == 'FOLLOWING') {
+      target = user?['siteUrl']?.toString();
+      if ((target == null || target.isEmpty) && user?['name'] != null) {
+        target = 'https://anilist.co/user/${user!['name']}';
+      }
+    } else if (_activity.contains(type)) {
+      final id = n['activityId'];
+      if (id != null) target = 'https://anilist.co/activity/$id';
+    } else if (_forum.contains(type)) {
+      target = thread?['siteUrl']?.toString();
+      if ((target == null || target.isEmpty) && thread?['id'] != null) {
+        target = 'https://anilist.co/forum/thread/${thread!['id']}';
+      }
+    } else if (type == 'STAFF_SUBMISSION_UPDATE') {
+      target = staff?['siteUrl']?.toString();
+    } else if (type == 'CHARACTER_SUBMISSION_UPDATE') {
+      target = character?['siteUrl']?.toString();
+    }
+
+    final uri = Uri.tryParse(target ?? '');
+    if (uri != null && (uri.scheme == 'https' || uri.scheme == 'http')) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Widget _fallback(IconData icon) => ColoredBox(
