@@ -1304,6 +1304,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                       child: PosterCard(
                         title: relation.title,
                         imageUrl: relation.cover,
+                        imageColor: relation.coverColor,
                         cellWidth: width,
                         seriesBadge: _isRecommended(relation) ? null : relation.relation,
                         scoreBadge: relation.score,
