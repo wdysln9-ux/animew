@@ -239,7 +239,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                       child: SizedBox(
                         width: posterWidth,
                         height: posterHeight,
-                        child: _image(poster, width: 528, fit: BoxFit.contain),
+                        child: _image(poster, width: 528, fit: BoxFit.cover),
                       ),
                     ),
                   ),
