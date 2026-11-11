@@ -143,7 +143,7 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.65)),
+          border: Border.all(color: AppColors.hairline),
         ),
         child: Row(
           children: [
@@ -153,14 +153,14 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
                 height: 46,
                 child: avatar == null || avatar.isEmpty
                     ? ColoredBox(
-                        color: AppColors.surfaceVariant,
+                        color: AppColors.surface2,
                         child: const Icon(Icons.person_rounded, color: AppColors.textSecondary),
                       )
                     : Image.network(
                         avatar,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => ColoredBox(
-                          color: AppColors.surfaceVariant,
+                          color: AppColors.surface2,
                           child: const Icon(Icons.person_rounded, color: AppColors.textSecondary),
                         ),
                       ),
