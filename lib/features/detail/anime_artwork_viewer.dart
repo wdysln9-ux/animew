@@ -5,8 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../core/theme/app_colors.dart';
-import '../../core/ui/app_toast.dart';
 
 const _galleryChannel = MethodChannel('animew/image_gallery');
 
