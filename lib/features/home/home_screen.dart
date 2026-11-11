@@ -18,7 +18,6 @@ import '../../core/mode/content_mode.dart';
 import '../../core/mode/content_mode_cubit.dart';
 import '../../core/models/watch_status.dart';
 import '../../core/tracker/tracker_hub.dart';
-import '../../core/notify/notification_service.dart';
 import '../../core/ui/global_messenger.dart';
 import '../../core/update/extension_auto_updater.dart';
 import '../../core/provider/cloudstream_provider.dart';
@@ -47,8 +46,6 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/zmode/zmode_prefs.dart';
 import '../../l10n/l10n.dart';
-import '../../core/announce/announcement.dart';
-import '../announce/announcement_sheet.dart';
 import '../community/community_sheet.dart';
 import '../downloads/downloads_screen.dart';
 import '../notify/subscriptions_screen.dart';
@@ -224,7 +221,6 @@ class _HomeViewState extends State<_HomeView>
         // announcement feed), then any new developer announcement — all awaited
         // in sequence so the modals never fight over the stack.
         if (mounted) await maybeShowCommunitySheet(context);
-        if (mounted) await maybeShowAnnouncement(context);
       });
       _checkSourceUpdates();
     }
@@ -429,12 +425,7 @@ class _HomeViewState extends State<_HomeView>
       if (!mounted) return;
       if (updated > 0) {
         final title = context.l10n.extensionsUpdated;
-        await NotificationService.instance.showMessage(
-          id: 779100,
-          title: title,
-          body:
-              '$updated extension${updated == 1 ? '' : 's'} updated to the latest version.',
-        );
+
       }
       return;
     }
@@ -456,9 +447,7 @@ class _HomeViewState extends State<_HomeView>
       }
 
       final total = csCount + aniCount;
-      if (total > 0 && csManager.notifyUpdates) {
-        await NotificationService.instance.showSourceUpdates(count: total);
-      }
+
     } catch (_) {
       /* never affects startup */
     }
@@ -1085,60 +1074,33 @@ class _HomeViewState extends State<_HomeView>
     );
   }
 
-  /// Flat bell → Notifications screen. The accent dot shows while any
-  /// announcement is unseen and clears itself reactively (the screen calls
-  /// markAllSeen, the Hive box updates, the listenable rebuilds).
+  /// Bell opens the AniList notifications inbox. No AnimeW-local
+  /// announcement or device-notification state is used for its badge.
   Widget _notificationBell(BuildContext context, {bool edgeBanner = false}) {
     void openNotifications() => Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const SubscriptionsScreen()),
     );
 
-    Widget icon() => Stack(
-      clipBehavior: Clip.none,
-      children: [
-        DockIcon(
-          DockGlyph.bell,
-          color: edgeBanner ? Colors.white : AppColors.textSecondary,
-          size: 22,
-        ),
-        if (Hive.isBoxOpen(AnnouncementStore.boxName) &&
-            AnnouncementStore().unseenCount() > 0)
-          Positioned(
-            top: 1,
-            right: 2,
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.accent,
-                border: Border.all(color: AppColors.bg, width: 1.5),
-              ),
-            ),
-          ),
-      ],
+    final icon = DockIcon(
+      DockGlyph.bell,
+      color: edgeBanner ? Colors.white : AppColors.textSecondary,
+      size: 22,
     );
-
-    // Build the same action fresh inside the listenable's builder so its badge
-    // updates when an announcement is seen.
-    Widget bell() => edgeBanner
+    return edgeBanner
         ? IconButton(
             tooltip: context.l10n.notifications,
             style: _edgeHeaderButtonStyle(),
             onPressed: openNotifications,
-            icon: icon(),
+            icon: icon,
           )
         : GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: openNotifications,
-            child: Padding(padding: const EdgeInsets.all(4), child: icon()),
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: DockIcon(DockGlyph.bell, size: 22),
+            ),
           );
-    // Rebuild the dot when the announcements box changes (e.g. markAllSeen).
-    if (!Hive.isBoxOpen(AnnouncementStore.boxName)) return bell();
-    return ValueListenableBuilder(
-      valueListenable: Hive.box(AnnouncementStore.boxName).listenable(),
-      builder: (context, _, child) => bell(),
-    );
   }
 
   /// Builds one provider-defined browse row (poster cards). The section is
