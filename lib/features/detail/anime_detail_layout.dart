@@ -224,12 +224,15 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                 right: 0,
                 bottom: 0,
                 child: Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(17),
-                    child: SizedBox(
-                      width: posterWidth,
-                      height: posterHeight,
-                      child: _image(poster, width: 528, fit: BoxFit.contain),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(17),
+                      child: SizedBox(
+                        width: posterWidth,
+                        height: posterHeight - 4,
+                        child: _image(poster, width: 528, fit: BoxFit.contain),
+                      ),
                     ),
                   ),
                 ),
@@ -445,7 +448,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -595,6 +598,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
             ? const Color(0xFF8BE0AE)
             : (isUpcoming ? const Color(0xFFFFC58A) : const Color(0xFFFFC58A));
     return Container(
+      constraints: const BoxConstraints(minHeight: 24),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: background,
@@ -605,6 +609,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
         label,
         style: AppText.caption.copyWith(
           fontSize: 12,
+          height: 1.0,
           color: foreground,
           fontWeight: FontWeight.w700,
         ),
@@ -846,7 +851,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
     final hasCredits = widget.studios.isNotEmpty || widget.tags.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
       child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -939,7 +944,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
   Widget build(BuildContext context) {
     final cast = widget.cast;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 0, 0),
+      padding: const EdgeInsets.fromLTRB(16, 8, 0, 0),
       child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -1109,75 +1114,56 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     final selectedTab = tabs[_selected];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 0, 0),
+      padding: const EdgeInsets.fromLTRB(16, 4, 0, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             height: 27,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Row(
-                  children: [
-                    for (var index = 0; index < tabs.length; index++)
-                      Expanded(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () => setState(() => _selected = index),
-                          child: Center(
-                            child: Text(
-                              tabs[index],
-                              textAlign: TextAlign.center,
-                              style: AppText.headline.copyWith(
-                                fontSize: 13,
-                                height: 1.2,
-                                color: index == _selected
-                                    ? AppColors.textPrimary
-                                    : AppColors.textSecondary,
-                                fontWeight: index == _selected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                              ),
-                            ),
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: 16),
+              itemCount: tabs.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 9),
+              itemBuilder: (context, index) {
+                final selected = index == _selected;
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => setState(() => _selected = index),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          tabs[index],
+                          style: AppText.headline.copyWith(
+                            fontSize: 13,
+                            height: 1.2,
+                            color: selected
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
                         ),
-                      ),
-                  ],
-                ),
-                // One continuous indicator slides between tabs instead of
-                // fading individual underlines in and out.
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 4,
-                  child: IgnorePointer(
-                    child: AnimatedAlign(
-                      duration: const Duration(milliseconds: 260),
-                      curve: Curves.easeInOutCubic,
-                      alignment: tabs.length <= 1
-                          ? Alignment.center
-                          : tabs.length == 2
-                              ? (_selected == 0
-                                  ? Alignment.centerLeft
-                                  : Alignment.centerRight)
-                              : _selected == 0
-                                  ? Alignment.centerLeft
-                                  : _selected == 1
-                                      ? Alignment.center
-                                      : Alignment.centerRight,
-                      child: Container(
-                        width: 30,
-                        height: 2,
-                        decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          borderRadius: BorderRadius.circular(2),
+                        const Spacer(),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeInOut,
+                          width: selected ? 30 : 0,
+                          height: 2,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ),
           const SizedBox(height: 6),
