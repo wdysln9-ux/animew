@@ -274,6 +274,35 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Widget _notificationTitle(Map<String, dynamic> n) {
+    final type = (n['type'] ?? '').toString();
+    final thread = n['thread'] is Map ? n['thread'] as Map : null;
+    String? prefix;
+    String? subject;
+    String suffix = '';
+    if (type == 'AIRING') {
+      subject = _mediaTitle(n['media'] is Map ? n['media'] as Map : null);
+    } else if (type == 'RELATED_MEDIA_ADDITION' || type == 'MEDIA_DATA_CHANGE' || type == 'MEDIA_MERGE') {
+      subject = _mediaTitle(n['media'] is Map ? n['media'] as Map : null);
+      suffix = type == 'RELATED_MEDIA_ADDITION' ? ' baru ditambahkan'
+          : type == 'MEDIA_DATA_CHANGE' ? ' diperbarui' : ' digabungkan';
+    } else if (type == 'THREAD_COMMENT_LIKE' || type == 'THREAD_LIKE') {
+      final user = n['user'] is Map ? n['user'] as Map : const {};
+      prefix = (user['name'] ?? 'AniList').toString() + ' menyukai utas: ';
+      subject = (thread?['title'] ?? 'Forum').toString();
+    }
+    if (subject == null) {
+      return Text(_title(n), maxLines: 2, overflow: TextOverflow.ellipsis,
+        style: AppText.body.copyWith(fontSize: 13, color: AppColors.textPrimary, fontWeight: FontWeight.w600));
+    }
+    return Text.rich(TextSpan(children: [
+      if (prefix != null) TextSpan(text: prefix, style: const TextStyle(color: AppColors.textPrimary)),
+      TextSpan(text: subject, style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
+      if (suffix.isNotEmpty) TextSpan(text: suffix, style: const TextStyle(color: AppColors.textPrimary)),
+    ]), maxLines: 2, overflow: TextOverflow.ellipsis,
+      style: AppText.body.copyWith(fontSize: 13, fontWeight: FontWeight.w600));
+  }
+
   String _time(Map<String, dynamic> n) {
     final raw = n['createdAt'];
     if (raw is! num) return '';
@@ -464,9 +493,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       title: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (_submissions.contains(type) && _submissionColor(n) != null)
           Padding(padding: const EdgeInsets.only(top: 5, right: 7), child: Container(width: 7, height: 7, decoration: BoxDecoration(color: _submissionColor(n), shape: BoxShape.circle))),
-        Expanded(child: Text.rich(TextSpan(children: [
-          TextSpan(text: _title(n), style: TextStyle(color: AppColors.textPrimary)),
-        ]), maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body.copyWith(fontSize: 13, fontWeight: FontWeight.w600))),
+        Expanded(child: _notificationTitle(n)),
       ]),
       subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (detail.isNotEmpty) Text(detail, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(fontSize: 11.5)),
