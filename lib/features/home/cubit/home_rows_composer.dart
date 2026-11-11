@@ -107,11 +107,13 @@ List<String> availableRowIds(
   required bool withTrackerRows,
   ZKind? kind,
   bool withStreamingRail = false,
+  List<String> extraRowIds = const [],
 }) => [
   localContinueRowId,
   if (withStreamingRail) streamingServicesRowId,
   if (withTrackerRows) ...trackerRowIdsFor(kind),
   for (final s in rowSections) 'section:${s.title}',
+  ...extraRowIds,
 ];
 
 /// The shipped arrangement for a layout: local row on, tracker rows present

@@ -111,6 +111,10 @@ const String localContinueRowId = 'local:continue';
 const String trackerContinueRowId = 'tracker:continue';
 const String newEpisodesRowId = 'tracker:new-episodes';
 
+/// Global AniList airing feed — separate from the tracker-driven new-episodes row.
+const String airingEpisodesSectionTitle = 'Anime Tayang';
+const String airingEpisodesRowId = 'section:Anime Tayang';
+
 /// Video layouts only — `with_watch_providers` is a TMDB parameter, so the
 /// rail has nothing to show on an anime/manga layout.
 const String streamingServicesRowId = 'local:streaming-services';

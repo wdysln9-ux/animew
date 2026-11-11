@@ -48,6 +48,7 @@ List<AiringEntry> parseAiringSchedules(Map<String, dynamic> data) {
     out.add(AiringEntry(
       altTitle: alt,
       malId: media['idMal'] as int?,
+      anilistId: media['id'] as int?,
       title: title,
       coverUrl: cover,
       episode: (raw['episode'] as int?) ?? 0,
@@ -139,6 +140,7 @@ query ($start: Int, $end: Int, $page: Int) {
       episode
       airingAt
       media {
+        id
         idMal
         title { romaji english }
         coverImage { large }

@@ -18,6 +18,9 @@ import '../../../core/mode/content_mode.dart';
 import '../../../core/mode/content_mode_cubit.dart';
 import '../../../core/platform/apple_tv.dart';
 import '../../../core/repository/catalogue_repository.dart';
+import '../../../core/schedule/airing_service.dart';
+import '../../../core/schedule/schedule_models.dart';
+import '../../../core/models/provider_info.dart';
 import '../../../core/tracker/tracker.dart';
 import '../../../core/tracker/tracker_hub.dart';
 import '../../../core/ui/home_rows_prefs.dart';
@@ -54,6 +57,7 @@ class HomeState extends Equatable {
     this.offline = false,
     this.rateLimitedSeconds,
     this.rows,
+    this.airingItems = const [],
   });
 
   /// The provider's named home rows, in order. Null until the first load.
@@ -84,6 +88,9 @@ class HomeState extends Equatable {
   /// refresh never flashes the rows away.
   final List<HomeRow>? rows;
 
+  /// Global AniList airing feed. Independent from the connected tracker.
+  final List<MediaItem> airingItems;
+
   /// Items that drive the hero carousel. Prefers the Trending section — the
   /// banner is a trending spotlight, same as every catalogue names one (Simkl
   /// prefixes its titles, hence the startsWith) — so the opening row can be
@@ -107,6 +114,7 @@ class HomeState extends Equatable {
     bool? offline,
     int? rateLimitedSeconds,
     List<HomeRow>? rows,
+    List<MediaItem>? airingItems,
   }) => HomeState(
     sections: sections ?? this.sections,
     loading: loading ?? this.loading,
@@ -114,6 +122,7 @@ class HomeState extends Equatable {
     offline: offline ?? this.offline,
     rateLimitedSeconds: rateLimitedSeconds ?? this.rateLimitedSeconds,
     rows: rows ?? this.rows,
+    airingItems: airingItems ?? this.airingItems,
   );
 
   @override
@@ -124,6 +133,7 @@ class HomeState extends Equatable {
     offline,
     rateLimitedSeconds,
     rows,
+    airingItems,
   ];
 }
 
@@ -143,6 +153,36 @@ class HomeCubit extends Cubit<HomeState> {
 
   final CatalogueRepository _repo;
   final TrackerHub? _hub;
+
+  AiringService? get _airingServiceOrNull =>
+      _sl.isRegistered<AiringService>() ? _sl<AiringService>() : null;
+
+  List<MediaItem> _mediaItemsFromAirings(List<AiringEntry> entries) {
+    final items = <MediaItem>[];
+    for (final entry in entries) {
+      final anilistId = entry.anilistId;
+      if (anilistId == null) continue;
+      final canonicalId = entry.malId == null
+          ? 'al:$anilistId'
+          : 'mal:${entry.malId}';
+      final canonical = ZCanonical(ZKind.anime, canonicalId);
+      items.add(MediaItem(
+        id: canonicalId,
+        title: entry.title,
+        englishTitle: entry.altTitle,
+        cover: entry.coverUrl,
+        banner: entry.bannerUrl,
+        url: ZmodeIds.showUrl(canonical),
+        type: ProviderType.anime,
+        sourceId: ZmodeIds.sourceId,
+        malId: entry.malId,
+        anilistId: anilistId,
+        format: entry.format,
+        latestEpisode: entry.episode > 0 ? entry.episode : null,
+      ));
+    }
+    return items;
+  }
 
   TrackerHub? get _hubOrNull =>
       _hub ?? (_sl.isRegistered<TrackerHub>() ? _sl<TrackerHub>() : null);
@@ -222,6 +262,17 @@ class HomeCubit extends Cubit<HomeState> {
     final sourceId = _repo.sourceId;
     final kind = _browseKind;
     final cacheKey = kind?.name ?? 'all';
+    final airingService = kind == ZKind.anime ? _airingServiceOrNull : null;
+    final airingFuture = airingService == null
+        ? Future.value(const <MediaItem>[])
+        : airingService
+            .weekAiring()
+            .timeout(
+              const Duration(seconds: 12),
+              onTimeout: () => const <AiringEntry>[],
+            )
+            .then(_mediaItemsFromAirings)
+            .catchError((_) => const <MediaItem>[]);
     // Cold start with a remembered home: paint it on the first frame and
     // refresh silently underneath. Same rows, same order — only the wait is
     // gone. A miss simply keeps the normal loading state.
@@ -235,7 +286,7 @@ class HomeCubit extends Cubit<HomeState> {
               loading: true,
               sections: remembered ?? state.sections,
               rows: remembered != null
-                  ? _mergedRows(remembered, kind, null, null)
+                  ? _mergedRows(remembered, kind, null, null, state.airingItems)
                   : state.rows,
             ),
     );
@@ -316,6 +367,10 @@ class HomeCubit extends Cubit<HomeState> {
     }
     if (sections.isNotEmpty) NovelCloudflare.clear();
 
+    // The global schedule is fetched in parallel with the provider and tracker.
+    // A timeout or API failure only removes this optional row.
+    final airingItems = await airingFuture;
+
     // A newer load started while we were fetching — discard this stale result.
     if (isClosed || gen != _gen) return;
     // Remember the good load so the next cold start paints instantly.
@@ -331,7 +386,8 @@ class HomeCubit extends Cubit<HomeState> {
         // bad row is not an offline screen.
         offline: offline && sections.isEmpty,
         rateLimitedSeconds: limitedSeconds,
-        rows: _mergedRows(sections, kind, library, tracker),
+        rows: _mergedRows(sections, kind, library, tracker, airingItems),
+        airingItems: airingItems,
       ),
     );
   }
@@ -367,7 +423,9 @@ class HomeCubit extends Cubit<HomeState> {
         }
       }
     }
-    emit(state.copyWith(rows: _mergedRows(sections, kind, library, tracker)));
+    emit(state.copyWith(
+      rows: _mergedRows(sections, kind, library, tracker, state.airingItems),
+    ));
   }
 
   /// The sanitized, merged arrangement of one load. Pure given its inputs;
@@ -378,9 +436,17 @@ class HomeCubit extends Cubit<HomeState> {
     ZKind? kind,
     List<TrackerListItem>? library,
     Tracker? tracker,
+    List<MediaItem> airingItems,
   ) {
     final isTv = _sl.isRegistered<AppMode>() ? _sl<AppMode>().isTv : false;
-    final rowSections = providerRowSections(sections, isTv: isTv);
+    final rowSections = [
+      ...providerRowSections(sections, isTv: isTv),
+      if (kind == ZKind.anime && airingItems.isNotEmpty)
+        HomeSection(title: airingEpisodesSectionTitle, items: airingItems),
+    ];
+    final extraRowIds = kind == ZKind.anime
+        ? const [airingEpisodesRowId]
+        : const <String>[];
     final withTrackerRows = kind != null;
     final layoutKey = _layoutKey;
     final withRail = streamingRailForLayout(layoutKey);
@@ -389,6 +455,7 @@ class HomeCubit extends Cubit<HomeState> {
       withTrackerRows: withTrackerRows,
       kind: kind,
       withStreamingRail: withRail,
+      extraRowIds: extraRowIds,
     );
     final saved = HomeRowsPrefs.savedFor(layoutKey);
     final layout = sanitizeLayout(

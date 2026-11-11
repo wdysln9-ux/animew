@@ -1,3 +1,4 @@
+import '../../core/models/home_row.dart' show airingEpisodesSectionTitle;
 import '../../features/home/cubit/home_rows_composer.dart';
 import 'anilist_catalogue.dart';
 import 'mal_catalogue.dart';
@@ -51,7 +52,10 @@ List<HomeLayout> allHomeLayouts() => [
       key: layoutKeyFor(sourceId: '', zModeOn: true, browseKind: kind),
       provider: 'AniList',
       kind: kind,
-      sectionTitles: AniListCatalogue.rowTitles(kind),
+      sectionTitles: [
+        ...AniListCatalogue.rowTitles(kind),
+        if (kind == ZKind.anime) airingEpisodesSectionTitle,
+      ],
     ),
     HomeLayout(
       key: layoutKeyFor(
@@ -62,7 +66,10 @@ List<HomeLayout> allHomeLayouts() => [
       ),
       provider: 'MyAnimeList',
       kind: kind,
-      sectionTitles: MalCatalogue.rowTitles(kind),
+      sectionTitles: [
+        ...MalCatalogue.rowTitles(kind),
+        if (kind == ZKind.anime) airingEpisodesSectionTitle,
+      ],
     ),
   ],
   HomeLayout(

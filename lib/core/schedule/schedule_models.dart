@@ -5,6 +5,7 @@ class AiringEntry extends Equatable {
   const AiringEntry({
     required this.malId,
     required this.title,
+    this.anilistId,
     required this.coverUrl,
     required this.episode,
     required this.airsAtLocal,
@@ -15,6 +16,7 @@ class AiringEntry extends Equatable {
   });
 
   final int? malId;
+  final int? anilistId;
   final String title;
 
   /// The other title AniList had (romaji when [title] is the English one).
@@ -37,8 +39,8 @@ class AiringEntry extends Equatable {
 
   @override
   List<Object?> get props =>
-      [malId, title, altTitle, coverUrl, episode, airsAtLocal, format,
-       bannerUrl, synopsis];
+      [malId, anilistId, title, altTitle, coverUrl, episode, airsAtLocal,
+       format, bannerUrl, synopsis];
 }
 
 /// One upcoming movie/TV title (from TMDB upcoming / on_the_air).
