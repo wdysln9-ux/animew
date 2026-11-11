@@ -34,6 +34,7 @@ class MediaRelation extends Equatable {
     required this.title,
     this.romaji,
     this.cover,
+    this.coverColor,
     this.relation,
     this.malId,
     this.anilistId,
@@ -57,6 +58,8 @@ class MediaRelation extends Equatable {
   final String? romaji;
 
   final String? cover;
+  /// AniList coverImage.color for the poster's loading background.
+  final String? coverColor;
 
   /// Human label for the link, e.g. "Sequel", "Side Story", "Recommended".
   final String? relation;
@@ -96,6 +99,7 @@ class MediaRelation extends Equatable {
     title,
     romaji,
     cover,
+    coverColor,
     relation,
     malId,
     anilistId,
