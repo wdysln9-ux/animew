@@ -634,6 +634,7 @@ class AnimeDetailActionButton extends StatelessWidget {
     this.primary = false,
     this.active = false,
     this.progress = 0,
+    required this.adaptiveTint,
   });
 
   final String label;
@@ -643,12 +644,19 @@ class AnimeDetailActionButton extends StatelessWidget {
   final bool primary;
   final bool active;
   final double progress;
+  final ValueListenable<Color?> adaptiveTint;
 
   @override
   Widget build(BuildContext context) {
     final foreground = active ? Colors.white : AppColors.textPrimary;
-    final background = active ? AppColors.accent : (primary ? AppColors.bg : AppColors.surface2);
-    return Opacity(
+    return ValueListenableBuilder<Color?>(
+      valueListenable: adaptiveTint,
+      builder: (context, tint, _) {
+        final base = primary ? AppColors.bg : AppColors.surface2;
+        final background = active
+            ? AppColors.accent
+            : Color.lerp(base, tint ?? base, primary ? 0.62 : 0.42)!;
+        return Opacity(
       opacity: onPressed != null || loading ? 1 : 0.42,
       child: Material(
         color: background,
@@ -683,6 +691,8 @@ class AnimeDetailActionButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+      },
     );
   }
 }
