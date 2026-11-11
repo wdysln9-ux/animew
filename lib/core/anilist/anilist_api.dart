@@ -410,12 +410,12 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
   /// The characters + relations selection, shared by the MAL-id and
   /// title-search enrichment queries.
   static const String _extrasSelection =
-      'characters(sort:[ROLE,RELEVANCE],perPage:24){ edges{ role '
+      'characters(sort:[ROLE,RELEVANCE],perPage:50){ edges{ role '
       'node{ id name{full} image{medium} } '
       'voiceActors(language:JAPANESE,sort:[RELEVANCE]){ name{full} } } } '
       'relations{ edges{ relationType '
       'node{ id idMal type format title{romaji english native} coverImage{large} } } } '
-      'recommendations(sort:RATING_DESC,perPage:16){ edges{ node{ mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
+      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
 
   /// Manga/novel twin of [_extrasSelection].
   ///
@@ -423,13 +423,13 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
   /// people worth naming on a manga are its author and artist. Relations come
   /// back the same shape.
   static const String _readingExtrasSelection =
-      'characters(sort:[ROLE,RELEVANCE],perPage:24){ edges{ role '
+      'characters(sort:[ROLE,RELEVANCE],perPage:50){ edges{ role '
       'node{ id name{full} image{medium} } } } '
       'staff(sort:[RELEVANCE],perPage:6){ edges{ role '
       'node{ id name{full} image{medium} } } } '
       'relations{ edges{ relationType '
       'node{ id idMal type format title{romaji english native} coverImage{large} } } } '
-      'recommendations(sort:RATING_DESC,perPage:16){ edges{ node{ mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
+      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
 
   /// Cast + relations for a MANGA or NOVEL, resolved by title.
   ///
