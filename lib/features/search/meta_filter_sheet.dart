@@ -69,6 +69,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       f.genres.length + f.tags.length + f.years.length +
       f.seasons.length + f.formats.length + f.statuses.length +
       (f.minEpisodes > 0 || f.maxEpisodes < 200 ? 1 : 0) +
+      (f.minTagRank > 0 ? 1 : 0) +
       (f.sort != MetaSort.popularity ? 1 : 0);
 
   @override
@@ -239,6 +240,19 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     ),
                     const SizedBox(height: 22),
                     _heading('Tags', theme),
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text('Persentase minimum', style: theme.textTheme.bodySmall),
+                      Text('${f.minTagRank}%', style: theme.textTheme.titleMedium?.copyWith(fontSize: 13, color: AppColors.accent, fontWeight: FontWeight.w700)),
+                    ]),
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7, elevation: 0, pressedElevation: 0),
+                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 13),
+                      ),
+                      child: Slider(min: 0, max: 100, divisions: 20,
+                        value: f.minTagRank.toDouble(), activeColor: AppColors.accent,
+                        onChanged: (value) => setState(() => f = f.copyWith(minTagRank: value.round()))),
+                    ),
                     FutureBuilder<List<String>>(
                       future: tagsFuture,
                       builder: (context, snap) {
