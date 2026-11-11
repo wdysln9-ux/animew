@@ -64,10 +64,10 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
               children: [
                 ColorPicker(
                   pickerColor: temp,
-                  onColorChanged: (c) {
+                  onColorChanged: (color) {
                     setDialogState(() {
-                      temp = c;
-                      hexController.text = c.toARGB32()
+                      temp = color;
+                      hexController.text = color.toARGB32()
                           .toRadixString(16).substring(2).toUpperCase();
                     });
                   },
@@ -95,40 +95,50 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   ),
                   onChanged: (value) {
                     final raw = value.trim().replaceFirst('#', '');
-                    if (RegExp(r'^[0-9A-Fa-f]{6}    final result = await showDialog<Color>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(context.l10n.customColour, style: AppText.headline),
-        content: SingleChildScrollView(
-          child: ColorPicker(
-            pickerColor: temp,
-            onColorChanged: (c) => temp = c,
-            enableAlpha: false,
-            displayThumbColor: true,
-            paletteType: PaletteType.hueWheel,
-            labelTypes: const [],
-            pickerAreaBorderRadius: BorderRadius.circular(12),
+                    if (RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(raw)) {
+                      setDialogState(() {
+                        temp = Color(0xFF000000 | int.parse(raw, radix: 16));
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 5),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Masukkan 6 digit HEX, contoh #F47521',
+                    style: AppText.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                context.l10n.cancel,
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                final raw = hexController.text.trim().replaceFirst('#', '');
+                if (!RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(raw)) return;
+                Navigator.pop(ctx, Color(0xFF000000 | int.parse(raw, radix: 16)));
+              },
+              child: Text(
+                context.l10n.apply,
+                style: TextStyle(color: AppColors.accent),
+              ),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              context.l10n.cancel,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, temp),
-            child: Text(
-              context.l10n.apply,
-              style: TextStyle(color: AppColors.accent),
-            ),
-          ),
-        ],
       ),
     );
+    hexController.dispose();
     if (result != null) {
       await _updateProfileTheme(accentColor: result.toARGB32());
     }
