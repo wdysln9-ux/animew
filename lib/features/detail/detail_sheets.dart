@@ -1564,7 +1564,7 @@ class _ThumbnailProgressBar extends StatelessWidget {
               child: SizedBox(
                 width: filledWidth,
                 height: 2,
-                child: const ColoredBox(color: AppColors.accent),
+                child: ColoredBox(color: AppColors.accent),
               ),
             ),
           ),
