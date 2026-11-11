@@ -881,6 +881,7 @@ class _DetailCredits extends StatefulWidget {
     required this.onGenreTap,
     required this.onStudioTap,
     required this.onTagsTap,
+    this.onNakamaTap,
   });
   final List<String> genres;
   final List<String> studios;
@@ -888,6 +889,7 @@ class _DetailCredits extends StatefulWidget {
   final ValueChanged<String> onGenreTap;
   final ValueChanged<String> onStudioTap;
   final VoidCallback onTagsTap;
+  final VoidCallback? onNakamaTap;
 
   @override
   State<_DetailCredits> createState() => _DetailCreditsState();
@@ -970,6 +972,11 @@ class _DetailCreditsState extends State<_DetailCredits> {
                   ),
               ],
             ),
+          if (onNakamaTap != null && (!_expanded || !hasCredits)) ...[
+            const SizedBox(height: 8),
+            _chip('Nakama Menonton', const Color(0xFF53B9A5),
+                icon: Icons.groups_rounded, onTap: onNakamaTap),
+          ],
           if (hasCredits && !_expanded) ...[
             const SizedBox(height: 7),
             GestureDetector(
@@ -1001,6 +1008,11 @@ class _DetailCreditsState extends State<_DetailCredits> {
               if (widget.tags.isNotEmpty)
                 _chip('Tags (${widget.tags.length})', AppColors.accent, onTap: widget.onTagsTap),
             ]),
+          ],
+          if (_expanded && onNakamaTap != null) ...[
+            const SizedBox(height: 8),
+            _chip('Nakama Menonton', const Color(0xFF53B9A5),
+                icon: Icons.groups_rounded, onTap: onNakamaTap),
           ],
           if (_expanded && hasCredits)
             GestureDetector(
