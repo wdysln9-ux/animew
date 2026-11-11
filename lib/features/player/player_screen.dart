@@ -352,19 +352,25 @@ class _PlayerScreenState extends State<PlayerScreen> {
   int _zoneTapCount = 0; // taps so far in the current burst
   Timer? _showTimer; // queued reveal, dropped if the tap turns into a seek
 
-  // ── Pinch-to-zoom (continuous, CloudStream-style: 1×–4×, pan + snap-back) ──
-  // Driven by a passive Listener watching raw pointers (NOT a scale recognizer),
-  // so the existing 1-finger brightness/volume/scrub gestures stay untouched —
-  // a 2-finger pinch just sets _pinching, which those handlers bail on.
-  double _zoom = 1.0; // current video zoom (1.0 = fit-to-screen)
-  Offset _zoomPan = Offset.zero; // pan offset while zoomed in
-  int _zoomIndex = -1; // episode this zoom belongs to (reset on episode change)
-  bool _pinching = false; // 2 fingers down → suppress the 1-finger swipes
-  final Map<int, Offset> _pointers = {}; // live pointers tracked for the pinch
-  double _pinchBaseDist = 0; // finger spread when the pinch started
-  double _pinchBaseZoom = 1.0;
-  Offset _pinchBaseFocal = Offset.zero;
-  Offset _pinchBasePan = Offset.zero;
+  // ── Two-finger horizontal stretch with aspect-ratio guides ──────────────
+  // Raw pointer tracking keeps the existing one-finger gestures independent.
+  double _stretchX = 1.0;
+  int _stretchIndex = -1;
+  bool _pinching = false;
+  final Map<int, Offset> _pointers = {};
+  double _stretchBaseSpan = 0;
+  double _stretchBaseX = 1.0;
+  double? _stretchSnapRatio;
+
+  static const List<double> _stretchGuideRatios = [
+    16 / 9, 4 / 3, 3 / 2, 1.0,
+  ];
+
+  double get _videoAspect {
+    final width = (_c.player.state.width ?? 0).toDouble();
+    final height = (_c.player.state.height ?? 0).toDouble();
+    return width > 0 && height > 0 ? width / height : 16 / 9;
+  }
 
   // Duration tracked off the stream so the slider has a max even before
   // a position event arrives.
@@ -1856,10 +1862,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (_controlsVisible) _scheduleHide();
   }
 
-  // ── Pinch-to-zoom — raw-pointer driven so it never fights the 1-finger
-  // gestures above. Two fingers down → start; their spread sets the zoom and
-  // their midpoint pans; releasing a finger ends it (snapping back to fit when
-  // near 1×). The video is scaled by [_zoom]/[_zoomPan] in build(). ──────────
+  // ── Two-finger horizontal stretch ───────────────────────────────────────
   void _onPointerDown(PointerDownEvent e) {
     _pointers[e.pointer] = e.position;
     if (_pointers.length == 2 && !_locked) _startPinch();
@@ -1878,49 +1881,49 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _startPinch() {
     final p = _pointers.values.toList();
-    _pinchBaseDist = (p[0] - p[1]).distance;
-    _pinchBaseFocal = Offset((p[0].dx + p[1].dx) / 2, (p[0].dy + p[1].dy) / 2);
-    _pinchBaseZoom = _zoom;
-    _pinchBasePan = _zoomPan;
+    _stretchBaseSpan = (p[0].dx - p[1].dx).abs();
+    _stretchBaseX = _stretchX;
     setState(() {
       _pinching = true;
-      _hSeeking = false; // cancel any 1-finger scrub the first finger started
-      _hudVisible = false; // and any brightness/volume HUD
+      _stretchSnapRatio = null;
+      _hSeeking = false;
+      _hudVisible = false;
     });
   }
 
   void _updatePinch() {
-    if (_pinchBaseDist <= 0) return;
+    if (_stretchBaseSpan < 1) return;
     final p = _pointers.values.toList();
-    final dist = (p[0] - p[1]).distance;
-    final focal = Offset((p[0].dx + p[1].dx) / 2, (p[0].dy + p[1].dy) / 2);
-    final z = (_pinchBaseZoom * dist / _pinchBaseDist).clamp(1.0, 4.0);
+    final span = (p[0].dx - p[1].dx).abs();
+    final size = MediaQuery.of(context).size;
+    var stretch = (_stretchBaseX * span / _stretchBaseSpan)
+        .clamp(0.45, 2.5).toDouble();
+    final aspect = _videoAspect * stretch;
+    double? snapped;
+    var nearestDistance = double.infinity;
+    for (final ratio in _stretchGuideRatios) {
+      final distance = (aspect - ratio).abs() * size.height;
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        snapped = ratio;
+      }
+    }
+    if (snapped != null && nearestDistance <= 18) {
+      stretch = (snapped / _videoAspect).clamp(0.45, 2.5).toDouble();
+    } else {
+      snapped = null;
+    }
     setState(() {
-      _zoom = z;
-      _zoomPan = _clampPan(_pinchBasePan + (focal - _pinchBaseFocal), z);
+      _stretchX = stretch;
+      _stretchSnapRatio = snapped;
     });
   }
 
   void _endPinch() {
     setState(() {
       _pinching = false;
-      if (_zoom < 1.08) {
-        // pinched back near fit → snap cleanly to 1× and recentre
-        _zoom = 1.0;
-        _zoomPan = Offset.zero;
-      }
+      _stretchSnapRatio = null;
     });
-  }
-
-  /// Keep the panned, zoomed video from sliding past its own edges.
-  Offset _clampPan(Offset pan, double zoom) {
-    final size = MediaQuery.of(context).size;
-    final maxX = (zoom - 1) * size.width / 2;
-    final maxY = (zoom - 1) * size.height / 2;
-    return Offset(
-      pan.dx.clamp(-maxX, maxX).toDouble(),
-      pan.dy.clamp(-maxY, maxY).toDouble(),
-    );
   }
 
   // ── Lock / zoom / up-next ─────────────────────────────────────────────────
@@ -3939,11 +3942,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ),
               );
             }
-            // Reset any pinch-zoom when the episode changes.
-            if (_zoomIndex != state.currentIndex) {
-              _zoomIndex = state.currentIndex;
-              _zoom = 1.0;
-              _zoomPan = Offset.zero;
+            // Reset horizontal stretch when the episode changes.
+            if (_stretchIndex != state.currentIndex) {
+              _stretchIndex = state.currentIndex;
+              _stretchX = 1.0;
+              _stretchSnapRatio = null;
             }
             // Passive Listener tracks raw pointers for pinch-to-zoom so it never
             // competes with the 1-finger gesture detector inside the Stack.
@@ -4004,24 +4007,35 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   Center(
                     child: ValueListenableBuilder<int>(
                       valueListenable: _c.subtitleStyleRev,
-                      builder: (context, _, _) => Transform.translate(
-                        // Pinch-zoom: scale about centre, then pan. Overflow is
-                        // clipped by the Stack so a zoomed frame crops to screen.
-                        offset: _zoomPan,
-                        child: Transform.scale(
-                          scale: _zoom,
-                          child: Video(
-                            controller: _c.videoController,
-                            controls: NoVideoControls,
-                            fit: _fits[_fitIndex].$1,
-                            // A black fill here covers the ambient layer entirely.
-                            fill: Colors.transparent,
-                            subtitleViewConfiguration: _subtitleConfig(),
-                          ),
+                      builder: (context, _, _) => Transform.scale(
+                        // Stretch horizontally around the centre; the fullscreen
+                        // Stack itself extends into the display-cutout area.
+                        scaleX: _stretchX,
+                        scaleY: 1,
+                        child: Video(
+                          controller: _c.videoController,
+                          controls: NoVideoControls,
+                          fit: _fits[_fitIndex].$1,
+                          fill: Colors.transparent,
+                          subtitleViewConfiguration: _subtitleConfig(),
                         ),
                       ),
                     ),
                   ),
+
+                  // Aspect-ratio guides appear only while adjusting the stretch.
+                  if (_pinching)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          painter: _StretchGuidesPainter(
+                            ratios: _stretchGuideRatios,
+                            activeRatio: _stretchSnapRatio,
+                            accent: AppColors.accent,
+                          ),
+                        ),
+                      ),
+                    ),
 
                   // 1b. Poster-on-start: cover the black surface with the episode's
                   // poster until the first frame decodes, then fade it out. width
@@ -4803,6 +4817,49 @@ class _PlayerScreenState extends State<PlayerScreen> {
 // / Stop casting controls bound to CastController's live position/duration.
 // ─────────────────────────────────────────────────────────────────────────────
 
+
+
+// Draws full-height aspect-ratio frames. The outer Stack is edge-to-edge in
+// fullscreen, so these guides and the stretched video also reach the notch.
+class _StretchGuidesPainter extends CustomPainter {
+  const _StretchGuidesPainter({
+    required this.ratios,
+    required this.activeRatio,
+    required this.accent,
+  });
+
+  final List<double> ratios;
+  final double? activeRatio;
+  final Color accent;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final centerX = size.width / 2;
+    for (final ratio in ratios) {
+      final isActive = activeRatio != null &&
+          (ratio - activeRatio!).abs() < 0.001;
+      final width = size.height * ratio;
+      final rect = Rect.fromCenter(
+        center: Offset(centerX, size.height / 2),
+        width: width,
+        height: size.height,
+      );
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = isActive ? 2.2 : 1.1
+        ..color = isActive
+            ? accent.withValues(alpha: 0.95)
+            : Colors.white.withValues(alpha: 0.62);
+      canvas.drawRect(rect, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StretchGuidesPainter oldDelegate) =>
+      oldDelegate.activeRatio != activeRatio ||
+      oldDelegate.ratios != ratios ||
+      oldDelegate.accent != accent;
+}
 
 class _CinematicSlider extends StatelessWidget {
   const _CinematicSlider({
