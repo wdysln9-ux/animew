@@ -445,12 +445,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final staffImage = staff?['image'] is Map ? (staff!['image'] as Map)['large']?.toString() : null;
     final characterImage = character?['image'] is Map ? (character!['image'] as Map)['large']?.toString() : null;
     final cover = media?['coverImage'] is Map ? (media!['coverImage'] as Map)['large']?.toString() : null;
+    final type = (n['type'] ?? '').toString();
     final socialNotification = _activity.contains(type) || _forum.contains(type);
     final image = socialNotification
         ? (avatar ?? staffImage ?? characterImage ?? cover)
         : (cover ?? staffImage ?? characterImage ?? avatar);
     final detail = _detail(n);
-    final type = (n['type'] ?? '').toString();
     final icon = type == 'AIRING' ? Icons.play_circle_outline_rounded
         : type == 'FOLLOWING' ? Icons.person_add_alt_1_rounded
         : _forum.contains(type) ? Icons.forum_outlined : Icons.notifications_none_rounded;
