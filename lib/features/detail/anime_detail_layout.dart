@@ -462,17 +462,17 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           if (romaji.isNotEmpty)
             Text(romaji, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppText.largeTitle.copyWith(fontFamily: 'Urbanist', fontFamilyFallback: AppText.fontFamilyFallback, fontSize: 22, height: 1.14)),
+              style: AppText.animeTitle.copyWith(fontSize: 22, height: 1.14)),
           if (romaji.isNotEmpty && english.isNotEmpty) const SizedBox(height: 2),
           if (english.isNotEmpty) ...[
             Text(english, textAlign: TextAlign.center, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppText.body.copyWith(fontFamily: 'Urbanist', fontFamilyFallback: AppText.fontFamilyFallback, fontSize: 13, height: 1.2, color: AppColors.textSecondary)),
+              style: AppText.animeTitle.copyWith(fontSize: 13, height: 1.2, color: AppColors.textSecondary)),
             const SizedBox(height: 2),
           ],
           AutoTranslatedText(text: translatedSource, textAlign: TextAlign.center, maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppText.body.copyWith(fontSize: 13, color: AppColors.textSecondary)),
+            style: AppText.animeTitle.copyWith(fontSize: 13, color: AppColors.textSecondary)),
           if (metaLine.isNotEmpty) ...[
             const SizedBox(height: 3),
             Text.rich(
