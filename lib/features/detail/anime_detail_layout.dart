@@ -121,22 +121,16 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                 top: 0,
                 left: 0,
                 right: 0,
-                // Continue the exact same backdrop below the hero so the
-                // information block can paint its matching lower segment.
-                bottom: -350,
+                bottom: 0,
                 child: _image(coverUrl, alignment: Alignment.topCenter),
               ),
-              // Darken the complete backdrop evenly first. The gradient
-              // then fades it into the page color without leaving a bright
-              // strip between the poster, title block, and the rest of page.
+              // Keep the artwork consistently dark. Only the lower edge
+              // transitions into the page background, so the fade does not
+              // wash out the top half of the hero.
               Positioned.fill(
-                child: ColoredBox(color: Color.fromRGBO(0, 0, 0, 0.25)),
+                child: ColoredBox(color: Color.fromRGBO(0, 0, 0, 0.30)),
               ),
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: -350,
+              Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
@@ -144,16 +138,11 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withValues(alpha: 0.20),
-                          Colors.black.withValues(alpha: 0.32),
-                          AppColors.bg.withValues(alpha: 0.34),
-                          AppColors.bg.withValues(alpha: 0.78),
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.10),
                           AppColors.bg,
                         ],
-                        // The image fades over the hero and continues into
-                        // the information block instead of ending at the
-                        // hero's bottom edge.
-                        stops: [0.0, 0.25, 0.62, 0.88, 1.0],
+                        stops: [0.54, 0.78, 1.0],
                       ),
                     ),
                   ),
@@ -403,9 +392,6 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     this.dateLine,
     this.broadcastLabel,
     this.rank,
-    this.backdropUrl,
-    this.backdropHeaders,
-    this.backdropHeight = 397,
   });
 
   final String title;
@@ -419,9 +405,6 @@ class AnimeDetailTitleBlock extends StatelessWidget {
   final String? dateLine;
   final String? broadcastLabel;
   final int? rank;
-  final String? backdropUrl;
-  final Map<String, String>? backdropHeaders;
-  final double backdropHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -435,51 +418,11 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Stack(
-        clipBehavior: Clip.none,
         children: [
-        // Continue the same full-size hero artwork behind the information.
-        // The negative top offset keeps its crop aligned with the hero image;
-        // this is one continuous backdrop, not a second independently-cropped
-        // poster.
-        if (backdropUrl?.isNotEmpty == true)
-          Positioned(
-            top: -backdropHeight,
-            left: 0,
-            right: 0,
-            height: backdropHeight + 350,
-            child: CachedNetworkImage(
-              imageUrl: backdropUrl!,
-              httpHeaders: backdropHeaders,
-              fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
-              memCacheWidth: 900,
-              placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
-              errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2),
-            ),
-          ),
-        Positioned(
-          top: -backdropHeight,
-          left: 0,
-          right: 0,
-          height: backdropHeight + 350,
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.20),
-                    Colors.black.withValues(alpha: 0.32),
-                    AppColors.bg.withValues(alpha: 0.34),
-                    AppColors.bg.withValues(alpha: 0.78),
-                    AppColors.bg,
-                  ],
-                  stops: [0.0, 0.25, 0.62, 0.88, 1.0],
-                ),
-              ),
-            ),
-          ),
+        // The information area uses the exact page background color. The
+        // hero artwork fades into this surface at its lower edge.
+        const Positioned.fill(
+          child: ColoredBox(color: AppColors.bg),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
