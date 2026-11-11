@@ -12,6 +12,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
     required this.animeId,
     required this.adaptiveTint,
     this.onAniListTap,
+    this.onPosterTap,
     this.maxHeight = 376,
   });
 
@@ -22,6 +23,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
   final String animeId;
   final ValueListenable<Color?> adaptiveTint;
   final VoidCallback? onAniListTap;
+  final VoidCallback? onPosterTap;
   final double maxHeight;
 
   @override
@@ -35,6 +37,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
       animeId: animeId,
       adaptiveTint: adaptiveTint,
       onAniListTap: onAniListTap,
+      onPosterTap: onPosterTap,
       maxHeight: maxHeight,
     ),
   );
@@ -50,6 +53,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     required this.adaptiveTint,
     required this.maxHeight,
     this.onAniListTap,
+    this.onPosterTap,
   });
 
   final String coverUrl;
@@ -60,6 +64,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   final ValueListenable<Color?> adaptiveTint;
   final double maxHeight;
   final VoidCallback? onAniListTap;
+  final VoidCallback? onPosterTap;
 
   Widget _image(
     String url, {
@@ -227,12 +232,15 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                 right: 0,
                 bottom: 15,
                 child: Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      width: posterWidth,
-                      height: posterHeight,
-                      child: _image(poster, width: 528, fit: BoxFit.contain),
+                  child: GestureDetector(
+                    onTap: onPosterTap,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+                      child: SizedBox(
+                        width: posterWidth,
+                        height: posterHeight,
+                        child: _image(poster, width: 528, fit: BoxFit.contain),
+                      ),
                     ),
                   ),
                 ),
@@ -257,6 +265,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
       oldDelegate.coverHeaders != coverHeaders ||
       oldDelegate.sourceLabel != sourceLabel ||
       oldDelegate.animeId != animeId ||
+      oldDelegate.onPosterTap != onPosterTap ||
       oldDelegate.maxHeight != maxHeight;
 }
 
@@ -1006,7 +1015,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
   Widget build(BuildContext context) {
     final cast = widget.cast;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 5, 0, 0),
+      padding: const EdgeInsets.fromLTRB(16, 11, 0, 0),
       child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GestureDetector(
           behavior: HitTestBehavior.opaque,
