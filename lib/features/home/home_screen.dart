@@ -170,6 +170,7 @@ class _HomeViewState extends State<_HomeView>
   void initState() {
     super.initState();
     _notificationCountFuture = sl<AniListService>().api.unreadNotificationCount();
+    sl<AniListService>().addListener(_onAniListNotificationChanged);
     _sourceCatalogueSelection = HomeCataloguePrefs.sourceSelection;
     _sourceCatalogueSelection.addListener(_onSourceCatalogueSelectionChanged);
     _sourceCatalogueModeSubscription = sl<ContentModeCubit>().stream.listen((
@@ -231,6 +232,7 @@ class _HomeViewState extends State<_HomeView>
 
   @override
   void dispose() {
+    sl<AniListService>().removeListener(_onAniListNotificationChanged);
     _sourceCatalogueModeSubscription?.cancel();
     _sourceCatalogueSelection.removeListener(
       _onSourceCatalogueSelectionChanged,
@@ -239,6 +241,11 @@ class _HomeViewState extends State<_HomeView>
     ThemeController.revision.removeListener(_onThemeRevision);
     _heroTint.dispose();
     super.dispose();
+  }
+
+  void _onAniListNotificationChanged() {
+    if (!mounted) return;
+    setState(() => _notificationCountFuture = sl<AniListService>().api.unreadNotificationCount());
   }
 
   void _onThemeRevision() {
