@@ -428,11 +428,11 @@ class _PosterCardState extends State<PosterCard> {
                                 _EpisodeTag(widget.latestEpisodeBadge!),
                               if (widget.latestEpisodeBadge != null && showViews)
                                 const SizedBox(width: 6),
-                              if (showViews) ...[
-                                const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
-                                const SizedBox(width: 3),
+                              if (widget.seriesBadge != null) ...[
+                                if (widget.latestEpisodeBadge != null)
+                                  const SizedBox(width: 7),
                                 Text(
-                                  _compactPopularity(widget.viewsBadge!),
+                                  widget.seriesBadge!,
                                   style: TextStyle(
                                     fontFamily: AppText.fontFamily,
                                     fontFamilyFallback: AppText.fontFamilyFallback,
@@ -444,11 +444,13 @@ class _PosterCardState extends State<PosterCard> {
                                   ),
                                 ),
                               ],
-                              if (widget.seriesBadge != null) ...[
-                                if (showViews || widget.latestEpisodeBadge != null)
+                              if (showViews) ...[
+                                if (widget.seriesBadge != null || widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
+                                const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
+                                const SizedBox(width: 3),
                                 Text(
-                                  widget.seriesBadge!,
+                                  _compactPopularity(widget.viewsBadge!),
                                   style: TextStyle(
                                     fontFamily: AppText.fontFamily,
                                     fontFamilyFallback: AppText.fontFamilyFallback,
