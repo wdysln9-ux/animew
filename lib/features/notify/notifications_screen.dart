@@ -41,6 +41,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _loadMoreFailed = false;
   bool _hasMore = true;
   int _page = 1;
+  int _loadGeneration = 0;
   final ScrollController _scroll = ScrollController();
 
   AniListService get _aniList => sl<AniListService>();
@@ -72,7 +73,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (_scroll.position.extentAfter < 480) _loadMore();
   }
 
+  List<String>? _typesFor(_NotificationTab tab) => switch (tab) {
+    _NotificationTab.all => null,
+    _NotificationTab.airing => const ['AIRING'],
+    _NotificationTab.activity => _activity.toList(),
+    _NotificationTab.forum => _forum.toList(),
+    _NotificationTab.following => const ['FOLLOWING'],
+    _NotificationTab.media => _media.toList(),
+    _NotificationTab.submissions => _submissions.toList(),
+  };
+
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
+    final types = _typesFor(_selected);
     if (!_aniList.isConnected) {
       if (mounted) {
         setState(() {
@@ -94,8 +107,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       _hasMore = true;
     });
     try {
-      final rows = await _aniList.api.notifications(page: 1);
-      if (!mounted) return;
+      final rows = await _aniList.api.notifications(page: 1, types: types);
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _items = rows;
         _page = 1;
@@ -103,7 +116,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _loading = false;
       });
     } catch (error) {
-      if (mounted) setState(() {
+      if (mounted && generation == _loadGeneration) setState(() {
         _loading = false;
         _failed = true;
         _errorMessage = error.toString().replaceFirst('Bad state: ', '');
@@ -118,9 +131,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       _loadMoreFailed = false;
     });
     final nextPage = _page + 1;
+    final generation = _loadGeneration;
+    final types = _typesFor(_selected);
     try {
-      final rows = await _aniList.api.notifications(page: nextPage);
-      if (!mounted) return;
+      final rows = await _aniList.api.notifications(page: nextPage, types: types);
+      if (!mounted || generation != _loadGeneration) return;
       final ids = _items.map((n) => n['id']?.toString()).whereType<String>().toSet();
       setState(() {
         _items = [
@@ -132,25 +147,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _loadingMore = false;
       });
     } catch (_) {
-      if (mounted) setState(() {
+      if (mounted && generation == _loadGeneration) setState(() {
         _loadingMore = false;
         _loadMoreFailed = true;
       });
     }
   }
 
-  bool _matches(Map<String, dynamic> n) {
-    final type = (n['type'] ?? '').toString();
-    switch (_selected) {
-      case _NotificationTab.all: return true;
-      case _NotificationTab.airing: return type == 'AIRING';
-      case _NotificationTab.activity: return _activity.contains(type);
-      case _NotificationTab.forum: return _forum.contains(type);
-      case _NotificationTab.following: return type == 'FOLLOWING';
-      case _NotificationTab.media: return _media.contains(type);
-      case _NotificationTab.submissions: return _submissions.contains(type);
-    }
-  }
 
   String _title(Map<String, dynamic> n) {
     final type = (n['type'] ?? '').toString();
@@ -207,7 +210,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final connected = _aniList.isConnected;
-    final rows = _items.where(_matches).toList();
+    final rows = _items;
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: settingsAppBar(context.l10n.notifications),
@@ -232,8 +235,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 label: Text(tab.$2),
                 selected: selected,
                 onSelected: (_) {
+                  if (_selected == tab.$1) return;
                   setState(() => _selected = tab.$1);
                   if (_scroll.hasClients) _scroll.jumpTo(0);
+                  _load();
                 },
                 showCheckmark: false,
                 labelStyle: AppText.caption.copyWith(
