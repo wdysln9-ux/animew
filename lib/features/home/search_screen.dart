@@ -877,7 +877,6 @@ class _SearchViewState extends State<_SearchView>
             SizedBox(
               height: widget.scope == SearchScope.sources ? 12 : 4,
             ),
-            if (widget.scope == SearchScope.library) _metaQuickControls(),
             // Source scope needs its scope selector and control row. Metadata
             // search has no controls in this row (its filter action is beside
             // the search field), so don't reserve an empty 40px band above
@@ -2628,44 +2627,8 @@ class _SearchViewState extends State<_SearchView>
               const SizedBox(height: 24),
           ],
           if (trending.isNotEmpty) ...[
-            if (browsing)
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      context.l10n.filteredSource(
-                        _repo.displayName(state.filteredBrowseSourceId),
-                      ),
-                      style: AppText.overline,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => context.read<SearchBloc>().add(
-                      SearchSourceFiltersApplied(
-                        state.filteredBrowseSourceId,
-                        '',
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
-                      ),
-                      child: Text(
-                        context.l10n.clear,
-                        style: TextStyle(
-                          color: AppColors.accent,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            else
-              Text(context.l10n.topPicks, style: _idleSectionTitle),
+            if (!browsing)
+            Text(context.l10n.topPicks, style: _idleSectionTitle),
             const SizedBox(height: 12),
             GridView.builder(
               shrinkWrap: true,
