@@ -68,10 +68,11 @@ Future<void> showAnimeTitleSheet(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                 children: [
                   _TitleValue(label: 'Romaji', value: romaji),
-                  if (english.isNotEmpty) ...[
-                    const SizedBox(height: 17),
-                    _TitleValue(label: 'Inggris', value: english),
-                  ],
+                  const SizedBox(height: 17),
+                  _TitleValue(
+                    label: 'Inggris',
+                    value: english.isNotEmpty ? english : 'Belum tersedia',
+                  ),
                   const SizedBox(height: 17),
                   FutureBuilder<String?>(
                     future: translated,
