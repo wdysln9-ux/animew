@@ -852,6 +852,31 @@ class _DetailViewState extends State<_DetailView> {
   /// and a dimmed Play, and the only way out was knowing that the source name
   /// above is tappable. Same picker, same effect — [SourceMatcher.chooseSource]
   /// is what the source row itself calls.
+  Future<void> _openWrongTitleForTitle(MediaDetail detail) async {
+    final canonical = ZmodeIds.parseShow(widget.item.url);
+    if (canonical == null) return;
+    final matcher = sl<SourceMatcher>();
+    final sourceId = matcher.sourceForTitle(canonical) ??
+        sl<MatchStore>().bestFor(canonical)?.sourceId;
+    if (sourceId == null || sourceId.isEmpty) {
+      showAppToast(context, 'Pilih sumber secara manual terlebih dahulu.');
+      return;
+    }
+    final picked = await showWrongTitleSheet(
+      context,
+      canonical: canonical,
+      title: detail.title,
+      sourceId: sourceId,
+      metadataAliases: [
+        if (detail.englishTitle?.isNotEmpty == true) detail.englishTitle!,
+        if (detail.romajiTitle?.isNotEmpty == true) detail.romajiTitle!,
+      ],
+      malId: detail.malId ?? widget.item.malId,
+    );
+    if (!mounted) return;
+    if (picked != null) context.read<DetailCubit>().refresh(dropCache: false);
+  }
+
   Future<void> _switchSource() async {
     final c = ZmodeIds.parseShow(widget.item.url);
     if (c == null || !sl.isRegistered<SourceMatcher>()) return;
@@ -2399,17 +2424,42 @@ class _DetailViewState extends State<_DetailView> {
                                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
                                   children: [
                                     if (!isReading)
-                                      ListTile(
-                                        leading: const Icon(Icons.auto_fix_high_rounded),
-                                        title: const Text('Auto Resolve Sumber'),
+                                      _DetailMoreMenuAction(
+                                        icon: Icons.auto_awesome_rounded,
+                                        title: 'Auto Resolve Sumber',
+                                        subtitle: 'Cari sumber yang cocok secara otomatis',
                                         onTap: () {
                                           Navigator.of(context).pop();
                                           if (eps.isNotEmpty) _sweepForEpisode(eps[resumeIdx]);
                                         },
                                       ),
-                                    ListTile(
-                                      leading: const Icon(Icons.download_rounded),
-                                      title: Text(isReading ? 'Unduh bab' : 'Unduh episode'),
+                                    if (!isReading && ZmodeIds.parseShow(item.url) != null)
+                                      _DetailMoreMenuAction(
+                                        icon: Icons.tune_rounded,
+                                        title: 'Pilih sumber manual',
+                                        subtitle: 'Tentukan provider untuk judul ini',
+                                        color: const Color(0xFF45A6E8),
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          unawaited(_switchSource());
+                                        },
+                                      ),
+                                    if (!isReading && ZmodeIds.parseShow(item.url) != null)
+                                      _DetailMoreMenuAction(
+                                        icon: Icons.edit_note_rounded,
+                                        title: 'Judul salah?',
+                                        subtitle: 'Perbaiki judul yang dipasangkan ke sumber',
+                                        color: const Color(0xFFE5A94C),
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          unawaited(_openWrongTitleForTitle(detail));
+                                        },
+                                      ),
+                                    _DetailMoreMenuAction(
+                                      icon: Icons.download_rounded,
+                                      title: isReading ? 'Unduh bab' : 'Unduh episode',
+                                      subtitle: 'Pilih episode atau bab yang ingin disimpan',
+                                      color: const Color(0xFF35B7E8),
                                       onTap: () {
                                         Navigator.of(context).pop();
                                         unawaited(_openDownloadSheet(
@@ -2421,18 +2471,22 @@ class _DetailViewState extends State<_DetailView> {
                                       },
                                     ),
                                     if (_trackingAvailable(detail))
-                                      ListTile(
-                                        leading: const Icon(Icons.sync_rounded),
-                                        title: const Text('Sinkronkan progres'),
+                                      _DetailMoreMenuAction(
+                                        icon: Icons.sync_rounded,
+                                        title: 'Sinkronkan progres',
+                                        subtitle: 'Kirim progres ke layanan pelacak',
+                                        color: const Color(0xFF42C99A),
                                         onTap: () {
                                           Navigator.of(context).pop();
                                           unawaited(_openTrackingSheet(detail));
                                         },
                                       ),
                                     if (detail.type == ProviderType.novel)
-                                      ListTile(
-                                        leading: const Icon(Icons.import_export_rounded),
-                                        title: const Text('Ekspor EPUB'),
+                                      _DetailMoreMenuAction(
+                                        icon: Icons.import_export_rounded,
+                                        title: 'Ekspor EPUB',
+                                        subtitle: 'Simpan novel sebagai file EPUB',
+                                        color: const Color(0xFF9B83F6),
                                         onTap: () {
                                           Navigator.of(context).pop();
                                           showEpubExportSheet(
