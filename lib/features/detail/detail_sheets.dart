@@ -1551,26 +1551,33 @@ class _ThumbnailProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 4,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(3),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ColoredBox(
-              color: AppColors.textTertiary.withValues(alpha: 0.32),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final value = fraction.clamp(0.0, 1.0);
+        final filledWidth = constraints.maxWidth * value;
+        return SizedBox(
+          height: 4,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ColoredBox(
+                  color: AppColors.textTertiary.withValues(alpha: 0.32),
+                ),
+                if (filledWidth > 0)
+                  PositionedDirectional(
+                    start: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: filledWidth,
+                    child: ColoredBox(color: AppColors.accent),
+                  ),
+              ],
             ),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: FractionallySizedBox(
-                widthFactor: fraction.clamp(0.0, 1.0),
-                child: ColoredBox(color: AppColors.accent),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
