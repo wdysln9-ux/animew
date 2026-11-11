@@ -654,7 +654,7 @@ class AnimeDetailActionButton extends StatelessWidget {
       builder: (context, tint, _) {
         final base = primary ? AppColors.bg : AppColors.surface2;
         final background = active
-            ? AppColors.accent
+            ? Color.lerp(AppColors.accent, tint ?? AppColors.accent, 0.35)!
             : Color.lerp(base, tint ?? base, primary ? 0.62 : 0.42)!;
         return Opacity(
       opacity: onPressed != null || loading ? 1 : 0.42,
