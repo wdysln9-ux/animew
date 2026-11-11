@@ -898,6 +898,36 @@ class _DetailCredits extends StatefulWidget {
 class _DetailCreditsState extends State<_DetailCredits> {
   late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('credits');
 
+  Widget _nakamaChip() {
+    final color = AppColors.accent;
+    return InkWell(
+      onTap: widget.onNakamaTap,
+      borderRadius: BorderRadius.circular(7),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withValues(alpha: 0.8)),
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.groups_rounded, size: 13, color: color),
+            const SizedBox(width: 5),
+            Text(
+              'Nakama Menonton',
+              style: AppText.caption.copyWith(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _chip(String label, Color color, {VoidCallback? onTap, IconData? icon}) {
     final child = Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
@@ -974,8 +1004,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
             ),
           if (widget.onNakamaTap != null && (!_expanded || !hasCredits)) ...[
             const SizedBox(height: 8),
-            _chip('Nakama Menonton', const Color(0xFF53B9A5),
-                icon: Icons.groups_rounded, onTap: widget.onNakamaTap),
+            _nakamaChip(),
           ],
           if (hasCredits && !_expanded) ...[
             const SizedBox(height: 7),
@@ -1011,8 +1040,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
           ],
           if (_expanded && onNakamaTap != null) ...[
             const SizedBox(height: 8),
-            _chip('Nakama Menonton', const Color(0xFF53B9A5),
-                icon: Icons.groups_rounded, onTap: widget.onNakamaTap),
+            _nakamaChip(),
           ],
           if (_expanded && hasCredits)
             GestureDetector(
