@@ -413,9 +413,13 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
       'characters(sort:[ROLE,RELEVANCE],perPage:50){ edges{ role '
       'node{ id name{full} image{medium} } '
       'voiceActors(language:JAPANESE,sort:[RELEVANCE]){ name{full} } } } '
+      'charactersPage2:characters(page:2,sort:[ROLE,RELEVANCE],perPage:50){ edges{ role '
+      'node{ id name{full} image{medium} } '
+      'voiceActors(language:JAPANESE,sort:[RELEVANCE]){ name{full} } } } '
       'relations{ edges{ relationType '
       'node{ id idMal type format title{romaji english native} coverImage{large} } } } '
-      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
+      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } } '
+      'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
 
   /// Manga/novel twin of [_extrasSelection].
   ///
@@ -425,11 +429,14 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
   static const String _readingExtrasSelection =
       'characters(sort:[ROLE,RELEVANCE],perPage:50){ edges{ role '
       'node{ id name{full} image{medium} } } } '
+      'charactersPage2:characters(page:2,sort:[ROLE,RELEVANCE],perPage:50){ edges{ role '
+      'node{ id name{full} image{medium} } } } '
       'staff(sort:[RELEVANCE],perPage:6){ edges{ role '
       'node{ id name{full} image{medium} } } } '
       'relations{ edges{ relationType '
       'node{ id idMal type format title{romaji english native} coverImage{large} } } } '
-      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
+      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } } '
+      'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
 
   /// Cast + relations for a MANGA or NOVEL, resolved by title.
   ///
@@ -691,10 +698,15 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
     Set<String> keepTypes = const {'ANIME'},
   }) {
     final cast = <CastMember>[];
-    final cEdges = media['characters'] is Map
-        ? media['characters']['edges']
-        : null;
-    if (cEdges is List) {
+    final cEdges = <dynamic>[
+      if (media['characters'] is Map &&
+          media['characters']['edges'] is List)
+        ...(media['characters']['edges'] as List),
+      if (media['charactersPage2'] is Map &&
+          media['charactersPage2']['edges'] is List)
+        ...(media['charactersPage2']['edges'] as List),
+    ];
+    if (cEdges.isNotEmpty) {
       for (final e in cEdges) {
         if (e is! Map) continue;
         final node = e['node'];
@@ -769,10 +781,15 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
     // fact about the title, a recommendation is someone else's opinion, and the
     // row reads wrong when the two are interleaved. Sorted by AniList's own
     // rating, so the top of the list is what its users actually voted up.
-    final recEdges = media['recommendations'] is Map
-        ? media['recommendations']['edges']
-        : null;
-    if (recEdges is List) {
+    final recEdges = <dynamic>[
+      if (media['recommendations'] is Map &&
+          media['recommendations']['edges'] is List)
+        ...(media['recommendations']['edges'] as List),
+      if (media['recommendationsPage2'] is Map &&
+          media['recommendationsPage2']['edges'] is List)
+        ...(media['recommendationsPage2']['edges'] as List),
+    ];
+    if (recEdges.isNotEmpty) {
       final seen = {for (final r in relations) r.title};
       for (final e in recEdges) {
         if (e is! Map) continue;
