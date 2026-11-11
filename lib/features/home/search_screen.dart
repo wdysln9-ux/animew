@@ -679,6 +679,7 @@ class _SearchViewState extends State<_SearchView>
     final f = _metaFilters;
     return (f.genres.isNotEmpty ? 1 : 0) +
         (f.tags.isNotEmpty ? 1 : 0) +
+        (f.minTagRank > 0 ? 1 : 0) +
         (f.years.isNotEmpty ? 1 : 0) +
         (f.seasons.isNotEmpty ? 1 : 0) +
         (f.formats.isNotEmpty ? 1 : 0) +
@@ -903,7 +904,6 @@ class _SearchViewState extends State<_SearchView>
                 color: AppColors.hairline,
               ),
             ),
-            const SizedBox(height: 6),
             Expanded(
               child: BlocBuilder<SearchBloc, SearchState>(
                 builder: (context, state) {
@@ -1344,6 +1344,8 @@ class _SearchViewState extends State<_SearchView>
         (g, f.copyWith(genres: [...f.genres]..remove(g))),
       for (final t in f.tags)
         (t, f.copyWith(tags: [...f.tags]..remove(t))),
+      if (f.minTagRank > 0)
+        ('Tags ≥ ${f.minTagRank}%', f.copyWith(minTagRank: 0)),
       if (f.years.isNotEmpty)
         ('Tahun: ${f.years.join(', ')}', f.copyWith(years: const [])),
       if (f.minYear > 1980 || f.maxYear < 2026)
