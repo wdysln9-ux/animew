@@ -57,7 +57,7 @@ class _AnimeTagsPageState extends State<AnimeTagsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: AppText.headline),
+                      Text(widget.title, style: AppText.headline),
                       const SizedBox(height: 5),
                       Text(
                         '${widget.tags.length} tag dari AniList',
