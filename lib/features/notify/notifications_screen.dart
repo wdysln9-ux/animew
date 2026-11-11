@@ -24,6 +24,14 @@ const _activity = <String>{'ACTIVITY_MESSAGE','ACTIVITY_MENTION','ACTIVITY_REPLY
 const _forum = <String>{'THREAD_COMMENT_MENTION','THREAD_COMMENT_REPLY','THREAD_SUBSCRIBED','THREAD_COMMENT_LIKE','THREAD_LIKE'};
 const _media = <String>{'RELATED_MEDIA_ADDITION','MEDIA_DATA_CHANGE','MEDIA_MERGE','MEDIA_DELETION'};
 const _submissions = <String>{'MEDIA_SUBMISSION_UPDATE','STAFF_SUBMISSION_UPDATE','CHARACTER_SUBMISSION_UPDATE'};
+const _allNotificationTypes = <String>{
+  'AIRING',
+  'FOLLOWING',
+  ..._activity,
+  ..._forum,
+  ..._media,
+  ..._submissions,
+};
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -74,7 +82,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   List<String>? _typesFor(_NotificationTab tab) => switch (tab) {
-    _NotificationTab.all => null,
+    _NotificationTab.all => _allNotificationTypes.toList(),
     _NotificationTab.airing => const ['AIRING'],
     _NotificationTab.activity => _activity.toList(),
     _NotificationTab.forum => _forum.toList(),
@@ -486,7 +494,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
               ),
             Expanded(child: Text(detail, maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: AppText.caption.copyWith(fontSize: 11.5))),
+              style: AppText.caption.copyWith(fontSize: 11.5, color: AppColors.textSecondary))),
           ]),
         const SizedBox(height: 3),
         Text(_time(n), style: AppText.caption.copyWith(fontSize: 11, color: AppColors.textSecondary)),
