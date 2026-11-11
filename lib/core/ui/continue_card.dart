@@ -17,6 +17,7 @@ class ContinueCard extends StatefulWidget {
     super.key,
     required this.title,
     this.imageUrl,
+    this.placeholderImageUrl,
     this.headers,
     required this.progress,
     this.subtitle,
@@ -28,6 +29,8 @@ class ContinueCard extends StatefulWidget {
 
   final String title;
   final String? imageUrl;
+  /// Poster art shown behind the episode thumbnail while it is loading.
+  final String? placeholderImageUrl;
   final Map<String, String>? headers;
 
   /// Playback progress in [0, 1].
@@ -62,6 +65,26 @@ class _ContinueCardState extends State<ContinueCard> {
   void _handleTapUp(TapUpDetails _) => setState(() => _pressed = false);
   void _handleTapCancel() => setState(() => _pressed = false);
 
+  Widget _placeholderBackdrop(int memW) {
+    final poster = widget.placeholderImageUrl;
+    if (poster == null || poster.isEmpty) {
+      return ColoredBox(color: AppColors.surface2);
+    }
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        CachedNetworkImage(
+          imageUrl: poster,
+          httpHeaders: widget.headers,
+          memCacheWidth: memW,
+          fit: BoxFit.cover,
+          errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2),
+        ),
+        ColoredBox(color: AppColors.surface2.withValues(alpha: 0.32)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dpr = MediaQuery.of(context).devicePixelRatio;
@@ -86,7 +109,7 @@ class _ContinueCardState extends State<ContinueCard> {
               children: [
                 // ── Landscape art (fills the 16:9 cell) ─────────────────────
                 if (widget.imageUrl == null || widget.imageUrl!.isEmpty)
-                  ColoredBox(color: AppColors.surface2)
+                  _placeholderBackdrop(memW)
                 else if (widget.headers?['x-ani-src'] != null ||
                     widget.headers?['x-mihon-src'] != null)
                   // Cloudflare-walled Aniyomi/Mihon image — load via the source's
@@ -116,10 +139,8 @@ class _ContinueCardState extends State<ContinueCard> {
                     memCacheWidth: memW,
                     fit: BoxFit.cover,
                     fadeInDuration: const Duration(milliseconds: 180),
-                    placeholder: (context, url) =>
-                        ColoredBox(color: AppColors.surface2),
-                    errorWidget: (context, url, err) =>
-                        ColoredBox(color: AppColors.surface2),
+                    placeholder: (context, url) => _placeholderBackdrop(memW),
+                    errorWidget: (context, url, err) => _placeholderBackdrop(memW),
                   ),
 
                 if (widget.subtitle != null)
