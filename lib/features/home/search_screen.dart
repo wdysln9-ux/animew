@@ -989,7 +989,7 @@ class _SearchViewState extends State<_SearchView>
                   child: Row(children: [
                     Expanded(child: Text(entry.value)),
                     if (_metaFilters.sort == entry.key)
-                      const Icon(Icons.check_rounded, size: 17, color: AppColors.accent),
+                      Icon(Icons.check_rounded, size: 17, color: AppColors.accent),
                   ]),
                 ),
             ],
@@ -1001,7 +1001,7 @@ class _SearchViewState extends State<_SearchView>
                 border: Border.all(color: AppColors.hairline),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.sort_rounded, size: 15, color: AppColors.accent),
+                Icon(Icons.sort_rounded, size: 15, color: AppColors.accent),
                 const SizedBox(width: 5),
                 Text(currentLabel, style: AppText.caption.copyWith(
                   color: AppColors.textPrimary,
