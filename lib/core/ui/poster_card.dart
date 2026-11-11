@@ -684,7 +684,10 @@ class _PosterCardTitleState extends State<PosterCardTitle> {
   }
 
   double _measuredTitleHeight(BuildContext context) {
-    final style = (widget.textStyle ?? AppText.caption.copyWith(
+    final style = (widget.textStyle ?? AppText.animeTitle.copyWith(
+          fontSize: AppText.caption.fontSize,
+          height: AppText.caption.height,
+          letterSpacing: AppText.caption.letterSpacing,
           fontFamily: 'Urbanist',
           color: AppColors.textPrimary,
           fontWeight: widget.inside ? FontWeight.w700 : null,
@@ -724,7 +727,10 @@ class _PosterCardTitleState extends State<PosterCardTitle> {
     widget.title,
     maxLines: widget.maxLines,
     overflow: TextOverflow.ellipsis,
-    style: (widget.textStyle ?? AppText.caption.copyWith(
+    style: (widget.textStyle ?? AppText.animeTitle.copyWith(
+      fontSize: AppText.caption.fontSize,
+      height: AppText.caption.height,
+      letterSpacing: AppText.caption.letterSpacing,
       color: AppColors.textPrimary,
       fontWeight: widget.inside ? FontWeight.w700 : null,
     )).copyWith(
