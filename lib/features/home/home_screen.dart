@@ -400,16 +400,14 @@ class _HomeViewState extends State<_HomeView>
     return sections.first.items;
   }
 
-  /// Best-effort, non-blocking check for CloudStream source updates on launch.
-  /// READ-ONLY (re-fetches catalogs, downloads nothing); posts a notification
-  /// when updates exist and the user left that toggle on. Deferred a few seconds
-  /// so it never competes with first content load, and fully guarded so it can
-  /// NEVER affect startup or playback.
+  /// Best-effort, non-blocking source update check on launch. Deferred a few
+  /// seconds so it never competes with first content load, and fully guarded
+  /// so it can NEVER affect startup or playback. No local notifications are sent.
   Future<void> _checkSourceUpdates() async {
     final prefs = sl<PlaybackPrefs>();
     final autoUpdate = prefs.autoUpdateExtensions;
-    // The read-only notify path below is Android-only; keep that gate unless
-    // we're auto-updating (JS providers auto-update on any platform).
+    // Passive source update checks remain Android-only; JS providers can
+    // auto-update on any platform.
     if (!autoUpdate && !Platform.isAndroid) return;
     await Future<void>.delayed(const Duration(seconds: 4));
     if (!mounted) return;
@@ -421,11 +419,7 @@ class _HomeViewState extends State<_HomeView>
       const dayMs = 24 * 60 * 60 * 1000;
       if (now - prefs.lastExtensionUpdateMs < dayMs) return;
       await prefs.setLastExtensionUpdateMs(now);
-      final updated = await ExtensionAutoUpdater.run();
-      if (!mounted) return;
-      if (updated > 0) {
-
-      }
+      await ExtensionAutoUpdater.run();
       return;
     }
 
