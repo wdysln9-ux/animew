@@ -1,6 +1,70 @@
 // Source picker and download sheets.
 part of 'detail_screen.dart';
 
+// Consistent, compact actions for the Detail screen's overflow sheet.
+class _DetailMoreMenuAction extends StatelessWidget {
+  const _DetailMoreMenuAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.color = AppColors.accent,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Material(
+      color: AppColors.surface2,
+      borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(15),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(title, style: AppText.body.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  )),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: AppText.caption.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  )),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, size: 19, color: AppColors.textTertiary),
+          ]),
+        ),
+      ),
+    ),
+  );
+}
+
 
 /// A readable name for a source row. Providers like 4khdhub set a rich [label];
 /// AllAnime sets neither label nor quality, so fall back to the host (or a
