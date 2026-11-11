@@ -265,6 +265,14 @@ class MetadataEnrichment {
       if (d.type == ProviderType.anime) {
         final id = d.malId ?? await resolveMalId(d);
         if (id == null) return (cast: <CastMember>[], relations: <MediaRelation>[]);
+        // Prefer AniList's own character ids so every character card can open
+        // its AniList profile. Jikan remains a fallback for titles AniList
+        // cannot resolve.
+        final extras = await _anilist.mediaExtras(id);
+        if (extras.cast.isNotEmpty || extras.relations.isNotEmpty) {
+          onAnimeExtras?.call(extras.cast, extras.relations);
+          return extras;
+        }
         return await _jikanAnimeExtras(id, onUpdate: onAnimeExtras);
       }
       if (d.type == ProviderType.manga || d.type == ProviderType.novel) {
