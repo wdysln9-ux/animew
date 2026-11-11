@@ -417,9 +417,9 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
       'node{ id name{full} image{medium} } '
       'voiceActors(language:JAPANESE,sort:[RELEVANCE]){ name{full} } } } '
       'relations{ edges{ relationType '
-      'node{ id idMal type format title{romaji english native} coverImage{large} } } } '
-      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } } '
-      'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
+      'node{ id idMal type format title{romaji english native} coverImage{large color} } } } '
+      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} } } } } '
+      'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} } } } }';
 
   /// Manga/novel twin of [_extrasSelection].
   ///
@@ -434,9 +434,9 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
       'staff(sort:[RELEVANCE],perPage:6){ edges{ role '
       'node{ id name{full} image{medium} } } } '
       'relations{ edges{ relationType '
-      'node{ id idMal type format title{romaji english native} coverImage{large} } } } '
-      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } } '
-      'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
+      'node{ id idMal type format title{romaji english native} coverImage{large color} } } } '
+      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} } } } } '
+      'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} } } } }';
 
   /// Cast + relations for a MANGA or NOVEL, resolved by title.
   ///
@@ -535,7 +535,7 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
     final d = await _gql(
       'query(\$id:Int){ Media(id:\$id,type:ANIME){ relations{ edges{ '
       'relationType node{ id idMal format episodes popularity averageScore status '
-      'title{romaji english native} coverImage{large} } } } } }',
+      'title{romaji english native} coverImage{large color} } } } } }',
       {'id': anilistId},
     );
     final edges = (d?['Media'] is Map) ? d!['Media']['relations'] : null;
@@ -765,6 +765,7 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
             title: title,
             romaji: romaji,
             cover: cover,
+            coverColor: (node['coverImage'] is Map) ? node['coverImage']['color'] as String? : null,
             relation: _relationLabel(
               e['relationType'] as String?,
               node['format'] as String?,
@@ -806,6 +807,9 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
             romaji: (t is Map) ? t['romaji'] as String? : null,
             cover: (rec['coverImage'] is Map)
                 ? rec['coverImage']['large'] as String?
+                : null,
+            coverColor: (rec['coverImage'] is Map)
+                ? rec['coverImage']['color'] as String?
                 : null,
             relation: 'Recommended',
             recommendationRating: (node['rating'] as num?)?.toInt(),
