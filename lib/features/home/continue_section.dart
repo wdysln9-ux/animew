@@ -143,6 +143,7 @@ class ContinueWatchingRow extends StatelessWidget {
             // Use only the thumbnail for the episode currently being
             // watched. Do not substitute the anime's portrait poster.
             imageUrl: e.thumbnail,
+            placeholderImageUrl: e.cover,
             headers: e.coverHeaders,
             progress: e.progress,
             cellWidth: 173,
