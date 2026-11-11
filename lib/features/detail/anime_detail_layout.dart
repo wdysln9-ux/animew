@@ -1119,7 +1119,6 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                 splashFactory: NoSplash.splashFactory,
                 splashBorderRadius: BorderRadius.zero,
                 overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-                focusColor: Colors.transparent,
                 indicator: UnderlineTabIndicator(
                   borderSide: BorderSide(color: AppColors.accent, width: 2),
                   borderRadius: BorderRadius.circular(2),
