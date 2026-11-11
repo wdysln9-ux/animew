@@ -129,8 +129,11 @@ class _ContinueCardState extends State<ContinueCard> {
                     ),
                     fit: BoxFit.cover,
                     frameBuilder: imageFadeIn,
+                    loadingBuilder: (context, child, progress) => progress == null
+                        ? child
+                        : _placeholderBackdrop(memW),
                     errorBuilder: (context, err, st) =>
-                        ColoredBox(color: AppColors.surface2),
+                        _placeholderBackdrop(memW),
                   )
                 else
                   CachedNetworkImage(
