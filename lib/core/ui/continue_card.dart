@@ -151,7 +151,7 @@ class _ContinueCardState extends State<ContinueCard> {
                         widget.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppText.animeTitle.copyWith(
+                        style: AppText.body.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 12,
@@ -266,7 +266,7 @@ class _ContinueReadingCardState extends State<ContinueReadingCard> {
                         widget.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: AppText.animeTitle.copyWith(
+                        style: AppText.body.copyWith(
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                           height: 1.12,
