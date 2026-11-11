@@ -44,6 +44,9 @@ abstract class AppText {
     letterSpacing: -0.5,
     color: AppColors.textPrimary,
   );
+  /// Fixed display style for anime names, independent of the user's UI font.
+  static TextStyle get animeTitle => title.copyWith(fontFamily: 'Urbanist');
+
   static TextStyle get title => TextStyle(
     fontFamily: _f,
     fontFamilyFallback: _fb,
