@@ -2085,7 +2085,10 @@ class _DetailViewState extends State<_DetailView> {
       unawaited(
         extractDominantColor(coverUrl, coverHeaders).then((c) {
           if (!mounted || _tintUrl != coverUrl) return;
-          _tint.value = c == null ? null : tintFromDominant(c);
+          // Keep the last valid adaptive tint if a later image decode fails.
+          // Clearing it here made the detail background fade back to the theme
+          // default after a transient cover/network decode failure.
+          if (c != null) _tint.value = tintFromDominant(c);
         }),
       );
     }
