@@ -447,9 +447,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final cover = media?['coverImage'] is Map ? (media!['coverImage'] as Map)['large']?.toString() : null;
     final type = (n['type'] ?? '').toString();
     final socialNotification = _activity.contains(type) || _forum.contains(type);
-    final image = socialNotification
-        ? (avatar ?? staffImage ?? characterImage ?? cover)
-        : (cover ?? staffImage ?? characterImage ?? avatar);
+    final mediaPoster = !socialNotification && cover?.isNotEmpty == true;
+    final image = mediaPoster
+        ? cover
+        : (avatar ?? staffImage ?? characterImage ?? cover);
     final detail = _detail(n);
     final icon = type == 'AIRING' ? Icons.play_circle_outline_rounded
         : type == 'FOLLOWING' ? Icons.person_add_alt_1_rounded
@@ -458,10 +459,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       onTap: () => _openNotification(n),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       leading: ClipRRect(
-        borderRadius: BorderRadius.circular(socialNotification ? 22 : 8),
+        borderRadius: BorderRadius.circular(mediaPoster ? 8 : 22),
         child: SizedBox(
           width: 44,
-          height: socialNotification ? 44 : 58,
+          height: mediaPoster ? 58 : 44,
           child: image != null && image.isNotEmpty
               ? CachedNetworkImage(imageUrl: image, fit: BoxFit.cover,
                   errorWidget: (_, _, _) => _fallback(icon))
