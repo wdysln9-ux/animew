@@ -721,14 +721,18 @@ class _PosterCardTitleState extends State<PosterCardTitle> {
     widget.title,
     maxLines: widget.maxLines,
     overflow: TextOverflow.ellipsis,
-    style: AppText.animeTitle.copyWith(
+    style: (widget.textStyle ?? AppText.caption.copyWith(
+      color: AppColors.textPrimary,
+      fontWeight: widget.inside ? FontWeight.w700 : null,
+    )).copyWith(
+      fontFamily: 'Urbanist',
+      fontFamilyFallback: AppText.fontFamilyFallback,
       color: widget.textStyle?.color ?? AppColors.textPrimary,
-      fontSize: widget.textStyle?.fontSize ?? AppText.animeTitle.fontSize,
       fontWeight: widget.textStyle?.fontWeight ??
           (widget.inside ? FontWeight.w700 : null),
-      height: widget.textStyle?.height ?? AppText.animeTitle.height,
+      height: widget.textStyle?.height ?? AppText.caption.height,
       letterSpacing: widget.textStyle?.letterSpacing ??
-          AppText.animeTitle.letterSpacing,
+          AppText.caption.letterSpacing,
       shadows: widget.textStyle?.shadows,
     ),
   );
