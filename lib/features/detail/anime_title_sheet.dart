@@ -103,7 +103,7 @@ Future<void> showAnimeTitleSheet(
                           color: AppColors.surface2,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
+                        child: Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontFamily: 'Urbanist', fontFamilyFallback: AppText.fontFamilyFallback)),
                       )).toList(),
                     ),
                   ],
@@ -137,7 +137,7 @@ class _TitleValue extends StatelessWidget {
       const SizedBox(height: 5),
       SelectableText(
         value,
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.35),
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontFamily: 'Urbanist', fontFamilyFallback: AppText.fontFamilyFallback, height: 1.35),
       ),
     ],
   );
