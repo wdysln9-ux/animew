@@ -2338,63 +2338,112 @@ class _DetailViewState extends State<_DetailView> {
                     border: Border.all(color: AppColors.textTertiary.withValues(alpha: 0.48)),
                     borderRadius: BorderRadius.circular(28),
                   ),
-                  child: PopupMenuButton<String>(
+                  child: IconButton(
                     tooltip: 'Lainnya',
+                    onPressed: () => showModalBottomSheet<void>(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      isScrollControlled: true,
+                      useSafeArea: true,
+                      builder: (sheetContext) => DraggableScrollableSheet(
+                        initialChildSize: 0.42,
+                        minChildSize: 0.30,
+                        maxChildSize: 0.72,
+                        expand: false,
+                        builder: (context, scrollController) => Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                          ),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 12),
+                              Container(
+                                width: 42,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: AppColors.textTertiary.withValues(alpha: 0.45),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(20, 16, 18, 12),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Lainnya',
+                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Tutup',
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      icon: const Icon(Icons.close_rounded),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: ListView(
+                                  controller: scrollController,
+                                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                                  children: [
+                                    if (!isReading)
+                                      ListTile(
+                                        leading: const Icon(Icons.auto_fix_high_rounded),
+                                        title: const Text('Auto Resolve Sumber'),
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          if (eps.isNotEmpty) _sweepForEpisode(eps[resumeIdx]);
+                                        },
+                                      ),
+                                    ListTile(
+                                      leading: const Icon(Icons.download_rounded),
+                                      title: Text(isReading ? 'Unduh bab' : 'Unduh episode'),
+                                      onTap: () {
+                                        Navigator.of(context).pop();
+                                        unawaited(_openDownloadSheet(
+                                          detail: detail,
+                                          category: category,
+                                          episodesBySeason: episodesBySeason,
+                                          initialSeason: currentSeason,
+                                        ));
+                                      },
+                                    ),
+                                    if (_trackingAvailable(detail))
+                                      ListTile(
+                                        leading: const Icon(Icons.sync_rounded),
+                                        title: const Text('Sinkronkan progres'),
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          unawaited(_openTrackingSheet(detail));
+                                        },
+                                      ),
+                                    if (detail.type == ProviderType.novel)
+                                      ListTile(
+                                        leading: const Icon(Icons.import_export_rounded),
+                                        title: const Text('Ekspor EPUB'),
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          showEpubExportSheet(
+                                            context,
+                                            sourceId: detail.sourceId.isNotEmpty ? detail.sourceId : item.sourceId,
+                                            showTitle: detail.title,
+                                            chapters: eps,
+                                          );
+                                        },
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                     icon: const Icon(Icons.more_horiz_rounded, color: AppColors.textPrimary, size: 21),
-                    onSelected: (value) {
-                      switch (value) {
-                        case 'save':
-                          unawaited(_openListSheet(detail));
-                          break;
-                        case 'resolve':
-                          if (eps.isNotEmpty) _sweepForEpisode(eps[resumeIdx]);
-                          break;
-                        case 'download':
-                          unawaited(_openDownloadSheet(
-                            detail: detail,
-                            category: category,
-                            episodesBySeason: episodesBySeason,
-                            initialSeason: currentSeason,
-                          ));
-                          break;
-                        case 'tracking':
-                          unawaited(_openTrackingSheet(detail));
-                          break;
-                        case 'share':
-                          _share(detail, sourceName);
-                          break;
-                        case 'web':
-                          unawaited(_openSourceSite());
-                          break;
-                        case 'epub':
-                          showEpubExportSheet(
-                            context,
-                            sourceId: detail.sourceId.isNotEmpty ? detail.sourceId : item.sourceId,
-                            showTitle: detail.title,
-                            chapters: eps,
-                          );
-                          break;
-                      }
-                    },
-                    itemBuilder: (_) => [
-                      if (!isReading)
-                        const PopupMenuItem(value: 'resolve', child: Text('Auto Resolve Sumber')),
-                      PopupMenuItem(
-                        value: 'save',
-                        child: Text(_inMyList ? 'Ubah status daftar' : 'Simpan anime'),
-                      ),
-                      PopupMenuItem(
-                        value: 'download',
-                        child: Text(isReading ? 'Unduh bab' : 'Unduh episode'),
-                      ),
-                      if (_trackingAvailable(detail))
-                        const PopupMenuItem(value: 'tracking', child: Text('Sinkronkan progres')),
-                      const PopupMenuItem(value: 'share', child: Text('Bagikan')),
-                      const PopupMenuItem(value: 'web', child: Text('Buka halaman sumber')),
-                      if (detail.type == ProviderType.novel)
-                        const PopupMenuItem(value: 'epub', child: Text('Ekspor EPUB')),
-                    ],
-                  ),
+                  )
                 ),
               ],
             ),
