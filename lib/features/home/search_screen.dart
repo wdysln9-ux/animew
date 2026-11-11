@@ -901,7 +901,7 @@ class _SearchViewState extends State<_SearchView>
               child: Divider(
                 height: 1,
                 thickness: 1,
-                color: AppColors.hairline,
+                color: Colors.transparent,
               ),
             ),
             Expanded(
@@ -1375,16 +1375,15 @@ class _SearchViewState extends State<_SearchView>
           f.copyWith(minEpisodes: 0, maxEpisodes: 200)),
       if (f.minScore != null) ('Skor ${f.minScore}+', f.copyWith(clearScore: true)),
       if (f.adult) ('NSFW', f.copyWith(adult: false)),
-      if (f.sort != MetaSort.popularity)
-        (switch (f.sort) {
+      if (f.sort != MetaSort.popularity || f.sortAscending)
+        ('${switch (f.sort) {
           MetaSort.popularity => 'Popularitas',
           MetaSort.score => 'Rating',
           MetaSort.trending => 'Trending',
           MetaSort.newest => 'Terbaru',
           MetaSort.title => 'Judul',
-        }, f.copyWith(sort: MetaSort.popularity, sortAscending: false)),
-      if (f.sortAscending)
-        ('Urutan naik', f.copyWith(sortAscending: false)),
+        }}${f.sortAscending ? ' ↑' : ''}',
+          f.copyWith(sort: MetaSort.popularity, sortAscending: false)),
     ];
     if (chips.isEmpty) return const SizedBox.shrink();
     return SizedBox(
@@ -1404,28 +1403,7 @@ class _SearchViewState extends State<_SearchView>
                 },
               ),
             ),
-          if (chips.length > 1)
-            Center(
-              child: GestureDetector(
-                onTap: () {
-                  setState(
-                    () => _metaFilters = MetaFilters(
-                      sort: _metaFilters.sort == MetaSort.trending
-                          ? MetaSort.trending
-                          : MetaSort.popularity,
-                    ),
-                  );
-                  _applyMetaFilters(browseDefaults: true);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    context.l10n.clearAll,
-                    style: AppText.caption.copyWith(color: AppColors.accent),
-                  ),
-                ),
-              ),
-            ),
+
         ],
       ),
     );
