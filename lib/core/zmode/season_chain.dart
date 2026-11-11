@@ -213,7 +213,8 @@ class SeasonChain {
     var id = startId;
     while (out.length < maxSeasons) {
       final List<({String relation, int id, int? idMal, String? format,
-          String title, String? cover, int? episodes, int? popularity})> neighbours;
+          String title, String? cover, int? episodes, int? popularity,
+          int? score, String? status})> neighbours;
       try {
         neighbours = await _api.seasonNeighbours(id);
       } catch (e) {
