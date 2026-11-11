@@ -877,6 +877,7 @@ class _SearchViewState extends State<_SearchView>
             SizedBox(
               height: widget.scope == SearchScope.sources ? 12 : 4,
             ),
+            if (widget.scope == SearchScope.library) _metaQuickControls(),
             // Source scope needs its scope selector and control row. Metadata
             // search has no controls in this row (its filter action is beside
             // the search field), so don't reserve an empty 40px band above
@@ -888,7 +889,6 @@ class _SearchViewState extends State<_SearchView>
                 (!sl.isRegistered<ViewerProfileStore>() ||
                     sl<ViewerProfileStore>().adultMetadataAllowed))
               _controlRow(modeSources),
-            if (widget.scope == SearchScope.library) _metaQuickControls(),
             // Per-source result pills — direct jump to one source's results.
             // Only meaningful once the scope is Sources.
             if (widget.scope == SearchScope.sources) _sourcePillsRow(),
