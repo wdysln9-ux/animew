@@ -18,6 +18,7 @@ class MetaFilters {
     this.statuses = const [],
     this.minEpisodes = 0,
     this.maxEpisodes = 200,
+    this.minTagRank = 0,
     this.minYear = 1980,
     this.maxYear = 2026,
     this.year,
@@ -46,6 +47,8 @@ class MetaFilters {
   final List<MetaStatus> statuses;
   final int minEpisodes;
   final int maxEpisodes;
+  /// Minimum AniList tag rank (0–100 percent).
+  final int minTagRank;
   final int minYear;
   final int maxYear;
   final int? year;
@@ -75,6 +78,7 @@ class MetaFilters {
       statuses.isEmpty &&
       minEpisodes == 0 &&
       maxEpisodes == 200 &&
+      minTagRank == 0 &&
       minYear == 1980 && maxYear == 2026 &&
       year == null &&
       season == null &&
@@ -103,6 +107,7 @@ class MetaFilters {
       statuses.isNotEmpty ||
       minEpisodes > 0 ||
       maxEpisodes < 200 ||
+      minTagRank > 0 ||
       minYear > 1980 || maxYear < 2026 ||
       year != null ||
       season != null ||
@@ -120,6 +125,7 @@ class MetaFilters {
     List<MetaStatus>? statuses,
     int? minEpisodes,
     int? maxEpisodes,
+    int? minTagRank,
     int? minYear,
     int? maxYear,
     int? year,
@@ -144,6 +150,7 @@ class MetaFilters {
     statuses: statuses ?? this.statuses,
     minEpisodes: minEpisodes ?? this.minEpisodes,
     maxEpisodes: maxEpisodes ?? this.maxEpisodes,
+    minTagRank: minTagRank ?? this.minTagRank,
     minYear: minYear ?? this.minYear,
     maxYear: maxYear ?? this.maxYear,
     year: clearYear ? null : (year ?? this.year),
@@ -168,6 +175,7 @@ class MetaFilters {
     if (statuses.isNotEmpty) 'sts': statuses.map((v) => v.name).toList(),
     if (minEpisodes > 0) 'emin': minEpisodes,
     if (maxEpisodes < 200) 'emax': maxEpisodes,
+    if (minTagRank > 0) 'mtr': minTagRank,
     if (minYear > 1980) 'ymin': minYear,
     if (maxYear < 2026) 'ymax': maxYear,
     if (year != null) 'y': year,
@@ -195,6 +203,7 @@ class MetaFilters {
         statuses: [for (final v in (m['sts'] as List? ?? [])) ...MetaStatus.values.where((e) => e.name == v)],
         minEpisodes: m['emin'] as int? ?? 0,
         maxEpisodes: m['emax'] as int? ?? 200,
+        minTagRank: (m['mtr'] as int? ?? 0).clamp(0, 100).toInt(),
         minYear: m['ymin'] as int? ?? 1980,
         maxYear: m['ymax'] as int? ?? 2026,
         year: m['y'] as int?,
