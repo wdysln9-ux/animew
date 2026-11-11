@@ -388,15 +388,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final character = n['character'] is Map ? n['character'] as Map : null;
 
     String? target;
-    if (type == 'AIRING' || _media.contains(type) ||
+    if (type == 'MEDIA_DELETION') {
+      final id = n['mediaId'];
+      if (id != null) target = 'https://anilist.co/anime/$id';
+    } else if (type == 'AIRING' || _media.contains(type) ||
         type == 'MEDIA_SUBMISSION_UPDATE') {
       target = media?['siteUrl']?.toString();
       if ((target == null || target.isEmpty) && media?['id'] != null) {
         target = 'https://anilist.co/anime/${media!['id']}';
       }
-    } else if (type == 'MEDIA_DELETION') {
-      final id = n['mediaId'];
-      if (id != null) target = 'https://anilist.co/anime/$id';
     } else if (type == 'FOLLOWING') {
       target = user?['siteUrl']?.toString();
       if ((target == null || target.isEmpty) && user?['name'] != null) {
