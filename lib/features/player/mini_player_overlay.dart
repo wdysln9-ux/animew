@@ -66,31 +66,11 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
         if (session == null) {
           _expanded = false;
           _positionReady = false;
+          // Keep the overlay out of the hit-test tree when inactive.
+          return const SizedBox.shrink();
         }
 
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 320),
-          reverseDuration: const Duration(milliseconds: 280),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) {
-            final curved = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-              reverseCurve: Curves.easeInCubic,
-            );
-            return FadeTransition(
-              opacity: animation,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.92, end: 1).animate(curved),
-                child: child,
-              ),
-            );
-          },
-          child: session == null
-              ? const SizedBox.expand(key: ValueKey<String>('mini-player-empty'))
-              : LayoutBuilder(
-          key: const ValueKey<String>('mini-player-active'),
+        return LayoutBuilder(
           builder: (context, constraints) {
             final screenWidth = constraints.maxWidth;
             final screenHeight = constraints.maxHeight;
@@ -120,8 +100,11 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                 .toDouble();
             final compactMaxLeft = math.max(8.0, screenWidth - compactWidth - 8);
 
+            // Only the mini-player card is a hit-test target. The full-screen
+            // overlay itself must remain transparent to gestures so the page
+            // underneath can continue scrolling and swiping.
             return Stack(
-              fit: StackFit.expand,
+              clipBehavior: Clip.none,
               children: [
                 ValueListenableBuilder<Offset>(
                   valueListenable: _position,
@@ -145,9 +128,6 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                       behavior: HitTestBehavior.opaque,
                       onPanStart: (_) => setState(() => _dragging = true),
                       onPanUpdate: (details) {
-                        // Only the tiny positioning layer listens to this
-                        // notifier. The video texture and its controls remain
-                        // mounted and are NOT rebuilt on every finger sample.
                         final current = _position.value;
                         _position.value = Offset(
                           _expanded
@@ -170,8 +150,6 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                           setState(() => _dragging = false);
                           return;
                         }
-                        // Snap horizontally to the nearest side, at any
-                        // vertical position. Only the card position animates.
                         final snapLeft = current.dx + width / 2 < screenWidth / 2
                             ? minLeft
                             : maxLeft;
@@ -213,8 +191,7 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                             left: 3,
                             child: StreamBuilder<bool>(
                               stream: session.controller.player.stream.playing,
-                              initialData:
-                                  session.controller.player.state.playing,
+                              initialData: session.controller.player.state.playing,
                               builder: (context, snapshot) {
                                 final playing = snapshot.data ?? false;
                                 return _MiniControlButton(
@@ -276,7 +253,6 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
               ],
             );
           },
-        ),
         );
       },
     );
