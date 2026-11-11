@@ -10,6 +10,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
     required this.coverHeaders,
     required this.sourceLabel,
     required this.animeId,
+    required this.adaptiveTint,
     this.onAniListTap,
     this.maxHeight = 376,
   });
@@ -19,6 +20,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
   final Map<String, String>? coverHeaders;
   final String sourceLabel;
   final String animeId;
+  final ValueListenable<Color?> adaptiveTint;
   final VoidCallback? onAniListTap;
   final double maxHeight;
 
@@ -31,6 +33,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
       coverHeaders: coverHeaders,
       sourceLabel: sourceLabel,
       animeId: animeId,
+      adaptiveTint: adaptiveTint,
       onAniListTap: onAniListTap,
       maxHeight: maxHeight,
     ),
@@ -44,6 +47,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     required this.coverHeaders,
     required this.sourceLabel,
     required this.animeId,
+    required this.adaptiveTint,
     required this.maxHeight,
     this.onAniListTap,
   });
@@ -53,6 +57,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   final Map<String, String>? coverHeaders;
   final String sourceLabel;
   final String animeId;
+  final ValueListenable<Color?> adaptiveTint;
   final double maxHeight;
   final VoidCallback? onAniListTap;
 
@@ -132,17 +137,20 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               ),
               Positioned.fill(
                 child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.16),
-                          Colors.black.withValues(alpha: 0.34),
-                          AppColors.bg,
-                        ],
-                        stops: [0.0, 0.58, 1.0],
+                  child: ValueListenableBuilder<Color?>(
+                    valueListenable: adaptiveTint,
+                    builder: (context, tint, _) => DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.16),
+                            Colors.black.withValues(alpha: 0.34),
+                            tint ?? AppColors.bg,
+                          ],
+                          stops: const [0.0, 0.58, 1.0],
+                        ),
                       ),
                     ),
                   ),
