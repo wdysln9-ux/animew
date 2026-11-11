@@ -29,6 +29,8 @@ import '../../core/ui/app_dialog.dart';
 import '../../core/ui/app_toast.dart';
 import 'open_related.dart';
 import '../trailer/trailer_screen.dart';
+import 'anime_artwork_viewer.dart';
+import 'anime_title_sheet.dart';
 import '../../core/ui/episode_unavailable_dialog.dart';
 import '../../core/zmode/playback_resolver.dart';
 import 'episode_sources_sheet.dart';
@@ -2232,17 +2234,21 @@ class _DetailViewState extends State<_DetailView> {
             Uri.parse('https://anilist.co/anime/${detail.anilistId}'),
             mode: LaunchMode.externalApplication,
           ),
+          onPosterTap: () => showAnimeArtworkViewer(
+            context,
+            posterUrl: heroPosterUrl,
+            bannerUrl: detail.banner ?? item.banner,
+            title: detail.title,
+            headers: coverHeaders,
+          ),
           maxHeight: _expandedHeight,
         ),
 
         // ── New independent title and metadata block.
         SliverToBoxAdapter(
           child: GestureDetector(
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => SearchScreen(initialQuery: detail.title),
-              ),
-            ),
+            behavior: HitTestBehavior.opaque,
+            onTap: () => showAnimeTitleSheet(context, detail),
             child: AnimeDetailTitleBlock(
               title: detail.title,
               englishTitle: detail.englishTitle,
