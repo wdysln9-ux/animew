@@ -591,6 +591,71 @@ class MainActivity : AppCompatActivity(), FlutterEngineConfigurator {
             }
         }
 
+        // Save anime posters and banners to the public Pictures/AnimeW folder.
+        // MediaStore keeps this permission-free on Android 10 and newer.
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "animew/image_gallery",
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "saveImage" -> {
+                    val bytes = call.argument<ByteArray>("bytes")
+                    val requestedName = call.argument<String>("fileName")
+                    val mimeType = call.argument<String>("mimeType") ?: "image/jpeg"
+                    if (bytes == null || bytes.isEmpty() || requestedName.isNullOrBlank()) {
+                        result.error("BAD_ARGS", "Image bytes and file name are required", null)
+                        return@setMethodCallHandler
+                    }
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                        result.error("UNSUPPORTED", "Saving to Gallery requires Android 10 or newer", null)
+                        return@setMethodCallHandler
+                    }
+                    Thread {
+                        try {
+                            val extension = when (mimeType.lowercase()) {
+                                "image/png" -> "png"
+                                "image/webp" -> "webp"
+                                else -> "jpg"
+                            }
+                            val baseName = requestedName.substringBeforeLast('.', requestedName)
+                            val values = ContentValues().apply {
+                                put(MediaStore.MediaColumns.DISPLAY_NAME, "$baseName.$extension")
+                                put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                                put(
+                                    MediaStore.MediaColumns.RELATIVE_PATH,
+                                    "${Environment.DIRECTORY_PICTURES}/AnimeW",
+                                )
+                                put(MediaStore.MediaColumns.IS_PENDING, 1)
+                            }
+                            val uri = contentResolver.insert(
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                values,
+                            ) ?: throw IllegalStateException("Could not create Gallery entry")
+                            try {
+                                contentResolver.openOutputStream(uri)?.use { output ->
+                                    output.write(bytes)
+                                    output.flush()
+                                } ?: throw IllegalStateException("Could not open Gallery image")
+                                val ready = ContentValues().apply {
+                                    put(MediaStore.MediaColumns.IS_PENDING, 0)
+                                }
+                                contentResolver.update(uri, ready, null, null)
+                                runOnUiThread { result.success(uri.toString()) }
+                            } catch (e: Exception) {
+                                contentResolver.delete(uri, null, null)
+                                throw e
+                            }
+                        } catch (e: Exception) {
+                            runOnUiThread {
+                                result.error("SAVE_FAILED", e.message ?: "Could not save image", null)
+                            }
+                        }
+                    }.start()
+                }
+                else -> result.notImplemented()
+            }
+        }
+
         // Manga page OCR/offline translation. Kept on its own method channel so
         // the reader feature does not alter player or source bridge behavior.
         MethodChannel(
