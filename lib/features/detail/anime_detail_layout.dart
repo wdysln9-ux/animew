@@ -421,7 +421,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         children: [
         // The information area uses the exact page background color. The
         // hero artwork fades into this surface at its lower edge.
-        const Positioned.fill(
+        Positioned.fill(
           child: ColoredBox(color: AppColors.bg),
         ),
         Padding(
