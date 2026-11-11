@@ -219,6 +219,10 @@ class MainActivity : AppCompatActivity(), FlutterEngineConfigurator {
         // The manifest meta-data is unchanged; we just have to read it ourselves.
         switchLaunchThemeForNormalTheme()
         super.onCreate(savedInstanceState)
+        // Let Flutter paint edge-to-edge in landscape, including the display-cutout area.
+        // Flutter's SafeArea/MediaQuery still protect controls; the video and cinematic
+        // ambient layer can now extend behind the notch instead of leaving a black strip.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         // Portrait keeps the existing short-edge policy. In landscape, a
         // phone's top-edge notch becomes a long-edge cutout; SHORT_EDGES then
         // leaves that strip black. Use ALWAYS only while landscape playback is
