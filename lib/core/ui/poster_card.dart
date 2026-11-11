@@ -42,6 +42,7 @@ class PosterCard extends StatefulWidget {
     this.progressBadge,
     this.statusBadge,
     this.viewsBadge,
+    this.recommendationRatingBadge,
     this.seriesBadge,
     this.latestEpisodeBadge,
     this.rankBadge,
@@ -83,6 +84,8 @@ class PosterCard extends StatefulWidget {
   final String? progressBadge;
   final String? statusBadge;
   final int? viewsBadge;
+  /// Signed AniList recommendation vote total, shown beside views.
+  final int? recommendationRatingBadge;
   /// Season number label, shown beside the views count on franchise cards.
   final String? seriesBadge;
   /// Latest aired episode, displayed as its own badge above the views count.
@@ -323,6 +326,9 @@ class _PosterCardState extends State<PosterCard> {
     final showAdult = prefs?.posterAdultBadge == true && widget.isAdult;
     final showStatus = (prefs?.posterStatusBadge ?? true) && widget.statusBadge != null;
     final showViews = widget.showViewsBadge && (prefs?.posterViewsBadge ?? true) && widget.viewsBadge != null;
+    final showRecommendationRating =
+        widget.recommendationRatingBadge != null &&
+        widget.recommendationRatingBadge != 0;
     final showRank = (prefs?.posterTrendingRank ?? true) && widget.rankBadge != null;
     final hasRightBadges = showGenre || showAdult;
     final bottomBadges = Wrap(
@@ -428,7 +434,7 @@ class _PosterCardState extends State<PosterCard> {
                                     : const Color(0xFF20B86B),
                           ),
                         ),
-                      if (widget.latestEpisodeBadge != null || showViews || widget.seriesBadge != null)
+                      if (widget.latestEpisodeBadge != null || showViews || showRecommendationRating || widget.seriesBadge != null)
                         Positioned(
                           left: 6,
                           bottom: 6,
@@ -461,6 +467,11 @@ class _PosterCardState extends State<PosterCard> {
                                     shadows: [Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0)],
                                   ),
                                 ),
+                              ],
+                              if (showRecommendationRating) ...[
+                                if (showViews || widget.seriesBadge != null || widget.latestEpisodeBadge != null)
+                                  const SizedBox(width: 7),
+                                _RecommendationRatingTag(widget.recommendationRatingBadge!),
                               ],
                             ],
                           ),
@@ -778,6 +789,48 @@ String _compactPopularity(int value) {
   if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1).replaceAll('.0', '')}jt';
   if (value >= 1000) return '${(value / 1000).toStringAsFixed(value >= 100000 ? 0 : 1).replaceAll('.0', '')}rb';
   return '$value';
+}
+
+class _RecommendationRatingTag extends StatelessWidget {
+  const _RecommendationRatingTag(this.rating);
+
+  final int rating;
+
+  @override
+  Widget build(BuildContext context) {
+    final positive = rating > 0;
+    final color = positive
+        ? const Color(0xFF24C66A)
+        : const Color(0xFFF04452);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          positive ? Icons.thumb_up_rounded : Icons.thumb_down_rounded,
+          size: 13,
+          color: color,
+          shadows: const [
+            Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0),
+          ],
+        ),
+        const SizedBox(width: 3),
+        Text(
+          _compactPopularity(rating.abs()),
+          style: TextStyle(
+            fontFamily: AppText.fontFamily,
+            fontFamilyFallback: AppText.fontFamilyFallback,
+            fontSize: 10,
+            height: 1,
+            fontWeight: FontWeight.w700,
+            color: color,
+            shadows: const [
+              Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _PosterInfoTag extends StatelessWidget {
