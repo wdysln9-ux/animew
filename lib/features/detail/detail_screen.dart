@@ -2053,6 +2053,16 @@ class _DetailViewState extends State<_DetailView> {
         : (resume.hasResume
               ? context.l10n.continueEpisode(episodeNum)
               : context.l10n.play);
+    final resumeMark = !isReading && eps.isNotEmpty
+        ? store.get(item.sourceId, item.url, eps[resumeIdx].id)
+        : null;
+    final resumeProgress = resumeMark != null &&
+            !resumeMark.finished &&
+            resumeMark.duration.inMilliseconds > 0
+        ? (resumeMark.position.inMilliseconds /
+                resumeMark.duration.inMilliseconds)
+            .clamp(0.0, 1.0)
+        : 0.0;
 
     // Tall phone hero: prefer TMDB's portrait art; other sources stay as-is.
     final coverUrl =
@@ -2284,6 +2294,7 @@ class _DetailViewState extends State<_DetailView> {
                     primary: true,
                     loading: state.episodesLoading,
                     label: buttonLabel,
+                    progress: resumeProgress,
                     icon: isReading ? Icons.menu_book_rounded : Icons.play_arrow_rounded,
                     onPressed: eps.isNotEmpty
                         ? () => _openPlayer(eps, resumeIdx, detail, category)
