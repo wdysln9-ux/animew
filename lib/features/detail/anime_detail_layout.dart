@@ -972,10 +972,10 @@ class _DetailCreditsState extends State<_DetailCredits> {
                   ),
               ],
             ),
-          if (onNakamaTap != null && (!_expanded || !hasCredits)) ...[
+          if (widget.onNakamaTap != null && (!_expanded || !hasCredits)) ...[
             const SizedBox(height: 8),
             _chip('Nakama Menonton', const Color(0xFF53B9A5),
-                icon: Icons.groups_rounded, onTap: onNakamaTap),
+                icon: Icons.groups_rounded, onTap: widget.onNakamaTap),
           ],
           if (hasCredits && !_expanded) ...[
             const SizedBox(height: 7),
@@ -1012,7 +1012,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
           if (_expanded && onNakamaTap != null) ...[
             const SizedBox(height: 8),
             _chip('Nakama Menonton', const Color(0xFF53B9A5),
-                icon: Icons.groups_rounded, onTap: onNakamaTap),
+                icon: Icons.groups_rounded, onTap: widget.onNakamaTap),
           ],
           if (_expanded && hasCredits)
             GestureDetector(
