@@ -1943,7 +1943,6 @@ class _SearchViewState extends State<_SearchView>
 
     return ListView(
       padding: EdgeInsets.only(
-        top: 6,
         bottom: MediaQuery.paddingOf(context).bottom,
       ),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
