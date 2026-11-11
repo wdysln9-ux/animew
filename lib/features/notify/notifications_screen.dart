@@ -11,7 +11,7 @@ import '../../l10n/l10n.dart';
 
 enum _NotificationTab { all, airing, activity, forum, following, media, submissions }
 
-const _tabs = <(_NotificationTab, String, IconData, Color)>[
+final _tabs = <(_NotificationTab, String, IconData, Color)>[
   (_NotificationTab.all, 'Semua', Icons.notifications_active_rounded, AppColors.accent),
   (_NotificationTab.airing, 'Episode', Icons.play_circle_rounded, Color(0xFF35B7E8)),
   (_NotificationTab.activity, 'Aktivitas', Icons.bolt_rounded, Color(0xFFFFB547)),
