@@ -64,7 +64,7 @@ class AniListCatalogue implements AnimeCatalogue {
   };
 
   static const _fields =
-      'id idMal title{romaji english native} coverImage{large extraLarge} '
+      'id idMal title{romaji english native} coverImage{large extraLarge color} '
       'bannerImage episodes chapters status genres description(asHtml:false) '
       'seasonYear studios(isMain:true){nodes{name}} '
       // airingAt as well as the number: an episode count with no date is a
@@ -77,8 +77,8 @@ class AniListCatalogue implements AnimeCatalogue {
       'tags{name rank isMediaSpoiler} '
       'trailer{id site thumbnail} '
       'characters(sort:ROLE,perPage:50){edges{role node{name{full} image{large}}}} '
-      'relations{edges{relationType node{id idMal type title{romaji english} coverImage{large} averageScore popularity format status episodes seasonYear genres}}} '
-      'recommendations(sort:RATING_DESC,perPage:50){edges{node{rating mediaRecommendation{id idMal type title{romaji english} coverImage{large} averageScore popularity format status episodes seasonYear genres}}}}';
+      'relations{edges{relationType node{id idMal type title{romaji english} coverImage{large color} averageScore popularity format status episodes seasonYear genres}}} '
+      'recommendations(sort:RATING_DESC,perPage:50){edges{node{rating mediaRecommendation{id idMal type title{romaji english} coverImage{large color} averageScore popularity format status episodes seasonYear genres}}}}';
 
   /// Exactly what [_item] reads, and nothing else. Home asks for 7 rows of 30
   /// in one request, so every field here is paid for 210 times: carrying the
@@ -446,6 +446,7 @@ class AniListCatalogue implements AnimeCatalogue {
         title: displayTitle,
         romaji: romaji,
         cover: (raw['coverImage'] as Map?)?['large'] as String?,
+        coverColor: (raw['coverImage'] as Map?)?['color'] as String?,
         relation: relationLabel,
         score: raw['averageScore'] as int?,
         popularity: raw['popularity'] as int?,
