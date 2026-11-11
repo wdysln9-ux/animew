@@ -107,9 +107,9 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   ) {
     final poster = posterUrl?.isNotEmpty == true ? posterUrl! : coverUrl;
     final topInset = MediaQuery.paddingOf(context).top;
-    final posterWidth = (MediaQuery.sizeOf(context).width * 0.45)
+    final posterWidth = ((MediaQuery.sizeOf(context).width * 0.45)
         .clamp(170.0, 194.0)
-        .toDouble();
+        .toDouble()) + 1;
     final posterHeight = posterWidth * 1.5;
 
     return ClipRect(
