@@ -249,9 +249,15 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7, elevation: 0, pressedElevation: 0),
                         overlayShape: const RoundSliderOverlayShape(overlayRadius: 13),
                       ),
-                      child: Slider(min: 0, max: 100, divisions: 20,
-                        value: f.minTagRank.toDouble(), activeColor: AppColors.accent,
-                        onChanged: (value) => setState(() => f = f.copyWith(minTagRank: value.round()))),
+                      child: Slider(
+                        min: 0,
+                        max: 100,
+                        value: f.minTagRank.toDouble().clamp(0, 100),
+                        activeColor: AppColors.accent,
+                        onChanged: (value) => setState(
+                          () => f = f.copyWith(minTagRank: value.round()),
+                        ),
+                      ),
                     ),
                     FutureBuilder<List<String>>(
                       future: tagsFuture,
