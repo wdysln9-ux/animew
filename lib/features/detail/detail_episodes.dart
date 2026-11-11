@@ -289,7 +289,6 @@ class _EpisodesTabState extends State<_EpisodesTab> {
         reversed: _reverseList,
       );
       _grid = true; // the grid makes the jumped-to episode easy to spot
-      _highlightEpId = eps[local].id;
     });
   }
 
@@ -337,7 +336,6 @@ class _EpisodesTabState extends State<_EpisodesTab> {
               if (_rangeCount > 0) {
                 _rangeIndex = _rangeCount - 1 - _rangeIndex;
               }
-              _highlightEpId = null;
             }),
             grid: _grid,
             onToggleView: () => setState(() => _grid = !_grid),
@@ -390,7 +388,6 @@ class _EpisodesTabState extends State<_EpisodesTab> {
               onSelect: (i) => setState(() {
                 _scanlator = i == 0 ? null : groups[i - 1];
                 _rangeIndex = 0;
-                _highlightEpId = null;
               }),
             ),
         if (showRanges)
@@ -401,7 +398,6 @@ class _EpisodesTabState extends State<_EpisodesTab> {
                   episodeRangeLabel(displayEps, i, reversed: _reverseList),
               onSelect: (i) => setState(() {
                 _rangeIndex = i;
-                _highlightEpId = null;
               }),
             ),
         if (_grid)
