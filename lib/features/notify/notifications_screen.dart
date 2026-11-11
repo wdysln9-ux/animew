@@ -18,7 +18,7 @@ final _tabs = <(_NotificationTab, String, IconData, Color)>[
   (_NotificationTab.forum, 'Forum', Icons.forum_rounded, Color(0xFF9B83F6)),
   (_NotificationTab.following, 'Pengikut', Icons.people_alt_rounded, Color(0xFF42C99A)),
   (_NotificationTab.media, 'Media', Icons.movie_creation_rounded, Color(0xFFFF7C91)),
-  (_NotificationTab.submissions, 'Submissions', Icons.fact_check_rounded, Color(0xFFB0A0FF)),
+  (_NotificationTab.submissions, 'Pengajuan', Icons.fact_check_rounded, Color(0xFFB0A0FF)),
 ];
 const _activity = <String>{'ACTIVITY_MESSAGE','ACTIVITY_MENTION','ACTIVITY_REPLY','ACTIVITY_REPLY_SUBSCRIBED','ACTIVITY_LIKE','ACTIVITY_REPLY_LIKE'};
 const _forum = <String>{'THREAD_COMMENT_MENTION','THREAD_COMMENT_REPLY','THREAD_SUBSCRIBED','THREAD_COMMENT_LIKE','THREAD_LIKE'};
@@ -155,42 +155,121 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
 
+
+  List<Map<String, dynamic>> _groupActivityLikes(List<Map<String, dynamic>> items) {
+    final groups = <String, List<Map<String, dynamic>>>{};
+    final out = <Map<String, dynamic>>[];
+    for (final item in items) {
+      final type = (item['type'] ?? '').toString();
+      if (type == 'ACTIVITY_LIKE' || type == 'ACTIVITY_REPLY_LIKE') {
+        final user = item['user'] is Map ? item['user'] as Map : const {};
+        final key = (user['id'] ?? user['name'] ?? 'unknown').toString();
+        if (!groups.containsKey(key)) {
+          groups[key] = [];
+          out.add({'__groupKey': key});
+        }
+        groups[key]!.add(item);
+      } else {
+        out.add(item);
+      }
+    }
+    return out.map((row) {
+      final key = row['__groupKey'];
+      if (key == null) return row;
+      final likes = groups[key]!;
+      return {...likes.first, '__groupedLikes': likes};
+    }).toList();
+  }
+
+  String _mediaTitle(Map? media) {
+    final titles = media?['title'] is Map ? media!['title'] as Map : null;
+    return (titles?['romaji'] ?? titles?['english'] ?? 'Media AniList').toString();
+  }
+
+  String _mediaKind(Map? media) {
+    if (media?['type'] == 'ANIME') return 'Anime';
+    if (media?['format'] == 'NOVEL') return 'Light novel';
+    if (media?['type'] == 'MANGA') return 'Manga';
+    return 'Media';
+  }
+
+  String _submissionStatus(Map n) {
+    switch ((n['status'] ?? '').toString().toUpperCase()) {
+      case 'ACCEPTED': return 'Diterima';
+      case 'REJECTED': return 'Ditolak';
+      case 'PENDING': return 'Menunggu';
+      default: return 'Diperbarui';
+    }
+  }
+
+  Color? _submissionColor(Map n) {
+    switch ((n['status'] ?? '').toString().toUpperCase()) {
+      case 'ACCEPTED': return const Color(0xFF35C978);
+      case 'REJECTED': return const Color(0xFFE34D59);
+      case 'PENDING': return const Color(0xFFFFB547);
+      default: return null;
+    }
+  }
+
+  String _detail(Map<String, dynamic> n) {
+    final type = (n['type'] ?? '').toString();
+    final media = n['media'] is Map ? n['media'] as Map : null;
+    switch (type) {
+      case 'AIRING': return 'Episode ' + (n['episode'] ?? '').toString() + ' baru tayang';
+      case 'RELATED_MEDIA_ADDITION': return _mediaKind(media);
+      case 'MEDIA_DATA_CHANGE': return 'Informasi ' + _mediaKind(media).toLowerCase() + ' diperbarui';
+      case 'MEDIA_SUBMISSION_UPDATE':
+      case 'STAFF_SUBMISSION_UPDATE':
+      case 'CHARACTER_SUBMISSION_UPDATE': return _submissionStatus(n);
+      case 'THREAD_COMMENT_REPLY': return 'Membalas komentarmu dalam utas';
+      case 'THREAD_SUBSCRIBED': return 'Ada komentar baru di utas yang kamu ikuti';
+      case 'THREAD_COMMENT_MENTION': return 'Menyebutmu dalam utas';
+      case 'ACTIVITY_MENTION': return 'Menyebutmu dalam aktivitas';
+      case 'ACTIVITY_REPLY':
+      case 'ACTIVITY_REPLY_SUBSCRIBED': return 'Membalas aktivitasmu';
+      default: return '';
+    }
+  }
+
+  String _activityDescription(Map<String, dynamic> n) {
+    final activity = n['activity'] is Map ? n['activity'] as Map : null;
+    final media = activity?['media'] is Map ? activity!['media'] as Map : null;
+    final status = (activity?['status'] ?? '').toString().toLowerCase();
+    final progress = (activity?['progress'] ?? '').toString();
+    if (status.contains('watch')) return 'Menonton episode ' + progress + ' ' + _mediaTitle(media);
+    if (status.contains('read')) return 'Membaca bab ' + progress + ' ' + _mediaTitle(media);
+    return 'Aktivitas AniList';
+  }
+
+
   String _title(Map<String, dynamic> n) {
     final type = (n['type'] ?? '').toString();
     final user = n['user'] is Map ? n['user'] as Map : null;
     final name = (user?['name'] ?? 'AniList').toString();
     final media = n['media'] is Map ? n['media'] as Map : null;
-    final titles = media?['title'] is Map ? media!['title'] as Map : null;
-    final mediaTitle = (titles?['romaji'] ?? titles?['english'] ?? 'Anime').toString();
+    final mediaTitle = _mediaTitle(media);
+    final thread = n['thread'] is Map ? n['thread'] as Map : null;
     switch (type) {
-      case 'AIRING': return mediaTitle + ' — Episode ' + (n['episode'] ?? '').toString() + ' sudah tayang';
+      case 'AIRING': return mediaTitle;
       case 'FOLLOWING': return name + ' mulai mengikutimu';
       case 'ACTIVITY_MESSAGE': return name + ' mengirim pesan';
       case 'ACTIVITY_MENTION': return name + ' menyebutmu di aktivitas';
       case 'ACTIVITY_REPLY':
-      case 'ACTIVITY_REPLY_SUBSCRIBED': return name + ' membalas aktivitas';
+      case 'ACTIVITY_REPLY_SUBSCRIBED': return name + ' membalas aktivitasmu';
       case 'ACTIVITY_LIKE':
       case 'ACTIVITY_REPLY_LIKE': return name + ' menyukai aktivitasmu';
       case 'THREAD_COMMENT_MENTION': return name + ' menyebutmu di forum';
       case 'THREAD_COMMENT_REPLY': return name + ' membalas komentarmu di forum';
-      case 'THREAD_SUBSCRIBED': return name + ' berkomentar di forum yang kamu ikuti';
+      case 'THREAD_SUBSCRIBED': return name + ' berkomentar di utas yang kamu ikuti';
       case 'THREAD_COMMENT_LIKE':
-      case 'THREAD_LIKE': return name + ' menyukai postingan forum';
-      case 'RELATED_MEDIA_ADDITION': return 'Media terkait baru ditambahkan';
-      case 'MEDIA_DATA_CHANGE': return 'Informasi media diperbarui';
-      case 'MEDIA_MERGE': return 'Media digabungkan';
-      case 'MEDIA_DELETION':
-        return 'Media dihapus: ${n['deletedMediaTitle'] ?? 'entri AniList'}';
-      case 'MEDIA_SUBMISSION_UPDATE':
-        return 'Pengajuan media diperbarui: ' + mediaTitle;
-      case 'STAFF_SUBMISSION_UPDATE':
-        final staff = n['staff'] is Map ? n['staff'] as Map : null;
-        final staffName = staff?['name'] is Map ? (staff!['name'] as Map)['full']?.toString() : null;
-        return 'Pengajuan staf diperbarui: ' + (staffName ?? 'AniList');
-      case 'CHARACTER_SUBMISSION_UPDATE':
-        final character = n['character'] is Map ? n['character'] as Map : null;
-        final characterName = character?['name'] is Map ? (character!['name'] as Map)['full']?.toString() : null;
-        return 'Pengajuan karakter diperbarui: ' + (characterName ?? 'AniList');
+      case 'THREAD_LIKE': return name + ' menyukai utas: ' + (thread?['title'] ?? 'Forum').toString();
+      case 'RELATED_MEDIA_ADDITION': return mediaTitle + ' baru ditambahkan';
+      case 'MEDIA_DATA_CHANGE': return mediaTitle + ' diperbarui';
+      case 'MEDIA_MERGE': return mediaTitle + ' digabungkan';
+      case 'MEDIA_DELETION': return 'Media dihapus';
+      case 'MEDIA_SUBMISSION_UPDATE': return 'Pengajuan media: ' + mediaTitle + ' — ' + _submissionStatus(n);
+      case 'STAFF_SUBMISSION_UPDATE': return 'Pengajuan staf — ' + _submissionStatus(n);
+      case 'CHARACTER_SUBMISSION_UPDATE': return 'Pengajuan karakter — ' + _submissionStatus(n);
       default: return 'Pembaruan AniList';
     }
   }
@@ -210,13 +289,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final connected = _aniList.isConnected;
-    final rows = _items;
+    final rows = _selected == _NotificationTab.activity ? _groupActivityLikes(_items) : _items;
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: settingsAppBar(context.l10n.notifications),
       body: Column(children: [
         SizedBox(
-          height: 54,
+          height: 56,
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             scrollDirection: Axis.horizontal,
@@ -226,34 +305,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               final tab = _tabs[index];
               final selected = _selected == tab.$1;
               final tabColor = tab.$4;
-              return ChoiceChip(
-                avatar: Icon(
-                  tab.$3,
-                  size: 16,
-                  color: selected ? AppColors.bg : tabColor,
+              return Material(
+                color: selected ? tabColor : tabColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    if (_selected == tab.$1) return;
+                    setState(() => _selected = tab.$1);
+                    if (_scroll.hasClients) _scroll.jumpTo(0);
+                    _load();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: tabColor.withOpacity(selected ? 0 : 0.28))),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(tab.$3, size: 17, color: selected ? AppColors.bg : tabColor),
+                      const SizedBox(width: 5),
+                      Text(tab.$2, style: AppText.caption.copyWith(fontSize: 12.5,
+                        color: selected ? AppColors.bg : AppColors.textPrimary,
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w600)),
+                    ]),
+                  ),
                 ),
-                label: Text(tab.$2),
-                selected: selected,
-                onSelected: (_) {
-                  if (_selected == tab.$1) return;
-                  setState(() => _selected = tab.$1);
-                  if (_scroll.hasClients) _scroll.jumpTo(0);
-                  _load();
-                },
-                showCheckmark: false,
-                labelStyle: AppText.caption.copyWith(
-                  color: selected ? AppColors.bg : AppColors.textPrimary,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                ),
-                selectedColor: tabColor,
-                backgroundColor: tabColor.withOpacity(0.13),
-                side: BorderSide(
-                  color: tabColor.withOpacity(selected ? 0 : 0.28),
-                  width: 1,
-                ),
-                shape: const StadiumBorder(),
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 5),
               );
             },
           ),
@@ -343,6 +418,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   );
 
   Widget _tile(Map<String, dynamic> n) {
+    final groupedLikes = n['__groupedLikes'] is List ? (n['__groupedLikes'] as List).whereType<Map<String, dynamic>>().toList() : null;
+    if (groupedLikes != null) {
+      final groupUser = n['user'] is Map ? n['user'] as Map : const {};
+      final groupName = (groupUser['name'] ?? 'AniList').toString();
+      return ExpansionTile(
+        leading: const Icon(Icons.favorite_rounded, color: AppColors.accent),
+        title: Text(groupName + ' menyukai ' + groupedLikes.length.toString() + ' aktivitasmu',
+          style: AppText.body.copyWith(fontSize: 13, fontWeight: FontWeight.w600)),
+        subtitle: Text(_time(groupedLikes.first), style: AppText.caption.copyWith(fontSize: 11)),
+        children: groupedLikes.map((like) => ListTile(
+          dense: true,
+          title: Text(_activityDescription(like), style: AppText.body.copyWith(fontSize: 12)),
+          onTap: () => _openNotification(like),
+        )).toList(),
+      );
+    }
     final user = n['user'] is Map ? n['user'] as Map : null;
     final media = n['media'] is Map ? n['media'] as Map : null;
     final staff = n['staff'] is Map ? n['staff'] as Map : null;
@@ -352,21 +443,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final characterImage = character?['image'] is Map ? (character!['image'] as Map)['large']?.toString() : null;
     final cover = media?['coverImage'] is Map ? (media!['coverImage'] as Map)['large']?.toString() : null;
     final image = avatar ?? staffImage ?? characterImage ?? cover;
-    final contextText = n['context']?.toString();
-    final contexts = n['contexts'] is List ? (n['contexts'] as List).whereType<String>().join(' · ') : '';
-    final message = n['message'] is Map ? n['message'] as Map : null;
-    final messageText = message?['message']?.toString();
-    final detailParts = <String>[
-      if (messageText?.isNotEmpty == true) messageText!,
-      if (contextText?.isNotEmpty == true) contextText!,
-      if ((contextText?.isNotEmpty != true) && contexts.isNotEmpty) contexts,
-      if ((n['status']?.toString().isNotEmpty ?? false)) 'Status: ${n['status']}',
-      if ((n['notes']?.toString().isNotEmpty ?? false)) n['notes'].toString(),
-      if ((n['reason']?.toString().isNotEmpty ?? false)) n['reason'].toString(),
-      if (n['deletedMediaTitles'] is List)
-        (n['deletedMediaTitles'] as List).whereType<String>().join(', '),
-    ];
-    final detail = detailParts.join(' · ');
+    final detail = _detail(n);
     final type = (n['type'] ?? '').toString();
     final icon = type == 'AIRING' ? Icons.play_circle_outline_rounded
         : type == 'FOLLOWING' ? Icons.person_add_alt_1_rounded
@@ -384,12 +461,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               : _fallback(icon),
         ),
       ),
-      title: Text(_title(n), maxLines: 2, overflow: TextOverflow.ellipsis,
-        style: AppText.body.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+      title: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        if (_submissions.contains(type) && _submissionColor(n) != null)
+          Padding(padding: const EdgeInsets.only(top: 5, right: 7), child: Container(width: 7, height: 7, decoration: BoxDecoration(color: _submissionColor(n), shape: BoxShape.circle))),
+        Expanded(child: Text.rich(TextSpan(children: [
+          TextSpan(text: _title(n), style: TextStyle(color: AppColors.textPrimary)),
+        ]), maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body.copyWith(fontSize: 13, fontWeight: FontWeight.w600))),
+      ]),
       subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (detail.isNotEmpty) Text(detail, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.caption),
+        if (detail.isNotEmpty) Text(detail, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(fontSize: 11.5)),
         const SizedBox(height: 3),
-        Text(_time(n), style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+        Text(_time(n), style: AppText.caption.copyWith(fontSize: 11, color: AppColors.textSecondary)),
       ]),
     );
   }
