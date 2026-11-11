@@ -881,7 +881,7 @@ class _DetailCredits extends StatefulWidget {
 class _DetailCreditsState extends State<_DetailCredits> {
   late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('credits');
 
-  Widget _chip(String label, Color color, {VoidCallback? onTap}) {
+  Widget _chip(String label, Color color, {VoidCallback? onTap, IconData? icon}) {
     final child = Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
@@ -889,16 +889,27 @@ class _DetailCreditsState extends State<_DetailCredits> {
         border: Border.all(color: color, width: 1),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: AppText.caption.copyWith(
-          fontSize: 12,
-          height: 1.1,
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 5),
+          ],
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.caption.copyWith(
+                fontSize: 12,
+                height: 1.1,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
     if (onTap == null) return child;
@@ -907,7 +918,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
 
   @override
   Widget build(BuildContext context) {
-    const studioBlue = Color(0xFF2864B7);
+    const studioBlue = Color(0xFF5799E8);
     final genreColor = AppColors.accent;
     final hasCredits = widget.studios.isNotEmpty || widget.tags.isNotEmpty;
 
@@ -971,7 +982,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
             const SizedBox(height: 7),
             Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6, children: [
               for (final studio in widget.studios)
-                _chip(studio, studioBlue, onTap: () => widget.onStudioTap(studio)),
+                _chip(studio, studioBlue, icon: Icons.business_rounded, onTap: () => widget.onStudioTap(studio)),
               if (widget.tags.isNotEmpty)
                 _chip('Tags (${widget.tags.length})', AppColors.accent, onTap: widget.onTagsTap),
             ]),
