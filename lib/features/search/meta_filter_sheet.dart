@@ -252,7 +252,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                       child: Slider(
                         min: 0,
                         max: 100,
-                        value: f.minTagRank.toDouble().clamp(0, 100),
+                        value: f.minTagRank.toDouble(),
                         activeColor: AppColors.accent,
                         onChanged: (value) => setState(
                           () => f = f.copyWith(minTagRank: value.round()),
