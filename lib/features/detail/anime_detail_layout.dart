@@ -7,6 +7,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
   const AnimeDetailHeroSliver({
     required this.coverUrl,
     required this.posterUrl,
+    required this.posterColor,
     required this.coverHeaders,
     required this.sourceLabel,
     required this.animeId,
@@ -18,6 +19,8 @@ class AnimeDetailHeroSliver extends StatelessWidget {
 
   final String coverUrl;
   final String? posterUrl;
+  /// AniList coverImage.color for the portrait poster's loading surface.
+  final String? posterColor;
   final Map<String, String>? coverHeaders;
   final String sourceLabel;
   final String animeId;
@@ -32,6 +35,7 @@ class AnimeDetailHeroSliver extends StatelessWidget {
     delegate: _AnimeDetailHeroDelegate(
       coverUrl: coverUrl,
       posterUrl: posterUrl,
+      posterColor: posterColor,
       coverHeaders: coverHeaders,
       sourceLabel: sourceLabel,
       animeId: animeId,
@@ -47,6 +51,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   const _AnimeDetailHeroDelegate({
     required this.coverUrl,
     required this.posterUrl,
+    required this.posterColor,
     required this.coverHeaders,
     required this.sourceLabel,
     required this.animeId,
@@ -58,6 +63,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
 
   final String coverUrl;
   final String? posterUrl;
+  final String? posterColor;
   final Map<String, String>? coverHeaders;
   final String sourceLabel;
   final String animeId;
@@ -71,8 +77,10 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     int width = 900,
     Alignment alignment = Alignment.center,
     BoxFit fit = BoxFit.cover,
+    Color? placeholderColor,
   }) {
-    if (url.isEmpty) return ColoredBox(color: AppColors.surface2);
+    final loadingColor = placeholderColor ?? AppColors.surface2;
+    if (url.isEmpty) return ColoredBox(color: loadingColor);
     final aniSource = coverHeaders?['x-ani-src'];
     final mihonSource = coverHeaders?['x-mihon-src'];
     final aniId = int.tryParse(aniSource ?? '');
@@ -85,7 +93,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
         ),
         fit: fit,
         alignment: alignment,
-        errorBuilder: (_, _, _) => ColoredBox(color: AppColors.surface2),
+        errorBuilder: (_, _, _) => ColoredBox(color: loadingColor),
       );
     }
     return CachedNetworkImage(
@@ -94,8 +102,8 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
       fit: fit,
       alignment: alignment,
       memCacheWidth: width,
-      placeholder: (_, _) => ColoredBox(color: AppColors.surface2),
-      errorWidget: (_, _, _) => ColoredBox(color: AppColors.surface2),
+      placeholder: (_, _) => ColoredBox(color: loadingColor),
+      errorWidget: (_, _, _) => ColoredBox(color: loadingColor),
     );
   }
 
@@ -106,6 +114,21 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final poster = posterUrl?.isNotEmpty == true ? posterUrl! : coverUrl;
+    final rawPosterColor = posterColor?.trim();
+    final normalizedPosterColor = rawPosterColor == null || rawPosterColor.isEmpty
+        ? null
+        : (rawPosterColor.startsWith('#') ? rawPosterColor.substring(1) : rawPosterColor);
+    final posterColorValue = normalizedPosterColor == null
+        ? null
+        : int.tryParse(
+            normalizedPosterColor.length == 6
+                ? 'FF$normalizedPosterColor'
+                : normalizedPosterColor,
+            radix: 16,
+          );
+    final posterLoadingColor = posterColorValue == null
+        ? AppColors.surface2
+        : Color(posterColorValue);
     final topInset = MediaQuery.paddingOf(context).top;
     final posterWidth = ((MediaQuery.sizeOf(context).width * 0.45)
         .clamp(170.0, 194.0)
@@ -239,7 +262,12 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                       child: SizedBox(
                         width: posterWidth,
                         height: posterHeight,
-                        child: _image(poster, width: 528, fit: BoxFit.cover),
+                        child: _image(
+                          poster,
+                          width: 528,
+                          fit: BoxFit.cover,
+                          placeholderColor: posterLoadingColor,
+                        ),
                       ),
                     ),
                   ),
@@ -262,6 +290,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(covariant _AnimeDetailHeroDelegate oldDelegate) =>
       oldDelegate.coverUrl != coverUrl ||
       oldDelegate.posterUrl != posterUrl ||
+      oldDelegate.posterColor != posterColor ||
       oldDelegate.coverHeaders != coverHeaders ||
       oldDelegate.sourceLabel != sourceLabel ||
       oldDelegate.animeId != animeId ||

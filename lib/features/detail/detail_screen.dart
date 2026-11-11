@@ -2258,6 +2258,7 @@ class _DetailViewState extends State<_DetailView> {
         AnimeDetailHeroSliver(
           coverUrl: heroBannerUrl,
           posterUrl: heroPosterUrl,
+          posterColor: item.coverColor,
           coverHeaders: coverHeaders,
           sourceLabel: detail.anilistId != null ? 'AniList' : sourceName,
           animeId: detail.anilistId?.toString() ?? detail.id,
