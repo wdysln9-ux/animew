@@ -26,6 +26,7 @@ class PosterCard extends StatefulWidget {
     super.key,
     required this.title,
     this.imageUrl,
+    this.imageColor,
     this.wideImageUrl,
     this.headers,
     this.onTap,
@@ -51,6 +52,8 @@ class PosterCard extends StatefulWidget {
   });
   final String title;
   final String? imageUrl;
+  /// AniList coverImage.color used while the poster image is loading.
+  final String? imageColor;
   final String? wideImageUrl;
   final Map<String, String>? headers;
   final VoidCallback? onTap;
@@ -278,7 +281,7 @@ class _PosterCardState extends State<PosterCard> {
   }
 
   Color get _loadingSurfaceColor {
-    final raw = widget.logoItem?.coverColor?.trim();
+    final raw = (widget.imageColor ?? widget.logoItem?.coverColor)?.trim();
     if (raw != null && raw.isNotEmpty) {
       final hex = raw.startsWith('#') ? raw.substring(1) : raw;
       final normalized = hex.length == 6 ? 'FF$hex' : hex;
@@ -450,28 +453,28 @@ class _PosterCardState extends State<PosterCard> {
                                   const SizedBox(width: 7),
                                 _PosterInfoTag(widget.seriesBadge!),
                               ],
-                              if (showViews) ...[
+                              if (showRecommendationRating) ...[
                                 if (widget.seriesBadge != null || widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
-                                const Icon(Icons.visibility_rounded, size: 13, color: Colors.white, shadows: [Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0)]),
+                                _RecommendationRatingTag(widget.recommendationRatingBadge!),
+                              ],
+                              if (showViews) ...[
+                                if (showRecommendationRating || widget.seriesBadge != null || widget.latestEpisodeBadge != null)
+                                  const SizedBox(width: 7),
+                                const Icon(Icons.visibility_rounded, size: 12, color: Colors.white, shadows: [Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0)]),
                                 const SizedBox(width: 3),
                                 Text(
                                   _compactPopularity(widget.viewsBadge!),
                                   style: TextStyle(
                                     fontFamily: AppText.fontFamily,
                                     fontFamilyFallback: AppText.fontFamilyFallback,
-                                    fontSize: 13,
-                                    height: 1,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 10,
+                                    height: 1.1,
+                                    fontWeight: FontWeight.w700,
                                     color: Colors.white,
                                     shadows: [Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0)],
                                   ),
                                 ),
-                              ],
-                              if (showRecommendationRating) ...[
-                                if (showViews || widget.seriesBadge != null || widget.latestEpisodeBadge != null)
-                                  const SizedBox(width: 7),
-                                _RecommendationRatingTag(widget.recommendationRatingBadge!),
                               ],
                             ],
                           ),
@@ -810,9 +813,9 @@ class _RecommendationRatingTag extends StatelessWidget {
         ? const Color(0xFF24C66A)
         : const Color(0xFFF04452);
     return Container(
-      padding: const EdgeInsets.fromLTRB(5, 3, 6, 3),
+      padding: const EdgeInsets.fromLTRB(6, 3, 6, 3),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.68),
+        color: Colors.black.withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -820,7 +823,7 @@ class _RecommendationRatingTag extends StatelessWidget {
         children: [
           Icon(
             positive ? Icons.thumb_up_rounded : Icons.thumb_down_rounded,
-            size: 13,
+            size: 11,
             color: color,
           ),
           const SizedBox(width: 3),
@@ -830,7 +833,7 @@ class _RecommendationRatingTag extends StatelessWidget {
               fontFamily: AppText.fontFamily,
               fontFamilyFallback: AppText.fontFamilyFallback,
               fontSize: 10,
-              height: 1,
+              height: 1.1,
               fontWeight: FontWeight.w700,
               color: color,
             ),
