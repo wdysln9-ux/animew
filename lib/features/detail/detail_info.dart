@@ -113,11 +113,11 @@ class _Description extends StatefulWidget {
 }
 
 class _DescriptionState extends State<_Description> {
-  late bool _expanded = sl<PlaybackPrefs>().synopsisExpanded;
+  late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('synopsis');
 
   void _toggleExpanded() {
     setState(() => _expanded = !_expanded);
-    unawaited(sl<PlaybackPrefs>().setSynopsisExpanded(_expanded));
+    unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('synopsis', _expanded));
   }
 
   @override
