@@ -2227,6 +2227,7 @@ class _DetailViewState extends State<_DetailView> {
           coverHeaders: coverHeaders,
           sourceLabel: detail.anilistId != null ? 'AniList' : sourceName,
           animeId: detail.anilistId?.toString() ?? detail.id,
+          adaptiveTint: _tint,
           onAniListTap: detail.anilistId == null ? null : () => launchUrl(
             Uri.parse('https://anilist.co/anime/${detail.anilistId}'),
             mode: LaunchMode.externalApplication,
