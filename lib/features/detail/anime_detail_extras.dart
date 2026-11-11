@@ -15,7 +15,7 @@ class _AniListTrailerSection extends StatefulWidget {
 }
 
 class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
-  bool _expanded = false;
+  late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('trailer');
 
   String? get _videoId {
     final uri = Uri.tryParse(widget.url);
@@ -34,7 +34,10 @@ class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
         children: [
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => setState(() => _expanded = !_expanded),
+            onTap: () => setState(() {
+              _expanded = !_expanded;
+              unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('trailer', _expanded));
+            }),
             child: Row(
               children: [
                 Text('Trailer & PV', style: AppText.headline.copyWith(fontSize: 16)),
