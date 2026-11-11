@@ -1291,8 +1291,11 @@ class _DetailViewState extends State<_DetailView> {
 
     Navigator.of(context)
         .push(
-          MaterialPageRoute(
-            builder: (_) => PlayerScreen(
+          PageRouteBuilder<void>(
+            opaque: false,
+            transitionDuration: const Duration(milliseconds: 280),
+            reverseTransitionDuration: const Duration(milliseconds: 220),
+            pageBuilder: (_, __, ___) => PlayerScreen(
               episodeDetailMode: true,
               onSaveToFolder: (_) => _openListSheet(detail),
               onDownloadEpisode: (episode) =>
@@ -1329,6 +1332,8 @@ class _DetailViewState extends State<_DetailView> {
               availableCategories: availableCategories,
               peek: peek,
             ),
+            transitionsBuilder: (_, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
           ),
           // Same reason as the reader's [_refreshAfterReading]: ResumeStore has no
           // change notification and this push was fire-and-forget, so a finished
