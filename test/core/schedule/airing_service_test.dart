@@ -21,6 +21,7 @@ void main() {
             'episode': 5,
             'airingAt': 1783000000,
             'media': {
+              'id': 222,
               'idMal': 111,
               'title': {'romaji': 'Romaji Name', 'english': 'English Name'},
               'coverImage': {'large': 'http://x/c.jpg'},
@@ -47,6 +48,7 @@ void main() {
     expect(out.length, 1);
     expect(out.first.title, 'English Name');
     expect(out.first.malId, 111);
+    expect(out.first.anilistId, 222);
     expect(out.first.episode, 5);
     expect(out.first.format, 'TV');
     expect(out.first.coverUrl, 'http://x/c.jpg');

@@ -162,9 +162,9 @@ class HomeCubit extends Cubit<HomeState> {
     for (final entry in entries) {
       final anilistId = entry.anilistId;
       if (anilistId == null) continue;
-      final canonicalId = entry.malId == null
-          ? 'al:$anilistId'
-          : 'mal:${entry.malId}';
+      // Match AniListCatalogue's canonical identity exactly; MAL remains
+      // a cross-reference on the MediaItem, not the title's primary id.
+      final canonicalId = 'al:$anilistId';
       final canonical = ZCanonical(ZKind.anime, canonicalId);
       items.add(MediaItem(
         id: canonicalId,
