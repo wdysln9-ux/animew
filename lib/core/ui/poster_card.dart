@@ -453,14 +453,14 @@ class _PosterCardState extends State<PosterCard> {
                               if (showViews) ...[
                                 if (widget.seriesBadge != null || widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
-                                const Icon(Icons.visibility_rounded, size: 14, color: Colors.white, shadows: [Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0)]),
+                                const Icon(Icons.visibility_rounded, size: 13, color: Colors.white, shadows: [Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0)]),
                                 const SizedBox(width: 3),
                                 Text(
                                   _compactPopularity(widget.viewsBadge!),
                                   style: TextStyle(
                                     fontFamily: AppText.fontFamily,
                                     fontFamilyFallback: AppText.fontFamilyFallback,
-                                    fontSize: 12,
+                                    fontSize: 13,
                                     height: 1,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
