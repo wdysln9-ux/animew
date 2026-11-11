@@ -415,7 +415,7 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
       'voiceActors(language:JAPANESE,sort:[RELEVANCE]){ name{full} } } } '
       'relations{ edges{ relationType '
       'node{ id idMal type format title{romaji english native} coverImage{large} } } } '
-      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
+      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
 
   /// Manga/novel twin of [_extrasSelection].
   ///
@@ -429,7 +429,7 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
       'node{ id name{full} image{medium} } } } '
       'relations{ edges{ relationType '
       'node{ id idMal type format title{romaji english native} coverImage{large} } } } '
-      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
+      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large} } } } }';
 
   /// Cast + relations for a MANGA or NOVEL, resolved by title.
   ///
@@ -791,6 +791,7 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
                 ? rec['coverImage']['large'] as String?
                 : null,
             relation: 'Recommended',
+            recommendationRating: (node['rating'] as num?)?.toInt(),
             malId: (rec['idMal'] as num?)?.toInt(),
             anilistId: (rec['id'] as num?)?.toInt(),
             isReading: rec['type'] == 'MANGA',
