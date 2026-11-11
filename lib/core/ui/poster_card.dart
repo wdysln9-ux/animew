@@ -460,7 +460,7 @@ class _PosterCardState extends State<PosterCard> {
                                   style: TextStyle(
                                     fontFamily: AppText.fontFamily,
                                     fontFamilyFallback: AppText.fontFamilyFallback,
-                                    fontSize: 10,
+                                    fontSize: 12,
                                     height: 1,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
