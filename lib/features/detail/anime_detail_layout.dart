@@ -1298,6 +1298,9 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         seriesBadge: _isRecommended(relation) ? null : relation.relation,
                         scoreBadge: relation.score,
                         viewsBadge: relation.popularity,
+                        recommendationRatingBadge: _isRecommended(relation)
+                            ? relation.recommendationRating
+                            : null,
                         statusBadge: relation.status,
                         metaLine: [
                           if (relation.format?.isNotEmpty == true) relation.format!,
