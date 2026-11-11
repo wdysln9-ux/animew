@@ -802,33 +802,34 @@ class _RecommendationRatingTag extends StatelessWidget {
     final color = positive
         ? const Color(0xFF24C66A)
         : const Color(0xFFF04452);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          positive ? Icons.thumb_up_rounded : Icons.thumb_down_rounded,
-          size: 13,
-          color: color,
-          shadows: const [
-            Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0),
-          ],
-        ),
-        const SizedBox(width: 3),
-        Text(
-          _compactPopularity(rating.abs()),
-          style: TextStyle(
-            fontFamily: AppText.fontFamily,
-            fontFamilyFallback: AppText.fontFamilyFallback,
-            fontSize: 10,
-            height: 1,
-            fontWeight: FontWeight.w700,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(5, 3, 6, 3),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.68),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            positive ? Icons.thumb_up_rounded : Icons.thumb_down_rounded,
+            size: 13,
             color: color,
-            shadows: const [
-              Shadow(color: Colors.black, offset: Offset(1, 1), blurRadius: 0),
-            ],
           ),
-        ),
-      ],
+          const SizedBox(width: 3),
+          Text(
+            positive ? _compactPopularity(rating) : '-${_compactPopularity(rating.abs())}',
+            style: TextStyle(
+              fontFamily: AppText.fontFamily,
+              fontFamilyFallback: AppText.fontFamilyFallback,
+              fontSize: 10,
+              height: 1,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
