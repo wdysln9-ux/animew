@@ -124,6 +124,12 @@ class AniListCatalogue implements AnimeCatalogue {
       7 || 8 || 9 => 'SUMMER',
       _ => 'FALL',
     };
+    final seasonTitle = switch (season) {
+      'WINTER' => 'Winter',
+      'SPRING' => 'Spring',
+      'SUMMER' => 'Summer',
+      _ => 'Fall',
+    };
     // AniList's FuzzyDateInt form. Needed because START_DATE_DESC alone puts
     // NOT_YET_RELEASED titles first — announced entries with a null start date
     // sort above everything, so the row filled up with "(Provisional Title)"
@@ -146,7 +152,7 @@ class AniListCatalogue implements AnimeCatalogue {
         // against the live API: >1000 returned 2023 entries, >50 returns the
         // current month.
         ('Recently released', recent(k == ZKind.novel ? 50 : 1000)),
-        ('Trending', 'sort:TRENDING_DESC'),
+        ('Sedang Trending', 'sort:TRENDING_DESC'),
         ('Popular', 'sort:POPULARITY_DESC'),
         ('Top rated', 'sort:SCORE_DESC'),
         ('Action', 'genre_in:["Action"],sort:POPULARITY_DESC'),
@@ -160,19 +166,19 @@ class AniListCatalogue implements AnimeCatalogue {
       _ => ('WINTER', now.year + 1),
     };
     return [
-      ('Baru dirilis', recent(2000)),
+      ('Anime Baru', recent(2000)),
       ('Trending', 'sort:TRENDING_DESC'),
       (
-        'Populer musim ini',
+        '$seasonTitle ${now.year}',
         'sort:POPULARITY_DESC,season:$season,seasonYear:${now.year}',
       ),
       (
-        'Paling ditunggu',
+        'Paling Dinanti',
         'sort:POPULARITY_DESC,season:$nextSeason,seasonYear:$nextYear,'
             'status:NOT_YET_RELEASED',
       ),
       ('Populer', 'sort:POPULARITY_DESC'),
-      ('Rating tertinggi', 'sort:SCORE_DESC'),
+      ('Skor Tinggi', 'sort:SCORE_DESC'),
       ('Action', 'genre_in:["Action"],sort:TRENDING_DESC'),
       ('Romantis', 'genre_in:["Romance"],sort:TRENDING_DESC'),
     ];

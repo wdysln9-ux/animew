@@ -94,16 +94,16 @@ class MalCatalogue implements AnimeCatalogue {
           // Both seasonal rows come from ONE request (see [home]) — MAL has no
           // per-season ranking, so the season endpoint is fetched once and
           // read two ways: newest first, and most-listed first.
-          ('Recently released', _recentRow),
-          ('Trending', 'airing'),
-          ('Popular this season', _seasonRow),
-          ('Upcoming next season', 'upcoming'),
+          ('Anime Baru', _recentRow),
+          ('Sedang Trending', 'airing'),
+          (_seasonTitle(), _seasonRow),
+          ('Paling Dinanti', 'upcoming'),
           ('All-time popular', 'bypopularity'),
-          ('Top rated', 'all'),
+          ('Skor Tinggi', 'all'),
           ('Most favorited', 'favorite'),
         ]
       : const [
-          ('Trending', 'bypopularity'),
+          ('Sedang Trending', 'bypopularity'),
           ('Popular', 'bypopularity'),
           ('Top rated', 'all'),
         ];
@@ -123,6 +123,17 @@ class MalCatalogue implements AnimeCatalogue {
       7 || 8 || 9 => 'summer',
       _ => 'fall',
     });
+  }
+
+  static String _seasonTitle([DateTime? now]) {
+    final (year, season) = _currentSeason(now);
+    final name = switch (season) {
+      'winter' => 'Winter',
+      'spring' => 'Spring',
+      'summer' => 'Summer',
+      _ => 'Fall',
+    };
+    return '$name $year';
   }
 
   /// First day of the season [d] falls in — the cutoff that separates a show
