@@ -699,13 +699,13 @@ class _ActionProgressOutlinePainter extends CustomPainter {
     final path = Path()
       ..moveTo(size.width / 2, top)
       ..lineTo(right - r, top)
-      ..arcToPoint(Offset(right, top + r), radius: const Radius.circular(r))
+      ..arcToPoint(Offset(right, top + r), radius: Radius.circular(r))
       ..lineTo(right, bottom - r)
-      ..arcToPoint(Offset(right - r, bottom), radius: const Radius.circular(r))
+      ..arcToPoint(Offset(right - r, bottom), radius: Radius.circular(r))
       ..lineTo(left + r, bottom)
-      ..arcToPoint(Offset(left, bottom - r), radius: const Radius.circular(r))
+      ..arcToPoint(Offset(left, bottom - r), radius: Radius.circular(r))
       ..lineTo(left, top + r)
-      ..arcToPoint(Offset(left + r, top), radius: const Radius.circular(r))
+      ..arcToPoint(Offset(left + r, top), radius: Radius.circular(r))
       ..lineTo(size.width / 2, top);
     final metric = path.computeMetrics().first;
     final progressPath = metric.extractPath(0, metric.length * progress);
