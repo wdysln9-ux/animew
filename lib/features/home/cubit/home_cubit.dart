@@ -367,12 +367,14 @@ class HomeCubit extends Cubit<HomeState> {
     }
     if (sections.isNotEmpty) NovelCloudflare.clear();
 
-    // The global schedule is fetched in parallel with the provider and tracker.
-    // A timeout or API failure only removes this optional row.
-    final airingItems = await airingFuture;
-
     // A newer load started while we were fetching — discard this stale result.
     if (isClosed || gen != _gen) return;
+
+    // Keep Home responsive: render the provider + tracker rows first, then
+    // merge the global schedule as soon as its independent request completes.
+    final initialAiringItems = airingService == null
+        ? const <MediaItem>[]
+        : state.airingItems;
     // Remember the good load so the next cold start paints instantly.
     if (sections.isNotEmpty) {
       unawaited(HomeCache.write(sourceId, cacheKey, sections));
@@ -386,10 +388,22 @@ class HomeCubit extends Cubit<HomeState> {
         // bad row is not an offline screen.
         offline: offline && sections.isEmpty,
         rateLimitedSeconds: limitedSeconds,
-        rows: _mergedRows(sections, kind, library, tracker, airingItems),
-        airingItems: airingItems,
+        rows: _mergedRows(
+          sections, kind, library, tracker, initialAiringItems,
+        ),
+        airingItems: initialAiringItems,
       ),
     );
+
+    if (airingService != null) {
+      unawaited(airingFuture.then((airingItems) {
+        if (isClosed || gen != _gen) return;
+        emit(state.copyWith(
+          airingItems: airingItems,
+          rows: _mergedRows(sections, kind, library, tracker, airingItems),
+        ));
+      }));
+    }
   }
 
   /// Re-merge the rows over the sections already held, without refetching.
