@@ -2060,8 +2060,9 @@ class _DetailViewState extends State<_DetailView> {
           detail.banner ?? item.banner,
         ) ??
         '';
-    // The poster is intentionally reused as the backdrop; do not use the
-    // wide AniList banner for this page's reference design.
+    // Use AniList's wide banner as the hero background and keep the portrait
+    // cover as the foreground poster.
+    final heroBannerUrl = detail.banner ?? item.banner ?? coverUrl;
     final heroPosterUrl = detail.cover ?? item.cover ?? coverUrl;
     final coverHeaders = detail.coverHeaders ?? item.coverHeaders;
     final hasCover = coverUrl.isNotEmpty;
@@ -2210,7 +2211,7 @@ class _DetailViewState extends State<_DetailView> {
 
         // ── 1. Hero: backdrop + overlapping poster + status/total ──────────
         AnimeDetailHeroSliver(
-          coverUrl: heroPosterUrl,
+          coverUrl: heroBannerUrl,
           posterUrl: heroPosterUrl,
           coverHeaders: coverHeaders,
           sourceLabel: detail.anilistId != null ? 'AniList' : sourceName,
