@@ -397,6 +397,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
     this.dateLine,
     this.broadcastLabel,
     this.rank,
+    required this.adaptiveTint,
   });
 
   final String title;
@@ -410,6 +411,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
   final String? dateLine;
   final String? broadcastLabel;
   final int? rank;
+  final ValueListenable<Color?> adaptiveTint;
 
   @override
   Widget build(BuildContext context) {
@@ -427,7 +429,19 @@ class AnimeDetailTitleBlock extends StatelessWidget {
         // The information area uses the exact page background color. The
         // hero artwork fades into this surface at its lower edge.
         Positioned.fill(
-          child: ColoredBox(color: AppColors.bg),
+          child: ValueListenableBuilder<Color?>(
+            valueListenable: adaptiveTint,
+            builder: (context, tint, _) => DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [tint ?? AppColors.bg, AppColors.bg],
+                  stops: const [0.0, 0.82],
+                ),
+              ),
+            ),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
@@ -675,11 +689,24 @@ class _ActionProgressOutlinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (progress <= 0) return;
     final rect = Offset.zero & size;
+    const inset = 1.25;
+    const radius = 22.0;
+    final left = inset;
+    final top = inset;
+    final right = size.width - inset;
+    final bottom = size.height - inset;
+    final r = radius;
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        rect.deflate(1.25),
-        const Radius.circular(22),
-      ));
+      ..moveTo(size.width / 2, top)
+      ..lineTo(right - r, top)
+      ..arcToPoint(Offset(right, top + r), radius: const Radius.circular(r))
+      ..lineTo(right, bottom - r)
+      ..arcToPoint(Offset(right - r, bottom), radius: const Radius.circular(r))
+      ..lineTo(left + r, bottom)
+      ..arcToPoint(Offset(left, bottom - r), radius: const Radius.circular(r))
+      ..lineTo(left, top + r)
+      ..arcToPoint(Offset(left + r, top), radius: const Radius.circular(r))
+      ..lineTo(size.width / 2, top);
     final metric = path.computeMetrics().first;
     final progressPath = metric.extractPath(0, metric.length * progress);
     canvas.drawPath(
@@ -1018,6 +1045,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
           const SizedBox(height: 8),
           SizedBox(height: 124, child: ListView.separated(
             scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
             padding: const EdgeInsets.only(right: 16),
             itemCount: cast.length,
             separatorBuilder: (_, _) => const SizedBox(width: 8),
@@ -1161,7 +1189,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                 isScrollable: true,
                 tabAlignment: TabAlignment.start,
                 padding: const EdgeInsets.only(right: 16),
-                labelPadding: const EdgeInsets.symmetric(horizontal: 7),
+                labelPadding: const EdgeInsets.only(left: 0, right: 14),
                 dividerColor: Colors.transparent,
                 indicatorSize: TabBarIndicatorSize.label,
                 splashFactory: NoSplash.splashFactory,
@@ -1200,6 +1228,8 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         imageUrl: season.cover,
                         cellWidth: width,
                         seriesBadge: 'Seri ${season.number}',
+                        scoreBadge: season.score,
+                        statusBadge: season.status,
                         viewsBadge: season.popularity,
                         metaLine: season.episodes == null ? null : 'TV · ${season.episodes} eps',
                         onTap: () => widget.onOpenSeason(season),
@@ -1215,7 +1245,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         title: relation.title,
                         imageUrl: relation.cover,
                         cellWidth: width,
-                        seriesBadge: relation.relation,
+                        seriesBadge: _isRecommended(relation) ? null : relation.relation,
                         scoreBadge: relation.score,
                         viewsBadge: relation.popularity,
                         statusBadge: relation.status,
@@ -1259,6 +1289,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                 }
                 return ListView.separated(
                   scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
                   padding: const EdgeInsets.only(right: 16),
                   itemCount: cards.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 9),
