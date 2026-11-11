@@ -28,6 +28,7 @@ class HistoryEntry {
     required this.duration,
     required this.updatedAt,
     this.malId,
+    this.totalEpisodes,
   });
   final String sourceId,
       showId,
@@ -44,6 +45,8 @@ class HistoryEntry {
   /// to [cover]. Null for older entries and sources without episode thumbnails.
   final String? thumbnail;
   final double? episodeNumber;
+  /// Total episode count known when this history entry was saved.
+  final int? totalEpisodes;
 
   /// MyAnimeList id (anime), carried so a resume from Continue Watching can
   /// still auto-scrobble to AniList.
@@ -326,6 +329,7 @@ class WatchHistory {
       'category': e.category,
       'episodeId': e.episodeId,
       'episodeNumber': e.episodeNumber,
+      'totalEpisodes': e.totalEpisodes,
       'episodeUrl': e.episodeUrl,
       'positionMs': e.position.inMilliseconds,
       'durationMs': e.duration.inMilliseconds,
@@ -447,6 +451,7 @@ class WatchHistory {
       category: m['category'] as String? ?? 'sub',
       episodeId: m['episodeId'] as String? ?? '',
       episodeNumber: (m['episodeNumber'] as num?)?.toDouble(),
+      totalEpisodes: (m['totalEpisodes'] as num?)?.toInt(),
       episodeUrl: m['episodeUrl'] as String? ?? '',
       position: Duration(milliseconds: (m['positionMs'] as num?)?.toInt() ?? 0),
       duration: Duration(milliseconds: (m['durationMs'] as num?)?.toInt() ?? 0),
