@@ -659,7 +659,7 @@ class AnimeDetailSynopsisSection extends StatefulWidget {
 }
 
 class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection> {
-  late bool _expanded = sl<PlaybackPrefs>().synopsisExpanded;
+  late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('synopsis');
   String? _translated;
 
   @override
@@ -674,7 +674,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
       return;
     }
     setState(() => _expanded = !_expanded);
-    unawaited(sl<PlaybackPrefs>().setSynopsisExpanded(_expanded));
+    unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('synopsis', _expanded));
   }
 
   @override
@@ -795,7 +795,7 @@ class _DetailCredits extends StatefulWidget {
 }
 
 class _DetailCreditsState extends State<_DetailCredits> {
-  bool _expanded = false;
+  late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('credits');
 
   Widget _chip(String label, Color color, {VoidCallback? onTap}) {
     final child = Container(
@@ -864,7 +864,10 @@ class _DetailCreditsState extends State<_DetailCredits> {
             const SizedBox(height: 7),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _expanded = true),
+              onTap: () => setState(() {
+                _expanded = true;
+                unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('credits', true));
+              }),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 child: Row(
@@ -892,7 +895,10 @@ class _DetailCreditsState extends State<_DetailCredits> {
           if (_expanded && hasCredits)
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _expanded = false),
+              onTap: () => setState(() {
+                _expanded = false;
+                unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('credits', false));
+              }),
               child: Padding(
                 padding: const EdgeInsets.only(top: 6, bottom: 1),
                 child: Text('Lebih sedikit', style: AppText.caption.copyWith(
@@ -916,16 +922,19 @@ class AnimeDetailCharacterRail extends StatefulWidget {
   State<AnimeDetailCharacterRail> createState() => _AnimeDetailCharacterRailState();
 }
 class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
-  bool _expanded = true;
+  late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('characters', defaultValue: true);
   @override
   Widget build(BuildContext context) {
     final cast = widget.cast;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 0, 0),
+      padding: const EdgeInsets.fromLTRB(16, 5, 0, 0),
       child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () => setState(() => _expanded = !_expanded),
+          onTap: () => setState(() {
+            _expanded = !_expanded;
+            unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('characters', _expanded));
+          }),
           child: Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Row(children: [
@@ -954,12 +963,12 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
             ),
           ),
         if (_expanded && cast.isNotEmpty) ...[
-          const SizedBox(height: 11),
+          const SizedBox(height: 8),
           SizedBox(height: 148, child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(right: 16),
             itemCount: cast.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               final member = cast[index];
               return SizedBox(width: 86, child: GestureDetector(
@@ -1096,51 +1105,33 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 27,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(right: 16),
-              itemCount: tabs.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 9),
-              itemBuilder: (context, index) {
-                final selected = index == _selected;
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => setState(() => _selected = index),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 3),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          tabs[index],
-                          style: AppText.headline.copyWith(
-                            fontSize: 13,
-                            height: 1.2,
-                            color: selected
-                                ? AppColors.textPrimary
-                                : AppColors.textSecondary,
-                            fontWeight: selected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                          ),
-                        ),
-                        const Spacer(),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeInOut,
-                          width: selected ? 30 : 0,
-                          height: 2,
-                          decoration: BoxDecoration(
-                            color: AppColors.accent,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+            height: 30,
+            child: DefaultTabController(
+              length: tabs.length,
+              initialIndex: _selected,
+              child: TabBar(
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                padding: const EdgeInsets.only(right: 16),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 7),
+                dividerColor: Colors.transparent,
+                indicatorSize: TabBarIndicatorSize.label,
+                indicator: UnderlineTabIndicator(
+                  borderSide: BorderSide(color: AppColors.accent, width: 2),
+                  borderRadius: BorderRadius.circular(2),
+                  insets: const EdgeInsets.only(bottom: 1),
+                ),
+                labelStyle: AppText.headline.copyWith(
+                  fontSize: 13, height: 1.2, fontWeight: FontWeight.w700,
+                ),
+                unselectedLabelStyle: AppText.headline.copyWith(
+                  fontSize: 13, height: 1.2, fontWeight: FontWeight.w500,
+                ),
+                labelColor: AppColors.textPrimary,
+                unselectedLabelColor: AppColors.textSecondary,
+                onTap: (index) => setState(() => _selected = index),
+                tabs: [for (final tab in tabs) Tab(height: 28, text: tab)],
+              ),
             ),
           ),
           const SizedBox(height: 6),
