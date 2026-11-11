@@ -27,8 +27,6 @@ class _EpisodesTab extends StatefulWidget {
     this.autoScrollToResume = false,
     this.targetEpisodeId,
     this.trackerProgress,
-    this.nextAiringEpisode,
-    this.nextAiringAt,
     this.showPopularity,
     this.totalEpisodes,
     this.isAiring = false,
@@ -85,8 +83,6 @@ class _EpisodesTab extends StatefulWidget {
   /// Next episode to air and when. Both null unless the title matched a
   /// tracker and is still airing, which is what keeps the row off finished
   /// shows and movies instead of showing an empty countdown.
-  final int? nextAiringEpisode;
-  final DateTime? nextAiringAt;
   final int? showPopularity;
   final int? totalEpisodes;
   final bool isAiring;
@@ -348,34 +344,6 @@ class _EpisodesTabState extends State<_EpisodesTab> {
         // Only when the tracker says the show is still airing. Sits under the
         // header so it reads as part of the episode list rather than another
         // thing competing with the hero.
-        if (widget.nextAiringEpisode != null && widget.nextAiringAt != null)
-          Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-              child: RichText(
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                text: TextSpan(
-                  style: AppText.body.copyWith(color: AppColors.textSecondary),
-                  children: [
-                    TextSpan(
-                      text: context.l10n.episodeLabel(
-                        widget.nextAiringEpisode!,
-                      ),
-                    ),
-                    TextSpan(text: context.l10n.airsIn),
-                    // The countdown carries the weight — it's the part worth
-                    // glancing at; the rest is scaffolding around it.
-                    TextSpan(
-                      text: airsIn(widget.nextAiringAt!, long: true),
-                      style: AppText.body.copyWith(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
         // Only when a title actually has more than one group — a single
         // scanlator needs no picker, and most titles have exactly one.
         if (groups.length > 1)
@@ -1191,13 +1159,12 @@ if (isFiller)
                   ),
                 ),
               ),
-            if (isWatched || isInProgress || isResume)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _ThumbnailProgressBar(fraction: fraction),
-              ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _ThumbnailProgressBar(fraction: fraction),
+            ),
           ],
         ),
       ),
