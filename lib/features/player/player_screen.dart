@@ -3795,7 +3795,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Widget build(BuildContext context) {
     // While minimized, keep the native player route and cubit alive without
     // covering or intercepting the page underneath it.
-    if (_minimized) return const SizedBox.expand();
+    if (_minimized) {
+      return const IgnorePointer(ignoring: true, child: SizedBox.expand());
+    }
 
     // A Watch Together join that couldn't resolve the room's source — explain
     // it clearly instead of a blank/bouncing screen.
@@ -4781,10 +4783,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
       // In episode-detail mode, the first system Back while fullscreen must
       // return to the inline episode page instead of popping the player route.
       // Once details are visible, preserve the configured close behaviour.
-      canPop: !_ready &&
+      canPop: !_minimized &&
+          !_ready &&
           (!widget.episodeDetailMode || _showEpisodeDetails) &&
           sl<PlaybackPrefs>().closeConfirmation == 'direct',
       onPopInvokedWithResult: (didPop, _) {
+        if (_minimized) return;
         AppLogger.instance.log(
           '[player-route] pop didPop=$didPop loading=${_c.state.loadingSources} '
           'closeMode=${sl<PlaybackPrefs>().closeConfirmation} '
