@@ -274,6 +274,17 @@ class _PosterCardState extends State<PosterCard> {
     return int.tryParse(raw);
   }
 
+  Color get _loadingSurfaceColor {
+    final raw = widget.logoItem?.coverColor?.trim();
+    if (raw != null && raw.isNotEmpty) {
+      final hex = raw.startsWith('#') ? raw.substring(1) : raw;
+      final normalized = hex.length == 6 ? 'FF$hex' : hex;
+      final value = int.tryParse(normalized, radix: 16);
+      if (value != null) return Color(value);
+    }
+    return AppColors.surface2;
+  }
+
   /// The Mihon source id for this cover, or null. Twin of [_aniSrcId] — routes
   /// Cloudflare-gated manga covers through the native, cf_clearance-carrying
   /// [MihonImage] instead of CachedNetworkImage.
@@ -345,7 +356,7 @@ class _PosterCardState extends State<PosterCard> {
                     fit: StackFit.expand,
                     children: [
                       if (artUrl == null)
-                        ColoredBox(color: AppColors.surface2)
+                        ColoredBox(color: _loadingSurfaceColor)
                       else if (aniSrcId != null || mihonSrcId != null)
                         // Aniyomi/Mihon path: fetch bytes through the source's own
                         // OkHttpClient (carries CF session cookies) instead of
@@ -365,9 +376,9 @@ class _PosterCardState extends State<PosterCard> {
                           loadingBuilder: (_, child, progress) =>
                               progress == null
                               ? child
-                              : ColoredBox(color: AppColors.surface2),
+                              : ColoredBox(color: _loadingSurfaceColor),
                           errorBuilder: (context, error, stackTrace) =>
-                              ColoredBox(color: AppColors.surface2),
+                              ColoredBox(color: _loadingSurfaceColor),
                         )
                       else
                         CachedNetworkImage(
@@ -381,9 +392,9 @@ class _PosterCardState extends State<PosterCard> {
                               ? Duration.zero
                               : const Duration(milliseconds: 180),
                           placeholder: (context, url) =>
-                              ColoredBox(color: AppColors.surface2),
+                              ColoredBox(color: _loadingSurfaceColor),
                           errorWidget: (context, url, err) =>
-                              ColoredBox(color: AppColors.surface2),
+                              ColoredBox(color: _loadingSurfaceColor),
                         ),
                       if (titleInside || hasBottomBadges || hasRightBadges)
                         const DecoratedBox(
