@@ -244,12 +244,15 @@ class AniListApi {
 
   /// Fetch the signed-in user's AniList notifications. The API resets the
   /// unread counter on the first page load, matching AniList's own inbox.
-  Future<List<Map<String, dynamic>>> notifications({int page = 1}) async {
+  Future<List<Map<String, dynamic>>> notifications({
+    int page = 1,
+    List<String>? types,
+  }) async {
     const query = r'''
-query($page:Int,$perPage:Int,$reset:Boolean) {
+query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
   Page(page:$page, perPage:$perPage) {
     pageInfo { hasNextPage }
-    notifications(resetNotificationCount:$reset) {
+    notifications(resetNotificationCount:$reset, type_in:$types) {
       __typename
       ... on AiringNotification {
         id type createdAt animeId episode contexts
@@ -328,7 +331,7 @@ query($page:Int,$perPage:Int,$reset:Boolean) {
 }''';
     final d = await _gql(
       query,
-      {'page': page, 'perPage': 50, 'reset': page == 1},
+      {'page': page, 'perPage': 50, 'reset': page == 1, 'types': types},
       auth: true,
       throwOnError: true,
     );
