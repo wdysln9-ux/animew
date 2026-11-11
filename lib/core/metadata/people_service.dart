@@ -12,34 +12,38 @@ class PeopleService {
   final Dio _dio;
 
   static const String _anilist = 'https://graphql.anilist.co';
+  final Map<String, Future<PersonRef?>> _characterLookups = {};
   static const String _tmdbBase = 'https://api.themoviedb.org/3';
   static const String _img = 'https://image.tmdb.org/t/p';
 
   /// Best-effort fallback for source-provided cast rows that have a name
   /// but no AniList character id. This lets those cards open a real profile.
-  Future<PersonRef?> findCharacter(String name) async {
+  Future<PersonRef?> findCharacter(String name) {
     final query = name.trim();
-    if (query.isEmpty) return null;
-    final data = await _gql(
-      'query(\$search:String){ Character(search:\$search){ id name{full} image{medium} } }',
-      {'search': query},
-    );
-    final character = data?['Character'];
-    if (character is! Map) return null;
-    final id = (character['id'] as num?)?.toInt();
-    final resolvedName = character['name'] is Map
-        ? character['name']['full'] as String?
-        : null;
-    if (id == null || resolvedName == null || resolvedName.isEmpty) return null;
-    final photo = character['image'] is Map
-        ? character['image']['medium'] as String?
-        : null;
-    return PersonRef(
-      id: id,
-      source: PersonSource.anilistCharacter,
-      name: resolvedName,
-      photo: photo,
-    );
+    if (query.isEmpty) return Future.value(null);
+    final key = query.toLowerCase();
+    return _characterLookups.putIfAbsent(key, () async {
+      final data = await _gql(
+        'query(\$search:String){ Character(search:\$search){ id name{full} image{medium} } }',
+        {'search': query},
+      );
+      final character = data?['Character'];
+      if (character is! Map) return null;
+      final id = (character['id'] as num?)?.toInt();
+      final resolvedName = character['name'] is Map
+          ? character['name']['full'] as String?
+          : null;
+      if (id == null || resolvedName == null || resolvedName.isEmpty) return null;
+      final photo = character['image'] is Map
+          ? character['image']['medium'] as String?
+          : null;
+      return PersonRef(
+        id: id,
+        source: PersonSource.anilistCharacter,
+        name: resolvedName,
+        photo: photo,
+      );
+    });
   }
 
   Future<PersonProfile?> load(PersonRef ref) {
