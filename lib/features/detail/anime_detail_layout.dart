@@ -323,7 +323,10 @@ class _AnimeDetailToolbarDelegate extends SliverPersistentHeaderDelegate {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.headline,
+                  style: AppText.animeTitle.copyWith(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
