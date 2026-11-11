@@ -17,6 +17,9 @@ class MediaItem extends Equatable {
   /// doesn't provide one; UI falls back to [title].
   final String? englishTitle;
   final String? cover;
+  /// AniList's per-title coverImage.color, used as the poster loading surface.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? coverColor;
   final Map<String, String>? coverHeaders;
 
   /// Wide 16:9 art (AniList `bannerImage` / TMDB `backdrop_path`), for the
@@ -135,6 +138,7 @@ class MediaItem extends Equatable {
     required this.title,
     this.englishTitle,
     this.cover,
+    this.coverColor,
     this.coverHeaders,
     this.banner,
     required this.url,
@@ -181,6 +185,7 @@ class MediaItem extends Equatable {
     title: title,
     englishTitle: englishTitle,
     cover: cover,
+    coverColor: coverColor,
     coverHeaders: coverHeaders,
     banner: banner,
     url: url,
@@ -219,6 +224,7 @@ class MediaItem extends Equatable {
     title,
     englishTitle,
     cover,
+    coverColor,
     coverHeaders,
     banner,
     url,
