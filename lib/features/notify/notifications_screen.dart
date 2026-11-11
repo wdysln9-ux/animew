@@ -225,7 +225,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               return ChoiceChip(
                 label: Text(tab.$2),
                 selected: selected,
-                onSelected: (_) => setState(() => _selected = tab.$1),
+                onSelected: (_) {
+                  setState(() => _selected = tab.$1);
+                  if (_scroll.hasClients) _scroll.jumpTo(0);
+                },
                 showCheckmark: false,
                 labelStyle: AppText.caption.copyWith(
                   color: selected ? AppColors.bg : AppColors.textPrimary,
@@ -344,6 +347,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if ((contextText?.isNotEmpty != true) && contexts.isNotEmpty) contexts,
       if ((n['status']?.toString().isNotEmpty ?? false)) 'Status: ${n['status']}',
       if ((n['notes']?.toString().isNotEmpty ?? false)) n['notes'].toString(),
+      if ((n['reason']?.toString().isNotEmpty ?? false)) n['reason'].toString(),
+      if (n['deletedMediaTitles'] is List)
+        (n['deletedMediaTitles'] as List).whereType<String>().join(', '),
     ];
     final detail = detailParts.join(' · ');
     final type = (n['type'] ?? '').toString();
@@ -388,6 +394,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if ((target == null || target.isEmpty) && media?['id'] != null) {
         target = 'https://anilist.co/anime/${media!['id']}';
       }
+    } else if (type == 'MEDIA_DELETION') {
+      final id = n['mediaId'];
+      if (id != null) target = 'https://anilist.co/anime/$id';
     } else if (type == 'FOLLOWING') {
       target = user?['siteUrl']?.toString();
       if ((target == null || target.isEmpty) && user?['name'] != null) {
