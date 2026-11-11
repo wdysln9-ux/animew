@@ -956,25 +956,36 @@ class _SearchViewState extends State<_SearchView>
       child: Row(
         children: [
           const Spacer(),
-          ActionChip(
-            onPressed: () {
-              setState(() {
-                _metaFilters = MetaFilters(
-                  sort: _metaFilters.sort,
-                  sortAscending: _metaFilters.sortAscending,
-                  adult: _metaFilters.adult,
-                );
-                _hideMyAnime = false;
-              });
-              _applyMetaFilters(browseDefaults: true);
-            },
-            avatar: const Icon(Icons.close_rounded, size: 15, color: Color(0xFFFF5364)),
-            label: const SizedBox.shrink(),
-            padding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
-            backgroundColor: const Color(0x1AFF5364),
-            side: const BorderSide(color: Color(0x66FF5364)),
-            shape: const CircleBorder(),
+          Tooltip(
+            message: 'Bersihkan filter',
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () {
+                setState(() {
+                  _metaFilters = MetaFilters(
+                    sort: _metaFilters.sort,
+                    sortAscending: _metaFilters.sortAscending,
+                    adult: _metaFilters.adult,
+                  );
+                  _hideMyAnime = false;
+                });
+                _applyMetaFilters(browseDefaults: true);
+              },
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0x1AFF5364),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0x66FF5364)),
+                ),
+                child: const Icon(
+                  Icons.close_rounded,
+                  size: 16,
+                  color: Color(0xFFFF5364),
+                ),
+              ),
+            ),
           ),
           const SizedBox(width: 8),
           PopupMenuButton<MetaSort>(
