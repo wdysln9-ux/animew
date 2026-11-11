@@ -67,34 +67,75 @@ class MetadataEnrichment {
 
     Future<List<({int id, int? malId, String title, String? cover, int? episodes, int? popularity})>>
         walk(String relation) async {
-      final result = <({int id, int? malId, String title, String? cover, int? episodes, int? popularity})>[];
+      final result = <({
+        int id,
+        int? malId,
+        String title,
+        String? cover,
+        int? episodes,
+        int? popularity,
+        int depth,
+      })>[];
       final seen = <int>{currentId};
-      var cursor = currentId;
-      // Long franchises can exceed the four-title limit used by the old
-      // Jikan path. Keep a generous safety bound without making a loop endless.
-      while (result.length < 24) {
-        List<({String relation, int id, int? idMal, String? format, String title, String? cover, int? episodes, int? popularity})> neighbours;
+      final queue = <({int id, int depth})>[
+        (id: currentId, depth: 0),
+      ];
+
+      // Follow every matching edge, not just the first one. Some franchises
+      // branch into films, OVAs, or parallel seasons; a single next-hop walk
+      // silently dropped every branch after the first.
+      while (queue.isNotEmpty && result.length < 24) {
+        final node = queue.removeAt(0);
+        List<({
+          String relation,
+          int id,
+          int? idMal,
+          String? format,
+          String title,
+          String? cover,
+          int? episodes,
+          int? popularity,
+        })> neighbours;
         try {
-          neighbours = await _anilist.seasonNeighbours(cursor);
+          neighbours = await _anilist.seasonNeighbours(node.id);
         } catch (_) {
-          break;
+          continue;
         }
-        final next = neighbours.where((n) =>
-          n.relation == relation && isSeason(n.format) && !seen.contains(n.id)
-        ).firstOrNull;
-        if (next == null) break;
-        seen.add(next.id);
-        result.add((
-          id: next.id,
-          malId: next.idMal,
-          title: next.title,
-          cover: next.cover,
-          episodes: next.episodes,
-          popularity: next.popularity,
-        ));
-        cursor = next.id;
+        for (final next in neighbours) {
+          if (next.relation != relation ||
+              !isSeason(next.format) ||
+              !seen.add(next.id)) {
+            continue;
+          }
+          result.add((
+            id: next.id,
+            malId: next.idMal,
+            title: next.title,
+            cover: next.cover,
+            episodes: next.episodes,
+            popularity: next.popularity,
+            depth: node.depth + 1,
+          ));
+          queue.add((id: next.id, depth: node.depth + 1));
+          if (result.length >= 24) break;
+        }
       }
-      return result;
+
+      // Prequels run oldest → newest; sequels run nearest → farthest.
+      result.sort((a, b) => relation == 'PREQUEL'
+          ? b.depth.compareTo(a.depth)
+          : a.depth.compareTo(b.depth));
+      return [
+        for (final entry in result)
+          (
+            id: entry.id,
+            malId: entry.malId,
+            title: entry.title,
+            cover: entry.cover,
+            episodes: entry.episodes,
+            popularity: entry.popularity,
+          ),
+      ];
     }
 
     final walks = await Future.wait([
