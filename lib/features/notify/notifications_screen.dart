@@ -11,14 +11,14 @@ import '../../l10n/l10n.dart';
 
 enum _NotificationTab { all, airing, activity, forum, following, media, submissions }
 
-const _tabs = <(_NotificationTab, String)>[
-  (_NotificationTab.all, 'Semua'),
-  (_NotificationTab.airing, 'Episode'),
-  (_NotificationTab.activity, 'Aktivitas'),
-  (_NotificationTab.forum, 'Forum'),
-  (_NotificationTab.following, 'Pengikut'),
-  (_NotificationTab.media, 'Media'),
-  (_NotificationTab.submissions, 'Submissions'),
+const _tabs = <(_NotificationTab, String, IconData, Color)>[
+  (_NotificationTab.all, 'Semua', Icons.notifications_active_rounded, AppColors.accent),
+  (_NotificationTab.airing, 'Episode', Icons.play_circle_rounded, Color(0xFF35B7E8)),
+  (_NotificationTab.activity, 'Aktivitas', Icons.bolt_rounded, Color(0xFFFFB547)),
+  (_NotificationTab.forum, 'Forum', Icons.forum_rounded, Color(0xFF9B83F6)),
+  (_NotificationTab.following, 'Pengikut', Icons.people_alt_rounded, Color(0xFF42C99A)),
+  (_NotificationTab.media, 'Media', Icons.movie_creation_rounded, Color(0xFFFF7C91)),
+  (_NotificationTab.submissions, 'Submissions', Icons.fact_check_rounded, Color(0xFFB0A0FF)),
 ];
 const _activity = <String>{'ACTIVITY_MESSAGE','ACTIVITY_MENTION','ACTIVITY_REPLY','ACTIVITY_REPLY_SUBSCRIBED','ACTIVITY_LIKE','ACTIVITY_REPLY_LIKE'};
 const _forum = <String>{'THREAD_COMMENT_MENTION','THREAD_COMMENT_REPLY','THREAD_SUBSCRIBED','THREAD_COMMENT_LIKE','THREAD_LIKE'};
@@ -222,7 +222,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             itemBuilder: (context, index) {
               final tab = _tabs[index];
               final selected = _selected == tab.$1;
+              final tabColor = tab.$4;
               return ChoiceChip(
+                avatar: Icon(
+                  tab.$3,
+                  size: 16,
+                  color: selected ? AppColors.bg : tabColor,
+                ),
                 label: Text(tab.$2),
                 selected: selected,
                 onSelected: (_) {
@@ -232,13 +238,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 showCheckmark: false,
                 labelStyle: AppText.caption.copyWith(
                   color: selected ? AppColors.bg : AppColors.textPrimary,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                 ),
-                selectedColor: AppColors.accent,
-                backgroundColor: AppColors.surface2,
-                side: BorderSide.none,
+                selectedColor: tabColor,
+                backgroundColor: tabColor.withOpacity(0.13),
+                side: BorderSide(
+                  color: tabColor.withOpacity(selected ? 0 : 0.28),
+                  width: 1,
+                ),
                 shape: const StadiumBorder(),
                 visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 5),
               );
             },
           ),
