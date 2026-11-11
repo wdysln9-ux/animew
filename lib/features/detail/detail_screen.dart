@@ -2308,6 +2308,7 @@ class _DetailViewState extends State<_DetailView> {
                     loading: state.episodesLoading,
                     label: buttonLabel,
                     progress: resumeProgress,
+                    adaptiveTint: _tint,
                     icon: isReading ? Icons.menu_book_rounded : Icons.play_arrow_rounded,
                     onPressed: eps.isNotEmpty
                         ? () => _openPlayer(eps, resumeIdx, detail, category)
@@ -2318,6 +2319,7 @@ class _DetailViewState extends State<_DetailView> {
                 Expanded(
                   child: AnimeDetailActionButton(
                     loading: state.episodesLoading,
+                    adaptiveTint: _tint,
                     label: isReading ? downloadLabel : (_inMyList ? 'Tersimpan' : 'Simpan'),
                     active: !isReading && _inMyList,
                     primary: !isReading && !_inMyList,
@@ -2335,11 +2337,13 @@ class _DetailViewState extends State<_DetailView> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
+                ValueListenableBuilder<Color?>(
+                  valueListenable: _tint,
+                  builder: (context, tint, _) => Container(
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: AppColors.bg,
+                    color: Color.lerp(AppColors.surface2, tint ?? AppColors.surface2, 0.52),
                     border: Border.all(color: AppColors.textTertiary.withValues(alpha: 0.48)),
                     borderRadius: BorderRadius.circular(28),
                   ),
@@ -2449,6 +2453,7 @@ class _DetailViewState extends State<_DetailView> {
                     ),
                     icon: const Icon(Icons.more_horiz_rounded, color: AppColors.textPrimary, size: 21),
                   )
+                  ),
                 ),
               ],
             ),
