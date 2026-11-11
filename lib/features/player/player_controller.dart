@@ -3831,6 +3831,7 @@ class PlayerCubit extends Cubit<PlayerState> {
           category: _activeCategory,
           episodeId: currentEpisode.id,
           episodeNumber: currentEpisode.number,
+          totalEpisodes: episodes.isEmpty ? null : episodes.length,
           episodeUrl: currentEpisode.url,
           position: _lastPos,
           duration: _lastDur,
