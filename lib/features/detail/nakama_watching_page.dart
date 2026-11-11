@@ -135,7 +135,7 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
   Widget _ratingWidget(double score, String format) {
     final color = AppColors.accent;
     if (format == 'POINT_5') {
-      final stars = score.round().clamp(0, 5);
+      final stars = score.round().clamp(0, 5).toInt();
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: List.generate(
@@ -145,7 +145,7 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
       );
     }
     if (format == 'POINT_3') {
-      final value = score.round().clamp(0, 3);
+      final value = score.round().clamp(0, 3).toInt();
       final icon = switch (value) {
         1 => Icons.sentiment_dissatisfied_rounded,
         2 => Icons.sentiment_neutral_rounded,
