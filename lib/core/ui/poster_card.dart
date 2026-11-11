@@ -451,6 +451,7 @@ class _PosterCardState extends State<PosterCard> {
                                     height: 1,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
+                                    backgroundColor: Colors.black.withValues(alpha: 0.55),
                                     shadows: [Shadow(color: Colors.black.withValues(alpha: 0.85), blurRadius: 4)],
                                   ),
                                 ),
