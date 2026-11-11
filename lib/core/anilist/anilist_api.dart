@@ -354,6 +354,47 @@ query($page:Int,$perPage:Int,$reset:Boolean,$types:[NotificationType]) {
         .toList();
   }
 
+  /// Entries for the selected anime made by accounts the viewer follows.
+  /// AniList filters these server-side, so this is one paginated request rather
+  /// than one request per followed account.
+  Future<({List<Map<String, dynamic>> entries, bool hasNextPage})>
+  nakamaWatching(int mediaId, {int page = 1}) async {
+    const query = r'''
+query($page:Int,$mediaId:Int) {
+  Page(page:$page, perPage:50) {
+    pageInfo { hasNextPage }
+    mediaList(mediaId:$mediaId, type:ANIME, isFollowing:true, sort:UPDATED_TIME_DESC) {
+      id
+      status
+      progress
+      score(format:POINT_10)
+      user { id name avatar { large } }
+    }
+  }
+}''';
+    final data = await _gql(
+      query,
+      {'page': page, 'mediaId': mediaId},
+      auth: true,
+      throwOnError: true,
+    );
+    final pageData = data?['Page'];
+    if (pageData is! Map) {
+      throw StateError('Data Nakama Menonton tidak tersedia.');
+    }
+    final rawEntries = pageData['mediaList'];
+    final entries = rawEntries is List
+        ? rawEntries.whereType<Map>()
+            .map((entry) => Map<String, dynamic>.from(entry))
+            .toList()
+        : <Map<String, dynamic>>[];
+    final pageInfo = pageData['pageInfo'];
+    return (
+      entries: entries,
+      hasNextPage: pageInfo is Map && pageInfo['hasNextPage'] == true,
+    );
+  }
+
   Future<int> unreadNotificationCount() async {
     final d = await _gql('query{ Viewer{ unreadNotificationCount } }', const {}, auth: true);
     final viewer = d?['Viewer'];
