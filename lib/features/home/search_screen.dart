@@ -964,6 +964,7 @@ class _SearchViewState extends State<_SearchView>
                   sortAscending: _metaFilters.sortAscending,
                   adult: _metaFilters.adult,
                 );
+                _hideMyAnime = false;
               });
               _applyMetaFilters(browseDefaults: true);
             },
