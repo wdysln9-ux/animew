@@ -259,10 +259,11 @@ query($page:Int,$perPage:Int,$reset:Boolean) {
         id type createdAt user { id name siteUrl avatar { large } }
       }
       ... on ActivityMessageNotification {
-        id type createdAt context user { id name avatar { large } } activityId
+        id type createdAt context user { id name siteUrl avatar { large } } activityId
+        message { id message }
       }
       ... on ActivityMentionNotification {
-        id type createdAt context user { id name avatar { large } } activityId
+        id type createdAt context user { id name siteUrl avatar { large } } activityId
       }
       ... on ActivityReplyNotification {
         id type createdAt context user { id name avatar { large } } activityId
@@ -277,8 +278,9 @@ query($page:Int,$perPage:Int,$reset:Boolean) {
         id type createdAt context user { id name avatar { large } } activityId
       }
       ... on ThreadCommentMentionNotification {
-        id type createdAt context user { id name avatar { large } }
+        id type createdAt context user { id name siteUrl avatar { large } }
         thread { id title siteUrl }
+        comment { id comment }
       }
       ... on ThreadCommentReplyNotification {
         id type createdAt context user { id name avatar { large } }
@@ -303,10 +305,11 @@ query($page:Int,$perPage:Int,$reset:Boolean) {
         id type createdAt context media { id siteUrl title { romaji english } coverImage { large } }
       }
       ... on MediaMergeNotification {
-        id type createdAt context media { id siteUrl title { romaji english } coverImage { large } }
+        id type createdAt context reason deletedMediaTitles
+        media { id siteUrl title { romaji english } coverImage { large } }
       }
       ... on MediaDeletionNotification {
-        id type createdAt context media { id siteUrl title { romaji english } coverImage { large } }
+        id type createdAt mediaId context reason deletedMediaTitle
       }
       ... on MediaSubmissionUpdateNotification {
         id type createdAt contexts status notes
