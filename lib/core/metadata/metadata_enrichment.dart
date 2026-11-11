@@ -142,7 +142,7 @@ class MetadataEnrichment {
       walk('PREQUEL'),
       walk('SEQUEL'),
     ]);
-    final before = walks[0].reversed.toList();
+    final before = walks[0];
     final after = walks[1];
 
     final ordered = <({int id, int? malId, String title, String? cover, int? episodes, int? popularity})>[
