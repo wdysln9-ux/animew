@@ -131,6 +131,7 @@ class PhonePlayerActivity : Activity() {
         } else {
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
+        updateDisplayCutoutMode(resources.configuration.orientation)
         goImmersive()
 
         val url = intent.getStringExtra(PhonePlayerIntent.EXTRA_URL).orEmpty()
@@ -456,6 +457,8 @@ class PhonePlayerActivity : Activity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        updateDisplayCutoutMode(newConfig.orientation)
+        goImmersive()
         moreDialog?.dismiss()
         updateOrientationLayout()
         val parent = quickActions.parent as ViewGroup
@@ -1468,6 +1471,26 @@ class PhonePlayerActivity : Activity() {
         if (controls.visibility == View.VISIBLE) { hideControls(); return }
         @Suppress("DEPRECATION")
         super.onBackPressed()
+    }
+
+    /**
+     * Let the video extend behind the display cutout in landscape. The phone
+     * player is a separate Activity from MainActivity, so it must apply the
+     * cutout policy itself or the notch area is left as a black strip.
+     */
+    private fun updateDisplayCutoutMode(orientation: Int) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.P) return
+        val mode = if (
+            orientation == Configuration.ORIENTATION_LANDSCAPE &&
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R
+        ) {
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        } else {
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+        window.attributes = window.attributes.apply {
+            layoutInDisplayCutoutMode = mode
+        }
     }
 
     private fun goImmersive() {
