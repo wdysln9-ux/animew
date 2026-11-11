@@ -188,7 +188,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final media = n['media'] is Map ? n['media'] as Map : null;
     switch (type) {
       case 'AIRING': return 'Episode ' + (n['episode'] ?? '').toString();
-      case 'RELATED_MEDIA_ADDITION': return 'Ditambahkan ke database';
+      case 'RELATED_MEDIA_ADDITION': return _mediaKind(media);
       case 'MEDIA_DATA_CHANGE': return 'Informasi ' + _mediaKind(media).toLowerCase() + ' diperbarui';
       case 'MEDIA_SUBMISSION_UPDATE':
       case 'STAFF_SUBMISSION_UPDATE':
