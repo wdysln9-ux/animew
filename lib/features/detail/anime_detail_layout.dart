@@ -138,11 +138,11 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.10),
+                          Colors.black.withValues(alpha: 0.16),
+                          Colors.black.withValues(alpha: 0.34),
                           AppColors.bg,
                         ],
-                        stops: [0.54, 0.78, 1.0],
+                        stops: [0.0, 0.58, 1.0],
                       ),
                     ),
                   ),
@@ -217,7 +217,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 0,
+                bottom: 8,
                 child: Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
@@ -425,7 +425,7 @@ class AnimeDetailTitleBlock extends StatelessWidget {
           child: ColoredBox(color: AppColors.bg),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -901,9 +901,13 @@ class _DetailCreditsState extends State<_DetailCredits> {
               }),
               child: Padding(
                 padding: const EdgeInsets.only(top: 6, bottom: 1),
-                child: Text('Lebih sedikit', style: AppText.caption.copyWith(
-                  fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600,
-                )),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.keyboard_arrow_up_rounded, size: 18, color: AppColors.textSecondary),
+                  const SizedBox(width: 2),
+                  Text('Sembunyikan', style: AppText.caption.copyWith(
+                    fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600,
+                  )),
+                ]),
               ),
             ),
         ],
@@ -964,7 +968,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
           ),
         if (_expanded && cast.isNotEmpty) ...[
           const SizedBox(height: 8),
-          SizedBox(height: 148, child: ListView.separated(
+          SizedBox(height: 124, child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(right: 16),
             itemCount: cast.length,
@@ -972,8 +976,12 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
             itemBuilder: (context, index) {
               final member = cast[index];
               return SizedBox(width: 86, child: GestureDetector(
-                onTap: member.person == null || widget.onOpenPerson == null
-                    ? null : () => widget.onOpenPerson!(member.person!),
+                behavior: HitTestBehavior.opaque,
+                onTap: widget.onOpenPerson == null ? null : () async {
+                  final person = member.person ?? await sl<PeopleService>().findCharacter(member.name);
+                  if (!mounted || person == null) return;
+                  widget.onOpenPerson!(person);
+                },
                 child: Column(children: [
                   ClipOval(child: SizedBox(width: 69.3, height: 69.3,
                     child: member.photo?.isNotEmpty == true
@@ -1116,6 +1124,11 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                 labelPadding: const EdgeInsets.symmetric(horizontal: 7),
                 dividerColor: Colors.transparent,
                 indicatorSize: TabBarIndicatorSize.label,
+                splashFactory: NoSplash.splashFactory,
+                splashBorderRadius: BorderRadius.zero,
+                overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+                hoverColor: Colors.transparent,
+                focusColor: Colors.transparent,
                 indicator: UnderlineTabIndicator(
                   borderSide: BorderSide(color: AppColors.accent, width: 2),
                   borderRadius: BorderRadius.circular(2),
@@ -1148,7 +1161,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         title: season.title,
                         imageUrl: season.cover,
                         cellWidth: width,
-                        seriesBadge: season.isCurrent ? 'Sedang dibuka' : 'Seri ${season.number}',
+                        seriesBadge: 'Seri ${season.number}',
                         viewsBadge: season.popularity,
                         metaLine: season.episodes == null ? null : 'TV · ${season.episodes} eps',
                         onTap: () => widget.onOpenSeason(season),
