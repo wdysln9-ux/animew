@@ -444,7 +444,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final staffImage = staff?['image'] is Map ? (staff!['image'] as Map)['large']?.toString() : null;
     final characterImage = character?['image'] is Map ? (character!['image'] as Map)['large']?.toString() : null;
     final cover = media?['coverImage'] is Map ? (media!['coverImage'] as Map)['large']?.toString() : null;
-    final image = avatar ?? staffImage ?? characterImage ?? cover;
+    final socialNotification = _activity.contains(type) || _forum.contains(type);
+    final image = socialNotification
+        ? (avatar ?? staffImage ?? characterImage ?? cover)
+        : (cover ?? staffImage ?? characterImage ?? avatar);
     final detail = _detail(n);
     final type = (n['type'] ?? '').toString();
     final icon = type == 'AIRING' ? Icons.play_circle_outline_rounded
@@ -454,12 +457,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       onTap: () => _openNotification(n),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       leading: ClipRRect(
-        borderRadius: BorderRadius.circular(
-          (!_activity.contains(type) && !_forum.contains(type) && cover != null) ? 8 : 22,
-        ),
+        borderRadius: BorderRadius.circular(socialNotification ? 22 : 8),
         child: SizedBox(
           width: 44,
-          height: (!_activity.contains(type) && !_forum.contains(type) && cover != null) ? 58 : 44,
+          height: socialNotification ? 44 : 58,
           child: image != null && image.isNotEmpty
               ? CachedNetworkImage(imageUrl: image, fit: BoxFit.cover,
                   errorWidget: (_, _, _) => _fallback(icon))
