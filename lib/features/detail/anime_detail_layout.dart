@@ -1074,14 +1074,6 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     final malIds = widget.seasons.map((s) => s.malId).whereType<int>().toSet();
     final seasonTitles = widget.seasons.map((s) => s.title.trim().toLowerCase()).where((s) => s.isNotEmpty).toSet();
 
-    // AniList's full franchise chain is authoritative. Relations only fill
-    // gaps if a linked season could not be resolved into the chain.
-    final seasonRelations = _uniqueAnimeRelations(
-      widget.relations.where(_isSeasonRelation),
-      anilistIds: anilistIds,
-      malIds: malIds,
-      seasonTitles: seasonTitles,
-    );
     final related = _uniqueAnimeRelations(
       widget.relations.where((r) => !_isRecommended(r) && !_isSeasonRelation(r)),
       anilistIds: anilistIds,
@@ -1165,27 +1157,6 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         viewsBadge: season.popularity,
                         metaLine: season.episodes == null ? null : 'TV · ${season.episodes} eps',
                         onTap: () => widget.onOpenSeason(season),
-                      ),
-                    ));
-                  }
-                  for (final relation in seasonRelations) {
-                    cards.add(SizedBox(
-                      width: width,
-                      child: PosterCard(
-                        title: relation.title,
-                        imageUrl: relation.cover,
-                        cellWidth: width,
-                        seriesBadge: relation.relation,
-                        scoreBadge: relation.score,
-                        statusBadge: relation.status,
-                        genres: relation.genres,
-                        metaLine: [
-                          if (relation.year != null) '${relation.year}',
-                          if (relation.format != null) relation.format!,
-                          if (relation.episodes != null) '${relation.episodes} eps',
-                        ].join(' · '),
-                        viewsBadge: relation.popularity,
-                        onTap: () => widget.onOpenRelation(relation),
                       ),
                     ));
                   }
