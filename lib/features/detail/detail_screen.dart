@@ -589,11 +589,6 @@ class _DetailViewState extends State<_DetailView> {
   /// can be tracked at episode 0 (Planning), which is still "tracked".
   bool _tracked = false;
 
-  /// Next episode to air, from the tracker entry fetched for progress. Null
-  /// for a finished show, a movie, or a title with no tracker match — the row
-  /// hides rather than claiming it doesn't know.
-  int? _nextAiringEpisode;
-  DateTime? _nextAiringAt;
   bool _trackerFetchStarted = false;
 
   /// Fetch the connected tracker's episode progress once, so episodes already
@@ -623,28 +618,17 @@ class _DetailViewState extends State<_DetailView> {
         )
         .then((e) {
           if (!mounted) return;
-          // Same response the progress comes from — the airing fields were already
-          // being fetched and thrown away, so showing them costs no extra request.
-          // Both null for a finished show, a movie, or a title we couldn't match.
-          final ep = e?.nextAiringEpisode;
-          final at = e?.nextAiringAt;
           final p = e?.progress;
           final onList = e?.onList ?? false;
           if (p == null || p <= 0) {
             setState(() {
               _tracked = onList;
-              if (ep != null && at != null) {
-                _nextAiringEpisode = ep;
-                _nextAiringAt = at;
-              }
             });
             return;
           }
           setState(() {
             _tracked = onList;
             _trackerProgress = p;
-            _nextAiringEpisode = ep;
-            _nextAiringAt = at;
           });
         });
   }
@@ -2471,8 +2455,6 @@ class _DetailViewState extends State<_DetailView> {
             autoScrollToResume: widget.autoScrollToResume,
             targetEpisodeId: widget.targetEpisodeId,
             trackerProgress: _trackerProgress,
-            nextAiringEpisode: _nextAiringEpisode,
-            nextAiringAt: _nextAiringAt,
             showPopularity: detail.popularity,
             totalEpisodes: eps.length,
             isAiring: detail.status == MediaStatus.ongoing,
