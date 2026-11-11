@@ -31,6 +31,7 @@ import 'open_related.dart';
 import '../trailer/trailer_screen.dart';
 import 'anime_artwork_viewer.dart';
 import 'anime_title_sheet.dart';
+import 'nakama_watching_page.dart';
 import '../../core/ui/episode_unavailable_dialog.dart';
 import '../../core/zmode/playback_resolver.dart';
 import 'episode_sources_sheet.dart';
@@ -2295,7 +2296,10 @@ class _DetailViewState extends State<_DetailView> {
           ),
         ),
 
-        if (detail.genres.isNotEmpty || detail.studios.isNotEmpty || detail.tags.isNotEmpty)
+        if (detail.genres.isNotEmpty ||
+            detail.studios.isNotEmpty ||
+            detail.tags.isNotEmpty ||
+            detail.anilistId != null)
           SliverToBoxAdapter(
             child: _DetailCredits(
               genres: detail.genres,
@@ -2310,6 +2314,16 @@ class _DetailViewState extends State<_DetailView> {
               onTagsTap: () => Navigator.of(context).push(
                 AnimeTagsPage.route(title: detail.title, tags: detail.tags),
               ),
+              onNakamaTap: detail.anilistId == null
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => NakamaWatchingPage(
+                          mediaId: detail.anilistId!,
+                          animeTitle: detail.title,
+                        ),
+                      ),
+                    ),
             ),
           ),
 
