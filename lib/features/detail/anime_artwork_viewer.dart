@@ -25,7 +25,7 @@ Future<void> showAnimeArtworkViewer(
 
   await showDialog<void>(
     context: context,
-    barrierColor: Colors.black,
+    barrierColor: Colors.black.withValues(alpha: 0.60),
     builder: (dialogContext) => _AnimeArtworkViewer(
       images: images,
       title: title,
@@ -124,7 +124,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   Widget build(BuildContext context) {
     final current = widget.images[_index];
     return Material(
-      color: Colors.black,
+      color: Colors.black.withValues(alpha: 0.60),
       child: SafeArea(
         child: Stack(
           children: [
