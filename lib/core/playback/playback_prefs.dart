@@ -252,6 +252,19 @@ class PlaybackPrefs {
   Future<void> setSynopsisExpanded(bool value) =>
       _box.put('synopsisExpanded', value);
 
+  /// Persistent expand/collapse state for every expandable detail section.
+  /// The synopsis keeps its legacy key so existing installs retain its choice.
+  bool detailSectionExpanded(String section, {bool defaultValue = false}) {
+    if (section == 'synopsis') return synopsisExpanded;
+    return _box.get('detailSectionExpanded:$section',
+        defaultValue: defaultValue) as bool;
+  }
+
+  Future<void> setDetailSectionExpanded(String section, bool value) {
+    if (section == 'synopsis') return setSynopsisExpanded(value);
+    return _box.put('detailSectionExpanded:$section', value);
+  }
+
   /// Play the fullscreen trailer in HD (up to 1080p) instead of the light 360p
   /// stream. Off by default: 1080p is only offered as separate video+audio
   /// streams (joined at playback) and uses noticeably more data. The
