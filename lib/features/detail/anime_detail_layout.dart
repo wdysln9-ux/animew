@@ -977,7 +977,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
             Text(
               _nakamaCount == null
                   ? 'Nakama Menonton'
-                  : 'Nakama Menonton ($_nakamaCount)',
+                  : '$_nakamaCount Nakama Menonton',
               style: AppText.caption.copyWith(
                 fontSize: 12,
                 color: color,
