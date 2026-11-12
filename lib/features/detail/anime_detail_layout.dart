@@ -1150,11 +1150,6 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    if (widget.cast.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) widget.onLoadMore?.call();
-      });
-    }
   }
 
   void _onScroll() {
@@ -1284,9 +1279,6 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
   void initState() {
     super.initState();
     _recommendationsController.addListener(_onRecommendationsScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) widget.onLoadMoreRecommendations?.call();
-    });
   }
 
   void _onRecommendationsScroll() {

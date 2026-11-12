@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -2548,7 +2549,14 @@ class _DetailViewState extends State<_DetailView> {
           ),
         if (!isReading)
           SliverToBoxAdapter(
-            child: AnimeDetailCharacterRail(
+            child: VisibilityDetector(
+              key: Key('detail-characters-${detail.anilistId ?? detail.id}'),
+              onVisibilityChanged: (info) {
+                if (info.visibleFraction > 0.04 && state.characterTotal == null && !state.charactersLoading) {
+                  context.read<DetailCubit>().loadMoreCharacters();
+                }
+              },
+              child: AnimeDetailCharacterRail(
               cast: state.cast.isNotEmpty
                   ? state.cast
                   : [for (final name in detail.cast) CastMember(name: name)],
@@ -2561,11 +2569,19 @@ class _DetailViewState extends State<_DetailView> {
               onOpenPerson: (ref) => Navigator.of(
                 context,
               ).push(PersonPage.route(ref, sourceId: widget.item.sourceId)),
+              ),
             ),
           ),
         if (!isReading)
           SliverToBoxAdapter(
-            child: AnimeDetailSeasonRail(
+            child: VisibilityDetector(
+              key: Key('detail-recommendations-${detail.anilistId ?? detail.id}'),
+              onVisibilityChanged: (info) {
+                if (info.visibleFraction > 0.04 && !state.recommendationsLoaded && !state.recommendationsLoading) {
+                  context.read<DetailCubit>().loadMoreRecommendations();
+                }
+              },
+              child: AnimeDetailSeasonRail(
               seasons: state.seasons,
               relations: state.relations.isNotEmpty ? state.relations : detail.relations,
               loading: state.seasonsLoading,
@@ -2582,6 +2598,7 @@ class _DetailViewState extends State<_DetailView> {
                 ),
               ),
               onOpenRelation: _openRelation,
+              ),
             ),
           ),
 

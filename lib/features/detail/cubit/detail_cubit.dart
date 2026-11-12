@@ -210,13 +210,17 @@ class DetailCubit extends Cubit<DetailState> {
 
   int _characterPage = 0;
   int _recommendationPage = 0;
+  bool _characterRequestAttempted = false;
+  bool _recommendationRequestAttempted = false;
 
-  Future<void> loadMoreCharacters() async {
+  Future<void> loadMoreCharacters({bool retry = false}) async {
     final detail = state.detail;
     final mediaId = detail?.anilistId;
     if (mediaId == null || detail?.type != ProviderType.anime ||
         state.charactersLoading ||
-        (_characterPage > 0 && !state.charactersHasNextPage)) return;
+        (_characterPage > 0 && !state.charactersHasNextPage) ||
+        (_characterPage == 0 && _characterRequestAttempted && !retry)) return;
+    _characterRequestAttempted = true;
     final page = _characterPage + 1;
     emit(state.copyWith(charactersLoading: true));
     try {
@@ -241,12 +245,14 @@ class DetailCubit extends Cubit<DetailState> {
     }
   }
 
-  Future<void> loadMoreRecommendations() async {
+  Future<void> loadMoreRecommendations({bool retry = false}) async {
     final detail = state.detail;
     final mediaId = detail?.anilistId;
     if (mediaId == null || detail?.type != ProviderType.anime ||
         state.recommendationsLoading ||
-        (_recommendationPage > 0 && !state.recommendationsHasNextPage)) return;
+        (_recommendationPage > 0 && !state.recommendationsHasNextPage) ||
+        (_recommendationPage == 0 && _recommendationRequestAttempted && !retry)) return;
+    _recommendationRequestAttempted = true;
     final page = _recommendationPage + 1;
     emit(state.copyWith(recommendationsLoading: true));
     try {
