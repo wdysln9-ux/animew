@@ -772,8 +772,12 @@ Future<void> launchDownloadedEpisode(
   }
 
   await Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => PlayerScreen(
+    PageRouteBuilder<void>(
+      // Keep the downloads page interactive when this player is minimized.
+      opaque: false,
+      transitionDuration: const Duration(milliseconds: 220),
+      reverseTransitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (_, __, ___) => PlayerScreen(
         sourceId: record.sourceId,
         episodes: queue.episodes,
         startIndex: queue.startIndex,
@@ -792,6 +796,8 @@ Future<void> launchDownloadedEpisode(
         scrobbleTitle: scrobbleTitle,
         playerOverride: playerOverride,
       ),
+      transitionsBuilder: (_, animation, __, child) =>
+          FadeTransition(opacity: animation, child: child),
     ),
   );
 }
