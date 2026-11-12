@@ -30,9 +30,6 @@ List<AiringEntry> parseAiringSchedules(Map<String, dynamic> data) {
     if (media is! Map) continue;
     if (media['isAdult'] == true) continue;
     final format = (media['format'] as String?) ?? '';
-    if (format == 'TV_SHORT') continue;
-    final duration = (media['duration'] as num?)?.toInt();
-    if (format == 'ONA' && duration != null && duration < 10) continue;
     final titleMap = media['title'];
     final english = (titleMap is Map) ? titleMap['english'] as String? : null;
     final romaji = (titleMap is Map) ? titleMap['romaji'] as String? : null;
@@ -60,7 +57,7 @@ List<AiringEntry> parseAiringSchedules(Map<String, dynamic> data) {
       episode: (raw['episode'] as int?) ?? 0,
       airsAtLocal:
           DateTime.fromMillisecondsSinceEpoch(airingAt * 1000).toLocal(),
-      format: (media['format'] as String?) ?? '',
+      format: format,
       bannerUrl: media['bannerImage'] as String?,
       synopsis: _cleanDescription(media['description'] as String?),
     ));
@@ -88,7 +85,15 @@ List<AiringEntry> sortHomeAiringsByLatestRelease(
   DateTime? now,
 }) {
   final current = now ?? DateTime.now();
-  final sorted = List<AiringEntry>.of(entries);
+  // These presentation filters belong to Home's "Anime Tayang" row, not the
+  // general airing feed: keep TV_SHORT and short ONA available to other views.
+  final sorted = entries.where((entry) {
+    if (entry.format == 'TV_SHORT') return false;
+    if (entry.format == 'ONA' &&
+        entry.durationMinutes != null &&
+        entry.durationMinutes! < 10) return false;
+    return true;
+  }).toList();
   sorted.sort((a, b) {
     final aReleased = !a.airsAtLocal.isAfter(current);
     final bReleased = !b.airsAtLocal.isAfter(current);

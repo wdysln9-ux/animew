@@ -59,34 +59,25 @@ void main() {
         DateTime.fromMillisecondsSinceEpoch(1783000000 * 1000).toLocal());
   });
 
-  test('filters TV_SHORT and short ONA but keeps ONA at least 10 minutes', () {
-    final data = {
-      'Page': {
-        'airingSchedules': [
-          for (final item in [
-            ('Short TV', 'TV_SHORT', 3),
-            ('Short ONA', 'ONA', 9),
-            ('Ten Minute ONA', 'ONA', 10),
-            ('Long ONA', 'ONA', 24),
-            ('Unknown Runtime ONA', 'ONA', null),
-            ('Regular TV', 'TV', 24),
-          ])
-            {
-              'episode': 1,
-              'airingAt': 1783000000,
-              'media': {
-                'id': item.$1.hashCode,
-                'title': {'romaji': item.$1, 'english': null},
-                'coverImage': {'large': 'cover'},
-                'format': item.$2,
-                'duration': item.$3,
-                'isAdult': false,
-              },
-            },
-        ],
-      },
-    };
-    final out = parseAiringSchedules(Map<String, dynamic>.from(data));
+  test('Home airing sort filters TV_SHORT and ONA under 10 minutes', () {
+    AiringEntry entry(String title, String format, int? duration) =>
+        AiringEntry(
+          malId: 1,
+          title: title,
+          coverUrl: null,
+          episode: 1,
+          airsAtLocal: DateTime(2026, 11, 12),
+          format: format,
+          durationMinutes: duration,
+        );
+    final out = sortHomeAiringsByLatestRelease([
+      entry('Short TV', 'TV_SHORT', 3),
+      entry('Short ONA', 'ONA', 9),
+      entry('Ten Minute ONA', 'ONA', 10),
+      entry('Long ONA', 'ONA', 24),
+      entry('Unknown Runtime ONA', 'ONA', null),
+      entry('Regular TV', 'TV', 24),
+    ], now: DateTime(2026, 11, 11));
     expect(out.map((entry) => entry.title).toList(), [
       'Ten Minute ONA',
       'Long ONA',
