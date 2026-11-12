@@ -301,7 +301,10 @@ class PlaybackPrefs {
   /// Last selected video aspect mode: 0=Fit, 1=Fill, 2=Stretch.
   /// Shared across episodes and player sessions.
   int get videoFitIndex =>
-      (_box.get('videoFitIndex', defaultValue: 0) as num).toInt().clamp(0, 2);
+      (_box.get('videoFitIndex', defaultValue: 0) as num)
+          .toInt()
+          .clamp(0, 2)
+          .toInt();
   Future<void> setVideoFitIndex(int value) =>
       _box.put('videoFitIndex', value.clamp(0, 2));
 
