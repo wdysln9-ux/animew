@@ -35,6 +35,36 @@ class MiniPlayerState {
   static void clear() => active.value = null;
 }
 
+
+/// A player page route whose modal barrier becomes non-blocking while the
+/// player is minimized. The player route stays mounted to preserve playback,
+/// but taps and scroll gestures can reach the page underneath it.
+class MiniPlayerAwarePageRoute<T> extends PageRouteBuilder<T> {
+  MiniPlayerAwarePageRoute({
+    required RoutePageBuilder<T> pageBuilder,
+    required RouteTransitionsBuilder transitionsBuilder,
+    required Duration transitionDuration,
+    required Duration reverseTransitionDuration,
+  }) : super(
+          opaque: false,
+          pageBuilder: pageBuilder,
+          transitionsBuilder: transitionsBuilder,
+          transitionDuration: transitionDuration,
+          reverseTransitionDuration: reverseTransitionDuration,
+        );
+
+  @override
+  Widget buildModalBarrier() {
+    final normalBarrier = super.buildModalBarrier();
+    return ValueListenableBuilder<MiniPlayerSession?>(
+      valueListenable: MiniPlayerState.active,
+      builder: (context, session, _) => session != null
+          ? const IgnorePointer(child: SizedBox.expand())
+          : normalBarrier,
+    );
+  }
+}
+
 /// Floating video surface mounted above the root Navigator.
 class MiniPlayerOverlay extends StatefulWidget {
   const MiniPlayerOverlay({super.key});

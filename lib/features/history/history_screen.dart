@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../player/mini_player_overlay.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -195,10 +196,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   Future<void> _resume(HistoryEntry e) async {
     await Navigator.push(
       context,
-      PageRouteBuilder<void>(
-        // The floating mini-player keeps this route alive; it must not leave
-        // an opaque route or modal barrier over the history page beneath it.
-        opaque: false,
+      MiniPlayerAwarePageRoute<void>(
         transitionDuration: const Duration(milliseconds: 220),
         reverseTransitionDuration: const Duration(milliseconds: 180),
         pageBuilder: (_, __, ___) => PlayerScreen(

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+import '../player/mini_player_overlay.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart' show CupertinoPicker;
@@ -1319,8 +1320,7 @@ class _DetailViewState extends State<_DetailView> {
 
     Navigator.of(context)
         .push(
-          PageRouteBuilder<void>(
-            opaque: false,
+          MiniPlayerAwarePageRoute<void>(
             transitionDuration: const Duration(milliseconds: 280),
             reverseTransitionDuration: const Duration(milliseconds: 220),
             pageBuilder: (_, __, ___) => PlayerScreen(

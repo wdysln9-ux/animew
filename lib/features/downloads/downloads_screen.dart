@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../player/mini_player_overlay.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -772,9 +773,7 @@ Future<void> launchDownloadedEpisode(
   }
 
   await Navigator.of(context).push(
-    PageRouteBuilder<void>(
-      // Keep the downloads page interactive when this player is minimized.
-      opaque: false,
+    MiniPlayerAwarePageRoute<void>(
       transitionDuration: const Duration(milliseconds: 220),
       reverseTransitionDuration: const Duration(milliseconds: 180),
       pageBuilder: (_, __, ___) => PlayerScreen(
