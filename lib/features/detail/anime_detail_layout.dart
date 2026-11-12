@@ -1189,11 +1189,9 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
               Text('Karakter', style: AppText.headline.copyWith(fontSize: 16)),
               const SizedBox(width: 7),
               Text(
-                (widget.hasMore && widget.totalCount != null && widget.totalCount! >= 500)
-                    ? '${cast.length}+'
-                    : (widget.hasMore
-                        ? (widget.totalCount ?? cast.length).toString()
-                        : cast.length.toString()),
+                // AniList's PageInfo.total is available with the first page;
+                // show the real total immediately without loading every card.
+                (widget.totalCount ?? cast.length).toString(),
                 style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textSecondary),
               ),
               const Spacer(),
