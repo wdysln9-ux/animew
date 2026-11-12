@@ -711,9 +711,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
         onClose: stopPlayback,
         onBack: () {
           final background = widget.backgroundRoute;
-          if (background != null && background.isActive) {
+          if (background != null &&
+              background.isActive &&
+              !background.isFirst) {
             nav.removeRoute(background);
           } else {
+            // The root shell is not a page to remove. Let its normal Back
+            // behaviour switch tabs or handle the double-Back exit gesture.
             MiniPlayerState.onRootBack?.call();
           }
         },
