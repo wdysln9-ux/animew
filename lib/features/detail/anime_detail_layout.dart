@@ -1188,15 +1188,11 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
             child: Row(children: [
               Text('Karakter', style: AppText.headline.copyWith(fontSize: 16)),
               const SizedBox(width: 7),
-              Text(
-                // AniList caps PageInfo.total at 500 for large connections.
-                // If another page exists, show a lower bound rather than
-                // presenting that capped value as the exact character count.
-                widget.totalCount != null && widget.totalCount! >= 500 && widget.hasMore
-                    ? '500+'
-                    : (widget.totalCount ?? cast.length).toString(),
-                style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textSecondary),
-              ),
+              if (widget.totalCount != null)
+                Text(
+                  widget.totalCount.toString(),
+                  style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textSecondary),
+                ),
               const Spacer(),
               Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 21),
             ]),
