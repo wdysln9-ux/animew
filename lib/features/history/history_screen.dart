@@ -195,8 +195,13 @@ class _HistoryScreenState extends State<HistoryScreen>
   Future<void> _resume(HistoryEntry e) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => PlayerScreen(
+      PageRouteBuilder<void>(
+        // The floating mini-player keeps this route alive; it must not leave
+        // an opaque route or modal barrier over the history page beneath it.
+        opaque: false,
+        transitionDuration: const Duration(milliseconds: 220),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        pageBuilder: (_, __, ___) => PlayerScreen(
           sourceId: e.sourceId,
           episodesResolver: () => _repo.episodes(
             e.showUrl,
@@ -218,6 +223,8 @@ class _HistoryScreenState extends State<HistoryScreen>
           malId: e.malId,
           scrobbleTitle: e.malId != null ? e.showTitle : null,
         ),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
       ),
     );
     _reloadAnime();
