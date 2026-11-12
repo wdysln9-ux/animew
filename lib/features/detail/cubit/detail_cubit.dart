@@ -259,7 +259,7 @@ class DetailCubit extends Cubit<DetailState> {
       final result = await sl<AniListService>().api.mediaRecommendations(mediaId, page: page);
       if (isClosed || state.detail?.anilistId != mediaId) return;
       _recommendationPage = page;
-      final existing = state.relations.isNotEmpty ? state.relations : detail.relations;
+      final existing = state.relations.isNotEmpty ? state.relations : (detail?.relations ?? const <MediaRelation>[]);
       final seenIds = <int>{for (final item in existing) if (item.anilistId != null) item.anilistId!};
       final seenTitles = <String>{for (final item in existing) item.title.trim().toLowerCase()};
       final merged = [
