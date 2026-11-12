@@ -298,6 +298,13 @@ class PlaybackPrefs {
   Future<void> setCinematicVignette(double value) =>
       _box.put('cinematicVignette', value);
 
+  /// Last selected video aspect mode: 0=Fit, 1=Fill, 2=Stretch.
+  /// Shared across episodes and player sessions.
+  int get videoFitIndex =>
+      (_box.get('videoFitIndex', defaultValue: 0) as num).toInt().clamp(0, 2);
+  Future<void> setVideoFitIndex(int value) =>
+      _box.put('videoFitIndex', value.clamp(0, 2));
+
   /// How many seconds a single seek (forward/back) jumps.
   int get seekSeconds =>
       (_box.get('seekSeconds', defaultValue: 10) as num).toInt();

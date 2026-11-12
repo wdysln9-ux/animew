@@ -495,6 +495,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
+    _fitIndex = sl<PlaybackPrefs>().videoFitIndex;
     _showEpisodeDetails = widget.episodeDetailMode;
     _portraitMode = widget.episodeDetailMode;
     _loadCinematicLightingPrefs();
@@ -564,6 +565,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// player first. Once the episode details are visible, it navigates back
   /// normally. Standalone player sessions keep their usual back behaviour.
   void _handlePlayerBack() {
+    // While minimized, Back belongs to the page/navigation stack underneath.
+    // Never restore or dispose the floating player from this handler.
+    if (_minimized || MiniPlayerState.active.value != null) return;
     // Inline playback belongs to the anime detail route. Back first leaves
     // fullscreen, then closes this player route so the exact anime page,
     // selected source, and scroll position remain underneath.
@@ -2204,7 +2208,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _cycleFit() {
-    setState(() => _fitIndex = (_fitIndex + 1) % _fits.length);
+    final next = (_fitIndex + 1) % _fits.length;
+    setState(() => _fitIndex = next);
+    unawaited(sl<PlaybackPrefs>().setVideoFitIndex(next));
     _bumpControls(); // the top-bar zoom label reflects the new mode
   }
 
@@ -4790,12 +4796,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
       // In episode-detail mode, the first system Back while fullscreen must
       // return to the inline episode page instead of popping the player route.
       // Once details are visible, preserve the configured close behaviour.
-      canPop: !_minimized &&
+      // A minimized player route must remain mounted so playback survives.
+      // Let the shell / page beneath it own Back navigation instead.
+      canPop: MiniPlayerState.active.value == null &&
+          !_minimized &&
           !_ready &&
           (!widget.episodeDetailMode || _showEpisodeDetails) &&
           sl<PlaybackPrefs>().closeConfirmation == 'direct',
       onPopInvokedWithResult: (didPop, _) {
-        if (_minimized) return;
+        if (_minimized || MiniPlayerState.active.value != null) return;
         AppLogger.instance.log(
           '[player-route] pop didPop=$didPop loading=${_c.state.loadingSources} '
           'closeMode=${sl<PlaybackPrefs>().closeConfirmation} '
