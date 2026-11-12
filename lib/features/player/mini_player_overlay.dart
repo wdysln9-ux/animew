@@ -41,7 +41,7 @@ class MiniPlayerState {
 /// but taps and scroll gestures can reach the page underneath it.
 class MiniPlayerAwarePageRoute<T> extends PageRouteBuilder<T> {
   MiniPlayerAwarePageRoute({
-    required RoutePageBuilder<T> pageBuilder,
+    required RoutePageBuilder pageBuilder,
     required RouteTransitionsBuilder transitionsBuilder,
     required Duration transitionDuration,
     required Duration reverseTransitionDuration,
