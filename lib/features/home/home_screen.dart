@@ -1127,6 +1127,7 @@ class _HomeViewState extends State<_HomeView>
           title: items[i].title,
           logoItem: items[i],
           imageUrl: items[i].cover,
+          imageColor: items[i].coverColor,
           headers: items[i].coverHeaders,
           cellWidth: posterRowWidth(c),
           wideImageUrl: items[i].banner,

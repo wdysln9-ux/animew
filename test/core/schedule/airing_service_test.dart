@@ -24,8 +24,9 @@ void main() {
               'id': 222,
               'idMal': 111,
               'title': {'romaji': 'Romaji Name', 'english': 'English Name'},
-              'coverImage': {'large': 'http://x/c.jpg'},
+              'coverImage': {'large': 'http://x/c.jpg', 'color': '#F97216'},
               'format': 'TV',
+              'duration': 24,
               'isAdult': false,
             },
           },
@@ -52,8 +53,46 @@ void main() {
     expect(out.first.episode, 5);
     expect(out.first.format, 'TV');
     expect(out.first.coverUrl, 'http://x/c.jpg');
+    expect(out.first.coverColor, '#F97216');
+    expect(out.first.durationMinutes, 24);
     expect(out.first.airsAtLocal,
         DateTime.fromMillisecondsSinceEpoch(1783000000 * 1000).toLocal());
+  });
+
+  test('filters TV_SHORT and short ONA but keeps ONA at least 10 minutes', () {
+    final data = {
+      'Page': {
+        'airingSchedules': [
+          for (final item in [
+            ('Short TV', 'TV_SHORT', 3),
+            ('Short ONA', 'ONA', 9),
+            ('Ten Minute ONA', 'ONA', 10),
+            ('Long ONA', 'ONA', 24),
+            ('Unknown Runtime ONA', 'ONA', null),
+            ('Regular TV', 'TV', 24),
+          ])
+            {
+              'episode': 1,
+              'airingAt': 1783000000,
+              'media': {
+                'id': item.$1.hashCode,
+                'title': {'romaji': item.$1, 'english': null},
+                'coverImage': {'large': 'cover'},
+                'format': item.$2,
+                'duration': item.$3,
+                'isAdult': false,
+              },
+            },
+        ],
+      },
+    };
+    final out = parseAiringSchedules(Map<String, dynamic>.from(data));
+    expect(out.map((entry) => entry.title).toList(), [
+      'Ten Minute ONA',
+      'Long ONA',
+      'Unknown Runtime ONA',
+      'Regular TV',
+    ]);
   });
 
   test('parseAiringSchedules falls back to romaji when english is null/empty', () {

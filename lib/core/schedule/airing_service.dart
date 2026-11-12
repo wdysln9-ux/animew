@@ -29,6 +29,10 @@ List<AiringEntry> parseAiringSchedules(Map<String, dynamic> data) {
     final media = raw['media'];
     if (media is! Map) continue;
     if (media['isAdult'] == true) continue;
+    final format = (media['format'] as String?) ?? '';
+    if (format == 'TV_SHORT') continue;
+    final duration = (media['duration'] as num?)?.toInt();
+    if (format == 'ONA' && duration != null && duration < 10) continue;
     final titleMap = media['title'];
     final english = (titleMap is Map) ? titleMap['english'] as String? : null;
     final romaji = (titleMap is Map) ? titleMap['romaji'] as String? : null;
@@ -38,9 +42,9 @@ List<AiringEntry> parseAiringSchedules(Map<String, dynamic> data) {
     if (title.isEmpty) continue;
     final airingAt = raw['airingAt'];
     if (airingAt is! int) continue;
-    final cover = (media['coverImage'] is Map)
-        ? media['coverImage']['large'] as String?
-        : null;
+    final coverImage = media['coverImage'];
+    final cover = coverImage is Map ? coverImage['large'] as String? : null;
+    final coverColor = coverImage is Map ? coverImage['color'] as String? : null;
     final alt = (english != null && english.isNotEmpty && romaji != null &&
             romaji.isNotEmpty && romaji != english)
         ? romaji
@@ -51,6 +55,8 @@ List<AiringEntry> parseAiringSchedules(Map<String, dynamic> data) {
       anilistId: media['id'] as int?,
       title: title,
       coverUrl: cover,
+      coverColor: coverColor,
+      durationMinutes: duration,
       episode: (raw['episode'] as int?) ?? 0,
       airsAtLocal:
           DateTime.fromMillisecondsSinceEpoch(airingAt * 1000).toLocal(),
@@ -163,7 +169,8 @@ query ($start: Int, $end: Int, $page: Int) {
         id
         idMal
         title { romaji english }
-        coverImage { large }
+        coverImage { large color }
+        duration
         bannerImage
         description(asHtml: false)
         format

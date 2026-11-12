@@ -173,6 +173,7 @@ class HomeCubit extends Cubit<HomeState> {
         title: entry.title,
         englishTitle: entry.altTitle,
         cover: entry.coverUrl,
+        coverColor: entry.coverColor,
         banner: entry.bannerUrl,
         url: ZmodeIds.showUrl(canonical),
         type: ProviderType.anime,

@@ -13,6 +13,8 @@ class AiringEntry extends Equatable {
     this.altTitle,
     this.bannerUrl,
     this.synopsis,
+    this.coverColor,
+    this.durationMinutes,
   });
 
   final int? malId;
@@ -26,6 +28,10 @@ class AiringEntry extends Equatable {
   /// AniList hands back the English one. Null when they're the same.
   final String? altTitle;
   final String? coverUrl;
+  /// AniList coverImage.color, used as the poster's loading background.
+  final String? coverColor;
+  /// Runtime of one episode in minutes, as reported by AniList.
+  final int? durationMinutes;
   final int episode;
   final DateTime airsAtLocal;
   final String format;
@@ -40,7 +46,7 @@ class AiringEntry extends Equatable {
   @override
   List<Object?> get props =>
       [malId, anilistId, title, altTitle, coverUrl, episode, airsAtLocal,
-       format, bannerUrl, synopsis];
+       format, bannerUrl, synopsis, coverColor, durationMinutes];
 }
 
 /// One upcoming movie/TV title (from TMDB upcoming / on_the_air).
