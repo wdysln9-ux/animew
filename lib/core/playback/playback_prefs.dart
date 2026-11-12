@@ -298,15 +298,15 @@ class PlaybackPrefs {
   Future<void> setCinematicVignette(double value) =>
       _box.put('cinematicVignette', value);
 
-  /// Last selected video aspect mode: 0=Fit, 1=Fill, 2=Stretch.
+  /// Last two-finger horizontal stretch multiplier (0.45x–2.5x).
   /// Shared across episodes and player sessions.
-  int get videoFitIndex =>
-      (_box.get('videoFitIndex', defaultValue: 0) as num)
-          .toInt()
-          .clamp(0, 2)
-          .toInt();
-  Future<void> setVideoFitIndex(int value) =>
-      _box.put('videoFitIndex', value.clamp(0, 2));
+  double get videoStretchX =>
+      (_box.get('videoStretchX', defaultValue: 1.0) as num)
+          .toDouble()
+          .clamp(0.45, 2.5)
+          .toDouble();
+  Future<void> setVideoStretchX(double value) =>
+      _box.put('videoStretchX', value.clamp(0.45, 2.5).toDouble());
 
   /// How many seconds a single seek (forward/back) jumps.
   int get seekSeconds =>

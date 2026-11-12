@@ -495,7 +495,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
-    _fitIndex = sl<PlaybackPrefs>().videoFitIndex;
+    _stretchX = sl<PlaybackPrefs>().videoStretchX;
     _showEpisodeDetails = widget.episodeDetailMode;
     _portraitMode = widget.episodeDetailMode;
     _loadCinematicLightingPrefs();
@@ -1928,6 +1928,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _pinching = false;
       _stretchSnapRatio = null;
     });
+    // Save only when the two-finger gesture ends, not on every pointer move.
+    unawaited(sl<PlaybackPrefs>().setVideoStretchX(_stretchX));
   }
 
   // ── Lock / zoom / up-next ─────────────────────────────────────────────────
