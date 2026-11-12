@@ -43,6 +43,45 @@ void main() {
     },
   };
 
+  test('character parser accepts the large image returned by mediaCharacters', () {
+    final out = api.parseExtrasForTest({
+      'characters': {
+        'edges': [
+          {
+            'role': 'MAIN',
+            'node': {
+              'id': 42,
+              'name': {'full': 'Example Character'},
+              'image': {'large': 'https://img/character-large.jpg'},
+            },
+          },
+        ],
+      },
+    });
+
+    expect(out.cast.single.photo, 'https://img/character-large.jpg');
+    expect(out.cast.single.person?.photo, 'https://img/character-large.jpg');
+  });
+
+  test('character parser falls back to medium image for older extras query', () {
+    final out = api.parseExtrasForTest({
+      'characters': {
+        'edges': [
+          {
+            'role': 'MAIN',
+            'node': {
+              'id': 43,
+              'name': {'full': 'Legacy Character'},
+              'image': {'medium': 'https://img/character-medium.jpg'},
+            },
+          },
+        ],
+      },
+    });
+
+    expect(out.cast.single.photo, 'https://img/character-medium.jpg');
+  });
+
   test('recommendations follow the relations, never interleaved', () {
     final out = api.parseExtrasForTest(
       _media(

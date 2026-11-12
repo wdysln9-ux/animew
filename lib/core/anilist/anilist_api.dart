@@ -871,9 +871,14 @@ query($id:Int,$page:Int) {
             ? node['name']['full'] as String?
             : null;
         if (name == null || name.isEmpty) continue;
-        final img = (node is Map && node['image'] is Map)
-            ? node['image']['medium'] as String?
-            : null;
+        // The paginated mediaCharacters query asks AniList for image.large,
+        // while the older extras query asks for image.medium. Accept both so
+        // the parser works with either response shape.
+        final image = node is Map && node['image'] is Map
+            ? node['image'] as Map
+            : const <String, dynamic>{};
+        final rawImage = image['large'] ?? image['medium'];
+        final img = rawImage is String && rawImage.isNotEmpty ? rawImage : null;
         final vas = e['voiceActors'];
         final va =
             (vas is List &&

@@ -1141,7 +1141,12 @@ class _HomeViewState extends State<_HomeView>
           imageColor: items[i].coverColor,
           headers: items[i].coverHeaders,
           cellWidth: posterRowWidth(c),
-          wideImageUrl: items[i].banner,
+          // Airing titles use the same poster artwork as the other Home
+          // catalogue rows. Their AniList banner is a different crop and made
+          // the wide-card layout look like a separate card design.
+          wideImageUrl: rawTitle.toLowerCase() == 'anime tayang'
+              ? null
+              : items[i].banner,
           genres: items[i].genres,
           isAdult: items[i].isAdult,
           qualityBadge: items[i].quality,

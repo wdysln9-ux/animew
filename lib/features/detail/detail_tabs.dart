@@ -382,63 +382,38 @@ class _RelationsTab extends StatelessWidget {
     );
 
   Widget _card(BuildContext context, MediaRelation r, int i) {
-    {
-      final visual = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: AspectRatio(
-              aspectRatio: posterLayout(context) == PosterCardLayout.wide
-                  ? 16 / 9
-                  : 2 / 3,
-              child: (r.cover != null && r.cover!.isNotEmpty)
-                  ? CachedNetworkImage(
-                      imageUrl: r.cover!,
-                      fit: BoxFit.cover,
-                      placeholder: (_, _) =>
-                          Container(color: AppColors.surface2),
-                      errorWidget: (_, _, _) =>
-                          Container(color: AppColors.surface2),
-                    )
-                  : Container(color: AppColors.surface2),
-            ),
-          ),
-          const SizedBox(height: 6),
-          if (r.relation != null && r.relation!.isNotEmpty)
-            Text(
-              _indonesianRelationLabel(r.relation!),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppText.caption.copyWith(
-                color: AppColors.accent,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.4,
-              ),
-            ),
-          Text(
-            r.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppText.caption.copyWith(color: AppColors.textPrimary),
-          ),
-        ],
+    final hasRelationTag = r.relation != null && r.relation!.isNotEmpty;
+    Widget card = LayoutBuilder(
+      builder: (context, constraints) => PosterCard(
+        title: r.title,
+        imageUrl: r.cover,
+        imageColor: r.coverColor,
+        cellWidth: constraints.maxWidth,
+        showTitle: true,
+        scoreBadge: r.score,
+        statusBadge: r.status,
+        viewsBadge: r.popularity,
+        recommendationRatingBadge: r.recommendationRating,
+        seriesBadge: hasRelationTag
+            ? _indonesianRelationLabel(r.relation!)
+            : null,
+        metaLine: [
+          if (r.format?.isNotEmpty == true) r.format!,
+          if (r.year != null) '${r.year}',
+          if (r.episodes != null && r.episodes! > 0) '${r.episodes} Eps',
+        ].join(' · '),
+        onTap: tvFocus ? null : () => onOpen(r),
+      ),
+    );
+    if (tvFocus) {
+      return TvFocusable(
+        key: ValueKey('tv-rel-$i'),
+        onTap: () => onOpen(r),
+        semanticLabel: hasRelationTag ? '${r.relation}, ${r.title}' : r.title,
+        child: ExcludeSemantics(child: card),
       );
-      // TV path: D-pad-navigable TvFocusable wrapper.
-      if (tvFocus) {
-        final hasRelationTag = r.relation != null && r.relation!.isNotEmpty;
-        return TvFocusable(
-          key: ValueKey('tv-rel-$i'),
-          onTap: () => onOpen(r),
-          semanticLabel: hasRelationTag ? '${r.relation}, ${r.title}' : r.title,
-          // visual is shared with the phone branch below — exclude it here
-          // instead of touching it.
-          child: ExcludeSemantics(child: visual),
-        );
-      }
-      return _PressableCard(onTap: () => onOpen(r), child: visual);
     }
+    return card;
   }
 }
 
