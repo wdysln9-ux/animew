@@ -4696,12 +4696,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
               onPointerCancel: _onPointerUp,
               child: widget.episodeDetailMode
                   ? SafeArea(
-                      // The portrait episode-detail page respects system
-                      // insets, but fullscreen must extend through the notch
-                      // and home-indicator areas so both the video and its
-                      // cinematic-lighting backdrop reach every screen edge.
+                      // Portrait episode details respect all system insets.
+                      // In landscape fullscreen, disable every inset: the
+                      // display-cutout side padding was shrinking and shifting
+                      // the player Stack, leaving the notch black, moving the
+                      // video off-centre, and pulling controls away from edges.
                       top: _showEpisodeDetails,
                       bottom: _showEpisodeDetails,
+                      left: _showEpisodeDetails,
+                      right: _showEpisodeDetails,
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           final videoHeight = (constraints.maxWidth * 9 / 16)
