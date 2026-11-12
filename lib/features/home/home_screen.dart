@@ -1124,6 +1124,8 @@ class _HomeViewState extends State<_HomeView>
   Widget _sectionRow(HomeSection section, {bool sourceCatalogue = false}) {
     final items = section.items;
     final rawTitle = section.title.trim();
+    final isAiringSection =
+        rawTitle.toLowerCase() == airingEpisodesSectionTitle.toLowerCase();
     final displayTitle = rawTitle.toLowerCase() == 'baru dirilis'
         ? 'Anime baru'
         : section.title;
@@ -1141,12 +1143,10 @@ class _HomeViewState extends State<_HomeView>
           imageColor: items[i].coverColor,
           headers: items[i].coverHeaders,
           cellWidth: posterRowWidth(c),
-          // Airing titles use the same poster artwork as the other Home
-          // catalogue rows. Their AniList banner is a different crop and made
-          // the wide-card layout look like a separate card design.
-          wideImageUrl: rawTitle.toLowerCase() == 'anime tayang'
-              ? null
-              : items[i].banner,
+          // The Home airing catalogue must stay visually identical to
+          // the other PosterCard rows in both portrait and wide layouts:
+          // always use its cover poster, never AniList's landscape banner.
+          wideImageUrl: isAiringSection ? null : items[i].banner,
           genres: items[i].genres,
           isAdult: items[i].isAdult,
           qualityBadge: items[i].quality,
