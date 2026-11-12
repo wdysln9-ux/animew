@@ -1189,9 +1189,12 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
               Text('Karakter', style: AppText.headline.copyWith(fontSize: 16)),
               const SizedBox(width: 7),
               Text(
-                // AniList's PageInfo.total is available with the first page;
-                // show the real total immediately without loading every card.
-                (widget.totalCount ?? cast.length).toString(),
+                // AniList caps PageInfo.total at 500 for large connections.
+                // If another page exists, show a lower bound rather than
+                // presenting that capped value as the exact character count.
+                widget.totalCount != null && widget.totalCount! >= 500 && widget.hasMore
+                    ? '500+'
+                    : (widget.totalCount ?? cast.length).toString(),
                 style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textSecondary),
               ),
               const Spacer(),
@@ -1501,7 +1504,8 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                   clipBehavior: Clip.none,
                   padding: const EdgeInsets.only(right: 16),
                   itemCount: cards.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 9),
+                  // Match the 12 px spacing used by ContentRow on Home.
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
                   itemBuilder: (_, index) => cards[index],
                 );
               },
