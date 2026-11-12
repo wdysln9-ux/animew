@@ -874,6 +874,9 @@ class _SearchViewState extends State<_SearchView>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _searchBar(),
+            // Keep the selected metadata filters visible directly below the
+            // search field so they can be removed without reopening the sheet.
+            if (widget.scope == SearchScope.library) _activeFilterChips(),
             SizedBox(
               height: widget.scope == SearchScope.sources ? 12 : 4,
             ),
