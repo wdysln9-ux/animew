@@ -213,6 +213,21 @@ class DetailCubit extends Cubit<DetailState> {
   bool _characterRequestAttempted = false;
   bool _recommendationRequestAttempted = false;
 
+  bool _characterCountRequestStarted = false;
+
+  Future<void> _loadExactCharacterCount(int mediaId) async {
+    if (_characterCountRequestStarted) return;
+    _characterCountRequestStarted = true;
+    try {
+      final count = await sl<AniListService>().api.mediaCharacterExactCount(mediaId);
+      if (!isClosed && state.detail?.anilistId == mediaId) {
+        emit(state.copyWith(characterTotal: count));
+      }
+    } catch (error) {
+      _log('exact character count failed: $error', level: 'W');
+    }
+  }
+
   Future<void> loadMoreCharacters({bool retry = false}) async {
     final detail = state.detail;
     final mediaId = detail?.anilistId;
@@ -221,45 +236,31 @@ class DetailCubit extends Cubit<DetailState> {
         (_characterPage > 0 && !state.charactersHasNextPage) ||
         (_characterPage == 0 && _characterRequestAttempted && !retry)) return;
     _characterRequestAttempted = true;
+    // Count-only pagination runs independently; visible character cards remain
+    // lazy-loaded a page at a time.
+    unawaited(_loadExactCharacterCount(mediaId));
+    final page = _characterPage + 1;
     emit(state.copyWith(charactersLoading: true));
-
-    // AniList may report PageInfo.total as 500 even when the real cast is
-    // smaller. Fetch every page and use the deduplicated entries count instead.
-    // Keep the count unset while paging so the capped value is never displayed.
     try {
-      var hasNextPage = true;
-      var pagesFetched = 0;
-      while (hasNextPage && pagesFetched < 100) {
-        final page = _characterPage + 1;
-        final result = await sl<AniListService>().api.mediaCharacters(mediaId, page: page);
-        if (isClosed || state.detail?.anilistId != mediaId) return;
-        _characterPage = page;
-        pagesFetched++;
-        final seen = <String>{
-          for (final item in state.cast) item.person?.id.toString() ?? item.name,
-        };
-        final merged = [
-          ...state.cast,
-          for (final item in result.cast)
-            if (seen.add(item.person?.id.toString() ?? item.name)) item,
-        ];
-        hasNextPage = result.hasNextPage;
-        emit(state.copyWith(
-          cast: merged,
-          charactersHasNextPage: hasNextPage,
-          charactersLoading: hasNextPage,
-          characterTotal: hasNextPage ? null : merged.length,
-        ));
-      }
-      if (pagesFetched >= 100 && hasNextPage) {
-        throw StateError('Batas halaman karakter terlampaui.');
-      }
+      final result = await sl<AniListService>().api.mediaCharacters(mediaId, page: page);
+      if (isClosed || state.detail?.anilistId != mediaId) return;
+      _characterPage = page;
+      final seen = <String>{for (final item in state.cast) item.person?.id.toString() ?? item.name};
+      final merged = [
+        ...state.cast,
+        for (final item in result.cast)
+          if (seen.add(item.person?.id.toString() ?? item.name)) item,
+      ];
+      emit(state.copyWith(
+        cast: merged,
+        charactersHasNextPage: result.hasNextPage,
+        charactersLoading: false,
+      ));
     } catch (error) {
-      _log('characters page ' + (_characterPage + 1).toString() + ' failed: $error', level: 'W');
+      _log('characters page $page failed: $error', level: 'W');
       if (!isClosed) emit(state.copyWith(charactersLoading: false));
     }
   }
-
   Future<void> loadMoreRecommendations({bool retry = false}) async {
     final detail = state.detail;
     final mediaId = detail?.anilistId;

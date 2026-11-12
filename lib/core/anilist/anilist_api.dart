@@ -423,6 +423,40 @@ query($page:Int,$mediaId:Int) {
     return null;
   }
 
+  /// Counts character IDs in the background without downloading character
+  /// names or images. This avoids AniList's capped PageInfo.total value while
+  /// allowing the visible character cards to keep loading lazily.
+  Future<int> mediaCharacterExactCount(int mediaId, {int maxPages = 100}) async {
+    const query = r'''
+query($id:Int,$page:Int) {
+  Media(id:$id,type:ANIME) {
+    characters(page:$page,perPage:50,sort:[ROLE,RELEVANCE]) {
+      pageInfo { hasNextPage }
+      edges { node { id } }
+    }
+  }
+}''';
+    final ids = <int>{};
+    for (var page = 1; page <= maxPages; page++) {
+      final data = await _gql(query, {'id': mediaId, 'page': page}, throwOnError: true);
+      final media = data?['Media'];
+      final connection = media is Map ? media['characters'] : null;
+      if (connection is! Map) throw StateError('Data jumlah karakter AniList tidak tersedia.');
+      final edges = connection['edges'];
+      if (edges is List) {
+        for (final edge in edges.whereType<Map>()) {
+          final node = edge['node'];
+          final id = node is Map ? (node['id'] as num?)?.toInt() : null;
+          if (id != null) ids.add(id);
+        }
+      }
+      final info = connection['pageInfo'];
+      final hasNext = info is Map && info['hasNextPage'] == true;
+      if (!hasNext) return ids.length;
+    }
+    throw StateError('Jumlah karakter belum bisa dipastikan: batas halaman tercapai.');
+  }
+
   /// Fetches one page of characters only when the detail rail becomes visible.
   Future<({List<CastMember> cast, int totalCount, bool hasNextPage})>
   mediaCharacters(int mediaId, {int page = 1}) async {
