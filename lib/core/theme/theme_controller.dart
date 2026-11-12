@@ -128,16 +128,31 @@ class ThemeController {
     }
   }
 
+  /// Builds a restrained dark palette from the selected accent hue.
+  /// The low lightness keeps text contrast high while giving each theme its
+  /// own coloured atmosphere. For an orange accent such as #F97216 this
+  /// produces a warm brown-black background and slightly lighter surfaces.
+  static ({Color bg, Color surface, Color surface2}) _paletteFromAccent(
+    Color color,
+  ) {
+    final hue = HSLColor.fromColor(color).hue;
+    return (
+      bg: HSLColor.fromAHSL(1, hue, 0.30, 0.07).toColor(),
+      surface: HSLColor.fromAHSL(1, hue, 0.22, 0.10).toColor(),
+      surface2: HSLColor.fromAHSL(1, hue, 0.20, 0.14).toColor(),
+    );
+  }
+
   /// Single place that decides the four mutable colours, so the accent picker,
   /// AMOLED and Material You can't fight each other.
   ///
-  /// Precedence for the surfaces is AMOLED → Material You → default: someone
-  /// who asked for pure black wants pure black, but they still get the
-  /// wallpaper's accent.
+  /// AMOLED remains the strongest override. Material You keeps its wallpaper
+  /// palette; otherwise the dark surfaces are derived from the chosen accent.
   static void _applyColors() {
     final d = materialYou ? _dynamic : null;
+    final activeAccent = d?.accent ?? _profileAccent ?? accent;
 
-    AppColors.accent = d?.accent ?? _profileAccent ?? accent;
+    AppColors.accent = activeAccent;
 
     if (amoled) {
       AppColors.bg = amoledBg;
@@ -148,9 +163,10 @@ class ThemeController {
       AppColors.surface = d.surface;
       AppColors.surface2 = d.surface2;
     } else {
-      AppColors.bg = AppColors.defaultBg;
-      AppColors.surface = AppColors.defaultSurface;
-      AppColors.surface2 = AppColors.defaultSurface2;
+      final palette = _paletteFromAccent(activeAccent);
+      AppColors.bg = palette.bg;
+      AppColors.surface = palette.surface;
+      AppColors.surface2 = palette.surface2;
     }
   }
 
