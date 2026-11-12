@@ -4,6 +4,7 @@ import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
+import '../../core/ui/anilist_markdown.dart';
 
 /// People followed by the signed-in AniList account who have this anime
 /// somewhere in their list.
@@ -129,6 +130,7 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
     'COMPLETED' => const Color(0xFF5799E8),
     'DROPPED' => const Color(0xFFE16B70),
     'PAUSED' => const Color(0xFFE0A34A),
+    'REPEATING' => const Color(0xFF9B6DDB),
     _ => AppColors.textSecondary,
   };
 
@@ -182,6 +184,7 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
     final scoreFormat = options['scoreFormat']?.toString() ?? 'POINT_10';
     final status = entry['status']?.toString();
     final statusColor = _statusColor(status);
+    final notes = entry['notes']?.toString().trim() ?? '';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
@@ -192,8 +195,11 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
           borderRadius: BorderRadius.circular(13),
           border: Border.all(color: AppColors.hairline),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
             ClipOval(
               child: SizedBox(
                 width: 46,
@@ -263,6 +269,21 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
             ),
             const SizedBox(width: 8),
             if (score > 0) _ratingWidget(score, scoreFormat),
+              ],
+            ),
+            if (notes.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: AppColors.hairline),
+              const SizedBox(height: 9),
+              AniListMarkdown(
+                data: notes,
+                textStyle: AppText.body.copyWith(
+                  fontSize: 12.5,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
           ],
         ),
       ),

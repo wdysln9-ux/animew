@@ -368,6 +368,7 @@ query($page:Int,$mediaId:Int) {
       status
       progress
       score
+      notes
       user {
         id
         name
