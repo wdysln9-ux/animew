@@ -2212,7 +2212,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _cycleFit() {
     final next = (_fitIndex + 1) % _fits.length;
     setState(() => _fitIndex = next);
-    unawaited(sl<PlaybackPrefs>().setVideoFitIndex(next));
+    // Fit mode remains a session-only control; only the two-finger stretch
+    // gesture is persisted through videoStretchX.
     _bumpControls(); // the top-bar zoom label reflects the new mode
   }
 

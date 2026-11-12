@@ -53,7 +53,7 @@ List<AiringEntry> parseAiringSchedules(Map<String, dynamic> data) {
       title: title,
       coverUrl: cover,
       coverColor: coverColor,
-      durationMinutes: duration,
+      durationMinutes: (media['duration'] as num?)?.toInt(),
       episode: (raw['episode'] as int?) ?? 0,
       airsAtLocal:
           DateTime.fromMillisecondsSinceEpoch(airingAt * 1000).toLocal(),
