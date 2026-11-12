@@ -74,6 +74,26 @@ String? _cleanDescription(String? raw) {
   return text.isEmpty ? null : text;
 }
 
+/// Orders the Home "Anime Tayang" feed by the most recently released
+/// episode first. Airings that have already happened are descending by time;
+/// upcoming episodes follow in chronological order (nearest first).
+List<AiringEntry> sortHomeAiringsByLatestRelease(
+  List<AiringEntry> entries, {
+  DateTime? now,
+}) {
+  final current = now ?? DateTime.now();
+  final sorted = List<AiringEntry>.of(entries);
+  sorted.sort((a, b) {
+    final aReleased = !a.airsAtLocal.isAfter(current);
+    final bReleased = !b.airsAtLocal.isAfter(current);
+    if (aReleased != bReleased) return aReleased ? -1 : 1;
+    return aReleased
+        ? b.airsAtLocal.compareTo(a.airsAtLocal)
+        : a.airsAtLocal.compareTo(b.airsAtLocal);
+  });
+  return sorted;
+}
+
 /// Groups entries by their local calendar day, each day's list time-sorted.
 Map<DateTime, List<AiringEntry>> groupByLocalDay(List<AiringEntry> entries) {
   final map = <DateTime, List<AiringEntry>>{};

@@ -159,7 +159,9 @@ class HomeCubit extends Cubit<HomeState> {
 
   List<MediaItem> _mediaItemsFromAirings(List<AiringEntry> entries) {
     final items = <MediaItem>[];
-    for (final entry in entries) {
+    // The API's TIME sort is ascending (soonest first). Home instead puts
+    // the episode that aired most recently at the front of this section.
+    for (final entry in sortHomeAiringsByLatestRelease(entries)) {
       final anilistId = entry.anilistId;
       if (anilistId == null) continue;
       // Match AniListCatalogue's canonical identity exactly; MAL remains
