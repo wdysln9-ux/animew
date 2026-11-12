@@ -14,6 +14,7 @@ class MiniPlayerSession {
     required this.subtitle,
     required this.onRestore,
     required this.onClose,
+    this.onBack,
     this.pageBuilder,
   });
 
@@ -22,6 +23,9 @@ class MiniPlayerSession {
   final String subtitle;
   final VoidCallback onRestore;
   final VoidCallback onClose;
+  /// Handles system Back while the player is floating. The player route stays
+  /// alive; the route that was underneath it is dismissed instead.
+  final VoidCallback? onBack;
   final WidgetBuilder? pageBuilder;
 }
 
@@ -30,6 +34,10 @@ class MiniPlayerState {
 
   static final ValueNotifier<MiniPlayerSession?> active =
       ValueNotifier<MiniPlayerSession?>(null);
+
+  /// Root-shell Back behaviour, delegated to the floating player because its
+  /// transparent route remains above the shell while playback is minimized.
+  static VoidCallback? onRootBack;
 
   static void show(MiniPlayerSession session) => active.value = session;
   static void clear() => active.value = null;

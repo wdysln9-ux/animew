@@ -200,6 +200,7 @@ class _HistoryScreenState extends State<HistoryScreen>
         transitionDuration: const Duration(milliseconds: 220),
         reverseTransitionDuration: const Duration(milliseconds: 180),
         pageBuilder: (_, __, ___) => PlayerScreen(
+          backgroundRoute: ModalRoute.of(context),
           sourceId: e.sourceId,
           episodesResolver: () => _repo.episodes(
             e.showUrl,

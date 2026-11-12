@@ -178,6 +178,7 @@ class PlayerScreen extends StatefulWidget {
     this.episodeDetailMode = false,
     this.onDownloadEpisode,
     this.onSaveToFolder,
+    this.backgroundRoute,
   });
 
   /// A mirror picked from the episode list's long-press menu, opened instead
@@ -194,6 +195,10 @@ class PlayerScreen extends StatefulWidget {
 
   /// Optional action to save the current title into a My List folder.
   final Future<void> Function(Episode episode)? onSaveToFolder;
+
+  /// The page that launched this player. When Back is pressed in mini-player
+  /// mode, this route is removed while the player route/controller stay alive.
+  final Route<dynamic>? backgroundRoute;
 
   /// Set by the episode list's long-press sheet: play this one episode here,
   /// ignoring the Settings default. Empty string means the built-in player
@@ -565,9 +570,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// player first. Once the episode details are visible, it navigates back
   /// normally. Standalone player sessions keep their usual back behaviour.
   void _handlePlayerBack() {
-    // While minimized, Back belongs to the page/navigation stack underneath.
-    // Never restore or dispose the floating player from this handler.
-    if (_minimized || MiniPlayerState.active.value != null) return;
+    // The player route deliberately remains mounted above the app while
+    // minimized. Delegate Back to the floating session so it can dismiss the
+    // page that launched playback without disposing the native player.
+    final miniSession = MiniPlayerState.active.value;
+    if (_minimized || miniSession != null) {
+      miniSession?.onBack?.call();
+      return;
+    }
     // Inline playback belongs to the anime detail route. Back first leaves
     // fullscreen, then closes this player route so the exact anime page,
     // selected source, and scroll position remain underneath.
@@ -699,6 +709,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
         subtitle: subtitle,
         onRestore: returnToPlayer,
         onClose: stopPlayback,
+        onBack: () {
+          final background = widget.backgroundRoute;
+          if (background != null && background.isActive) {
+            nav.removeRoute(background);
+          } else {
+            MiniPlayerState.onRootBack?.call();
+          }
+        },
       ),
     );
     // No replacement shell is pushed: the route below this player remains
@@ -4807,7 +4825,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
           (!widget.episodeDetailMode || _showEpisodeDetails) &&
           sl<PlaybackPrefs>().closeConfirmation == 'direct',
       onPopInvokedWithResult: (didPop, _) {
-        if (_minimized || MiniPlayerState.active.value != null) return;
+        if (_minimized || MiniPlayerState.active.value != null) {
+          if (!didPop) _handlePlayerBack();
+          return;
+        }
         AppLogger.instance.log(
           '[player-route] pop didPop=$didPop loading=${_c.state.loadingSources} '
           'closeMode=${sl<PlaybackPrefs>().closeConfirmation} '

@@ -1325,6 +1325,7 @@ class _DetailViewState extends State<_DetailView> {
             reverseTransitionDuration: const Duration(milliseconds: 220),
             pageBuilder: (_, __, ___) => PlayerScreen(
               episodeDetailMode: true,
+              backgroundRoute: ModalRoute.of(context),
               onSaveToFolder: (_) => _openListSheet(detail),
               onDownloadEpisode: (episode) =>
                   _downloadSingle(episode, detail, launchCategory),

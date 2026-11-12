@@ -108,6 +108,7 @@ class _RootShellState extends State<RootShell>
   /// nothing is rebuilt during the animation (the page is a cached layer).
   late final AnimationController _switchCtrl;
   late final Animation<double> _switch;
+  late final VoidCallback _miniPlayerBackHandler = _onBack;
 
   @override
   void initState() {
@@ -120,6 +121,7 @@ class _RootShellState extends State<RootShell>
     _switch = CurvedAnimation(parent: _switchCtrl, curve: Curves.easeOutCubic);
     _navPrefs.addListener(_onTabsChanged);
     MiniPlayerState.active.addListener(_onMiniPlayerChanged);
+    MiniPlayerState.onRootBack = _miniPlayerBackHandler;
     if (sl.isRegistered<ViewerProfileStore>()) {
       sl<ViewerProfileStore>().active.addListener(_onProfileChanged);
       sl<ViewerProfileStore>().contextRevision.addListener(
@@ -194,6 +196,9 @@ class _RootShellState extends State<RootShell>
   void dispose() {
     _navPrefs.removeListener(_onTabsChanged);
     MiniPlayerState.active.removeListener(_onMiniPlayerChanged);
+    if (identical(MiniPlayerState.onRootBack, _miniPlayerBackHandler)) {
+      MiniPlayerState.onRootBack = null;
+    }
     if (sl.isRegistered<ViewerProfileStore>()) {
       sl<ViewerProfileStore>().active.removeListener(_onProfileChanged);
       sl<ViewerProfileStore>().contextRevision.removeListener(

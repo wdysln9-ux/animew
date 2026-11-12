@@ -777,6 +777,7 @@ Future<void> launchDownloadedEpisode(
       transitionDuration: const Duration(milliseconds: 220),
       reverseTransitionDuration: const Duration(milliseconds: 180),
       pageBuilder: (_, __, ___) => PlayerScreen(
+        backgroundRoute: ModalRoute.of(context),
         sourceId: record.sourceId,
         episodes: queue.episodes,
         startIndex: queue.startIndex,

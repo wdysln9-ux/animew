@@ -85,6 +85,7 @@ import '../auth/reconnect.dart';
 import '../detail/detail_screen.dart';
 import '../history/history_screen.dart';
 import '../player/player_screen.dart';
+import '../player/mini_player_overlay.dart';
 import '../schedule/schedule_screen.dart';
 import '../shell/dock_icons.dart';
 import '../shell/mode_bar.dart' show ModeChoice, modeChoices;
@@ -765,8 +766,11 @@ class _HomeViewState extends State<_HomeView>
     // Instant nav — the player resolves the episode list behind its loader.
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => PlayerScreen(
+      MiniPlayerAwarePageRoute<void>(
+        transitionDuration: const Duration(milliseconds: 220),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        pageBuilder: (_, __, ___) => PlayerScreen(
+          backgroundRoute: ModalRoute.of(context),
           sourceId: item.sourceId,
           episodesResolver: () =>
               _repo.episodes(item.url, sourceId: item.sourceId),
@@ -784,6 +788,8 @@ class _HomeViewState extends State<_HomeView>
           tmdbId: item.tmdbId,
           tmdbIsTv: item.tmdbIsTv,
         ),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
       ),
     );
     if (mounted) setState(() {});
@@ -810,9 +816,12 @@ class _HomeViewState extends State<_HomeView>
   Future<void> _resume(HistoryEntry e) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => PlayerScreen(
+      MiniPlayerAwarePageRoute<void>(
+        transitionDuration: const Duration(milliseconds: 220),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        pageBuilder: (_, __, ___) => PlayerScreen(
           episodeDetailMode: true,
+          backgroundRoute: ModalRoute.of(context),
           sourceId: e.sourceId,
           episodesResolver: () => _repo.episodes(
             e.showUrl,
@@ -834,6 +843,8 @@ class _HomeViewState extends State<_HomeView>
           malId: e.malId,
           scrobbleTitle: e.malId != null ? e.showTitle : null,
         ),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
       ),
     );
     if (mounted) setState(() {});
