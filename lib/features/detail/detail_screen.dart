@@ -2565,7 +2565,9 @@ class _DetailViewState extends State<_DetailView> {
               hasMore: state.charactersHasNextPage,
               loadingMore: state.charactersLoading,
               onLoadMore: detail.anilistId == null ? null : () => context.read<DetailCubit>().loadMoreCharacters(),
-              onRetry: () => context.read<DetailCubit>().retryExtras(),
+              onRetry: detail.anilistId != null
+                  ? () => context.read<DetailCubit>().loadMoreCharacters(retry: true)
+                  : () => context.read<DetailCubit>().retryExtras(),
               onOpenPerson: (ref) => Navigator.of(
                 context,
               ).push(PersonPage.route(ref, sourceId: widget.item.sourceId)),
