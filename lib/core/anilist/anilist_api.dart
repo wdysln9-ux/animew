@@ -458,7 +458,7 @@ query($id:Int,$page:Int) {
       edges { node { rating mediaRecommendation {
         id idMal type format title { romaji english native }
         coverImage { large color }
-        averageScore popularity status episodes seasonYear genres { name }
+        averageScore popularity status episodes seasonYear genres
       } } }
     }
   }
