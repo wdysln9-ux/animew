@@ -928,7 +928,7 @@ class _DetailCredits extends StatefulWidget {
 
 class _DetailCreditsState extends State<_DetailCredits> {
   late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('credits');
-  int? _nakamaCount;
+  String? _nakamaCount;
 
   @override
   void initState() {
@@ -951,7 +951,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
     try {
       final result = await sl<AniListService>().api.nakamaWatching(mediaId, page: 1);
       if (mounted && widget.nakamaMediaId == mediaId) {
-        setState(() => _nakamaCount = result.totalCount);
+        setState(() => _nakamaCount = result.hasNextPage && result.totalCount >= 5000 ? '5.000+' : result.totalCount.toString());
       }
     } catch (_) {
       // Keep the chip usable even if the count endpoint is temporarily unavailable.
@@ -1129,9 +1129,13 @@ class _DetailCreditsState extends State<_DetailCredits> {
 }
 
 class AnimeDetailCharacterRail extends StatefulWidget {
-  const AnimeDetailCharacterRail({required this.cast, this.loading = false, this.onOpenPerson, this.onRetry});
+  const AnimeDetailCharacterRail({required this.cast, this.loading = false, this.totalCount, this.hasMore = false, this.loadingMore = false, this.onLoadMore, this.onOpenPerson, this.onRetry});
   final List<CastMember> cast;
   final bool loading;
+  final int? totalCount;
+  final bool hasMore;
+  final bool loadingMore;
+  final VoidCallback? onLoadMore;
   final ValueChanged<PersonRef>? onOpenPerson;
   final VoidCallback? onRetry;
   @override
@@ -1140,31 +1144,28 @@ class AnimeDetailCharacterRail extends StatefulWidget {
 class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
   late bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('characters', defaultValue: true);
 
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-    _warmMissingPeople(widget.cast);
+    _scrollController.addListener(_onScroll);
+    if (widget.cast.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onLoadMore?.call();
+      });
+    }
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients || widget.loadingMore || !widget.hasMore) return;
+    if (_scrollController.position.extentAfter < 180) widget.onLoadMore?.call();
   }
 
   @override
-  void didUpdateWidget(covariant AnimeDetailCharacterRail oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.cast, widget.cast)) {
-      _warmMissingPeople(widget.cast);
-    }
-  }
-
-  void _warmMissingPeople(List<CastMember> cast) {
-    unawaited(_loadMissingPeople(cast));
-  }
-
-  Future<void> _loadMissingPeople(List<CastMember> cast) async {
-    final people = sl<PeopleService>();
-    for (final member in cast) {
-      if (member.person == null) {
-        await people.findCharacter(member.name);
-      }
-    }
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -1184,7 +1185,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
             child: Row(children: [
               Text('Karakter', style: AppText.headline.copyWith(fontSize: 16)),
               const SizedBox(width: 7),
-              Text(cast.length.toString(), style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textSecondary)),
+              Text((widget.totalCount ?? cast.length).toString(), style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textSecondary)),
               const Spacer(),
               Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 21),
             ]),
@@ -1209,6 +1210,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
         if (_expanded && cast.isNotEmpty) ...[
           const SizedBox(height: 8),
           SizedBox(height: 124, child: ListView.separated(
+            controller: _scrollController,
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
             padding: const EdgeInsets.only(right: 16),
@@ -1257,12 +1259,18 @@ class AnimeDetailSeasonRail extends StatefulWidget {
     this.loading = false,
     required this.onOpenSeason,
     required this.onOpenRelation,
+    this.onLoadMoreRecommendations,
+    this.recommendationsLoading = false,
+    this.recommendationsHasNextPage = false,
   });
   final List<SeasonEntry> seasons;
   final List<MediaRelation> relations;
   final bool loading;
   final ValueChanged<SeasonEntry> onOpenSeason;
   final ValueChanged<MediaRelation> onOpenRelation;
+  final VoidCallback? onLoadMoreRecommendations;
+  final bool recommendationsLoading;
+  final bool recommendationsHasNextPage;
 
   @override
   State<AnimeDetailSeasonRail> createState() => _AnimeDetailSeasonRailState();
@@ -1270,6 +1278,29 @@ class AnimeDetailSeasonRail extends StatefulWidget {
 
 class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
   int _selected = 0;
+  final ScrollController _recommendationsController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _recommendationsController.addListener(_onRecommendationsScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.onLoadMoreRecommendations?.call();
+    });
+  }
+
+  void _onRecommendationsScroll() {
+    if (!_recommendationsController.hasClients || widget.recommendationsLoading || !widget.recommendationsHasNextPage) return;
+    if (_recommendationsController.position.extentAfter < 220) {
+      widget.onLoadMoreRecommendations?.call();
+    }
+  }
+
+  @override
+  void dispose() {
+    _recommendationsController.dispose();
+    super.dispose();
+  }
 
   bool _isRecommended(MediaRelation relation) {
     final value = relation.relation?.trim().toLowerCase().replaceAll('_', ' ');
@@ -1456,7 +1487,11 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                     ),
                   );
                 }
+                if (selectedTab == 'Rekomendasi' && widget.recommendationsLoading) {
+                  cards.add(SizedBox(width: 54, child: Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 1.8)))));
+                }
                 return ListView.separated(
+                  controller: selectedTab == 'Rekomendasi' ? _recommendationsController : null,
                   scrollDirection: Axis.horizontal,
                   clipBehavior: Clip.none,
                   padding: const EdgeInsets.only(right: 16),

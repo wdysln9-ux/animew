@@ -140,7 +140,7 @@ class AniListApi {
         data: {'query': query, 'variables': variables},
         options: Options(
           headers: headers,
-          validateStatus: (s) => s != null && s < 500,
+          validateStatus: (s) => s != null && (s < 400 || s == 403),
         ),
       );
       final data = res.data;
@@ -398,6 +398,59 @@ query($page:Int,$mediaId:Int) {
       entries: entries,
       hasNextPage: pageInfo is Map && pageInfo['hasNextPage'] == true,
       totalCount: pageInfo is Map ? (pageInfo['total'] as num?)?.toInt() ?? entries.length : entries.length,
+    );
+  }
+
+  /// Fetches one page of characters only when the detail rail becomes visible.
+  Future<({List<CastMember> cast, int totalCount, bool hasNextPage})>
+  mediaCharacters(int mediaId, {int page = 1}) async {
+    const query = r'''
+query($id:Int,$page:Int) {
+  Media(id:$id,type:ANIME) {
+    characters(page:$page,perPage:25,sort:[ROLE,RELEVANCE]) {
+      pageInfo { total hasNextPage }
+      edges { role node { id name { full } image { large } } }
+    }
+  }
+}''';
+    final data = await _gql(query, {'id': mediaId, 'page': page}, throwOnError: true);
+    final media = data?['Media'];
+    final connection = media is Map ? media['characters'] : null;
+    if (connection is! Map) throw StateError('Data karakter AniList tidak tersedia.');
+    final parsed = _parseExtras({'characters': connection});
+    final info = connection['pageInfo'];
+    return (
+      cast: parsed.cast,
+      totalCount: info is Map ? (info['total'] as num?)?.toInt() ?? parsed.cast.length : parsed.cast.length,
+      hasNextPage: info is Map && info['hasNextPage'] == true,
+    );
+  }
+
+  /// Fetches 12 recommendation cards at a time when their rail becomes visible.
+  Future<({List<MediaRelation> recommendations, int totalCount, bool hasNextPage})>
+  mediaRecommendations(int mediaId, {int page = 1}) async {
+    const query = r'''
+query($id:Int,$page:Int) {
+  Media(id:$id,type:ANIME) {
+    recommendations(page:$page,perPage:12,sort:RATING_DESC) {
+      pageInfo { total hasNextPage }
+      edges { node { rating mediaRecommendation {
+        id idMal type format title { romaji english native }
+        coverImage { large color }
+      } } }
+    }
+  }
+}''';
+    final data = await _gql(query, {'id': mediaId, 'page': page}, throwOnError: true);
+    final media = data?['Media'];
+    final connection = media is Map ? media['recommendations'] : null;
+    if (connection is! Map) throw StateError('Data rekomendasi AniList tidak tersedia.');
+    final parsed = _parseExtras({'recommendations': connection});
+    final info = connection['pageInfo'];
+    return (
+      recommendations: parsed.relations,
+      totalCount: info is Map ? (info['total'] as num?)?.toInt() ?? parsed.relations.length : parsed.relations.length,
+      hasNextPage: info is Map && info['hasNextPage'] == true,
     );
   }
 

@@ -6,6 +6,7 @@ import '../../../core/di/injector.dart';
 import '../../../core/provider/provider_manager.dart';
 import '../../../core/error/exceptions.dart';
 import '../../../core/anilist/anilist_network_policy.dart';
+import '../../../core/anilist/anilist_service.dart';
 import '../../../core/error/network_failure.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/lnreader/novel_cloudflare.dart';
@@ -53,6 +54,12 @@ class DetailState extends Equatable {
     this.episodesLoading = false,
     this.extrasLoading = false,
     this.seasonsLoading = false,
+    this.characterTotal,
+    this.charactersHasNextPage = false,
+    this.charactersLoading = false,
+    this.recommendationsHasNextPage = false,
+    this.recommendationsLoading = false,
+    this.recommendationsLoaded = false,
   });
 
   final DetailStatus status;
@@ -69,6 +76,12 @@ class DetailState extends Equatable {
   final List<SeasonEntry> seasons;
   final bool extrasLoading;
   final bool seasonsLoading;
+  final int? characterTotal;
+  final bool charactersHasNextPage;
+  final bool charactersLoading;
+  final bool recommendationsHasNextPage;
+  final bool recommendationsLoading;
+  final bool recommendationsLoaded;
 
   /// 'sub' | 'dub'. Drives the Sub/Dub toggle and the player `category`.
   final String category;
@@ -103,6 +116,12 @@ class DetailState extends Equatable {
     bool? episodesLoading,
     bool? extrasLoading,
     bool? seasonsLoading,
+    int? characterTotal,
+    bool? charactersHasNextPage,
+    bool? charactersLoading,
+    bool? recommendationsHasNextPage,
+    bool? recommendationsLoading,
+    bool? recommendationsLoaded,
   }) => DetailState(
     status: status ?? this.status,
     detail: detail ?? this.detail,
@@ -119,6 +138,12 @@ class DetailState extends Equatable {
     episodesLoading: episodesLoading ?? this.episodesLoading,
     extrasLoading: extrasLoading ?? this.extrasLoading,
     seasonsLoading: seasonsLoading ?? this.seasonsLoading,
+    characterTotal: characterTotal ?? this.characterTotal,
+    charactersHasNextPage: charactersHasNextPage ?? this.charactersHasNextPage,
+    charactersLoading: charactersLoading ?? this.charactersLoading,
+    recommendationsHasNextPage: recommendationsHasNextPage ?? this.recommendationsHasNextPage,
+    recommendationsLoading: recommendationsLoading ?? this.recommendationsLoading,
+    recommendationsLoaded: recommendationsLoaded ?? this.recommendationsLoaded,
   );
 
   @override
@@ -136,6 +161,12 @@ class DetailState extends Equatable {
     cloudflareUrl,
     extrasLoading,
     seasonsLoading,
+    characterTotal,
+    charactersHasNextPage,
+    charactersLoading,
+    recommendationsHasNextPage,
+    recommendationsLoading,
+    recommendationsLoaded,
   ];
 }
 
@@ -174,6 +205,72 @@ class DetailCubit extends Cubit<DetailState> {
     // throws. Id-less titles (no seed id) just enrich after load, as before.
     if (seedType == ProviderType.anime && seedMalId != null) {
       sl<EpisodeMetadataService>().animeEpisodeMeta(seedMalId);
+    }
+  }
+
+  int _characterPage = 0;
+  int _recommendationPage = 0;
+
+  Future<void> loadMoreCharacters() async {
+    final detail = state.detail;
+    final mediaId = detail?.anilistId;
+    if (mediaId == null || detail?.type != ProviderType.anime ||
+        state.charactersLoading ||
+        (_characterPage > 0 && !state.charactersHasNextPage)) return;
+    final page = _characterPage + 1;
+    emit(state.copyWith(charactersLoading: true));
+    try {
+      final result = await sl<AniListService>().api.mediaCharacters(mediaId, page: page);
+      if (isClosed || state.detail?.anilistId != mediaId) return;
+      _characterPage = page;
+      final seen = <String>{for (final item in state.cast) item.person?.id.toString() ?? item.name};
+      final merged = [
+        ...state.cast,
+        for (final item in result.cast)
+          if (seen.add(item.person?.id.toString() ?? item.name)) item,
+      ];
+      emit(state.copyWith(
+        cast: merged,
+        characterTotal: result.totalCount,
+        charactersHasNextPage: result.hasNextPage,
+        charactersLoading: false,
+      ));
+    } catch (error) {
+      _log('characters page $page failed: $error', level: 'W');
+      if (!isClosed) emit(state.copyWith(charactersLoading: false));
+    }
+  }
+
+  Future<void> loadMoreRecommendations() async {
+    final detail = state.detail;
+    final mediaId = detail?.anilistId;
+    if (mediaId == null || detail?.type != ProviderType.anime ||
+        state.recommendationsLoading ||
+        (_recommendationPage > 0 && !state.recommendationsHasNextPage)) return;
+    final page = _recommendationPage + 1;
+    emit(state.copyWith(recommendationsLoading: true));
+    try {
+      final result = await sl<AniListService>().api.mediaRecommendations(mediaId, page: page);
+      if (isClosed || state.detail?.anilistId != mediaId) return;
+      _recommendationPage = page;
+      final existing = state.relations.isNotEmpty ? state.relations : detail.relations;
+      final seenIds = <int>{for (final item in existing) if (item.anilistId != null) item.anilistId!};
+      final seenTitles = <String>{for (final item in existing) item.title.trim().toLowerCase()};
+      final merged = [
+        ...existing,
+        for (final item in result.recommendations)
+          if ((item.anilistId == null || seenIds.add(item.anilistId!)) &&
+              seenTitles.add(item.title.trim().toLowerCase())) item,
+      ];
+      emit(state.copyWith(
+        relations: merged,
+        recommendationsHasNextPage: result.hasNextPage,
+        recommendationsLoaded: true,
+        recommendationsLoading: false,
+      ));
+    } catch (error) {
+      _log('recommendations page $page failed: $error', level: 'W');
+      if (!isClosed) emit(state.copyWith(recommendationsLoading: false));
     }
   }
 

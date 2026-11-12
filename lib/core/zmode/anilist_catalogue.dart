@@ -76,9 +76,7 @@ class AniListCatalogue implements AnimeCatalogue {
       // drop the long tail of 3% tags.
       'tags{name rank isMediaSpoiler} '
       'trailer{id site thumbnail} '
-      'characters(sort:ROLE,perPage:50){edges{role node{name{full} image{large}}}} '
-      'relations{edges{relationType node{id idMal type title{romaji english} coverImage{large color} averageScore popularity format status episodes seasonYear genres}}} '
-      'recommendations(sort:RATING_DESC,perPage:50){edges{node{rating mediaRecommendation{id idMal type title{romaji english} coverImage{large color} averageScore popularity format status episodes seasonYear genres}}}}';
+      'relations{edges{relationType node{id idMal type title{romaji english} coverImage{large color} averageScore popularity format status episodes seasonYear genres}}}';
 
   /// Exactly what [_item] reads, and nothing else. Home asks for 7 rows of 30
   /// in one request, so every field here is paid for 210 times: carrying the

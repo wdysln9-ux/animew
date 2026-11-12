@@ -2552,7 +2552,11 @@ class _DetailViewState extends State<_DetailView> {
               cast: state.cast.isNotEmpty
                   ? state.cast
                   : [for (final name in detail.cast) CastMember(name: name)],
-              loading: state.extrasLoading,
+              loading: state.extrasLoading || state.charactersLoading,
+              totalCount: state.characterTotal,
+              hasMore: state.charactersHasNextPage,
+              loadingMore: state.charactersLoading,
+              onLoadMore: detail.anilistId == null ? null : () => context.read<DetailCubit>().loadMoreCharacters(),
               onRetry: () => context.read<DetailCubit>().retryExtras(),
               onOpenPerson: (ref) => Navigator.of(
                 context,
@@ -2565,6 +2569,9 @@ class _DetailViewState extends State<_DetailView> {
               seasons: state.seasons,
               relations: state.relations.isNotEmpty ? state.relations : detail.relations,
               loading: state.seasonsLoading,
+              onLoadMoreRecommendations: detail.anilistId == null ? null : () => context.read<DetailCubit>().loadMoreRecommendations(),
+              recommendationsLoading: state.recommendationsLoading,
+              recommendationsHasNextPage: state.recommendationsHasNextPage,
               onOpenSeason: (season) => _openRelation(
                 MediaRelation(
                   title: season.title,
