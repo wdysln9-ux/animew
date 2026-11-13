@@ -44,6 +44,26 @@ class MiniPlayerState {
   static VoidCallback? onRootBack;
 
   static void show(MiniPlayerSession session) => active.value = session;
+
+  /// Rebuilds the floating surface without replacing the live PlayerController.
+  /// Useful after a Navigator route is removed underneath the overlay: some
+  /// Android texture surfaces detach during that transition and need a fresh
+  /// Video widget to attach to the same controller again.
+  static void refresh() {
+    final current = active.value;
+    if (current == null) return;
+    active.value = MiniPlayerSession(
+      controller: current.controller,
+      title: current.title,
+      subtitle: current.subtitle,
+      onRestore: current.onRestore,
+      onClose: current.onClose,
+      onBack: current.onBack,
+      pageBuilder: current.pageBuilder,
+      videoBuilder: current.videoBuilder,
+    );
+  }
+
   static void clear() => active.value = null;
 }
 

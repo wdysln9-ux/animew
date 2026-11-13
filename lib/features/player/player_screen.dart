@@ -550,7 +550,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   // One GlobalKey lets Flutter reparent the live media_kit Video element
   // into the floating overlay instead of disposing its native texture and
   // creating a fresh (sometimes black) surface during minimization.
-  final GlobalKey _miniPlayerVideoKey = GlobalKey();
+  GlobalKey _miniPlayerVideoKey = GlobalKey();
 
   final ScrollController _episodeCardsScroll = ScrollController();
   // Keep the inline episode metadata scroll position when switching layouts.
@@ -727,6 +727,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
               background.isActive &&
               !background.isFirst) {
             nav.removeRoute(background);
+            // Removing the page underneath can detach media_kit's texture on
+            // some Android builds. Re-key and rebuild only the Video widget;
+            // the PlayerController and playback session remain untouched.
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted || MiniPlayerState.active.value == null) return;
+              _miniPlayerVideoKey = GlobalKey();
+              MiniPlayerState.refresh();
+            });
           } else {
             // The root shell's PopScope receives this same system Back event.
             // Calling onRootBack here as well dispatches the root handler twice:

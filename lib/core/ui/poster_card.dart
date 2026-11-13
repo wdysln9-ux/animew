@@ -331,6 +331,12 @@ class _PosterCardState extends State<PosterCard> {
         wide && prefs?.posterGenreBadge == true && widget.genres.isNotEmpty;
     final showAdult = prefs?.posterAdultBadge == true && widget.isAdult;
     final showStatus = (prefs?.posterStatusBadge ?? true) && widget.statusBadge != null;
+    final statusLabel = switch (widget.statusBadge?.trim().toLowerCase()) {
+      'finished' || 'completed' || 'complete' || 'selesai' => 'Selesai',
+      'releasing' || 'ongoing' || 'currently airing' || 'airing' || 'tayang' => 'Tayang',
+      'not yet released' || 'upcoming' || 'segera' => 'Segera',
+      _ => widget.statusBadge?.trim() ?? '',
+    };
     final showViews = widget.showViewsBadge && (prefs?.posterViewsBadge ?? true) && widget.viewsBadge != null;
     final showRecommendationRating =
         widget.recommendationRatingBadge != null &&
@@ -432,10 +438,10 @@ class _PosterCardState extends State<PosterCard> {
                           top: 6,
                           left: 6,
                           child: _PosterTag(
-                            widget.statusBadge!,
-                            color: widget.statusBadge == 'Selesai'
-                                ? const Color(0xFF438BE8)
-                                : widget.statusBadge == 'Segera'
+                            statusLabel,
+                            color: statusLabel == 'Selesai'
+                                ? const Color(0xFF4E8DFF)
+                                : statusLabel == 'Segera'
                                     ? const Color(0xFFE6A52D)
                                     : const Color(0xFF20B86B),
                           ),
@@ -507,7 +513,7 @@ class _PosterCardState extends State<PosterCard> {
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: AppColors.accent,
-                                  width: 2.5,
+                                  width: 1.5,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -602,7 +608,7 @@ class _PosterCardState extends State<PosterCard> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppText.body.copyWith(
-                                  fontSize: 13,
+                                  fontSize: 11,
                                   height: 1.1,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textSecondary,
