@@ -240,11 +240,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _taste() {
     final genres = _history.isEmpty ? const ['Comedy', 'Fantasy', 'Action', 'Adventure'] : _tasteGenres;
+    final counts = <String, int>{
+      for (final g in genres)
+        g: _all.where((m) => m.genres.any((x) => x.toLowerCase() == g.toLowerCase())).length,
+    };
+    final total = counts.values.fold<int>(0, (sum, value) => sum + value);
     return SizedBox(height: 28, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [for (final g in genres)
         Padding(padding: const EdgeInsets.only(right: 6), child: _pill(g,
           () => _search(filters: MetaFilters(genres: [g])),
-          suffix: '${_all.where((m) => m.genres.any((x) => x.toLowerCase() == g.toLowerCase())).length}'))]));
+          suffix: '${total == 0 ? 0 : (counts[g]! * 100 / total).round()}%'))]));
   }
 
   Widget _quickPicks() {
