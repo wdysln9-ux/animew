@@ -175,6 +175,26 @@ class MetadataRepository implements CatalogueRepository {
 
   /// Titles seen on this run, so `sources()` can search by name without a
   /// second metadata round-trip.
+  /// Refresh only the random AniList recommendations row, leaving every
+  /// other Home catalogue row and its cache untouched.
+  Future<List<MediaItem>> refreshRecommendations() async {
+    final items = await _al.refreshRecommendations();
+    final kind = _browseKind();
+    if (kind == ZKind.anime && items.isNotEmpty) {
+      final cached = _homeCache[kind];
+      if (cached != null) {
+        _homeCache[kind] = [
+          for (final section in cached)
+            if (section.title == 'Rekomendasi Anime')
+              HomeSection(title: section.title, items: items, more: section.more)
+            else
+              section,
+        ];
+      }
+    }
+    return items;
+  }
+
   final _titles = <String, ({String title, String? alt, int? malId})>{};
 
   /// The sub/dub cut each show was last opened as, by canonical key.

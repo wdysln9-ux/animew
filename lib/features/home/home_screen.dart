@@ -2067,15 +2067,18 @@ class _HomeViewState extends State<_HomeView>
             RefreshIndicator(
               color: AppColors.accent,
               onRefresh: () {
-                // Pull-to-refresh is the user saying "try again", so it also
-                // re-tests a session the startup check only assumed was dead
-                // (the "Reconnect to sync" banner). force: it must not sit out
-                // the cool-off when someone deliberately pulled.
-                if (sl.isRegistered<AuthCubit>()) {
-                  unawaited(sl<AuthCubit>().revalidateIfFlagged(force: true));
-                }
                 if (_sourceCatalogueSelected) {
                   return _sourceCatalogueController.refresh();
+                }
+                // In AniList anime mode, pull-to-refresh is scoped to the
+                // random recommendations row. Other Home data stays intact.
+                if (ZModePrefs.enabled &&
+                    sl<ContentModeCubit>().state == ContentMode.anime) {
+                  return context.read<HomeCubit>().refreshRecommendations();
+                }
+                // Keep the existing refresh behaviour for non-AniList modes.
+                if (sl.isRegistered<AuthCubit>()) {
+                  unawaited(sl<AuthCubit>().revalidateIfFlagged(force: true));
                 }
                 return context.read<HomeCubit>().load();
               },

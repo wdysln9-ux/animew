@@ -422,6 +422,26 @@ class HomeCubit extends Cubit<HomeState> {
     }
   }
 
+  /// Refreshes only the dedicated AniList recommendations row. No provider
+  /// home reload, tracker fetch, airing refresh, or other catalogue requests.
+  Future<void> refreshRecommendations() async {
+    if (_repo is! MetadataRepository || _browseKind != ZKind.anime) return;
+    final current = state.sections;
+    if (current == null || current.isEmpty) return;
+    final items = await _repo.refreshRecommendations();
+    if (isClosed || items.isEmpty) return;
+    final updated = [
+      for (final section in current)
+        if (section.title == 'Rekomendasi Anime')
+          HomeSection(title: section.title, items: items, more: section.more)
+        else
+          section,
+    ];
+    if (!updated.any((section) => section.title == 'Rekomendasi Anime')) return;
+    emit(state.copyWith(sections: updated));
+    relayout();
+  }
+
   /// Re-merge the rows over the sections already held, without refetching.
   ///
   /// This is the whole answer to an arrangement change: the provider data is

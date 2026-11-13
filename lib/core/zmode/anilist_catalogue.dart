@@ -251,6 +251,9 @@ class AniListCatalogue implements AnimeCatalogue {
     return out;
   }
 
+  /// Fetches a fresh random batch for the dedicated Home recommendation row.
+  Future<List<MediaItem>> refreshRecommendations() => _randomAnimePage();
+
   /// Samples unique AniList media IDs uniformly across the full anime ID
   /// range, then keeps only valid anime returned by AniList. It deliberately
   /// does not use score, popularity, trending, or a top-N result page.
