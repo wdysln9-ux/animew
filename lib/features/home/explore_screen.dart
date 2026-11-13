@@ -135,10 +135,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return const [];
   }
   List<MediaItem> get _trending => _row('Trending').isNotEmpty ? _row('Trending') : _row('Populer');
-  List<MediaItem> get _recommendations {
-    if (_personalized.isNotEmpty) return _personalized;
-    return _row('Rekomendasi Anime').isNotEmpty ? _row('Rekomendasi Anime') : _trending;
-  }
+  // Reuse the exact catalogue row shown as "Rekomendasi Anime" on Home.
+  // Do not synthesize a second recommendation list from genres/history here.
+  List<MediaItem> get _recommendations => _row('Rekomendasi Anime');
   List<MediaItem> get _heroes {
     final unique = <String, MediaItem>{};
     for (final m in [..._recommendations, ..._trending, ..._row('Populer')]) {
