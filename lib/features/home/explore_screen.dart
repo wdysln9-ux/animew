@@ -27,6 +27,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<HistoryEntry> _history = const [];
   List<MediaItem> _becauseCarousel = const [];
   List<MediaItem> _becauseList = const [];
+  Map<int, int> _becauseRatings = const {};
   bool _becauseLoading = false;
   String _selected = 'Untukmu';
   int _heroIndex = 0;
@@ -76,12 +77,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
       final api = sl<AniListService>().api;
       final items = <MediaItem>[];
       final seen = <int>{};
+      final ratings = <int, int>{};
       var page = 1;
       var hasNextPage = true;
       while (items.length < 15 && hasNextPage) {
         final result = await api.mediaRecommendations(anilistId, page: page);
         for (final r in result.recommendations) {
           if (r.isReading || r.isAdult || r.anilistId == null || !seen.add(r.anilistId!)) continue;
+          ratings[r.anilistId!] = r.recommendationRating ?? 0;
           items.add(MediaItem(
             id: 'anilist:${r.anilistId}',
             title: r.title,
@@ -108,6 +111,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       if (mounted) setState(() {
         _becauseCarousel = items.take(5).toList();
         _becauseList = items.skip(5).take(10).toList();
+        _becauseRatings = ratings;
       });
     } catch (_) {
       // Leave this section empty if AniList cannot provide title-specific recommendations.
@@ -305,6 +309,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 cellWidth: width,
                 onTap: () => _open(item),
                 scoreBadge: item.score,
+                recommendationRatingBadge: _becauseRatings[item.anilistId],
                 viewsBadge: item.popularity,
                 statusBadge: item.status?.name,
                 qualityBadge: item.quality,
@@ -515,7 +520,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _heading('Telusuri Musim'), _seasons(),
           _heading('Genre', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen()))), _genreGrid(),
           _heading('Telusuri Tahun'), _years(),
-          _heading('Studio Populer', marked: true, action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen()))), _studios(),
+          _heading('Studio Populer', marked: true), _studios(),
           const SizedBox(height: 100),
         ]))),
       ]),
