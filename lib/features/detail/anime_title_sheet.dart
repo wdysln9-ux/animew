@@ -22,99 +22,106 @@ Future<void> showAnimeTitleSheet(
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (sheetContext) => DraggableScrollableSheet(
-      initialChildSize: 0.48,
-      minChildSize: 0.34,
-      maxChildSize: 0.78,
-      expand: false,
-      builder: (context, scrollController) => Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+    builder: (sheetContext) => SafeArea(
+      top: false,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.8,
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 42,
-              height: 5,
-              decoration: BoxDecoration(
-                color: AppColors.textTertiary.withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(sheetContext).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 42,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: AppColors.textTertiary.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 18, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Judul anime',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Tutup',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                controller: scrollController,
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                children: [
-                  _TitleValue(label: 'Romaji', value: romaji),
-                  const SizedBox(height: 17),
-                  _TitleValue(
-                    label: 'Inggris',
-                    value: english.isNotEmpty ? english : 'Belum tersedia',
-                  ),
-                  const SizedBox(height: 17),
-                  FutureBuilder<String?>(
-                    future: translated,
-                    builder: (context, snapshot) => _TitleValue(
-                      label: 'Indonesia (terjemahan)',
-                      value: snapshot.data ??
-                          (snapshot.connectionState == ConnectionState.waiting
-                              ? 'Menerjemahkan…'
-                              : 'Terjemahan belum tersedia'),
-                    ),
-                  ),
-                  if (detail.synonyms.isNotEmpty) ...[
-                    const SizedBox(height: 17),
-                    Text(
-                      'Sinonim',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    Wrap(
-                      spacing: 7,
-                      runSpacing: 7,
-                      children: detail.synonyms.map((value) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface2,
-                          borderRadius: BorderRadius.circular(10),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 18, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Judul anime',
+                        style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
-                        child: Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontFamily: 'Urbanist', fontFamilyFallback: AppText.fontFamilyFallback)),
-                      )).toList(),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Tutup',
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      icon: const Icon(Icons.close_rounded),
                     ),
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+              Flexible(
+                fit: FlexFit.loose,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _TitleValue(label: 'Romaji', value: romaji),
+                      const SizedBox(height: 17),
+                      _TitleValue(
+                        label: 'Inggris',
+                        value: english.isNotEmpty ? english : 'Belum tersedia',
+                      ),
+                      const SizedBox(height: 17),
+                      FutureBuilder<String?>(
+                        future: translated,
+                        builder: (context, snapshot) => _TitleValue(
+                          label: 'Indonesia (terjemahan)',
+                          value: snapshot.data ??
+                              (snapshot.connectionState == ConnectionState.waiting
+                                  ? 'Menerjemahkan…'
+                                  : 'Terjemahan belum tersedia'),
+                        ),
+                      ),
+                      if (detail.synonyms.isNotEmpty) ...[
+                        const SizedBox(height: 17),
+                        Text(
+                          'Sinonim',
+                          style: Theme.of(sheetContext).textTheme.labelMedium?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Wrap(
+                          spacing: 7,
+                          runSpacing: 7,
+                          children: detail.synonyms.map((value) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface2,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(value, style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(fontFamily: 'Urbanist', fontFamilyFallback: AppText.fontFamilyFallback)),
+                          )).toList(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
+    )
   );
 }
 
