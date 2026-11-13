@@ -627,7 +627,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
     final isAiring = value.contains('tayang') || value.contains('ongoing');
     final isCompleted = value.contains('selesai') || value.contains('completed');
     final isUpcoming = value.contains('segera') || value.contains('upcoming');
-    final statusColor = isCompleted ? const Color(0xFF4389E8) : (isAiring ? const Color(0xFF24A765) : const Color(0xFFB86A2A));
+    final statusColor = isCompleted ? const Color(0xFF326DD2) : (isAiring ? const Color(0xFF24A765) : const Color(0xFFB86A2A));
     final background = isFormat ? AppColors.accent : statusColor.withValues(alpha: 0.20);
     final foreground = isFormat
         ? Colors.white
@@ -642,7 +642,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: background,
         border: isFormat ? null : Border.all(color: statusColor, width: 1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
@@ -970,22 +970,22 @@ class _DetailCreditsState extends State<_DetailCredits> {
     final color = AppColors.accent;
     return InkWell(
       onTap: widget.onNakamaTap,
-      borderRadius: BorderRadius.circular(7),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           border: Border.all(color: color.withValues(alpha: 0.8)),
-          borderRadius: BorderRadius.circular(7),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.groups_rounded, size: 13, color: color),
+            Icon(Icons.people_rounded, size: 14, color: color),
             const SizedBox(width: 5),
             Text(
               _nakamaCount == null
-                  ? 'Nakama Menonton'
-                  : '$_nakamaCount Nakama Menonton',
+                  ? 'nakama menonton'
+                  : '$_nakamaCount nakama menonton',
               style: AppText.caption.copyWith(
                 fontSize: 12,
                 color: color,
@@ -1004,7 +1004,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.20),
         border: Border.all(color: color, width: 1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1030,12 +1030,12 @@ class _DetailCreditsState extends State<_DetailCredits> {
       ),
     );
     if (onTap == null) return child;
-    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(5), child: child);
+    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(20), child: child);
   }
 
   @override
   Widget build(BuildContext context) {
-    const studioBlue = Color(0xFF5799E8);
+    const studioBlue = Color(0xFF326DD2);
     final genreColor = AppColors.accent;
     final hasCredits = widget.studios.isNotEmpty || widget.tags.isNotEmpty;
 
@@ -1053,12 +1053,12 @@ class _DetailCreditsState extends State<_DetailCredits> {
                 for (final genre in widget.genres)
                   InkWell(
                     onTap: () => widget.onGenreTap(genre),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(20),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                       decoration: BoxDecoration(
                         border: Border.all(color: genreColor.withValues(alpha: 0.8)),
-                        borderRadius: BorderRadius.circular(7),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         genre,
@@ -1105,7 +1105,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
               for (final studio in widget.studios)
                 _chip(studio, studioBlue, icon: Icons.business_rounded, onTap: () => widget.onStudioTap(studio)),
               if (widget.tags.isNotEmpty)
-                _chip('Tags (${widget.tags.length})', AppColors.accent, onTap: widget.onTagsTap),
+                _chip('Tags (${widget.tags.length})', const Color(0xFF326DD2), icon: Icons.tag_rounded, onTap: widget.onTagsTap),
             ]),
           ],
           if (_expanded && widget.onNakamaTap != null) ...[
