@@ -575,8 +575,8 @@ query($id:Int,$page:Int) {
       'voiceActors(language:JAPANESE,sort:[RELEVANCE]){ name{full} } } } '
       'relations{ edges{ relationType '
       'node{ id idMal type format title{romaji english native} coverImage{large color} averageScore popularity status episodes seasonYear genres isAdult } } } '
-      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} } } } } '
-      'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} } } } }';
+      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} averageScore popularity status episodes seasonYear genres isAdult } } } } '
+      'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} averageScore popularity status episodes seasonYear genres isAdult } } } }';
 
   /// Manga/novel twin of [_extrasSelection].
   ///
@@ -592,8 +592,8 @@ query($id:Int,$page:Int) {
       'node{ id name{full} image{medium} } } } '
       'relations{ edges{ relationType '
       'node{ id idMal type format title{romaji english native} coverImage{large color} } } } '
-      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} } } } } '
-      'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} } } } }';
+      'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} averageScore popularity status episodes seasonYear genres isAdult } } } } '
+      'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} averageScore popularity status episodes seasonYear genres isAdult } } } }';
 
   /// Cast + relations for a MANGA or NOVEL, resolved by title.
   ///
