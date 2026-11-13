@@ -467,14 +467,14 @@ class _PosterCardState extends State<PosterCard> {
                               if (showViews) ...[
                                 if (showRecommendationRating || widget.seriesBadge != null || widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
-                                const Icon(Icons.visibility_rounded, size: 12, color: Colors.white, shadows: [Shadow(color: Color.fromRGBO(0, 0, 0, 0.8), offset: Offset(0.5, 0.5), blurRadius: 0)]),
+                                const Icon(Icons.visibility_rounded, size: 12.5, color: Colors.white, shadows: [Shadow(color: Color.fromRGBO(0, 0, 0, 0.8), offset: Offset(0.5, 0.5), blurRadius: 0)]),
                                 const SizedBox(width: 3),
                                 Text(
                                   _compactPopularity(widget.viewsBadge!),
                                   style: TextStyle(
                                     fontFamily: AppText.fontFamily,
                                     fontFamilyFallback: AppText.fontFamilyFallback,
-                                    fontSize: 10,
+                                    fontSize: 10.5,
                                     height: 1.1,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
@@ -850,7 +850,7 @@ class _RecommendationRatingTag extends StatelessWidget {
         children: [
           Icon(
             positive ? Icons.thumb_up_rounded : Icons.thumb_down_rounded,
-            size: 11,
+            size: 11.5,
             color: color,
           ),
           const SizedBox(width: 3),
@@ -859,7 +859,7 @@ class _RecommendationRatingTag extends StatelessWidget {
             style: TextStyle(
               fontFamily: AppText.fontFamily,
               fontFamilyFallback: AppText.fontFamilyFallback,
-              fontSize: 10,
+              fontSize: 10.5,
               height: 1.1,
               fontWeight: FontWeight.w700,
               color: color,
@@ -892,7 +892,7 @@ class _PosterInfoTag extends StatelessWidget {
         style: TextStyle(
           fontFamily: AppText.fontFamily,
           fontFamilyFallback: AppText.fontFamilyFallback,
-          fontSize: 10,
+          fontSize: 10.5,
           height: 1.1,
           fontWeight: FontWeight.w700,
           color: Colors.white,
@@ -932,14 +932,14 @@ class _ScoreTag extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.star_rounded, size: 12, color: score >= 75 ? const Color(0xFF55D879) : score >= 60 ? const Color(0xFFFFC247) : const Color(0xFFFF7168)),
+          Icon(Icons.star_rounded, size: 12.5, color: score >= 75 ? const Color(0xFF55D879) : score >= 60 ? const Color(0xFFFFC247) : const Color(0xFFFF7168)),
           const SizedBox(width: 2),
           Text(
             _outOfTen,
             style: TextStyle(
               fontFamily: AppText.fontFamily,
               fontFamilyFallback: AppText.fontFamilyFallback,
-              fontSize: 10,
+              fontSize: 10.5,
               height: 1.1,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.2,
@@ -975,7 +975,7 @@ class _PosterTag extends StatelessWidget {
           style: TextStyle(
             fontFamily: AppText.fontFamily,
             fontFamilyFallback: AppText.fontFamilyFallback,
-            fontSize: 10,
+            fontSize: 10.5,
             height: 1.05,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,
