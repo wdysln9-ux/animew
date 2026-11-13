@@ -1057,7 +1057,7 @@ class _HomeViewState extends State<_HomeView>
           onInfo: onInfo,
           onToggleList: toggleList,
           meta: _heroMeta,
-          style: HeroTransition.cinematic,
+          style: HeroTransition.posterStack,
           onArtColor: ThemeController.adaptiveColour
               ? (c) => _heroTint.value = c == null ? null : tintFromDominant(c)
               : null,
