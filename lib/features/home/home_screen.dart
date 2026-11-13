@@ -1156,7 +1156,8 @@ class _HomeViewState extends State<_HomeView>
           viewsBadge: items[i].popularity,
           latestEpisodeBadge: items[i].latestEpisode,
           rankBadge: rawTitle.toLowerCase().contains('trending') ? i + 1 : null,
-          metaLine: [if (items[i].format?.isNotEmpty == true) items[i].format!, if (items[i].totalEpisodes != null && items[i].totalEpisodes! > 0) '${items[i].totalEpisodes} Eps'].join(' · '),
+          metaFormat: items[i].format,
+          metaEpisodes: items[i].totalEpisodes != null && items[i].totalEpisodes! > 0 ? items[i].totalEpisodes : null,
           onTap: () => sourceCatalogue
               ? _openSourceCatalogueDetail(items[i])
               : _openDetail(items[i]),

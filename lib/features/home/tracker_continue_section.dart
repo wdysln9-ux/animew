@@ -259,7 +259,8 @@ class _TrackerPosterCard extends StatelessWidget {
                     scoreBadge: entry.score == null ? null : (entry.score! * 10).round(),
                     statusBadge: trackerName == 'AniList' ? (entry.item.isUpcoming ? 'Segera' : entry.item.status == MediaStatus.completed ? 'Selesai' : entry.item.status == MediaStatus.ongoing ? 'Tayang' : null) : null,
                     viewsBadge: entry.item.popularity,
-                    metaLine: [if (entry.item.format?.isNotEmpty == true) entry.item.format!, if (entry.totalEpisodes != null && entry.totalEpisodes! > 0) '${entry.totalEpisodes} Eps'].join(' · '),
+                    metaFormat: entry.item.format,
+                    metaEpisodes: entry.totalEpisodes != null && entry.totalEpisodes! > 0 ? entry.totalEpisodes : null,
                     showTitle: titleInside,
                     onTap: onTap,
                   ),
@@ -290,13 +291,16 @@ class _TrackerPosterCard extends StatelessWidget {
               inside: false,
               textStyle: AppText.caption.copyWith(color: AppColors.textPrimary),
             ),
-          if (!titleInside && posterMetaLineEnabled())
+          if (!titleInside && posterMetaLineEnabled() && [
+            if (posterMetaFormatEnabled()) entry.item.format,
+            if (posterMetaEpisodesEnabled() && entry.totalEpisodes != null && entry.totalEpisodes! > 0) entry.totalEpisodes,
+          ].where((value) => value != null && value.toString().isNotEmpty).isNotEmpty)
             Padding(
               padding: EdgeInsets.zero,
               child: Text(
                 [
-                  if (entry.item.format?.isNotEmpty == true) entry.item.format!,
-                  if (entry.totalEpisodes != null && entry.totalEpisodes! > 0)
+                  if (posterMetaFormatEnabled() && entry.item.format?.isNotEmpty == true) entry.item.format!,
+                  if (posterMetaEpisodesEnabled() && entry.totalEpisodes != null && entry.totalEpisodes! > 0)
                     '${entry.totalEpisodes} Eps',
                 ].join(' · '),
                 maxLines: 1,
@@ -374,7 +378,8 @@ class TrackerListSection extends StatelessWidget {
           scoreBadge: e.score == null ? null : (e.score! * 10).round(),
         statusBadge: trackerName == 'AniList' ? (e.item.isUpcoming ? 'Segera' : e.item.status == MediaStatus.completed ? 'Selesai' : e.item.status == MediaStatus.ongoing ? 'Tayang' : null) : null,
           viewsBadge: e.item.popularity,
-          metaLine: [if (e.item.format?.isNotEmpty == true) e.item.format!, if (e.totalEpisodes != null && e.totalEpisodes! > 0) '${e.totalEpisodes} Eps'].join(' · '),
+          metaFormat: e.item.format,
+          metaEpisodes: e.totalEpisodes != null && e.totalEpisodes! > 0 ? e.totalEpisodes : null,
           onTap: () => onOpen(e),
           onLongPress: onLongPress == null ? null : () => onLongPress!(e),
         );

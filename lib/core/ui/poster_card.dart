@@ -129,6 +129,9 @@ PlaybackPrefs? get _posterPrefs {
 }
 
 bool posterMetaLineEnabled() => _posterPrefs?.posterMetaLine ?? true;
+bool posterMetaFormatEnabled() => _posterPrefs?.posterMetaFormat ?? true;
+bool posterMetaEpisodesEnabled() => _posterPrefs?.posterMetaEpisodes ?? true;
+bool posterMetaYearEnabled() => _posterPrefs?.posterMetaYear ?? true;
 
 /// Only geometry consumers depend on this scope; cards listen to the same
 /// revision themselves so standalone cards and widget tests also update.
