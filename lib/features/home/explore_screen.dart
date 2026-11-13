@@ -210,7 +210,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             Text('Cari anime, genre, studio...', style: _txt(11, color: AppColors.textTertiary)),
           ]))))));
 
-  Widget _pill(String label, VoidCallback tap, {bool selected = false, bool compact = false, Widget? icon, String? suffix}) =>
+  Widget _pill(String label, VoidCallback tap, {bool selected = false, bool compact = false, Widget? icon, String? suffix, Color? suffixColor}) =>
     Material(color: selected ? AppColors.accent : AppColors.surface,
       borderRadius: BorderRadius.circular(compact ? 18 : 10),
       child: InkWell(borderRadius: BorderRadius.circular(compact ? 18 : 10), onTap: tap,
@@ -219,7 +219,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             if (icon != null) ...[icon, const SizedBox(width: 5)],
             Text(label, style: _txt(compact ? 10 : 10.5, weight: FontWeight.w700,
               color: selected ? Colors.white : AppColors.textSecondary)),
-            if (suffix != null) ...[const SizedBox(width: 5), Text(suffix, style: _txt(7.5, weight: FontWeight.w900, color: AppColors.accent))],
+            if (suffix != null) ...[const SizedBox(width: 5), Text(suffix, style: _txt(7.5, weight: FontWeight.w900, color: suffixColor ?? AppColors.accent))],
           ]))));
 
   Widget _sorts() {
@@ -371,6 +371,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+  Color _tastePercentColor(int percent) {
+    if (percent >= 75) return const Color(0xFF55D879);
+    if (percent >= 60) return const Color(0xFFFFC247);
+    return const Color(0xFFFF7168);
+  }
+
   Widget _taste() {
     final stats = _viewerGenreCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -387,6 +393,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           () => _search(filters: MetaFilters(genres: [g])),
           suffix: _viewerGenreStatsLoaded && total > 0 && _viewerGenreCounts.containsKey(g)
               ? '${(_viewerGenreCounts[g]! * 100 / total).round()}%'
+              : null,
+          suffixColor: _viewerGenreStatsLoaded && total > 0 && _viewerGenreCounts.containsKey(g)
+              ? _tastePercentColor((_viewerGenreCounts[g]! * 100 / total).round())
               : null,
         ))],
     ));
