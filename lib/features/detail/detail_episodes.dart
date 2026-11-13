@@ -1459,14 +1459,15 @@ class _EpisodeRow extends StatelessWidget {
   String _absoluteEpisodeDate(DateTime date) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
       'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   Widget build(BuildContext context) {
     final unavailable = !ep.available;
+    // Watched episodes keep the same title brightness as unwatched ones.
     final titleColor = unavailable
         ? AppColors.textTertiary
-        : (isWatched ? AppColors.textSecondary : AppColors.textPrimary);
+        : AppColors.textPrimary;
 
     final srcTitle = displayTitle.trim();
     final titleText =
@@ -1505,7 +1506,7 @@ class _EpisodeRow extends StatelessWidget {
           'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         final absoluteDate = parsedDate == null
             ? relativeDate(context.l10n, episodeDate)
-            : '${months[parsedDate.month - 1]} ${parsedDate.day} ${parsedDate.year}';
+            : '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
         dateLabel = parsedDate != null && isAiring && dateLabel != null
             ? '$absoluteDate ($dateLabel)'
             : absoluteDate;
@@ -1810,8 +1811,8 @@ class _EpisodeDownloadIcon extends StatelessWidget {
     final child = switch (status) {
       DownloadStatus.done => Icon(
         Icons.download_done_rounded,
-        color: AppColors.accent,
-        size: 24,
+        color: AppColors.textSecondary,
+        size: 21,
       ),
       DownloadStatus.downloading || DownloadStatus.paused => SizedBox(
         width: 20,
@@ -1838,14 +1839,14 @@ class _EpisodeDownloadIcon extends StatelessWidget {
       ),
       DownloadStatus.failed => Icon(
         Icons.refresh_rounded,
-        color: AppColors.accent,
-        size: 24,
+        color: AppColors.textSecondary,
+        size: 21,
       ),
       // null (never downloaded) or canceled → offer to download.
       _ => const Icon(
         Icons.file_download_outlined,
-        color: AppColors.textPrimary,
-        size: 24,
+        color: AppColors.textSecondary,
+        size: 21,
       ),
     };
     final label = switch (status) {
@@ -1859,7 +1860,9 @@ class _EpisodeDownloadIcon extends StatelessWidget {
     return IconButton(
       onPressed: onPressed,
       visualDensity: VisualDensity.compact,
-      splashRadius: 22,
+      splashRadius: 19,
+      constraints: const BoxConstraints.tightFor(width: 34, height: 34),
+      padding: EdgeInsets.zero,
       tooltip: label,
       icon: child,
     );
