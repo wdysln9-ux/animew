@@ -144,7 +144,12 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     );
     _startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _syncActiveTint();
+      if (!mounted) return;
+      _syncActiveTint();
+      // PageController.page is not available until the first PageView layout.
+      // Rebuild once after that layout so neighboring poster cards receive
+      // their correct initial depth scale without requiring a user swipe.
+      if (widget.style == HeroTransition.posterStack) setState(() {});
     });
   }
 
