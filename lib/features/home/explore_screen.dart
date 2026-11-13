@@ -79,6 +79,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Future<void> _loadBecauseRecommendations({bool force = false}) async {
     if (_becauseLoading || _history.isEmpty) return;
+    if (force && mounted) {
+      setState(() {
+        _becauseCarousel = const [];
+        _becauseList = const [];
+        _becauseRatings = const {};
+      });
+    }
     _becauseLoading = true;
     try {
       final watched = _history.first;
