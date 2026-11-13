@@ -124,7 +124,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             const SizedBox(height: 6), Text(m.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
             Text('★ ${((m.score ?? 0) / 10).toStringAsFixed(1)}  Rekomendasi berdasarkan tontonanmu', style: const TextStyle(color: Colors.white, fontSize: 9)),
           ])),
-        ]))));
+        ])))));
   }
 
   Widget _searchBar() => Padding(padding: const EdgeInsets.fromLTRB(12, 12, 12, 8), child: InkWell(
