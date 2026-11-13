@@ -641,7 +641,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
     final isAiring = value.contains('tayang') || value.contains('ongoing');
     final isCompleted = value.contains('selesai') || value.contains('completed');
     final isUpcoming = value.contains('segera') || value.contains('upcoming');
-    final statusColor = isCompleted ? const Color(0xFF326DD2) : (isAiring ? const Color(0xFF24A765) : const Color(0xFFB86A2A));
+    final statusColor = isCompleted ? const Color(0xFF4E8DFF) : (isAiring ? const Color(0xFF24A765) : const Color(0xFFB86A2A));
     final background = isFormat ? AppColors.accent : statusColor.withValues(alpha: 0.20);
     final foreground = isFormat
         ? Colors.white
@@ -656,7 +656,7 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: background,
         border: isFormat ? null : Border.all(color: statusColor, width: 1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(isFormat ? 7 : 20),
       ),
       child: Text(
         label,
@@ -1013,7 +1013,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
     );
   }
 
-  Widget _chip(String label, Color color, {VoidCallback? onTap, IconData? icon}) {
+  Widget _chip(String label, Color color, {VoidCallback? onTap, IconData? icon, double iconGap = 5}) {
     final child = Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
@@ -1026,7 +1026,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
         children: [
           if (icon != null) ...[
             Icon(icon, size: 13, color: color),
-            const SizedBox(width: 5),
+            SizedBox(width: iconGap),
           ],
           Flexible(
             child: Text(
@@ -1050,7 +1050,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
 
   @override
   Widget build(BuildContext context) {
-    const studioBlue = Color(0xFF326DD2);
+    const studioBlue = Color(0xFF4E8DFF);
     final genreColor = AppColors.accent;
     final hasCredits = widget.studios.isNotEmpty || widget.tags.isNotEmpty;
 
@@ -1068,12 +1068,12 @@ class _DetailCreditsState extends State<_DetailCredits> {
                 for (final genre in widget.genres)
                   InkWell(
                     onTap: () => widget.onGenreTap(genre),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(7),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                       decoration: BoxDecoration(
                         border: Border.all(color: genreColor.withValues(alpha: 0.8)),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(7),
                       ),
                       child: Text(
                         genre,
@@ -1120,7 +1120,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
               for (final studio in widget.studios)
                 _chip(studio, studioBlue, icon: Icons.business_rounded, onTap: () => widget.onStudioTap(studio)),
               if (widget.tags.isNotEmpty)
-                _chip('Tags (${widget.tags.length})', const Color(0xFF326DD2), icon: Icons.tag_rounded, onTap: widget.onTagsTap),
+                _chip('Tags (${widget.tags.length})', const Color(0xFFEB4899), icon: Icons.tag_rounded, iconGap: 2, onTap: widget.onTagsTap),
             ]),
           ],
           if (_expanded && widget.onNakamaTap != null) ...[
