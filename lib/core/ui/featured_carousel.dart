@@ -136,11 +136,11 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
   @override
   void initState() {
     super.initState();
-    _pages = widget.items.take(6).toList();
+    _pages = widget.items.take(25).toList();
     _index = _count > 1 ? _startIndex : 0;
     _pc = PageController(
       initialPage: _index,
-      viewportFraction: widget.style == HeroTransition.posterStack ? 0.60 : 1.0,
+      viewportFraction: widget.style == HeroTransition.posterStack ? 0.52 : 1.0,
     );
     _startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -226,7 +226,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     super.didUpdateWidget(old);
     // The items change when the user switches source — rebuild the pages so the
     // banner reflects the new catalog (it used to cache the first source's items).
-    final next = widget.items.take(6).toList();
+    final next = widget.items.take(25).toList();
     // Comparing only length + first id misses sources that share a leading
     // title but return different later titles, leaving old-source slides in the
     // carousel until it rotates past them.
@@ -387,7 +387,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
   }
 
   Widget _posterStackCard(MediaItem item, int rank) {
-    final cover = mobileHeroArt(item.cover, item.banner);
+    final cover = item.cover;
     final provider = cover == null || cover.isEmpty
         ? null
         : nativeCoverProvider(cover, item.coverHeaders);
@@ -404,9 +404,19 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
           fit: StackFit.expand,
           children: [
             if (provider != null)
-              Image(image: provider, fit: BoxFit.cover, alignment: Alignment.topCenter)
+              Image(
+                image: provider,
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded || frame != null) return child;
+                  return _coverPlaceholder(item.coverColor);
+                },
+                errorBuilder: (context, error, stackTrace) =>
+                    _coverPlaceholder(item.coverColor),
+              )
             else
-              ColoredBox(color: AppColors.surface2),
+              _coverPlaceholder(item.coverColor),
             const DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -510,6 +520,15 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     );
   }
 
+  Widget _coverPlaceholder(String? rawColor) {
+    final value = rawColor?.trim().replaceFirst('#', '');
+    final parsed = value == null ? null : int.tryParse(value, radix: 16);
+    final color = parsed == null
+        ? AppColors.surface2
+        : Color(value!.length == 6 ? 0xFF000000 | parsed : parsed);
+    return ColoredBox(color: color);
+  }
+
   Widget _posterMetaChip(String label) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
     decoration: BoxDecoration(
@@ -534,7 +553,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     // Poster-stack cards were too narrow and too tall on phone screens.
     // Give this style a wider viewport and a slightly shorter stage.
     final carouselHeight = widget.style == HeroTransition.posterStack
-        ? (heroHeight - 56).clamp(320.0, heroHeight)
+        ? (heroHeight - 90).clamp(300.0, heroHeight)
         : heroHeight;
 
     // Empty state — reserve the height so layout doesn't jump.

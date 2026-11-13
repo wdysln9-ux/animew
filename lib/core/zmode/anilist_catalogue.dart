@@ -168,7 +168,7 @@ class AniListCatalogue implements AnimeCatalogue {
       ('Trending', 'sort:TRENDING_DESC'),
       (
         '$seasonTitle ${now.year}',
-        'sort:POPULARITY_DESC,season:$season,seasonYear:${now.year}',
+        'sort:SCORE_DESC,season:$season,seasonYear:${now.year}',
       ),
       (
         'Paling Dinanti',

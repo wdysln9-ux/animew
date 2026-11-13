@@ -91,16 +91,22 @@ class HomeState extends Equatable {
   /// Global AniList airing feed. Independent from the connected tracker.
   final List<MediaItem> airingItems;
 
-  /// Items that drive the hero carousel. Prefers the Trending section — the
-  /// banner is a trending spotlight, same as every catalogue names one (Simkl
-  /// prefixes its titles, hence the startsWith) — so the opening row can be
-  /// something else (recently released) without changing what the banner
-  /// shows. Falls back to the first section for sources with no Trending row
-  /// (CloudStream feeds, Aniyomi/Mihon Popular), which is every non-Z source.
-  /// Empty until something loads.
+  /// Items for the Home poster carousel. In anime mode, prefer the current
+  /// season row (AniList returns it sorted by score); other catalogues keep
+  /// their existing Trending/first-row fallback.
   List<MediaItem> get heroItems {
     final s = sections;
     if (s == null || s.isEmpty) return const [];
+    final now = DateTime.now();
+    final season = switch (now.month) {
+      1 || 2 || 3 => 'Winter',
+      4 || 5 || 6 => 'Spring',
+      7 || 8 || 9 => 'Summer',
+      _ => 'Fall',
+    };
+    for (final section in s) {
+      if (section.title == '$season ${now.year}') return section.items;
+    }
     for (final section in s) {
       if (section.title.startsWith('Trending')) return section.items;
     }
