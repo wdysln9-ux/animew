@@ -181,6 +181,13 @@ class HomeCubit extends Cubit<HomeState> {
         malId: entry.malId,
         anilistId: anilistId,
         format: entry.format,
+        score: entry.score,
+        popularity: entry.popularity,
+        totalEpisodes: entry.totalEpisodes,
+        genres: entry.genres,
+        status: entry.status,
+        isUpcoming: entry.airsAtLocal.isAfter(DateTime.now()),
+        isAdult: entry.isAdult,
         latestEpisode: entry.episode > 0 ? entry.episode : null,
       ));
     }

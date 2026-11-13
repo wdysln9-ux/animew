@@ -493,7 +493,7 @@ query($id:Int,$page:Int) {
       edges { node { rating mediaRecommendation {
         id idMal type format title { romaji english native }
         coverImage { large color }
-        averageScore popularity status episodes seasonYear genres
+        averageScore popularity status episodes seasonYear genres isAdult
       } } }
     }
   }
@@ -574,7 +574,7 @@ query($id:Int,$page:Int) {
       'node{ id name{full} image{medium} } '
       'voiceActors(language:JAPANESE,sort:[RELEVANCE]){ name{full} } } } '
       'relations{ edges{ relationType '
-      'node{ id idMal type format title{romaji english native} coverImage{large color} } } } '
+      'node{ id idMal type format title{romaji english native} coverImage{large color} averageScore popularity status episodes seasonYear genres isAdult } } } '
       'recommendations(sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} } } } } '
       'recommendationsPage2:recommendations(page:2,sort:RATING_DESC,perPage:50){ edges{ node{ rating mediaRecommendation{ id idMal type format title{romaji english native} coverImage{large color} } } } }';
 
@@ -935,6 +935,14 @@ query($id:Int,$page:Int) {
             malId: (node['idMal'] as num?)?.toInt(),
             anilistId: (node['id'] as num?)?.toInt(),
             isReading: node['type'] == 'MANGA',
+            score: (node['averageScore'] as num?)?.toInt(),
+            popularity: (node['popularity'] as num?)?.toInt(),
+            format: node['format'] as String?,
+            status: node['status'] as String?,
+            episodes: (node['episodes'] as num?)?.toInt(),
+            year: (node['seasonYear'] as num?)?.toInt(),
+            genres: [for (final g in (node['genres'] as List? ?? const [])) '$g'],
+            isAdult: node['isAdult'] == true,
           ),
         );
       }
@@ -978,6 +986,14 @@ query($id:Int,$page:Int) {
             malId: (rec['idMal'] as num?)?.toInt(),
             anilistId: (rec['id'] as num?)?.toInt(),
             isReading: rec['type'] == 'MANGA',
+            score: (rec['averageScore'] as num?)?.toInt(),
+            popularity: (rec['popularity'] as num?)?.toInt(),
+            format: rec['format'] as String?,
+            status: rec['status'] as String?,
+            episodes: (rec['episodes'] as num?)?.toInt(),
+            year: (rec['seasonYear'] as num?)?.toInt(),
+            genres: [for (final g in (rec['genres'] as List? ?? const [])) '$g'],
+            isAdult: rec['isAdult'] == true,
           ),
         );
       }

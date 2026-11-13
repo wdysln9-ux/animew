@@ -49,6 +49,7 @@ class MediaRelation extends Equatable {
     this.episodes,
     this.year,
     this.genres = const [],
+    this.isAdult = false,
   });
 
   final String title;
@@ -82,6 +83,7 @@ class MediaRelation extends Equatable {
   final int? episodes;
   final int? year;
   final List<String> genres;
+  final bool isAdult;
 
   /// MAL's id, in the catalogue [isReading] names — MAL numbers its manga and
   /// its anime separately, so this means nothing without that flag.
@@ -114,5 +116,6 @@ class MediaRelation extends Equatable {
     episodes,
     year,
     genres,
+    isAdult,
   ];
 }

@@ -391,7 +391,14 @@ class _RelationsTab extends StatelessWidget {
         cellWidth: constraints.maxWidth,
         showTitle: true,
         scoreBadge: r.score,
-        statusBadge: r.status,
+        statusBadge: switch (r.status?.toUpperCase()) {
+          'RELEASING' => 'Tayang',
+          'FINISHED' => 'Selesai',
+          'NOT_YET_RELEASED' => 'Segera',
+          _ => null,
+        },
+        genres: r.genres,
+        isAdult: r.isAdult,
         viewsBadge: r.popularity,
         recommendationRatingBadge: r.recommendationRating,
         seriesBadge: hasRelationTag

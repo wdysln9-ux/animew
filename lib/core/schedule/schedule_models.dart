@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'media_detail.dart';
+
 /// One anime episode airing event (from AniList AiringSchedule).
 class AiringEntry extends Equatable {
   const AiringEntry({
@@ -15,6 +17,12 @@ class AiringEntry extends Equatable {
     this.synopsis,
     this.coverColor,
     this.durationMinutes,
+    this.score,
+    this.popularity,
+    this.totalEpisodes,
+    this.genres = const [],
+    this.status,
+    this.isAdult = false,
   });
 
   final int? malId;
@@ -32,6 +40,12 @@ class AiringEntry extends Equatable {
   final String? coverColor;
   /// Runtime of one episode in minutes, as reported by AniList.
   final int? durationMinutes;
+  final int? score;
+  final int? popularity;
+  final int? totalEpisodes;
+  final List<String> genres;
+  final MediaStatus? status;
+  final bool isAdult;
   final int episode;
   final DateTime airsAtLocal;
   final String format;
@@ -46,7 +60,8 @@ class AiringEntry extends Equatable {
   @override
   List<Object?> get props =>
       [malId, anilistId, title, altTitle, coverUrl, episode, airsAtLocal,
-       format, bannerUrl, synopsis, coverColor, durationMinutes];
+       format, bannerUrl, synopsis, coverColor, durationMinutes, score,
+       popularity, totalEpisodes, genres, status, isAdult];
 }
 
 /// One upcoming movie/TV title (from TMDB upcoming / on_the_air).

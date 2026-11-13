@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../anilist/anilist_graphql.dart';
 import '../models/media_item.dart' show normalizeTitle;
+import '../models/media_detail.dart' show MediaStatus;
 import '../error/network_failure.dart';
 import 'schedule_models.dart';
 
@@ -58,6 +59,18 @@ List<AiringEntry> parseAiringSchedules(Map<String, dynamic> data) {
       airsAtLocal:
           DateTime.fromMillisecondsSinceEpoch(airingAt * 1000).toLocal(),
       format: format,
+      score: (media['averageScore'] as num?)?.toInt(),
+      popularity: (media['popularity'] as num?)?.toInt(),
+      totalEpisodes: (media['episodes'] as num?)?.toInt(),
+      genres: [for (final g in (media['genres'] as List? ?? const [])) '$g'],
+      status: switch (media['status']) {
+        'RELEASING' => MediaStatus.ongoing,
+        'FINISHED' => MediaStatus.completed,
+        'HIATUS' => MediaStatus.hiatus,
+        'CANCELLED' => MediaStatus.cancelled,
+        _ => MediaStatus.unknown,
+      },
+      isAdult: media['isAdult'] == true,
       bannerUrl: media['bannerImage'] as String?,
       synopsis: _cleanDescription(media['description'] as String?),
     ));
@@ -179,6 +192,11 @@ query ($start: Int, $end: Int, $page: Int) {
         bannerImage
         description(asHtml: false)
         format
+        averageScore
+        popularity
+        episodes
+        status
+        genres
         isAdult
       }
     }
