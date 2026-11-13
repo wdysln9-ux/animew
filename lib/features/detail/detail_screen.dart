@@ -2214,8 +2214,8 @@ class _DetailViewState extends State<_DetailView> {
     if (detail.popularity != null) {
       final count = detail.popularity!;
       final compact = count >= 1000000
-          ? '${_compactDecimal(count / 1000000)}JT'
-          : count >= 100000
+          ? '${(count / 1000000).round()}JT'
+          : count >= 10000
               ? '${(count / 1000).round()}K'
               : count >= 1000
                   ? '${(count / 1000).toStringAsFixed(1)}K'
