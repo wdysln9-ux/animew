@@ -657,6 +657,7 @@ class AniListCatalogue implements AnimeCatalogue {
       isUpcoming: m['status'] == 'NOT_YET_RELEASED',
       format: _prettyFormat(m['format'] as String?),
       totalEpisodes: m['episodes'] as int?,
+      year: (m['seasonYear'] as int?)?.toString(),
       latestEpisode: m['status'] == 'RELEASING' && nextAiringEpisode != null
           ? nextAiringEpisode - 1
           : null,

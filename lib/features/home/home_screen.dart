@@ -1158,6 +1158,7 @@ class _HomeViewState extends State<_HomeView>
           rankBadge: rawTitle.toLowerCase().contains('trending') ? i + 1 : null,
           metaFormat: items[i].format,
           metaEpisodes: items[i].totalEpisodes != null && items[i].totalEpisodes! > 0 ? items[i].totalEpisodes : null,
+          metaYear: items[i].year,
           onTap: () => sourceCatalogue
               ? _openSourceCatalogueDetail(items[i])
               : _openDetail(items[i]),
