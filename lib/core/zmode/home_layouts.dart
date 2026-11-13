@@ -54,6 +54,7 @@ List<HomeLayout> allHomeLayouts() => [
       kind: kind,
       sectionTitles: [
         ...AniListCatalogue.rowTitles(kind),
+        if (kind == ZKind.anime) 'Rekomendasi Anime',
         if (kind == ZKind.anime) airingEpisodesSectionTitle,
       ],
     ),

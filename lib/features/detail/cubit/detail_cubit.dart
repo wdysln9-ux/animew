@@ -237,7 +237,9 @@ class DetailCubit extends Cubit<DetailState> {
       ];
       emit(state.copyWith(
         cast: merged,
-        characterTotal: result.totalCount,
+        // AniList's PageInfo.total can report its capped estimate. Show the
+        // exact count only after every character page has been loaded.
+        characterTotal: result.hasNextPage ? null : merged.length,
         charactersHasNextPage: result.hasNextPage,
         charactersLoading: false,
       ));

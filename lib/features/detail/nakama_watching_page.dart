@@ -295,7 +295,12 @@ class _NakamaWatchingPageState extends State<NakamaWatchingPage> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: Text('Nakama Menonton', style: AppText.headline.copyWith(fontSize: 18)),
+        title: Text(
+          _hasNextPage || _loading
+              ? 'Nakama Menonton'
+              : 'Nakama Menonton (${_entries.length})',
+          style: AppText.headline.copyWith(fontSize: 18),
+        ),
         backgroundColor: AppColors.bg,
       ),
       body: Column(
