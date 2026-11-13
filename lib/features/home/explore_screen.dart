@@ -38,11 +38,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Map<String, int> _viewerGenreCounts = const {};
   bool _viewerGenreStatsLoaded = false;
   final PageController _heroController = PageController(viewportFraction: .96);
+  final PageController _recommendationController = PageController(viewportFraction: .34);
 
   @override
   void initState() { super.initState(); _load(); }
   @override
-  void dispose() { _heroController.dispose(); super.dispose(); }
+  void dispose() { _heroController.dispose(); _recommendationController.dispose(); super.dispose(); }
 
   Future<void> _load({bool refresh = false}) async {
     try {
@@ -323,6 +324,49 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
 
+  Widget _recommendationCarousel(List<MediaItem> items) {
+    if (items.isEmpty) return const SizedBox(height: 184);
+    final width = posterRowWidth(context);
+    final height = posterRowHeight(context);
+    return SizedBox(
+      height: height,
+      child: PageView.builder(
+        controller: _recommendationController,
+        itemCount: items.length,
+        itemBuilder: (_, index) {
+          final item = items[index];
+          return SizedBox(
+            width: width,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: PosterCard(
+                title: item.title,
+                imageUrl: item.cover,
+                imageColor: item.coverColor,
+                wideImageUrl: item.banner,
+                headers: item.coverHeaders,
+                logoItem: item,
+                cellWidth: width,
+                onTap: () => _open(item),
+                scoreBadge: item.score,
+                recommendationRatingBadge: _becauseRatings[item.anilistId],
+                viewsBadge: item.popularity,
+                statusBadge: item.status?.name,
+                qualityBadge: item.quality,
+                dubBadge: item.dubBadge,
+                genres: item.genres,
+                isAdult: item.isAdult,
+                metaFormat: item.format,
+                metaEpisodes: item.totalEpisodes,
+                metaYear: item.year,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _posterRail(List<MediaItem> items, {bool hidden = false, bool recommendationMode = false}) {
     if (items.isEmpty) return const SizedBox(height: 184);
     final list = items.take(18).toList();
@@ -549,7 +593,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),
           _searchBar(), _sorts(), const SizedBox(height: 10), _hero(),
           _heading('Selera Kamu', marked: true), _taste(),
-          _heading('Karena kamu menonton $watched'), _posterRail(_becauseCarousel, recommendationMode: true),
+          _heading('Karena kamu menonton $watched'), _recommendationCarousel(_becauseCarousel),
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'),
           if (hidden.isNotEmpty) _posterRail(hidden)
           else Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('Belum ada anime tersembunyi yang cocok.', style: _txt(11, color: AppColors.textTertiary))),
