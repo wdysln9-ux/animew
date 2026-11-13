@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import 'media_detail.dart';
+import '../models/media_detail.dart' show MediaStatus;
 
 /// One anime episode airing event (from AniList AiringSchedule).
 class AiringEntry extends Equatable {
