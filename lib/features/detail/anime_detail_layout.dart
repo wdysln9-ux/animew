@@ -965,15 +965,10 @@ class _DetailCreditsState extends State<_DetailCredits> {
     try {
       final api = sl<AniListService>().api;
       final firstPage = await api.nakamaWatching(mediaId, page: 1);
-      final exactCount = firstPage.totalCount >= 5000
-          ? await api.nakamaWatchingExactCount(
-              mediaId,
-              firstPageCount: firstPage.entries.length,
-              firstPageHasNext: firstPage.hasNextPage,
-            )
-          : firstPage.totalCount;
-      if (mounted && widget.nakamaMediaId == mediaId && exactCount != null) {
-        setState(() => _nakamaCount = exactCount.toString());
+      // Use AniList's Page.total directly. Counting every page here can
+      // trigger dozens of extra requests just to render the detail chip.
+      if (mounted && widget.nakamaMediaId == mediaId) {
+        setState(() => _nakamaCount = firstPage.totalCount.toString());
       }
     } catch (_) {
       // Keep the chip usable even if the count endpoint is temporarily unavailable.

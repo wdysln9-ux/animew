@@ -402,27 +402,6 @@ query($page:Int,$mediaId:Int) {
     );
   }
 
-  /// Counts the actual followed-user entries when AniList's Page.total is
-  /// capped or otherwise inconsistent (for example, it reports 5000 for a
-  /// title with only a few hundred followed users). Reuses the already fetched
-  /// first page and stops as soon as AniList says there are no more pages.
-  /// The safety bound avoids an unbounded burst if the upstream API misbehaves.
-  Future<int?> nakamaWatchingExactCount(
-    int mediaId, {
-    required int firstPageCount,
-    required bool firstPageHasNext,
-    int maxPages = 20,
-  }) async {
-    var count = firstPageCount;
-    if (!firstPageHasNext) return count;
-    for (var page = 2; page <= maxPages; page++) {
-      final result = await nakamaWatching(mediaId, page: page);
-      count += result.entries.length;
-      if (!result.hasNextPage) return count;
-    }
-    return null;
-  }
-
   /// Fetches one page of characters only when the detail rail becomes visible.
   Future<({List<CastMember> cast, int totalCount, bool hasNextPage})>
   mediaCharacters(int mediaId, {int page = 1}) async {
