@@ -520,6 +520,18 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                         const TextSpan(text: '  '),
                       ],
                     ),
+                  if (metaLine.split('  ·  ')[i].startsWith('★'))
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 2),
+                        child: Icon(
+                          Icons.star_rounded,
+                          size: 15,
+                          color: const Color(0xFF24C66A),
+                        ),
+                      ),
+                    ),
                   if (metaLine.split('  ·  ')[i].startsWith('◉ '))
                     WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
@@ -535,7 +547,9 @@ class AnimeDetailTitleBlock extends StatelessWidget {
                   TextSpan(
                     text: metaLine.split('  ·  ')[i].startsWith('◉ ')
                         ? metaLine.split('  ·  ')[i].substring(2)
-                        : metaLine.split('  ·  ')[i],
+                        : metaLine.split('  ·  ')[i].startsWith('★')
+                            ? metaLine.split('  ·  ')[i].substring(1).trimLeft()
+                            : metaLine.split('  ·  ')[i],
                     style: AppText.body.copyWith(
                       fontSize: 13,
                       color: i == 0 ? AppColors.accent
