@@ -25,7 +25,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<HomeSection> _rows = const [];
   List<String> _genres = const [];
   List<HistoryEntry> _history = const [];
-  List<MediaItem> _becauseRecommendations = const [];
+  List<MediaItem> _becauseCarousel = const [];
+  List<MediaItem> _becauseList = const [];
   bool _becauseLoading = false;
   String _selected = 'Untukmu';
   int _heroIndex = 0;
@@ -72,28 +73,42 @@ class _ExploreScreenState extends State<ExploreScreen> {
         anilistId = resolved?.id;
       }
       if (anilistId == null) return;
-      final result = await sl<AniListService>().api.mediaRecommendations(anilistId);
-      final items = result.recommendations
-        .where((r) => !r.isReading && !r.isAdult && r.anilistId != null)
-        .map((r) => MediaItem(
-          id: 'anilist:${r.anilistId}',
-          title: r.title,
-          englishTitle: r.romaji,
-          cover: r.cover,
-          coverColor: r.coverColor,
-          url: 'https://anilist.co/anime/${r.anilistId}',
-          type: ProviderType.anime,
-          sourceId: 'anilist',
-          malId: r.malId,
-          anilistId: r.anilistId,
-          genres: r.genres,
-          score: r.score,
-          popularity: r.popularity,
-          format: r.format,
-          totalEpisodes: r.episodes,
-          year: r.year?.toString(),
-        )).toList();
-      if (mounted) setState(() => _becauseRecommendations = items);
+      final api = sl<AniListService>().api;
+      final items = <MediaItem>[];
+      final seen = <int>{};
+      var page = 1;
+      var hasNextPage = true;
+      while (items.length < 15 && hasNextPage) {
+        final result = await api.mediaRecommendations(anilistId, page: page);
+        for (final r in result.recommendations) {
+          if (r.isReading || r.isAdult || r.anilistId == null || !seen.add(r.anilistId!)) continue;
+          items.add(MediaItem(
+            id: 'anilist:${r.anilistId}',
+            title: r.title,
+            englishTitle: r.romaji,
+            cover: r.cover,
+            coverColor: r.coverColor,
+            url: 'https://anilist.co/anime/${r.anilistId}',
+            type: ProviderType.anime,
+            sourceId: 'anilist',
+            malId: r.malId,
+            anilistId: r.anilistId,
+            genres: r.genres,
+            score: r.score,
+            popularity: r.popularity,
+            format: r.format,
+            totalEpisodes: r.episodes,
+            year: r.year?.toString(),
+          ));
+          if (items.length == 15) break;
+        }
+        hasNextPage = result.hasNextPage;
+        page++;
+      }
+      if (mounted) setState(() {
+        _becauseCarousel = items.take(5).toList();
+        _becauseList = items.skip(5).take(10).toList();
+      });
     } catch (_) {
       // Leave this section empty if AniList cannot provide title-specific recommendations.
     } finally {
@@ -248,8 +263,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ]));
   }
 
-  Widget _hero() {
-    final items = _heroes;
+  Widget _hero({List<MediaItem>? sourceItems}) {
+    final items = sourceItems ?? _heroes;
     if (items.isEmpty) return const SizedBox(height: 8);
     return Column(children: [
       SizedBox(height: 145, child: PageView.builder(controller: _heroController, itemCount: items.length,
@@ -482,7 +497,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(12, 5, 12, 0), child: Text('Jelajahi', style: _txt(16, weight: FontWeight.w900))),
           _searchBar(), _sorts(), const SizedBox(height: 5), _hero(),
           _heading('Selera Kamu', marked: true), _taste(),
-          _heading('Karena kamu menonton $watched'), _posterRail(_becauseRecommendations),
+          _heading('Karena kamu menonton $watched'), _hero(sourceItems: _becauseCarousel), _posterRail(_becauseList),
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'), _posterRail(hidden.isEmpty ? _recommendations : hidden, hidden: true),
           _heading('Lagi pengen apa?', marked: true), _quickPicks(),
           _heading('Telusuri Musim'), _seasons(),
