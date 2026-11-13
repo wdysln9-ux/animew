@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import '../../core/anilist/anilist_graphql.dart';
 import '../../core/di/injector.dart';
 import '../../core/models/home_section.dart';
 import '../../core/models/media_item.dart';
@@ -24,6 +26,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<HistoryEntry> _history = const [];
   String _selected = 'Untukmu';
   int _heroIndex = 0;
+  final Map<String, int> _genreCounts = {};
+  final Map<String, int> _studioCounts = {};
+  bool _countsLoading = false;
   final PageController _heroController = PageController(viewportFraction: .96);
 
   @override
@@ -44,7 +49,59 @@ class _ExploreScreenState extends State<ExploreScreen> {
         _genres = genres.where((g) => g.toLowerCase() != 'hentai').toList()..sort();
         _history = history;
       });
+      _loadCatalogueCounts();
     } catch (_) {}
+  }
+
+  Future<void> _loadCatalogueCounts() async {
+    if (_countsLoading) return;
+    _countsLoading = true;
+    const genres = ['Comedy', 'Kids', 'Fantasy', 'Action', 'Adventure', 'Sci-Fi', 'Drama', 'Shounen'];
+    const studios = ['Toei Animation', 'Sunrise', 'J.C.Staff', 'TMS Entertainment', 'Madhouse', 'Shanghai Animation Film Studio', 'Production I.G'];
+    try {
+      final fields = <String>[];
+      for (var i = 0; i < genres.length; i++) {
+        fields.add('g$i: Page { media(type: ANIME, genre: "${genres[i]}", isAdult: false, page: 1, perPage: 1) { pageInfo { total } } }');
+      }
+      for (var i = 0; i < studios.length; i++) {
+        fields.add('s$i: Studio(search: "${studios[i]}") { media(page: 1, perPage: 1, type: ANIME) { pageInfo { total } } }');
+      }
+      final query = 'query { ${fields.join(' ')} }';
+      final response = await sl<Dio>().post<dynamic>(
+        'https://graphql.anilist.co',
+        data: {'query': query},
+        options: Options(headers: AniListGraphql.headers, validateStatus: (s) => s != null && s < 500),
+      );
+      final data = response.data;
+      if (data is! Map || data['data'] is! Map) return;
+      final payload = data['data'] as Map;
+      final genreCounts = <String, int>{};
+      final studioCounts = <String, int>{};
+      for (var i = 0; i < genres.length; i++) {
+        final page = payload['g$i'] is Map ? (payload['g$i'] as Map)['media'] : null;
+        final info = page is Map ? page['pageInfo'] : null;
+        final total = info is Map ? info['total'] : null;
+        if (total is int) genreCounts[genres[i]] = total;
+      }
+      for (var i = 0; i < studios.length; i++) {
+        final media = payload['s$i'] is Map ? (payload['s$i'] as Map)['media'] : null;
+        final info = media is Map ? media['pageInfo'] : null;
+        final total = info is Map ? info['total'] : null;
+        if (total is int) studioCounts[studios[i]] = total;
+      }
+      if (mounted) setState(() {
+        _genreCounts
+          ..clear()
+          ..addAll(genreCounts);
+        _studioCounts
+          ..clear()
+          ..addAll(studioCounts);
+      });
+    } catch (_) {
+      // Keep counts unavailable rather than displaying guessed numbers.
+    } finally {
+      _countsLoading = false;
+    }
   }
 
   List<MediaItem> get _all => _rows.expand((r) => r.items).where((m) => !m.isAdult).toList();
@@ -272,7 +329,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _genreGrid() {
     const genres = ['Comedy', 'Kids', 'Fantasy', 'Action', 'Adventure', 'Sci-Fi', 'Drama', 'Shounen'];
-    const displayedCounts = [7715, 5945, 5977, 4792, 4536, 3369, 3042, 2234];
     const colors = [Color(0xFF9B742C), Color(0xFF7140A5), Color(0xFF7041A1), Color(0xFF98413F),
       Color(0xFF267D70), Color(0xFF276C78), Color(0xFF365F91), Color(0xFF8B3E57)];
     return Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: GridView.builder(
@@ -280,7 +336,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 6, crossAxisSpacing: 7, childAspectRatio: 2.55),
       itemBuilder: (_, i) {
         final g = genres[i];
-        final count = displayedCounts[i];
+        final count = _genreCounts[g];
         final c = colors[i % colors.length];
         return Material(color: c.withValues(alpha: .34), borderRadius: BorderRadius.circular(11),
           child: InkWell(borderRadius: BorderRadius.circular(11), onTap: () => _search(filters: MetaFilters(genres: [g])),
@@ -290,7 +346,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   colors: [c.withValues(alpha: .48), c.withValues(alpha: .20)])),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
                 Text(g, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(10, weight: FontWeight.w800)),
-                const SizedBox(height: 2), Text('$count anime', style: _txt(7.5, color: Colors.white.withValues(alpha: .82))),
+                const SizedBox(height: 2), Text(count == null ? 'Jumlah tidak tersedia' : '${count} anime', style: _txt(7.5, color: Colors.white.withValues(alpha: .82))),
               ]))));
       }));
   }
@@ -305,7 +361,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget _studios() {
     const names = ['Toei Animation', 'Sunrise', 'J.C.Staff', 'TMS Entertainment', 'Madhouse', 'Shanghai Animation Film Studio', 'Production I.G'];
     const initials = ['TO', 'SU', 'J', 'TM', 'MA', 'SH', 'PR'];
-    const counts = [912, 564, 446, 415, 369, 351, 347];
     return Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Column(children: [
       for (var i = 0; i < names.length; i++)
         Padding(padding: const EdgeInsets.only(bottom: 6), child: Material(
@@ -317,7 +372,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 const SizedBox(width: 9),
                 Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(names[i], maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(9.5, weight: FontWeight.w800)),
-                  Text('${counts[i]} anime', style: _txt(7, color: AppColors.textTertiary)),
+                  Text(_studioCounts[names[i]] == null ? 'Jumlah tidak tersedia' : '${_studioCounts[names[i]]} anime', style: _txt(7, color: AppColors.textTertiary)),
                 ])),
                 Icon(Icons.chevron_right_rounded, size: 17, color: AppColors.textTertiary),
               ]))),
