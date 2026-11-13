@@ -243,7 +243,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget _searchBar() => Padding(padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
     child: Material(color: AppColors.surface, borderRadius: BorderRadius.circular(24),
       child: InkWell(borderRadius: BorderRadius.circular(24), onTap: () => _search(),
-        child: SizedBox(height: 46, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15),
+        child: SizedBox(height: 50, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Row(children: [
             Icon(Icons.search_rounded, size: 18, color: AppColors.textTertiary),
             const SizedBox(width: 8),
@@ -254,7 +254,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     Material(color: selected ? AppColors.accent : AppColors.surface,
       borderRadius: BorderRadius.circular(compact ? 18 : 10),
       child: InkWell(borderRadius: BorderRadius.circular(compact ? 18 : 10), onTap: tap,
-        child: Padding(padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 12, vertical: compact ? 9 : 10),
+        child: Padding(padding: EdgeInsets.symmetric(horizontal: compact ? 15 : 14, vertical: compact ? 10 : 11.5),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             if (icon != null) ...[icon, const SizedBox(width: 5)],
             Text(label, style: _txt(compact ? 10 : 10.5, weight: FontWeight.w700,
@@ -264,7 +264,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _sorts() {
     const names = ['Untukmu', 'Populer', 'Nilai Tertinggi', 'Sedang Tayang'];
-    return SizedBox(height: 40, child: ListView(scrollDirection: Axis.horizontal,
+    return SizedBox(height: 42, child: ListView(scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16), children: [
         for (var i = 0; i < names.length; i++)
           Padding(padding: const EdgeInsets.only(right: 8), child: _pill(names[i], () {
@@ -380,7 +380,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ? stats.take(4).map((entry) => entry.key).toList()
         : (_history.isEmpty ? const ['Comedy', 'Fantasy', 'Action', 'Adventure'] : _tasteGenres);
     final total = stats.fold<int>(0, (sum, entry) => sum + entry.value);
-    return SizedBox(height: 36, child: ListView(
+    return SizedBox(height: 40, child: ListView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [for (final g in genres)
@@ -404,7 +404,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ('Siap Maraton', Icons.playlist_play_rounded, const MetaFilters(minEpisodes: 24)),
       ('Anime Baru', Icons.fiber_new_rounded, const MetaFilters(sort: MetaSort.newest)),
     ];
-    return SizedBox(height: 40, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16),
+    return SizedBox(height: 44, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [for (final c in choices) Padding(padding: const EdgeInsets.only(right: 7),
         child: _pill(c.$1, () => _search(filters: c.$3), icon: Icon(c.$2, size: 12, color: AppColors.accent)))]));
   }
@@ -414,7 +414,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final current = (now.month - 1) ~/ 3;
     const names = ['Winter', 'Spring', 'Summer', 'Fall'];
     final order = [for (var i = 0; i < 4; i++) (current - i + 4) % 4];
-    return SizedBox(height: 34, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
+    return SizedBox(height: 38, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [for (final i in order) Padding(padding: const EdgeInsets.only(right: 7),
         child: _pill('${names[i]} ${i > current ? now.year - 1 : now.year}', () => _search(filters: MetaFilters(
           years: [i > current ? now.year - 1 : now.year], seasons: [MetaSeason.values[i]]))))]));
@@ -450,7 +450,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _years() {
     final y = DateTime.now().year;
-    return SizedBox(height: 34, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
+    return SizedBox(height: 38, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [for (var i = 0; i < 12; i++) Padding(padding: const EdgeInsets.only(right: 7),
         child: _pill('${y - i}', () => _search(filters: MetaFilters(years: [y - i]))))]));
   }
