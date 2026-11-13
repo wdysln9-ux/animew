@@ -1475,7 +1475,8 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         metaLine: [
                           if (relation.format?.isNotEmpty == true) relation.format!,
                           if (relation.episodes != null) '${relation.episodes} eps',
-                          if (relation.year != null) '${relation.year}',
+                          if (!_isRecommended(relation) && relation.year != null)
+                            '${relation.year}',
                         ].join(' · '),
                         onTap: () => widget.onOpenRelation(relation),
                       ),
