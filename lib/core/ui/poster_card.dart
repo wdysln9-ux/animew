@@ -467,7 +467,7 @@ class _PosterCardState extends State<PosterCard> {
                               if (showViews) ...[
                                 if (showRecommendationRating || widget.seriesBadge != null || widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
-                                const Icon(Icons.visibility_rounded, size: 12, color: Colors.white, shadows: [Shadow(color: Colors.black, offset: Offset(0.5, 0.5), blurRadius: 0)]),
+                                const Icon(Icons.visibility_rounded, size: 12, color: Colors.white, shadows: [Shadow(color: Color.fromRGBO(0, 0, 0, 0.8), offset: Offset(0.5, 0.5), blurRadius: 0)]),
                                 const SizedBox(width: 3),
                                 Text(
                                   _compactPopularity(widget.viewsBadge!),
@@ -478,7 +478,7 @@ class _PosterCardState extends State<PosterCard> {
                                     height: 1.1,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
-                                    shadows: [Shadow(color: Colors.black, offset: Offset(0.5, 0.5), blurRadius: 0)],
+                                    shadows: const [Shadow(color: Color.fromRGBO(0, 0, 0, 0.8), offset: Offset(0.5, 0.5), blurRadius: 0)],
                                   ),
                                 ),
                               ],
