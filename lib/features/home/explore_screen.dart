@@ -327,7 +327,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  Widget _posterRail(List<MediaItem> items, {bool hidden = false}) {
+  Widget _posterRail(List<MediaItem> items, {bool hidden = false, bool recommendationMode = false}) {
     if (items.isEmpty) return const SizedBox(height: 184);
     final list = items.take(18).toList();
     final width = posterRowWidth(context);
@@ -354,6 +354,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               cellWidth: width,
               onTap: () => _open(m),
               scoreBadge: m.score,
+              recommendationRatingBadge: recommendationMode ? _becauseRatings[m.anilistId] : null,
               viewsBadge: m.popularity,
               statusBadge: m.status?.name,
               qualityBadge: m.quality,
@@ -514,7 +515,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(12, 5, 12, 0), child: Text('Jelajahi', style: _txt(16, weight: FontWeight.w900))),
           _searchBar(), _sorts(), const SizedBox(height: 5), _hero(),
           _heading('Selera Kamu', marked: true), _taste(),
-          _heading('Karena kamu menonton $watched'), _hero(sourceItems: _becauseCarousel), _posterRail(_becauseList),
+          _heading('Karena kamu menonton $watched'), _hero(sourceItems: _becauseCarousel), _posterRail(_becauseList, recommendationMode: true),
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'), _posterRail(hidden.isEmpty ? _recommendations : hidden, hidden: true),
           _heading('Lagi pengen apa?', marked: true), _quickPicks(),
           _heading('Telusuri Musim'), _seasons(),
