@@ -51,10 +51,10 @@ class _ContinueInfoPill extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.72), borderRadius: BorderRadius.circular(6.5)),
+    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.62), borderRadius: BorderRadius.circular(6.5)),
     child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis,
-        style: AppText.caption.copyWith(color: Colors.white, fontSize: 9.4))),
+        style: AppText.caption.copyWith(fontFamily: 'Urbanist', color: Colors.white, fontSize: 9.4))),
   );
 }
 
