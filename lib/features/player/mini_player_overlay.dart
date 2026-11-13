@@ -16,6 +16,7 @@ class MiniPlayerSession {
     required this.onClose,
     this.onBack,
     this.pageBuilder,
+    this.videoBuilder,
   });
 
   final VideoController controller;
@@ -27,6 +28,9 @@ class MiniPlayerSession {
   /// alive; the route that was underneath it is dismissed instead.
   final VoidCallback? onBack;
   final WidgetBuilder? pageBuilder;
+  /// Reuses the exact live Video element when moving between fullscreen and
+  /// floating layouts, preserving the native texture instead of recreating it.
+  final WidgetBuilder? videoBuilder;
 }
 
 class MiniPlayerState {
@@ -220,11 +224,12 @@ class _MiniPlayerOverlayState extends State<MiniPlayerOverlay> {
                           Positioned.fill(
                             child: IgnorePointer(
                               ignoring: true,
-                              child: Video(
-                                controller: session.controller,
-                                controls: NoVideoControls,
-                                fit: BoxFit.cover,
-                              ),
+                              child: session.videoBuilder?.call(context) ??
+                                  Video(
+                                    controller: session.controller,
+                                    controls: NoVideoControls,
+                                    fit: BoxFit.cover,
+                                  ),
                             ),
                           ),
                           Positioned(

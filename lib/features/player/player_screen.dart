@@ -547,6 +547,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
+  // One GlobalKey lets Flutter reparent the live media_kit Video element
+  // into the floating overlay instead of disposing its native texture and
+  // creating a fresh (sometimes black) surface during minimization.
+  final GlobalKey _miniPlayerVideoKey = GlobalKey();
+
   final ScrollController _episodeCardsScroll = ScrollController();
   // Keep the inline episode metadata scroll position when switching layouts.
   final ScrollController _episodeDetailScroll = ScrollController();
@@ -709,6 +714,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
         subtitle: subtitle,
         onRestore: returnToPlayer,
         onClose: stopPlayback,
+        videoBuilder: (_) => Video(
+          key: _miniPlayerVideoKey,
+          controller: _c.videoController,
+          controls: NoVideoControls,
+          fit: BoxFit.cover,
+          subtitleViewConfiguration: _subtitleConfig(),
+        ),
         onBack: () {
           final background = widget.backgroundRoute;
           if (background != null &&
@@ -4046,6 +4058,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         scaleX: _stretchX,
                         scaleY: 1,
                         child: Video(
+                          key: _miniPlayerVideoKey,
                           controller: _c.videoController,
                           controls: NoVideoControls,
                           fit: _fits[_fitIndex].$1,
