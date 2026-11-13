@@ -2398,131 +2398,139 @@ class _DetailViewState extends State<_DetailView> {
                       backgroundColor: Colors.transparent,
                       isScrollControlled: true,
                       useSafeArea: true,
-                      builder: (sheetContext) => DraggableScrollableSheet(
-                        initialChildSize: 0.42,
-                        minChildSize: 0.30,
-                        maxChildSize: 0.72,
-                        expand: false,
-                        builder: (context, scrollController) => Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).scaffoldBackgroundColor,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                      builder: (sheetContext) => SafeArea(
+                        top: false,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.8,
                           ),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 12),
-                              Container(
-                                width: 42,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: AppColors.textTertiary.withValues(alpha: 0.45),
-                                  borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(sheetContext).scaffoldBackgroundColor,
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: 42,
+                                  height: 5,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.textTertiary.withValues(alpha: 0.45),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(20, 16, 18, 12),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        'Lainnya',
-                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(20, 16, 18, 12),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          'Lainnya',
+                                          style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Tutup',
+                                        onPressed: () => Navigator.of(sheetContext).pop(),
+                                        icon: const Icon(Icons.close_rounded),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Flexible(
+                                  fit: FlexFit.loose,
+                                  child: SingleChildScrollView(
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (!isReading)
+                                            _DetailMoreMenuAction(
+                                              icon: Icons.auto_awesome_rounded,
+                                              title: 'Auto Resolve Sumber',
+                                              subtitle: 'Cari sumber yang cocok secara otomatis',
+                                              onTap: () {
+                                                Navigator.of(sheetContext).pop();
+                                                if (eps.isNotEmpty) _sweepForEpisode(eps[resumeIdx]);
+                                              },
+                                            ),
+                                          if (!isReading && ZmodeIds.parseShow(item.url) != null)
+                                            _DetailMoreMenuAction(
+                                              icon: Icons.tune_rounded,
+                                              title: 'Pilih sumber manual',
+                                              subtitle: 'Tentukan provider untuk judul ini',
+                                              color: const Color(0xFF45A6E8),
+                                              onTap: () {
+                                                Navigator.of(sheetContext).pop();
+                                                unawaited(_switchSource());
+                                              },
+                                            ),
+                                          if (!isReading && ZmodeIds.parseShow(item.url) != null)
+                                            _DetailMoreMenuAction(
+                                              icon: Icons.edit_note_rounded,
+                                              title: 'Judul salah?',
+                                              subtitle: 'Perbaiki judul yang dipasangkan ke sumber',
+                                              color: const Color(0xFFE5A94C),
+                                              onTap: () {
+                                                Navigator.of(sheetContext).pop();
+                                                unawaited(_openWrongTitleForTitle(detail));
+                                              },
+                                            ),
+                                          _DetailMoreMenuAction(
+                                            icon: Icons.download_rounded,
+                                            title: isReading ? 'Unduh bab' : 'Unduh episode',
+                                            subtitle: 'Pilih episode atau bab yang ingin disimpan',
+                                            color: const Color(0xFF35B7E8),
+                                            onTap: () {
+                                              Navigator.of(sheetContext).pop();
+                                              unawaited(_openDownloadSheet(
+                                                detail: detail,
+                                                category: category,
+                                                episodesBySeason: episodesBySeason,
+                                                initialSeason: currentSeason,
+                                              ));
+                                            },
+                                          ),
+                                          if (_trackingAvailable(detail))
+                                            _DetailMoreMenuAction(
+                                              icon: Icons.sync_rounded,
+                                              title: 'Sinkronkan progres',
+                                              subtitle: 'Kirim progres ke layanan pelacak',
+                                              color: const Color(0xFF42C99A),
+                                              onTap: () {
+                                                Navigator.of(sheetContext).pop();
+                                                unawaited(_openTrackingSheet(detail));
+                                              },
+                                            ),
+                                          if (detail.type == ProviderType.novel)
+                                            _DetailMoreMenuAction(
+                                              icon: Icons.import_export_rounded,
+                                              title: 'Ekspor EPUB',
+                                              subtitle: 'Simpan novel sebagai file EPUB',
+                                              color: const Color(0xFF9B83F6),
+                                              onTap: () {
+                                                Navigator.of(sheetContext).pop();
+                                                showEpubExportSheet(
+                                                  context,
+                                                  sourceId: detail.sourceId.isNotEmpty ? detail.sourceId : item.sourceId,
+                                                  showTitle: detail.title,
+                                                  chapters: eps,
+                                                );
+                                              },
+                                            ),
+                                        ],
                                       ),
                                     ),
-                                    IconButton(
-                                      tooltip: 'Tutup',
-                                      onPressed: () => Navigator.of(context).pop(),
-                                      icon: const Icon(Icons.close_rounded),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                              Expanded(
-                                child: ListView(
-                                  controller: scrollController,
-                                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
-                                  children: [
-                                    if (!isReading)
-                                      _DetailMoreMenuAction(
-                                        icon: Icons.auto_awesome_rounded,
-                                        title: 'Auto Resolve Sumber',
-                                        subtitle: 'Cari sumber yang cocok secara otomatis',
-                                        onTap: () {
-                                          Navigator.of(context).pop();
-                                          if (eps.isNotEmpty) _sweepForEpisode(eps[resumeIdx]);
-                                        },
-                                      ),
-                                    if (!isReading && ZmodeIds.parseShow(item.url) != null)
-                                      _DetailMoreMenuAction(
-                                        icon: Icons.tune_rounded,
-                                        title: 'Pilih sumber manual',
-                                        subtitle: 'Tentukan provider untuk judul ini',
-                                        color: const Color(0xFF45A6E8),
-                                        onTap: () {
-                                          Navigator.of(context).pop();
-                                          unawaited(_switchSource());
-                                        },
-                                      ),
-                                    if (!isReading && ZmodeIds.parseShow(item.url) != null)
-                                      _DetailMoreMenuAction(
-                                        icon: Icons.edit_note_rounded,
-                                        title: 'Judul salah?',
-                                        subtitle: 'Perbaiki judul yang dipasangkan ke sumber',
-                                        color: const Color(0xFFE5A94C),
-                                        onTap: () {
-                                          Navigator.of(context).pop();
-                                          unawaited(_openWrongTitleForTitle(detail));
-                                        },
-                                      ),
-                                    _DetailMoreMenuAction(
-                                      icon: Icons.download_rounded,
-                                      title: isReading ? 'Unduh bab' : 'Unduh episode',
-                                      subtitle: 'Pilih episode atau bab yang ingin disimpan',
-                                      color: const Color(0xFF35B7E8),
-                                      onTap: () {
-                                        Navigator.of(context).pop();
-                                        unawaited(_openDownloadSheet(
-                                          detail: detail,
-                                          category: category,
-                                          episodesBySeason: episodesBySeason,
-                                          initialSeason: currentSeason,
-                                        ));
-                                      },
-                                    ),
-                                    if (_trackingAvailable(detail))
-                                      _DetailMoreMenuAction(
-                                        icon: Icons.sync_rounded,
-                                        title: 'Sinkronkan progres',
-                                        subtitle: 'Kirim progres ke layanan pelacak',
-                                        color: const Color(0xFF42C99A),
-                                        onTap: () {
-                                          Navigator.of(context).pop();
-                                          unawaited(_openTrackingSheet(detail));
-                                        },
-                                      ),
-                                    if (detail.type == ProviderType.novel)
-                                      _DetailMoreMenuAction(
-                                        icon: Icons.import_export_rounded,
-                                        title: 'Ekspor EPUB',
-                                        subtitle: 'Simpan novel sebagai file EPUB',
-                                        color: const Color(0xFF9B83F6),
-                                        onTap: () {
-                                          Navigator.of(context).pop();
-                                          showEpubExportSheet(
-                                            context,
-                                            sourceId: detail.sourceId.isNotEmpty ? detail.sourceId : item.sourceId,
-                                            showTitle: detail.title,
-                                            chapters: eps,
-                                          );
-                                        },
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                      )
                     ),
                     icon: const Icon(Icons.more_horiz_rounded, color: AppColors.textPrimary, size: 21),
                   )
