@@ -739,7 +739,6 @@ class _WatchAppState extends State<WatchApp> with WidgetsBindingObserver {
                           ),
                         ),
                       ),
-                    const Positioned.fill(child: MiniPlayerOverlay()),
                   ],
                 )
               : (child ?? const SizedBox.shrink());
