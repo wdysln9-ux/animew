@@ -824,7 +824,7 @@ double posterGridAspect(BuildContext context) => posterCellAspect(
 /// 10 because that is what people read a rating as.
 String _compactPopularity(int value) {
   if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1).replaceAll('.0', '')}jt';
-  if (value >= 1000) return '${(value / 1000).toStringAsFixed(value >= 100000 ? 0 : 1).replaceAll('.0', '')}rb';
+  if (value >= 1000) return '${(value / 1000).toStringAsFixed(value >= 10000 ? 0 : 1).replaceAll('.0', '')}rb';
   return '$value';
 }
 
