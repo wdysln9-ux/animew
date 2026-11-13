@@ -1,7 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
-import '../../core/anilist/anilist_graphql.dart';
 import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
 import '../../core/models/home_section.dart';
@@ -13,6 +11,8 @@ import '../../core/zmode/metadata_filters.dart';
 import '../../core/zmode/metadata_repository.dart';
 import '../detail/detail_screen.dart';
 import 'search_screen.dart';
+import 'genres_screen.dart';
+import '../studio/studio_page.dart';
 import '../../core/ui/poster_card.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -30,15 +30,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _becauseLoading = false;
   String _selected = 'Untukmu';
   int _heroIndex = 0;
-  final Map<String, int> _genreCounts = {};
-  final Map<String, int> _studioCounts = {};
-  bool _countsLoading = false;
+  Map<String, int> _viewerGenreCounts = const {};
+  bool _viewerGenreStatsLoaded = false;
   final PageController _heroController = PageController(viewportFraction: .96);
+  final PageController _recommendationController = PageController(viewportFraction: .36);
 
   @override
   void initState() { super.initState(); _load(); }
   @override
-  void dispose() { _heroController.dispose(); super.dispose(); }
+  void dispose() { _heroController.dispose(); _recommendationController.dispose(); super.dispose(); }
 
   Future<void> _load() async {
     try {
@@ -53,7 +53,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         _genres = genres.where((g) => g.toLowerCase() != 'hentai').toList()..sort();
         _history = history;
       });
-      _loadCatalogueCounts();
+      _loadViewerGenreStats();
       _loadBecauseRecommendations();
     } catch (_) {}
   }
@@ -116,54 +116,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
-  Future<void> _loadCatalogueCounts() async {
-    if (_countsLoading) return;
-    _countsLoading = true;
-    const genres = ['Comedy', 'Kids', 'Fantasy', 'Action', 'Adventure', 'Sci-Fi', 'Drama', 'Shounen'];
-    const studios = ['Toei Animation', 'Sunrise', 'J.C.Staff', 'TMS Entertainment', 'Madhouse', 'Shanghai Animation Film Studio', 'Production I.G'];
-    try {
-      final fields = <String>[];
-      for (var i = 0; i < genres.length; i++) {
-        fields.add('g$i: Page { media(type: ANIME, genre: "${genres[i]}", isAdult: false, page: 1, perPage: 1) { pageInfo { total } } }');
-      }
-      for (var i = 0; i < studios.length; i++) {
-        fields.add('s$i: Studio(search: "${studios[i]}") { media(page: 1, perPage: 1) { pageInfo { total } } }');
-      }
-      final query = 'query { ${fields.join(' ')} }';
-      final response = await sl<Dio>().post<dynamic>(
-        'https://graphql.anilist.co',
-        data: {'query': query},
-        options: Options(headers: AniListGraphql.headers, validateStatus: (s) => s != null && s < 500),
-      );
-      final data = response.data;
-      if (data is! Map || data['data'] is! Map) return;
-      final payload = data['data'] as Map;
-      final genreCounts = <String, int>{};
-      final studioCounts = <String, int>{};
-      for (var i = 0; i < genres.length; i++) {
-        final page = payload['g$i'] is Map ? (payload['g$i'] as Map)['media'] : null;
-        final info = page is Map ? page['pageInfo'] : null;
-        final total = info is Map ? info['total'] : null;
-        if (total is int) genreCounts[genres[i]] = total;
-      }
-      for (var i = 0; i < studios.length; i++) {
-        final media = payload['s$i'] is Map ? (payload['s$i'] as Map)['media'] : null;
-        final info = media is Map ? media['pageInfo'] : null;
-        final total = info is Map ? info['total'] : null;
-        if (total is int) studioCounts[studios[i]] = total;
-      }
+  Future<void> _loadViewerGenreStats() async {
+    final service = sl<AniListService>();
+    if (!service.isConnected) {
       if (mounted) setState(() {
-        _genreCounts
-          ..clear()
-          ..addAll(genreCounts);
-        _studioCounts
-          ..clear()
-          ..addAll(studioCounts);
+        _viewerGenreCounts = const {};
+        _viewerGenreStatsLoaded = true;
+      });
+      return;
+    }
+    try {
+      final counts = await service.api.viewerAnimeGenreCounts();
+      if (mounted) setState(() {
+        _viewerGenreCounts = counts;
+        _viewerGenreStatsLoaded = true;
       });
     } catch (_) {
-      // Keep counts unavailable rather than displaying guessed numbers.
-    } finally {
-      _countsLoading = false;
+      if (mounted) setState(() => _viewerGenreStatsLoaded = true);
     }
   }
 
@@ -264,7 +233,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _hero({List<MediaItem>? sourceItems}) {
-    final items = sourceItems ?? _heroes;
+    if (sourceItems != null) return _recommendationCarousel(sourceItems);
+    
+    final items = _heroes;
     if (items.isEmpty) return const SizedBox(height: 8);
     return Column(children: [
       SizedBox(height: 145, child: PageView.builder(controller: _heroController, itemCount: items.length,
@@ -307,6 +278,48 @@ class _ExploreScreenState extends State<ExploreScreen> {
               borderRadius: BorderRadius.circular(5))),
         ])),
     ]);
+  }
+
+  Widget _recommendationCarousel(List<MediaItem> items) {
+    if (items.isEmpty) return const SizedBox(height: 8);
+    final width = posterRowWidth(context);
+    final height = posterRowHeight(context);
+    return SizedBox(
+      height: height,
+      child: PageView.builder(
+        controller: _recommendationController,
+        itemCount: items.length,
+        itemBuilder: (_, index) {
+          final item = items[index];
+          return SizedBox(
+            width: width,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: PosterCard(
+                title: item.title,
+                imageUrl: item.cover,
+                imageColor: item.coverColor,
+                wideImageUrl: item.banner,
+                headers: item.coverHeaders,
+                logoItem: item,
+                cellWidth: width,
+                onTap: () => _open(item),
+                scoreBadge: item.score,
+                viewsBadge: item.popularity,
+                statusBadge: item.status?.name,
+                qualityBadge: item.quality,
+                dubBadge: item.dubBadge,
+                genres: item.genres,
+                isAdult: item.isAdult,
+                metaFormat: item.format,
+                metaEpisodes: item.totalEpisodes,
+                metaYear: item.year,
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget _posterRail(List<MediaItem> items, {bool hidden = false}) {
@@ -353,17 +366,24 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _taste() {
-    final genres = _history.isEmpty ? const ['Comedy', 'Fantasy', 'Action', 'Adventure'] : _tasteGenres;
-    final counts = <String, int>{
-      for (final g in genres)
-        g: _all.where((m) => m.genres.any((x) => x.toLowerCase() == g.toLowerCase())).length,
-    };
-    final total = counts.values.fold<int>(0, (sum, value) => sum + value);
-    return SizedBox(height: 28, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
+    final stats = _viewerGenreCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final genres = stats.isNotEmpty
+        ? stats.take(4).map((entry) => entry.key).toList()
+        : (_history.isEmpty ? const ['Comedy', 'Fantasy', 'Action', 'Adventure'] : _tasteGenres);
+    final total = stats.fold<int>(0, (sum, entry) => sum + entry.value);
+    return SizedBox(height: 28, child: ListView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [for (final g in genres)
-        Padding(padding: const EdgeInsets.only(right: 6), child: _pill(g,
+        Padding(padding: const EdgeInsets.only(right: 6), child: _pill(
+          g,
           () => _search(filters: MetaFilters(genres: [g])),
-          suffix: '${total == 0 ? 0 : (counts[g]! * 100 / total).round()}%'))]));
+          suffix: _viewerGenreStatsLoaded && total > 0 && _viewerGenreCounts.containsKey(g)
+              ? '${(_viewerGenreCounts[g]! * 100 / total).round()}%'
+              : null,
+        ))],
+    ));
   }
 
   Widget _quickPicks() {
@@ -398,7 +418,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 6, crossAxisSpacing: 7, childAspectRatio: 2.55),
       itemBuilder: (_, i) {
         final g = genres[i];
-        final count = _genreCounts[g];
         final c = colors[i % colors.length];
         return Material(color: c.withValues(alpha: .34), borderRadius: BorderRadius.circular(11),
           child: InkWell(borderRadius: BorderRadius.circular(11), onTap: () => _search(filters: MetaFilters(genres: [g])),
@@ -408,7 +427,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   colors: [c.withValues(alpha: .48), c.withValues(alpha: .20)])),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
                 Text(g, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(10, weight: FontWeight.w800)),
-                const SizedBox(height: 2), Text(count == null ? 'Jumlah tidak tersedia' : '${count} anime', style: _txt(7.5, color: Colors.white.withValues(alpha: .82))),
               ]))));
       }));
   }
@@ -435,7 +453,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 borderRadius: BorderRadius.circular(10),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
-                  onTap: () => _search(query: names[i]),
+                  onTap: () => Navigator.of(context).push(StudioPage.route(names[i])),
                   child: SizedBox(
                     height: 48,
                     child: Padding(
@@ -462,12 +480,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: _txt(9.5, weight: FontWeight.w800),
-                                ),
-                                Text(
-                                  _studioCounts[names[i]] == null
-                                      ? 'Jumlah tidak tersedia'
-                                      : '${_studioCounts[names[i]]} anime',
-                                  style: _txt(7, color: AppColors.textTertiary),
                                 ),
                               ],
                             ),
@@ -501,9 +513,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'), _posterRail(hidden.isEmpty ? _recommendations : hidden, hidden: true),
           _heading('Lagi pengen apa?', marked: true), _quickPicks(),
           _heading('Telusuri Musim'), _seasons(),
-          _heading('Genre', action: 'Lihat Semua →', onAction: () => _search()), _genreGrid(),
+          _heading('Genre', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen()))), _genreGrid(),
           _heading('Telusuri Tahun'), _years(),
-          _heading('Studio Populer', marked: true, action: 'Lihat Semua →', onAction: () => _search()), _studios(),
+          _heading('Studio Populer', marked: true, action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen()))), _studios(),
           const SizedBox(height: 100),
         ]))),
       ]),

@@ -482,6 +482,32 @@ query($id:Int,$page:Int) {
     );
   }
 
+  /// Genre counts from the signed-in viewer's AniList anime statistics.
+  /// The UI can normalize these counts into percentages without guessing from
+  /// the local catalogue or playback history.
+  Future<Map<String, int>> viewerAnimeGenreCounts() async {
+    final data = await _gql(
+      'query{ Viewer{ statistics{ anime{ genres{ genre count } } } } }',
+      const {},
+      auth: true,
+    );
+    final viewer = data?['Viewer'];
+    final statistics = viewer is Map ? viewer['statistics'] : null;
+    final anime = statistics is Map ? statistics['anime'] : null;
+    final genres = anime is Map ? anime['genres'] : null;
+    if (genres is! List) return const {};
+    final result = <String, int>{};
+    for (final item in genres) {
+      if (item is! Map) continue;
+      final name = item['genre'];
+      final count = item['count'];
+      if (name is String && count is num && count > 0) {
+        result[name] = count.toInt();
+      }
+    }
+    return result;
+  }
+
   /// Resolve an AniList media id (+ total episodes, or chapters for
   /// [MediaKind.manga]) from a MAL id. Returns `(id, episodes)` or null when
   /// unmatched.
