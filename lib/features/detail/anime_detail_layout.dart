@@ -1447,7 +1447,8 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         scoreBadge: season.score,
                         statusBadge: season.status,
                         viewsBadge: season.popularity,
-                        metaLine: season.episodes == null ? null : 'TV · ${season.episodes} eps',
+                        metaFormat: 'TV',
+                        metaEpisodes: season.episodes,
                         // The currently open season is highlighted and cannot be reopened.
                         onTap: season.isCurrent
                             ? null
@@ -1472,12 +1473,9 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                             ? relation.recommendationRating
                             : null,
                         statusBadge: relation.status,
-                        metaLine: [
-                          if (relation.format?.isNotEmpty == true) relation.format!,
-                          if (relation.episodes != null) '${relation.episodes} eps',
-                          if (!_isRecommended(relation) && relation.year != null)
-                            '${relation.year}',
-                        ].join(' · '),
+                        metaFormat: relation.format,
+                        metaEpisodes: relation.episodes,
+                        metaYear: relation.year?.toString(),
                         onTap: () => widget.onOpenRelation(relation),
                       ),
                     ));

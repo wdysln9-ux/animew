@@ -49,6 +49,9 @@ class PosterCard extends StatefulWidget {
     this.latestEpisodeBadge,
     this.rankBadge,
     this.metaLine,
+    this.metaFormat,
+    this.metaEpisodes,
+    this.metaYear,
     this.showViewsBadge = true,
   });
   final String title;
@@ -98,6 +101,9 @@ class PosterCard extends StatefulWidget {
   final int? latestEpisodeBadge;
   final int? rankBadge;
   final String? metaLine;
+  final String? metaFormat;
+  final int? metaEpisodes;
+  final String? metaYear;
   final bool showViewsBadge;
   final double cellWidth;
 
@@ -585,7 +591,15 @@ class _PosterCardState extends State<PosterCard> {
                 // follows the row.
                 Builder(
                   builder: (context) {
-                    final meta = widget.metaLine?.trim() ?? '';
+                    final hasStructuredMeta = widget.metaFormat != null ||
+                        widget.metaEpisodes != null || widget.metaYear != null;
+                    final meta = hasStructuredMeta
+                        ? [
+                            if ((prefs?.posterMetaFormat ?? true) && widget.metaFormat?.isNotEmpty == true) widget.metaFormat!,
+                            if ((prefs?.posterMetaEpisodes ?? true) && widget.metaEpisodes != null) '${widget.metaEpisodes} eps',
+                            if ((prefs?.posterMetaYear ?? true) && widget.metaYear?.isNotEmpty == true) widget.metaYear!,
+                          ].join(' · ')
+                        : (widget.metaLine?.trim() ?? '');
                     final showMeta = (prefs?.posterMetaLine ?? true) && meta.isNotEmpty;
                     return SizedBox(
                       height: _titleBoxHeight + (showMeta ? 12 : 0),
