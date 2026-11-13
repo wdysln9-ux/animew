@@ -42,6 +42,36 @@ class _ExploreScreenState extends State<ExploreScreen> {
     } catch (_) {}
   }
 
+  List<String> get _tasteGenres {
+    final watchedIds = _history.map((e) => e.malId).whereType<int>().toSet();
+    final watchedTitles = _history.map((e) => e.showTitle.toLowerCase()).toSet();
+    final counts = <String, int>{};
+    for (final item in _rows.expand((row) => row.items)) {
+      if ((item.malId != null && watchedIds.contains(item.malId)) ||
+          watchedTitles.contains(item.title.toLowerCase())) {
+        for (final genre in item.genres) {
+          counts.update(genre, (value) => value + 1, ifAbsent: () => 1);
+        }
+      }
+    }
+    final sorted = counts.keys.toList()
+      ..sort((a, b) => counts[b]!.compareTo(counts[a]!));
+    return sorted.isEmpty ? _genres.take(4).toList() : sorted.take(4).toList();
+  }
+
+  List<MediaItem> get _personalized {
+    final tastes = _tasteGenres.map((g) => g.toLowerCase()).toSet();
+    final watchedIds = _history.map((e) => e.malId).whereType<int>().toSet();
+    final all = <String, MediaItem>{};
+    for (final item in _rows.expand((row) => row.items)) {
+      if (item.malId != null && watchedIds.contains(item.malId)) continue;
+      if (item.genres.any((g) => tastes.contains(g.toLowerCase()))) {
+        all[item.id] = item;
+      }
+    }
+    return all.values.toList();
+  }
+
   List<MediaItem> _row(String name) {
     for (final row in _rows) { if (row.title.toLowerCase() == name.toLowerCase()) return row.items; }
     return const [];
@@ -80,8 +110,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     backgroundColor: selected ? AppColors.accent : AppColors.surface, side: BorderSide.none, onPressed: onTap);
 
   Widget _hero() {
+    final personalized = _personalized;
     final recs = _row('Rekomendasi Anime');
-    final m = recs.isNotEmpty ? recs.first : (_rows.isNotEmpty && _rows.first.items.isNotEmpty ? _rows.first.items.first : null);
+    final m = personalized.isNotEmpty ? personalized.first : (recs.isNotEmpty ? recs.first : (_rows.isNotEmpty && _rows.first.items.isNotEmpty ? _rows.first.items.first : null));
     if (m == null) return const SizedBox.shrink();
     return Padding(padding: const EdgeInsets.fromLTRB(14, 12, 14, 0), child: GestureDetector(onTap: () => _open(m),
       child: ClipRRect(borderRadius: BorderRadius.circular(13), child: SizedBox(height: 145, width: double.infinity,
@@ -150,7 +181,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   Widget build(BuildContext context) {
     final trending = _row('Trending').isNotEmpty ? _row('Trending') : _row('Populer');
-    final recs = _row('Rekomendasi Anime').isNotEmpty ? _row('Rekomendasi Anime') : trending;
+    final recs = _personalized.isNotEmpty ? _personalized : (_row('Rekomendasi Anime').isNotEmpty ? _row('Rekomendasi Anime') : trending);
     final watched = _history.isEmpty ? 'anime yang kamu ikuti' : _history.first.showTitle;
     const studios = ['Toei Animation','Sunrise','J.C.Staff','TMS Entertainment','Madhouse','Production I.G'];
     return Scaffold(backgroundColor: AppColors.bg, body: RefreshIndicator(
@@ -161,7 +192,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _searchBar(), _sorts(), _hero(),
           _heading('Selera Kamu'),
           Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Wrap(spacing: 6, children: [
-            for (final g in (_history.isEmpty ? const ['Comedy','Fantasy','Action','Adventure'] : _genres.take(4))) _chip(g, () => _search(filters: MetaFilters(genres: [g]))),
+            for (final g in (_history.isEmpty ? const ['Comedy','Fantasy','Action','Adventure'] : _tasteGenres)) _chip(g, () => _search(filters: MetaFilters(genres: [g]))),
           ])),
           _heading('Karena kamu menonton $watched'), _rail(recs),
           _heading('Permata Tersembunyi'), _rail(_rows.expand((r) => r.items).where((m) => (m.popularity ?? 999999) < 50000).take(12).toList()),
