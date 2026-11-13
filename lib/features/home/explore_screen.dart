@@ -10,6 +10,7 @@ import '../../core/zmode/metadata_filters.dart';
 import '../../core/zmode/metadata_repository.dart';
 import '../detail/detail_screen.dart';
 import 'search_screen.dart';
+import '../../core/ui/poster_card.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -189,52 +190,47 @@ class _ExploreScreenState extends State<ExploreScreen> {
     ]);
   }
 
-  String _compact(int? n) {
-    if (n == null || n <= 0) return '—';
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(n >= 10000000 ? 0 : 1).replaceAll('.0', '')}jt';
-    if (n >= 10000) return '${(n / 1000).toStringAsFixed(0)}rb';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1).replaceAll('.0', '')}rb';
-    return '$n';
-  }
-
   Widget _posterRail(List<MediaItem> items, {bool hidden = false}) {
     if (items.isEmpty) return const SizedBox(height: 184);
     final list = items.take(18).toList();
-    return SizedBox(height: 235, child: ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 12), scrollDirection: Axis.horizontal,
-      itemCount: list.length, separatorBuilder: (_, _) => const SizedBox(width: 9),
-      itemBuilder: (_, i) {
-        final m = list[i];
-        const width = 104.0;
-        final meta = [if (m.format?.isNotEmpty == true) m.format!, if (m.totalEpisodes != null) '${m.totalEpisodes} Eps'].join(' · ');
-        return SizedBox(width: width, child: GestureDetector(onTap: () => _open(m),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            ClipRRect(borderRadius: BorderRadius.circular(8), child: SizedBox(width: width, height: 156,
-              child: Stack(fit: StackFit.expand, children: [
-                if (m.cover != null) Image.network(m.cover!, fit: BoxFit.cover, headers: m.coverHeaders,
-                  errorBuilder: (_, _, _) => ColoredBox(color: AppColors.surface2))
-                else const ColoredBox(color: Colors.black12),
-                Positioned(left: 5, top: 5, child: Container(padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
-                  decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(5)),
-                  child: Text(hidden ? 'Pilihan' : 'Selesai', style: _txt(6.5, weight: FontWeight.w900, color: Colors.white)))),
-                if (m.score != null) Positioned(right: 4, top: 5, child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  decoration: BoxDecoration(color: Colors.black.withValues(alpha: .68), borderRadius: BorderRadius.circular(5)),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.star_rounded, size: 9, color: Color(0xFF8BE16B)),
-                    Text((m.score! / 10).toStringAsFixed(1), style: _txt(7, weight: FontWeight.w900, color: Colors.white)),
-                  ]))),
-                if (m.popularity != null) Positioned(left: 5, bottom: 5, child: Row(children: [
-                  const Icon(Icons.visibility_rounded, size: 9, color: Colors.white),
-                  const SizedBox(width: 2), Text(_compact(m.popularity), style: _txt(7, weight: FontWeight.w800, color: Colors.white)),
-                ])),
-              ]))),
-            const SizedBox(height: 5),
-            Text(m.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: _txt(9, weight: FontWeight.w800, height: 1.03)),
-            if (meta.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 2),
-              child: Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(7.5, color: AppColors.textTertiary))),
-          ])));
-      }));
+    final width = posterRowWidth(context);
+    final height = posterRowHeight(context);
+    return SizedBox(
+      height: height,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        scrollDirection: Axis.horizontal,
+        itemCount: list.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 9),
+        itemBuilder: (_, i) {
+          final m = list[i];
+          return SizedBox(
+            width: width,
+            height: height,
+            child: PosterCard(
+              title: m.title,
+              imageUrl: m.cover,
+              imageColor: m.coverColor,
+              wideImageUrl: m.banner,
+              headers: m.coverHeaders,
+              logoItem: m,
+              cellWidth: width,
+              onTap: () => _open(m),
+              scoreBadge: m.score,
+              viewsBadge: m.popularity,
+              statusBadge: m.status?.name,
+              qualityBadge: m.quality,
+              dubBadge: m.dubBadge,
+              genres: m.genres,
+              isAdult: m.isAdult,
+              metaFormat: m.format,
+              metaEpisodes: m.totalEpisodes,
+              metaYear: m.year,
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget _taste() {
