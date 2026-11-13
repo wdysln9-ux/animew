@@ -34,7 +34,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Map<String, int> _viewerGenreCounts = const {};
   bool _viewerGenreStatsLoaded = false;
   final PageController _heroController = PageController(viewportFraction: .96);
-  final PageController _recommendationController = PageController(viewportFraction: .36);
+  final PageController _recommendationController = PageController(viewportFraction: .34);
 
   @override
   void initState() { super.initState(); _load(); }
@@ -191,43 +191,43 @@ class _ExploreScreenState extends State<ExploreScreen> {
       AppText.body.copyWith(fontSize: size, height: height, fontWeight: weight, color: color ?? AppColors.textPrimary);
 
   Widget _heading(String title, {String? action, String? subtitle, VoidCallback? onAction, bool marked = false}) =>
-    Padding(padding: const EdgeInsets.fromLTRB(12, 19, 13, 9), child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-      if (marked) Container(width: 2.5, height: 28, margin: const EdgeInsets.only(right: 8), decoration: BoxDecoration(color: AppColors.textPrimary, borderRadius: BorderRadius.circular(3))),
+    Padding(padding: const EdgeInsets.fromLTRB(16, 23, 16, 11), child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+      if (marked) Container(width: 3, height: 30, margin: const EdgeInsets.only(right: 9), decoration: BoxDecoration(color: AppColors.textPrimary, borderRadius: BorderRadius.circular(3))),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(12, weight: FontWeight.w800)),
-        if (subtitle != null) Padding(padding: const EdgeInsets.only(top: 2), child: Text(subtitle, style: _txt(8, color: AppColors.textTertiary))),
+        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(14, weight: FontWeight.w800)),
+        if (subtitle != null) Padding(padding: const EdgeInsets.only(top: 2), child: Text(subtitle, style: _txt(9, color: AppColors.textTertiary))),
       ])),
-      if (action != null) GestureDetector(onTap: onAction, child: Text(action, style: _txt(9.5, weight: FontWeight.w800, color: AppColors.accent))),
+      if (action != null) GestureDetector(onTap: onAction, child: Text(action, style: _txt(10.5, weight: FontWeight.w800, color: AppColors.accent))),
     ]));
 
-  Widget _searchBar() => Padding(padding: const EdgeInsets.fromLTRB(12, 11, 12, 8),
+  Widget _searchBar() => Padding(padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
     child: Material(color: AppColors.surface, borderRadius: BorderRadius.circular(24),
       child: InkWell(borderRadius: BorderRadius.circular(24), onTap: () => _search(),
-        child: SizedBox(height: 40, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 13),
+        child: SizedBox(height: 46, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Row(children: [
-            Icon(Icons.search_rounded, size: 16, color: AppColors.textTertiary),
+            Icon(Icons.search_rounded, size: 18, color: AppColors.textTertiary),
             const SizedBox(width: 8),
-            Text('Cari anime, genre, studio...', style: _txt(10, color: AppColors.textTertiary)),
+            Text('Cari anime, genre, studio...', style: _txt(11, color: AppColors.textTertiary)),
           ]))))));
 
   Widget _pill(String label, VoidCallback tap, {bool selected = false, bool compact = false, Widget? icon, String? suffix}) =>
     Material(color: selected ? AppColors.accent : AppColors.surface,
       borderRadius: BorderRadius.circular(compact ? 18 : 10),
       child: InkWell(borderRadius: BorderRadius.circular(compact ? 18 : 10), onTap: tap,
-        child: Padding(padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 10, vertical: 8),
+        child: Padding(padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 12, vertical: compact ? 9 : 10),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             if (icon != null) ...[icon, const SizedBox(width: 5)],
-            Text(label, style: _txt(compact ? 9 : 9.5, weight: FontWeight.w700,
+            Text(label, style: _txt(compact ? 10 : 10.5, weight: FontWeight.w700,
               color: selected ? Colors.white : AppColors.textSecondary)),
             if (suffix != null) ...[const SizedBox(width: 5), Text(suffix, style: _txt(7.5, weight: FontWeight.w900, color: AppColors.accent))],
           ]))));
 
   Widget _sorts() {
     const names = ['Untukmu', 'Populer', 'Nilai Tertinggi', 'Sedang Tayang'];
-    return SizedBox(height: 36, child: ListView(scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 11), children: [
+    return SizedBox(height: 40, child: ListView(scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16), children: [
         for (var i = 0; i < names.length; i++)
-          Padding(padding: const EdgeInsets.only(right: 6), child: _pill(names[i], () {
+          Padding(padding: const EdgeInsets.only(right: 8), child: _pill(names[i], () {
             setState(() => _selected = names[i]);
             if (i == 1) _search(filters: const MetaFilters(sort: MetaSort.popularity));
             if (i == 2) _search(filters: const MetaFilters(sort: MetaSort.score));
@@ -242,13 +242,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final items = _heroes;
     if (items.isEmpty) return const SizedBox(height: 8);
     return Column(children: [
-      SizedBox(height: 145, child: PageView.builder(controller: _heroController, itemCount: items.length,
+      SizedBox(height: 178, child: PageView.builder(controller: _heroController, itemCount: items.length,
         onPageChanged: (i) => setState(() => _heroIndex = i),
         itemBuilder: (_, i) {
           final m = items[i];
-          return Padding(padding: const EdgeInsets.only(left: 12, right: 3),
+          return Padding(padding: const EdgeInsets.only(left: 16, right: 5),
             child: GestureDetector(onTap: () => _open(m), child: ClipRRect(
-              borderRadius: BorderRadius.circular(13), child: Stack(fit: StackFit.expand, children: [
+              borderRadius: BorderRadius.circular(16), child: Stack(fit: StackFit.expand, children: [
                 if (m.banner != null || m.cover != null)
                   Image.network(m.banner ?? m.cover!, fit: BoxFit.cover,
                     errorBuilder: (_, _, _) => ColoredBox(color: AppColors.surface2)),
@@ -256,25 +256,25 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   begin: Alignment.topCenter, end: Alignment.bottomCenter,
                   colors: [Colors.black.withValues(alpha: .02), Colors.black.withValues(alpha: .1), Colors.black.withValues(alpha: .9)],
                   stops: const [0, .35, 1]))),
-                Positioned(left: 11, right: 10, bottom: 10, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                Positioned(left: 14, right: 13, bottom: 13, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(4)),
-                    child: Text('SOROTAN', style: _txt(7, weight: FontWeight.w900, color: Colors.white))),
+                    child: Text('SOROTAN', style: _txt(8, weight: FontWeight.w900, color: Colors.white))),
                   const SizedBox(height: 5),
-                  Text(m.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: _txt(11.5, weight: FontWeight.w900, color: Colors.white, height: 1.05)),
+                  Text(m.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: _txt(14, weight: FontWeight.w900, color: Colors.white, height: 1.05)),
                   const SizedBox(height: 3),
                   Row(children: [
                     const Icon(Icons.star_rounded, size: 11, color: Color(0xFF8BE16B)),
                     const SizedBox(width: 2),
-                    Text(m.score == null ? '—' : (m.score! / 10).toStringAsFixed(1), style: _txt(8, weight: FontWeight.w900, color: const Color(0xFF8BE16B))),
+                    Text(m.score == null ? '—' : (m.score! / 10).toStringAsFixed(1), style: _txt(9, weight: FontWeight.w900, color: const Color(0xFF8BE16B))),
                     const SizedBox(width: 6),
                     Expanded(child: Text('Karena kamu menonton ${_history.isEmpty ? 'anime favoritmu' : _history.first.showTitle}',
-                      maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(8, color: Colors.white.withValues(alpha: .9)))),
+                      maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(9, color: Colors.white.withValues(alpha: .9)))),
                   ]),
                 ])),
               ]))));
         })),
-      if (items.length > 1) Padding(padding: const EdgeInsets.only(top: 7),
+      if (items.length > 1) Padding(padding: const EdgeInsets.only(top: 9),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           for (var i = 0; i < items.length; i++) AnimatedContainer(duration: const Duration(milliseconds: 180),
             margin: const EdgeInsets.symmetric(horizontal: 2), width: _heroIndex == i ? 12 : 5, height: 4,
@@ -378,11 +378,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ? stats.take(4).map((entry) => entry.key).toList()
         : (_history.isEmpty ? const ['Comedy', 'Fantasy', 'Action', 'Adventure'] : _tasteGenres);
     final total = stats.fold<int>(0, (sum, entry) => sum + entry.value);
-    return SizedBox(height: 28, child: ListView(
+    return SizedBox(height: 36, child: ListView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [for (final g in genres)
-        Padding(padding: const EdgeInsets.only(right: 6), child: _pill(
+        Padding(padding: const EdgeInsets.only(right: 8), child: _pill(
           g,
           () => _search(filters: MetaFilters(genres: [g])),
           suffix: _viewerGenreStatsLoaded && total > 0 && _viewerGenreCounts.containsKey(g)
@@ -399,7 +399,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ('Siap Maraton', Icons.playlist_play_rounded, const MetaFilters(minEpisodes: 24)),
       ('Anime Baru', Icons.fiber_new_rounded, const MetaFilters(sort: MetaSort.newest)),
     ];
-    return SizedBox(height: 34, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
+    return SizedBox(height: 40, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [for (final c in choices) Padding(padding: const EdgeInsets.only(right: 7),
         child: _pill(c.$1, () => _search(filters: c.$3), icon: Icon(c.$2, size: 12, color: AppColors.accent)))]));
   }
@@ -421,18 +421,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
       Color(0xFF267D70), Color(0xFF276C78), Color(0xFF365F91), Color(0xFF8B3E57)];
     return Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: GridView.builder(
       shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: math.min(8, genres.length),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 6, crossAxisSpacing: 7, childAspectRatio: 2.55),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 9, crossAxisSpacing: 9, childAspectRatio: 2.35),
       itemBuilder: (_, i) {
         final g = genres[i];
         final c = colors[i % colors.length];
         return Material(color: c.withValues(alpha: .34), borderRadius: BorderRadius.circular(11),
           child: InkWell(borderRadius: BorderRadius.circular(11), onTap: () => _search(filters: MetaFilters(genres: [g])),
-            child: Container(padding: const EdgeInsets.fromLTRB(10, 8, 8, 7),
+            child: Container(padding: const EdgeInsets.fromLTRB(13, 10, 11, 9),
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(11), border: Border.all(color: c.withValues(alpha: .65), width: .8),
                 gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
                   colors: [c.withValues(alpha: .48), c.withValues(alpha: .20)])),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text(g, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(10, weight: FontWeight.w800)),
+                Text(g, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(12, weight: FontWeight.w800)),
               ]))));
       }));
   }
@@ -453,7 +453,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         children: [
           for (var i = 0; i < names.length; i++)
             Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(bottom: 8),
               child: Material(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(10),
@@ -471,7 +471,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             child: Center(
                               child: Text(
                                 initials[i],
-                                style: _txt(8, weight: FontWeight.w900, color: AppColors.textSecondary),
+                                style: _txt(9, weight: FontWeight.w900, color: AppColors.textSecondary),
                               ),
                             ),
                           ),
@@ -485,7 +485,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   names[i],
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: _txt(9.5, weight: FontWeight.w800),
+                                  style: _txt(11, weight: FontWeight.w800),
                                 ),
                               ],
                             ),
@@ -512,8 +512,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
       color: AppColors.accent, backgroundColor: AppColors.surface, onRefresh: _load,
       child: CustomScrollView(physics: const AlwaysScrollableScrollPhysics(), slivers: [
         SliverToBoxAdapter(child: SafeArea(bottom: false, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(padding: const EdgeInsets.fromLTRB(12, 5, 12, 0), child: Text('Jelajahi', style: _txt(16, weight: FontWeight.w900))),
-          _searchBar(), _sorts(), const SizedBox(height: 5), _hero(),
+          Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),
+          _searchBar(), _sorts(), const SizedBox(height: 10), _hero(),
           _heading('Selera Kamu', marked: true), _taste(),
           _heading('Karena kamu menonton $watched'), _hero(sourceItems: _becauseCarousel), _posterRail(_becauseList, recommendationMode: true),
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'), _posterRail(hidden.isEmpty ? _recommendations : hidden, hidden: true),
