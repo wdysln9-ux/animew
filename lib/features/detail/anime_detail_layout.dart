@@ -1434,7 +1434,10 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         statusBadge: season.status,
                         viewsBadge: season.popularity,
                         metaLine: season.episodes == null ? null : 'TV · ${season.episodes} eps',
-                        onTap: () => widget.onOpenSeason(season),
+                        // The currently open season is highlighted and cannot be reopened.
+                        onTap: season.isCurrent
+                            ? null
+                            : () => widget.onOpenSeason(season),
                       ),
                     ));
                   }
