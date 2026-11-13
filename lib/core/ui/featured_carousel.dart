@@ -140,7 +140,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     _index = _count > 1 ? _startIndex : 0;
     _pc = PageController(
       initialPage: _index,
-      viewportFraction: widget.style == HeroTransition.posterStack ? 0.50 : 1.0,
+      viewportFraction: widget.style == HeroTransition.posterStack ? 0.72 : 1.0,
     );
     _startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -526,6 +526,11 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
   @override
   Widget build(BuildContext context) {
     final heroHeight = heroHeightFor(context);
+    // Poster-stack cards were too narrow and too tall on phone screens.
+    // Give this style a wider viewport and a slightly shorter stage.
+    final carouselHeight = widget.style == HeroTransition.posterStack
+        ? (heroHeight - 56).clamp(320.0, heroHeight)
+        : heroHeight;
 
     // Empty state — reserve the height so layout doesn't jump.
     if (_count == 0) return SizedBox(height: heroHeight);
@@ -539,7 +544,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
 
     return RepaintBoundary(
       child: SizedBox(
-        height: heroHeight,
+        height: carouselHeight,
         child: Stack(
           children: [
             // ── Main poster carousel ───────────────────────────────────────
