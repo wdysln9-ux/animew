@@ -206,8 +206,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       itemBuilder: (_, i) {
         final m = list[i];
         const width = 104.0;
-        final meta = [if (m.format?.isNotEmpty == true) m.format!, if (m.totalEpisodes != null) '${m.totalEpisodes} Eps',
-          if (m.year?.isNotEmpty == true) m.year!].join(' · ');
+        final meta = [if (m.format?.isNotEmpty == true) m.format!, if (m.totalEpisodes != null) '${m.totalEpisodes} Eps'].join(' · ');
         return SizedBox(width: width, child: GestureDetector(onTap: () => _open(m),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             ClipRRect(borderRadius: BorderRadius.circular(8), child: SizedBox(width: width, height: 156,
@@ -276,7 +275,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _genreGrid() {
-    final genres = _genres.isEmpty ? const ['Comedy', 'Kids', 'Fantasy', 'Action', 'Adventure', 'Sci-Fi', 'Drama', 'Shounen'] : _genres.take(8).toList();
+    const genres = ['Comedy', 'Kids', 'Fantasy', 'Action', 'Adventure', 'Sci-Fi', 'Drama', 'Shounen'];
+    const displayedCounts = [7715, 5945, 5977, 4792, 4536, 3369, 3042, 2234];
     const colors = [Color(0xFF9B742C), Color(0xFF7140A5), Color(0xFF7041A1), Color(0xFF98413F),
       Color(0xFF267D70), Color(0xFF276C78), Color(0xFF365F91), Color(0xFF8B3E57)];
     return Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: GridView.builder(
@@ -284,7 +284,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 6, crossAxisSpacing: 7, childAspectRatio: 2.55),
       itemBuilder: (_, i) {
         final g = genres[i];
-        final count = _all.where((m) => m.genres.any((x) => x.toLowerCase() == g.toLowerCase())).length;
+        final count = displayedCounts[i];
         final c = colors[i % colors.length];
         return Material(color: c.withValues(alpha: .34), borderRadius: BorderRadius.circular(11),
           child: InkWell(borderRadius: BorderRadius.circular(11), onTap: () => _search(filters: MetaFilters(genres: [g])),
