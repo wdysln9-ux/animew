@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import '../../core/anilist/anilist_graphql.dart';
+import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
 import '../../core/models/home_section.dart';
 import '../../core/models/media_item.dart';
@@ -24,6 +25,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<HomeSection> _rows = const [];
   List<String> _genres = const [];
   List<HistoryEntry> _history = const [];
+  List<MediaItem> _becauseRecommendations = const [];
+  bool _becauseLoading = false;
   String _selected = 'Untukmu';
   int _heroIndex = 0;
   final Map<String, int> _genreCounts = {};
@@ -50,7 +53,52 @@ class _ExploreScreenState extends State<ExploreScreen> {
         _history = history;
       });
       _loadCatalogueCounts();
+      _loadBecauseRecommendations();
     } catch (_) {}
+  }
+
+  Future<void> _loadBecauseRecommendations() async {
+    if (_becauseLoading || _history.isEmpty) return;
+    _becauseLoading = true;
+    try {
+      final watched = _history.first;
+      final match = _all.where((m) =>
+        (watched.malId != null && m.malId == watched.malId) ||
+        m.title.toLowerCase() == watched.showTitle.toLowerCase()
+      ).firstOrNull;
+      var anilistId = match?.anilistId;
+      if (anilistId == null && watched.malId != null) {
+        final resolved = await sl<AniListService>().api.mediaByMalId(watched.malId!);
+        anilistId = resolved?.id;
+      }
+      if (anilistId == null) return;
+      final result = await sl<AniListService>().api.mediaRecommendations(anilistId);
+      final items = result.recommendations
+        .where((r) => !r.isReading && !r.isAdult && r.anilistId != null)
+        .map((r) => MediaItem(
+          id: 'anilist:${r.anilistId}',
+          title: r.title,
+          englishTitle: r.romaji,
+          cover: r.cover,
+          coverColor: r.coverColor,
+          url: 'https://anilist.co/anime/${r.anilistId}',
+          type: ProviderType.anime,
+          sourceId: 'anilist',
+          malId: r.malId,
+          anilistId: r.anilistId,
+          genres: r.genres,
+          score: r.score,
+          popularity: r.popularity,
+          format: r.format,
+          totalEpisodes: r.episodes,
+          year: r.year?.toString(),
+        )).toList();
+      if (mounted) setState(() => _becauseRecommendations = items);
+    } catch (_) {
+      // Leave this section empty if AniList cannot provide title-specific recommendations.
+    } finally {
+      _becauseLoading = false;
+    }
   }
 
   Future<void> _loadCatalogueCounts() async {
@@ -434,7 +482,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(12, 5, 12, 0), child: Text('Jelajahi', style: _txt(16, weight: FontWeight.w900))),
           _searchBar(), _sorts(), const SizedBox(height: 5), _hero(),
           _heading('Selera Kamu', marked: true), _taste(),
-          _heading('Karena kamu menonton $watched'), _posterRail(_recommendations),
+          _heading('Karena kamu menonton $watched'), _posterRail(_becauseRecommendations),
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'), _posterRail(hidden.isEmpty ? _recommendations : hidden, hidden: true),
           _heading('Lagi pengen apa?', marked: true), _quickPicks(),
           _heading('Telusuri Musim'), _seasons(),
