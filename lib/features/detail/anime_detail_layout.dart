@@ -967,7 +967,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
   }
 
   Widget _nakamaChip() {
-    const color = Color(0xFF326DD2);
+    final color = AppColors.accent;
     return InkWell(
       onTap: widget.onNakamaTap,
       borderRadius: BorderRadius.circular(20),
