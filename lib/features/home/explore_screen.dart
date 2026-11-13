@@ -4,6 +4,7 @@ import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
 import '../../core/models/home_section.dart';
 import '../../core/models/media_item.dart';
+import '../../core/models/provider_info.dart' show ProviderType;
 import '../../core/playback/watch_history.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
