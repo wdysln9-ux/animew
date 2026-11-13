@@ -1,10 +1,13 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
 import '../../core/models/home_section.dart';
 import '../../core/models/media_item.dart';
 import '../../core/models/provider_info.dart' show ProviderType;
+import '../../core/mode/content_mode_cubit.dart';
+import '../../core/zmode/genre_catalog.dart';
+import '../../core/zmode/zmode_module.dart' show browseKindFor;
+import '../../core/zmode/zmode_prefs.dart';
 import '../../core/playback/watch_history.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
@@ -27,20 +30,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<String> _genres = const [];
   List<HistoryEntry> _history = const [];
   List<MediaItem> _becauseCarousel = const [];
-  List<MediaItem> _becauseList = const [];
   Map<int, int> _becauseRatings = const {};
   bool _becauseLoading = false;
+  int _becauseGeneration = 0;
   String _selected = 'Untukmu';
   int _heroIndex = 0;
   Map<String, int> _viewerGenreCounts = const {};
   bool _viewerGenreStatsLoaded = false;
   final PageController _heroController = PageController(viewportFraction: .96);
-  final PageController _recommendationController = PageController(viewportFraction: .34);
 
   @override
   void initState() { super.initState(); _load(); }
   @override
-  void dispose() { _heroController.dispose(); _recommendationController.dispose(); super.dispose(); }
+  void dispose() { _heroController.dispose(); super.dispose(); }
 
   Future<void> _load({bool refresh = false}) async {
     try {
@@ -73,17 +75,28 @@ class _ExploreScreenState extends State<ExploreScreen> {
         _genres = genres.where((g) => g.toLowerCase() != 'hentai').toList()..sort();
         _history = history;
       });
-      _loadViewerGenreStats();
+      if (!_viewerGenreStatsLoaded) _loadViewerGenreStats();
       _loadBecauseRecommendations(force: refresh);
     } catch (_) {}
   }
 
   Future<void> _loadBecauseRecommendations({bool force = false}) async {
-    if (_becauseLoading || _history.isEmpty) return;
+    if (_history.isEmpty) {
+      ++_becauseGeneration;
+      if (mounted) {
+        setState(() {
+          _becauseCarousel = const [];
+          _becauseRatings = const {};
+          _becauseLoading = false;
+        });
+      }
+      return;
+    }
+    if (_becauseLoading && !force) return;
+    final generation = ++_becauseGeneration;
     if (force && mounted) {
       setState(() {
         _becauseCarousel = const [];
-        _becauseList = const [];
         _becauseRatings = const {};
       });
     }
@@ -134,15 +147,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
         hasNextPage = result.hasNextPage;
         page++;
       }
-      if (mounted) setState(() {
-        _becauseCarousel = items.take(5).toList();
-        _becauseList = items.skip(5).take(10).toList();
-        _becauseRatings = ratings;
-      });
+      if (mounted && generation == _becauseGeneration) {
+        setState(() {
+          _becauseCarousel = items;
+          _becauseRatings = ratings;
+        });
+      }
     } catch (_) {
-      // Leave this section empty if AniList cannot provide title-specific recommendations.
+      // Keep this row empty if AniList cannot provide title-specific recommendations.
     } finally {
-      _becauseLoading = false;
+      if (generation == _becauseGeneration) _becauseLoading = false;
     }
   }
 
@@ -214,7 +228,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
   void _open(MediaItem m) => Navigator.of(context).push(DetailScreen.route(m));
   TextStyle _txt(double size, {FontWeight weight = FontWeight.w500, Color? color, double height = 1.1}) =>
-      AppText.body.copyWith(fontSize: size, height: height, fontWeight: weight, color: color ?? AppColors.textPrimary);
+      AppText.body.copyWith(fontSize: size + 1.5, height: height, fontWeight: weight, color: color ?? AppColors.textPrimary);
 
   Widget _heading(String title, {String? action, String? subtitle, VoidCallback? onAction, bool marked = false}) =>
     Padding(padding: const EdgeInsets.fromLTRB(16, 23, 16, 11), child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -262,9 +276,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ]));
   }
 
-  Widget _hero({List<MediaItem>? sourceItems}) {
-    if (sourceItems != null) return _recommendationCarousel(sourceItems);
-    
+  Widget _hero() {
     final items = _heroes;
     if (items.isEmpty) return const SizedBox(height: 8);
     return Column(children: [
@@ -310,48 +322,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     ]);
   }
 
-  Widget _recommendationCarousel(List<MediaItem> items) {
-    if (items.isEmpty) return const SizedBox(height: 8);
-    final width = posterRowWidth(context);
-    final height = posterRowHeight(context);
-    return SizedBox(
-      height: height,
-      child: PageView.builder(
-        controller: _recommendationController,
-        itemCount: items.length,
-        itemBuilder: (_, index) {
-          final item = items[index];
-          return SizedBox(
-            width: width,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: PosterCard(
-                title: item.title,
-                imageUrl: item.cover,
-                imageColor: item.coverColor,
-                wideImageUrl: item.banner,
-                headers: item.coverHeaders,
-                logoItem: item,
-                cellWidth: width,
-                onTap: () => _open(item),
-                scoreBadge: item.score,
-                recommendationRatingBadge: _becauseRatings[item.anilistId],
-                viewsBadge: item.popularity,
-                statusBadge: item.status?.name,
-                qualityBadge: item.quality,
-                dubBadge: item.dubBadge,
-                genres: item.genres,
-                isAdult: item.isAdult,
-                metaFormat: item.format,
-                metaEpisodes: item.totalEpisodes,
-                metaYear: item.year,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
 
   Widget _posterRail(List<MediaItem> items, {bool hidden = false, bool recommendationMode = false}) {
     if (items.isEmpty) return const SizedBox(height: 184);
@@ -451,25 +421,31 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _genreGrid() {
-    const genres = ['Comedy', 'Kids', 'Fantasy', 'Action', 'Adventure', 'Sci-Fi', 'Drama', 'Shounen'];
-    const colors = [Color(0xFF9B742C), Color(0xFF7140A5), Color(0xFF7041A1), Color(0xFF98413F),
-      Color(0xFF267D70), Color(0xFF276C78), Color(0xFF365F91), Color(0xFF8B3E57)];
-    return Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: GridView.builder(
-      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: math.min(8, genres.length),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 9, crossAxisSpacing: 9, childAspectRatio: 2.35),
-      itemBuilder: (_, i) {
-        final g = genres[i];
-        final c = colors[i % colors.length];
-        return Material(color: c.withValues(alpha: .34), borderRadius: BorderRadius.circular(11),
-          child: InkWell(borderRadius: BorderRadius.circular(11), onTap: () => _search(filters: MetaFilters(genres: [g])),
-            child: Container(padding: const EdgeInsets.fromLTRB(13, 10, 11, 9),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(11), border: Border.all(color: c.withValues(alpha: .65), width: .8),
-                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
-                  colors: [c.withValues(alpha: .48), c.withValues(alpha: .20)])),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text(g, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(12, weight: FontWeight.w800)),
-              ]))));
-      }));
+    final kind = browseKindFor(
+      sl<ContentModeCubit>().state,
+      ZModePrefs.streamKind,
+    );
+    final genres = GenreCatalog.genresFor(kind);
+    final art = genreArtFrom(_rows);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: genres.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 2.9,
+        ),
+        itemBuilder: (_, index) => GenreTile(
+          genre: genres[index],
+          kind: kind,
+          art: art[genres[index]],
+        ),
+      ),
+    );
   }
 
   Widget _years() {
@@ -541,8 +517,31 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   Widget build(BuildContext context) {
     final watched = _history.isEmpty ? 'anime favoritmu' : _history.first.showTitle;
-    final hidden = _all.where((m) => m.popularity != null && m.popularity! < 50000).toList()
-      ..sort((a, b) => (a.popularity ?? 0).compareTo(b.popularity ?? 0));
+    final recommendationIds = _row('Rekomendasi Anime').map((m) => m.id).toSet();
+    final watchedIds = _history.map((h) => h.malId).whereType<int>().toSet();
+    final hiddenById = <String, MediaItem>{};
+    for (final section in _rows) {
+      if (section.title.toLowerCase() == 'rekomendasi anime') continue;
+      for (final item in section.items) {
+        if (item.isAdult ||
+            item.score == null ||
+            item.score! < 70 ||
+            item.popularity == null ||
+            item.popularity! >= 50000 ||
+            recommendationIds.contains(item.id) ||
+            (item.malId != null && watchedIds.contains(item.malId))) {
+          continue;
+        }
+        hiddenById.putIfAbsent(item.id, () => item);
+      }
+    }
+    final hidden = hiddenById.values.toList()
+      ..sort((a, b) {
+        final score = (b.score ?? 0).compareTo(a.score ?? 0);
+        return score != 0
+            ? score
+            : (a.popularity ?? 0).compareTo(b.popularity ?? 0);
+      });
     return Scaffold(backgroundColor: AppColors.bg, body: RefreshIndicator(
       color: AppColors.accent, backgroundColor: AppColors.surface, onRefresh: () => _load(refresh: true),
       child: CustomScrollView(physics: const AlwaysScrollableScrollPhysics(), slivers: [
@@ -550,8 +549,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),
           _searchBar(), _sorts(), const SizedBox(height: 10), _hero(),
           _heading('Selera Kamu', marked: true), _taste(),
-          _heading('Karena kamu menonton $watched', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen()))), _hero(sourceItems: _becauseCarousel), _posterRail(_becauseList, recommendationMode: true),
-          _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'), _posterRail(hidden.isEmpty ? _recommendations : hidden, hidden: true),
+          _heading('Karena kamu menonton $watched'), _posterRail(_becauseCarousel, recommendationMode: true),
+          _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'),
+          if (hidden.isNotEmpty) _posterRail(hidden)
+          else Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('Belum ada anime tersembunyi yang cocok.', style: _txt(11, color: AppColors.textTertiary))),
           _heading('Lagi pengen apa?', marked: true), _quickPicks(),
           _heading('Telusuri Musim'), _seasons(),
           _heading('Genre', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen()))), _genreGrid(),

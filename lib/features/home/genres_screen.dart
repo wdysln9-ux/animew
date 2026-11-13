@@ -208,15 +208,15 @@ class _GenresScreenState extends State<GenresScreen> {
         ),
         itemBuilder: (_, i) {
           final g = genres[i];
-          return _GenreTile(genre: g, kind: kind, art: art[g]);
+          return GenreTile(genre: g, kind: kind, art: art[g]);
         },
       ),
     );
   }
 }
 
-class _GenreTile extends StatelessWidget {
-  const _GenreTile({required this.genre, required this.kind, this.art});
+class GenreTile extends StatelessWidget {
+  const GenreTile({super.key, required this.genre, required this.kind, this.art});
 
   final String genre;
   final ZKind kind;

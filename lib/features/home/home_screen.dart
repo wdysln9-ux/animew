@@ -2126,6 +2126,7 @@ class _HomeViewState extends State<_HomeView>
                           ContentMode.anime => false,
                         };
                   return CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
                       // ── Hero + floating header (first sliver) ─────────────────
                       SliverToBoxAdapter(

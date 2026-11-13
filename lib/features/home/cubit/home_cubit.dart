@@ -448,6 +448,10 @@ class HomeCubit extends Cubit<HomeState> {
   Future<void> refreshHome() async {
     if (_repo is MetadataRepository) {
       _repo.clearHomeCache();
+      _streamKindCache.clear();
+      // Remove the persisted snapshot too, so a later remount cannot paint
+      // the pre-refresh catalogue as if it were the latest result.
+      await HomeCache.clearSource(ZmodeIds.sourceId);
     }
     await load();
     if (isClosed) return;
