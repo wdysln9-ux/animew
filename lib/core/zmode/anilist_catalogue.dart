@@ -30,6 +30,7 @@ class AniListCatalogue implements AnimeCatalogue {
   final Gql _gql;
   final bool Function() _adultAllowed;
   int? _maxAnimeId;
+  List<MediaItem> _lastRecommendations = const [];
 
   static const String _recommendationsRowId = 'random_anime_recommendations';
 
@@ -296,7 +297,9 @@ class AniListCatalogue implements AnimeCatalogue {
         }
       }
       final items = found.values.toList()..shuffle(random);
-      return items.take(30).toList();
+      final selected = items.take(30).toList();
+      _lastRecommendations = List<MediaItem>.unmodifiable(selected);
+      return selected;
     } catch (_) {
       // Recommendations are additive: an AniList hiccup must not hide the
       // regular home rows.
@@ -307,6 +310,9 @@ class AniListCatalogue implements AnimeCatalogue {
   @override
   Future<List<MediaItem>> browseRow(ZKind kind, String rowId, int page) async {
     if (kind == ZKind.anime && rowId == _recommendationsRowId) {
+      // Page 1 is the exact batch already rendered on Home. This also guards
+      // callers that request page 1 instead of passing the initial items.
+      if (page <= 1) return List<MediaItem>.from(_lastRecommendations);
       return _randomAnimePage();
     }
     final data = await _gql(
