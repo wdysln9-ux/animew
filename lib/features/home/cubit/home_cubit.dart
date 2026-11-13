@@ -442,6 +442,20 @@ class HomeCubit extends Cubit<HomeState> {
     relayout();
   }
 
+  /// Pull-to-refresh for the complete metadata Home catalogue. The repository
+  /// normally serves cached rows, so invalidate that snapshot before loading;
+  /// then refresh the randomized recommendations row as a separate request.
+  Future<void> refreshHome() async {
+    if (_repo is MetadataRepository) {
+      _repo.clearHomeCache();
+    }
+    await load();
+    if (isClosed) return;
+    if (_repo is MetadataRepository && _browseKind == ZKind.anime) {
+      await refreshRecommendations();
+    }
+  }
+
   /// Re-merge the rows over the sections already held, without refetching.
   ///
   /// This is the whole answer to an arrangement change: the provider data is

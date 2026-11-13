@@ -308,6 +308,28 @@ class PlaybackPrefs {
   Future<void> setVideoStretchX(double value) =>
       _box.put('videoStretchX', value.clamp(0.45, 2.5).toDouble());
 
+  /// Two-finger stretch preference scoped to one anime. A missing key means
+  /// normal aspect ratio, so another title never inherits the previous one.
+  double videoStretchXFor(String animeKey) {
+    final stored = _box.get('videoStretchByAnime');
+    final value = stored is Map ? stored[animeKey] : null;
+    return (value is num ? value.toDouble() : 1.0)
+        .clamp(0.45, 2.5)
+        .toDouble();
+  }
+
+  Future<void> setVideoStretchXFor(String animeKey, double value) async {
+    final stored = _box.get('videoStretchByAnime');
+    final values = <String, double>{
+      if (stored is Map)
+        for (final entry in stored.entries)
+          if (entry.key is String && entry.value is num)
+            entry.key as String: (entry.value as num).toDouble(),
+    };
+    values[animeKey] = value.clamp(0.45, 2.5).toDouble();
+    await _box.put('videoStretchByAnime', values);
+  }
+
   /// How many seconds a single seek (forward/back) jumps.
   int get seekSeconds =>
       (_box.get('seekSeconds', defaultValue: 10) as num).toInt();

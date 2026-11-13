@@ -41,9 +41,27 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void dispose() { _heroController.dispose(); _recommendationController.dispose(); super.dispose(); }
 
-  Future<void> _load() async {
+  Future<void> _load({bool refresh = false}) async {
     try {
-      final rows = await sl<MetadataRepository>().home();
+      final repository = sl<MetadataRepository>();
+      if (refresh) repository.clearHomeCache();
+      var rows = await repository.home();
+      if (refresh) {
+        final freshRecommendations = await repository.refreshRecommendations();
+        if (freshRecommendations.isNotEmpty) {
+          rows = [
+            for (final section in rows)
+              if (section.title == 'Rekomendasi Anime')
+                HomeSection(
+                  title: section.title,
+                  items: freshRecommendations,
+                  more: section.more,
+                )
+              else
+                section,
+          ];
+        }
+      }
       final all = rows.expand((r) => r.items).where((m) => !m.isAdult);
       final genres = <String>{for (final m in all) ...m.genres};
       final history = sl.isRegistered<WatchHistory>()
@@ -55,11 +73,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
         _history = history;
       });
       _loadViewerGenreStats();
-      _loadBecauseRecommendations();
+      _loadBecauseRecommendations(force: refresh);
     } catch (_) {}
   }
 
-  Future<void> _loadBecauseRecommendations() async {
+  Future<void> _loadBecauseRecommendations({bool force = false}) async {
     if (_becauseLoading || _history.isEmpty) return;
     _becauseLoading = true;
     try {
@@ -518,7 +536,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final hidden = _all.where((m) => m.popularity != null && m.popularity! < 50000).toList()
       ..sort((a, b) => (a.popularity ?? 0).compareTo(b.popularity ?? 0));
     return Scaffold(backgroundColor: AppColors.bg, body: RefreshIndicator(
-      color: AppColors.accent, backgroundColor: AppColors.surface, onRefresh: _load,
+      color: AppColors.accent, backgroundColor: AppColors.surface, onRefresh: () => _load(refresh: true),
       child: CustomScrollView(physics: const AlwaysScrollableScrollPhysics(), slivers: [
         SliverToBoxAdapter(child: SafeArea(bottom: false, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),

@@ -360,12 +360,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
   // ── Two-finger horizontal stretch with aspect-ratio guides ──────────────
   // Raw pointer tracking keeps the existing one-finger gestures independent.
   double _stretchX = 1.0;
-  int _stretchIndex = -1;
   bool _pinching = false;
   final Map<int, Offset> _pointers = {};
   double _stretchBaseSpan = 0;
   double _stretchBaseX = 1.0;
   double? _stretchSnapRatio;
+
+  String get _stretchPreferenceKey {
+    final malId = widget.malId;
+    if (malId != null) return 'mal:$malId';
+    final url = widget.showUrl?.trim();
+    if (url != null && url.isNotEmpty) return 'url:$url';
+    final title = widget.showTitle?.trim().toLowerCase();
+    return 'title:${widget.sourceId}:${title?.isNotEmpty == true ? title : 'unknown'}';
+  }
 
   static const List<double> _stretchGuideRatios = [
     16 / 9, 4 / 3, 3 / 2, 1.0,
@@ -500,7 +508,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
-    _stretchX = sl<PlaybackPrefs>().videoStretchX;
+    _stretchX = sl<PlaybackPrefs>().videoStretchXFor(_stretchPreferenceKey);
     _showEpisodeDetails = widget.episodeDetailMode;
     _portraitMode = widget.episodeDetailMode;
     _loadCinematicLightingPrefs();
@@ -1942,7 +1950,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _stretchSnapRatio = null;
     });
     // Save only when the two-finger gesture ends, not on every pointer move.
-    unawaited(sl<PlaybackPrefs>().setVideoStretchX(_stretchX));
+    unawaited(sl<PlaybackPrefs>().setVideoStretchXFor(_stretchPreferenceKey, _stretchX));
   }
 
   // ── Lock / zoom / up-next ─────────────────────────────────────────────────
@@ -3966,12 +3974,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ),
               );
             }
-            // Reset horizontal stretch when the episode changes.
-            if (_stretchIndex != state.currentIndex) {
-              _stretchIndex = state.currentIndex;
-              _stretchX = 1.0;
-              _stretchSnapRatio = null;
-            }
+            // Stretch is remembered per anime, not per episode. Moving to the
+            // next episode of this same title keeps the chosen ratio.
             // Passive Listener tracks raw pointers for pinch-to-zoom so it never
             // competes with the 1-finger gesture detector inside the Stack.
             final playerStack = Stack(

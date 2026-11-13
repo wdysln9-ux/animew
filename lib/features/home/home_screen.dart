@@ -2074,7 +2074,7 @@ class _HomeViewState extends State<_HomeView>
                 // random recommendations row. Other Home data stays intact.
                 if (ZModePrefs.enabled &&
                     sl<ContentModeCubit>().state == ContentMode.anime) {
-                  return context.read<HomeCubit>().refreshRecommendations();
+                  return context.read<HomeCubit>().refreshHome();
                 }
                 // Keep the existing refresh behaviour for non-AniList modes.
                 if (sl.isRegistered<AuthCubit>()) {
