@@ -450,7 +450,7 @@ class _PosterCardState extends State<PosterCard> {
                               if (widget.latestEpisodeBadge != null)
                                 _EpisodeTag(widget.latestEpisodeBadge!),
                               if (widget.latestEpisodeBadge != null && showViews)
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 3),
                               if (widget.seriesBadge != null) ...[
                                 if (widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
@@ -601,9 +601,10 @@ class _PosterCardState extends State<PosterCard> {
                                 meta,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: AppText.caption.copyWith(
-                                  fontSize: 10.5,
+                                style: AppText.body.copyWith(
+                                  fontSize: 13,
                                   height: 1.1,
+                                  fontWeight: FontWeight.w600,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
