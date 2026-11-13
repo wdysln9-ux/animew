@@ -1429,6 +1429,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                         imageUrl: season.cover,
                         cellWidth: width,
                         seriesBadge: 'Seri ${season.number}',
+                        isCurrentSeason: season.isCurrent,
                         scoreBadge: season.score,
                         statusBadge: season.status,
                         viewsBadge: season.popularity,

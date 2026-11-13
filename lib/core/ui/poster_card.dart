@@ -45,6 +45,7 @@ class PosterCard extends StatefulWidget {
     this.viewsBadge,
     this.recommendationRatingBadge,
     this.seriesBadge,
+    this.isCurrentSeason = false,
     this.latestEpisodeBadge,
     this.rankBadge,
     this.metaLine,
@@ -91,6 +92,8 @@ class PosterCard extends StatefulWidget {
   final int? recommendationRatingBadge;
   /// Season number label, shown beside the views count on franchise cards.
   final String? seriesBadge;
+  /// Highlights the currently open season in a franchise rail.
+  final bool isCurrentSeason;
   /// Latest aired episode, displayed as its own badge above the views count.
   final int? latestEpisodeBadge;
   final int? rankBadge;
@@ -451,7 +454,10 @@ class _PosterCardState extends State<PosterCard> {
                               if (widget.seriesBadge != null) ...[
                                 if (widget.latestEpisodeBadge != null)
                                   const SizedBox(width: 7),
-                                _PosterInfoTag(widget.seriesBadge!),
+                                _PosterInfoTag(
+                                  widget.seriesBadge!,
+                                  highlighted: widget.isCurrentSeason,
+                                ),
                               ],
                               if (showRecommendationRating) ...[
                                 if (widget.seriesBadge != null || widget.latestEpisodeBadge != null)
@@ -493,6 +499,20 @@ class _PosterCardState extends State<PosterCard> {
                           top: 6,
                           left: 6,
                           child: _PosterTag(widget.dubBadge!),
+                        ),
+                      if (widget.isCurrentSeason)
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: AppColors.accent,
+                                  width: 2.5,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
                         ),
                       if (titleInside || hasBottomBadges || hasRightBadges)
                         Positioned(
@@ -851,16 +871,19 @@ class _RecommendationRatingTag extends StatelessWidget {
 }
 
 class _PosterInfoTag extends StatelessWidget {
-  const _PosterInfoTag(this.label);
+  const _PosterInfoTag(this.label, {this.highlighted = false});
 
   final String label;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 3, 6, 3),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.62),
+        color: highlighted
+            ? AppColors.accent
+            : Colors.black.withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
