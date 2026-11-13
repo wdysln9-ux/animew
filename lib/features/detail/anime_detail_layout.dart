@@ -967,14 +967,15 @@ class _DetailCreditsState extends State<_DetailCredits> {
   }
 
   Widget _nakamaChip() {
-    final color = AppColors.accent;
+    const color = Color(0xFF326DD2);
     return InkWell(
       onTap: widget.onNakamaTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
         decoration: BoxDecoration(
-          border: Border.all(color: color.withValues(alpha: 0.8)),
+          color: color.withValues(alpha: 0.20),
+          border: Border.all(color: color, width: 1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
