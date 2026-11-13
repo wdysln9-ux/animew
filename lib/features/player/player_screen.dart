@@ -575,40 +575,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// player first. Once the episode details are visible, it navigates back
   /// normally. Standalone player sessions keep their usual back behaviour.
   void _handlePlayerBack() {
-    // The player route deliberately remains mounted above the app while
-    // minimized. Delegate Back to the floating session so it can dismiss the
-    // page that launched playback without disposing the native player.
-    final miniSession = MiniPlayerState.active.value;
-    if (_minimized || miniSession != null) {
-      miniSession?.onBack?.call();
-      return;
-    }
-    // Inline playback belongs to the anime detail route. Back first leaves
-    // fullscreen, then closes this player route so the exact anime page,
-    // selected source, and scroll position remain underneath.
-    if (widget.episodeDetailMode) {
-      if (!_showEpisodeDetails) {
-        _toggleOrientation();
-        return;
-      }
-      // Once back in portrait, minimize to the floating mini-player
-      // instead of disposing this route. The player/cubit must stay mounted
-      // so playback continues while the user returns to browsing.
-      if (_ready &&
-          !_inPip &&
-          sl<CastController>().state != CastState.connected) {
-        _minimizeToMiniPlayer();
-      } else {
-        Navigator.of(context).maybePop();
-      }
-      return;
-    }
-
-    // Standalone playback keeps its existing floating mini-player behaviour.
-    if (_ready &&
-        !_inPip &&
-        sl<CastController>().state != CastState.connected) {
-      _minimizeToMiniPlayer();
+    // Mini-player is temporarily disabled. Inline playback first returns from
+    // fullscreen to the episode details; the next Back closes the player.
+    if (widget.episodeDetailMode && !_showEpisodeDetails) {
+      _toggleOrientation();
       return;
     }
     Navigator.of(context).maybePop();
@@ -4861,14 +4831,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           'deadEnd=$_handlingDeadEnd',
         );
         if (didPop) return;
-        // Once playback is ready, system Back always minimizes to the floating
-        // player instead of revealing a close-confirmation dialog.
-        if (_ready &&
-            !_inPip &&
-            sl<CastController>().state != CastState.connected) {
-          _handlePlayerBack();
-          return;
-        }
+        // Mini-player is disabled: Back exits the player normally.
         if (widget.episodeDetailMode && !_showEpisodeDetails) {
           _handlePlayerBack();
           return;
