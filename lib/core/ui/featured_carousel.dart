@@ -140,7 +140,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     _index = _count > 1 ? _startIndex : 0;
     _pc = PageController(
       initialPage: _index,
-      viewportFraction: widget.style == HeroTransition.posterStack ? 0.72 : 1.0,
+      viewportFraction: widget.style == HeroTransition.posterStack ? 0.60 : 1.0,
     );
     _startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
