@@ -36,6 +36,7 @@ import '../home/cubit/home_cubit.dart';
 import '../home/home_screen.dart';
 import '../home/my_list_screen.dart';
 import '../home/search_screen.dart';
+import '../home/explore_screen.dart';
 import '../settings/settings_screen.dart';
 import 'dock_icons.dart';
 import 'mode_bar.dart';
@@ -304,6 +305,7 @@ class _RootShellState extends State<RootShell>
             DockTab.downloads => const DownloadsScreen(showBack: false),
             DockTab.history => const HistoryScreen(showBack: false),
             DockTab.sources => const BrowseSourcesScreen(),
+            DockTab.explore => const ExploreScreen(),
           },
         ),
     ];
@@ -733,6 +735,7 @@ class _FloatingDock extends StatelessWidget {
   DockTab.downloads => (Icons.download_outlined, Icons.download_rounded),
   DockTab.history => (Icons.history_outlined, Icons.history_rounded),
   DockTab.sources => (Icons.extension_outlined, Icons.extension_rounded),
+  DockTab.explore => (Icons.explore_outlined, Icons.explore_rounded),
   _ => null,
 };
 

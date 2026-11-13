@@ -15,6 +15,7 @@ enum DockTab {
   downloads('Downloads'),
   history('History'),
   sources('Sources'),
+  explore('Jelajahi'),
   profile('Profile');
 
   const DockTab(this.label);

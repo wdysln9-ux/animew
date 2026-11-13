@@ -289,6 +289,7 @@ class _NavTabsScreenState extends State<NavTabsScreen> {
     DockTab.downloads =>
       active ? Icons.download_rounded : Icons.download_outlined,
     DockTab.history => active ? Icons.history_rounded : Icons.history_outlined,
+    DockTab.explore => active ? Icons.explore_rounded : Icons.explore_outlined,
     _ => active ? Icons.person_rounded : Icons.person_outline_rounded,
   };
 
