@@ -10,7 +10,6 @@ import 'route_observer.dart';
 import 'featured_hero.dart';
 import 'mobile_hero_art.dart';
 import 'poster_palette.dart';
-import 'featured_hero.dart' show heroTopReserve;
 import 'native_cover_provider.dart';
 
 /// Hero height as a share of the screen, so the banner keeps the same
