@@ -213,21 +213,6 @@ class DetailCubit extends Cubit<DetailState> {
   bool _characterRequestAttempted = false;
   bool _recommendationRequestAttempted = false;
 
-  bool _characterCountRequestStarted = false;
-
-  Future<void> _loadExactCharacterCount(int mediaId) async {
-    if (_characterCountRequestStarted) return;
-    _characterCountRequestStarted = true;
-    try {
-      final count = await sl<AniListService>().api.mediaCharacterExactCount(mediaId);
-      if (!isClosed && state.detail?.anilistId == mediaId) {
-        emit(state.copyWith(characterTotal: count));
-      }
-    } catch (error) {
-      _log('exact character count failed: $error', level: 'W');
-    }
-  }
-
   Future<void> loadMoreCharacters({bool retry = false}) async {
     final detail = state.detail;
     final mediaId = detail?.anilistId;
@@ -236,9 +221,8 @@ class DetailCubit extends Cubit<DetailState> {
         (_characterPage > 0 && !state.charactersHasNextPage) ||
         (_characterPage == 0 && _characterRequestAttempted && !retry)) return;
     _characterRequestAttempted = true;
-    // Count-only pagination runs independently; visible character cards remain
-    // lazy-loaded a page at a time.
-    unawaited(_loadExactCharacterCount(mediaId));
+    // Character cards are fetched only in visible 25-item pages. The total
+    // count comes from pageInfo.total in that same request.
     final page = _characterPage + 1;
     emit(state.copyWith(charactersLoading: true));
     try {
@@ -253,6 +237,7 @@ class DetailCubit extends Cubit<DetailState> {
       ];
       emit(state.copyWith(
         cast: merged,
+        characterTotal: result.totalCount,
         charactersHasNextPage: result.hasNextPage,
         charactersLoading: false,
       ));
