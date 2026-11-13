@@ -515,7 +515,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),
           _searchBar(), _sorts(), const SizedBox(height: 10), _hero(),
           _heading('Selera Kamu', marked: true), _taste(),
-          _heading('Karena kamu menonton $watched'), _hero(sourceItems: _becauseCarousel), _posterRail(_becauseList, recommendationMode: true),
+          _heading('Karena kamu menonton $watched', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen()))), _hero(sourceItems: _becauseCarousel), _posterRail(_becauseList, recommendationMode: true),
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'), _posterRail(hidden.isEmpty ? _recommendations : hidden, hidden: true),
           _heading('Lagi pengen apa?', marked: true), _quickPicks(),
           _heading('Telusuri Musim'), _seasons(),
