@@ -64,7 +64,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         fields.add('g$i: Page { media(type: ANIME, genre: "${genres[i]}", isAdult: false, page: 1, perPage: 1) { pageInfo { total } } }');
       }
       for (var i = 0; i < studios.length; i++) {
-        fields.add('s$i: Studio(search: "${studios[i]}") { media(page: 1, perPage: 1, type: ANIME) { pageInfo { total } } }');
+        fields.add('s$i: Studio(search: "${studios[i]}") { media(page: 1, perPage: 1) { pageInfo { total } } }');
       }
       final query = 'query { ${fields.join(' ')} }';
       final response = await sl<Dio>().post<dynamic>(
@@ -361,23 +361,66 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget _studios() {
     const names = ['Toei Animation', 'Sunrise', 'J.C.Staff', 'TMS Entertainment', 'Madhouse', 'Shanghai Animation Film Studio', 'Production I.G'];
     const initials = ['TO', 'SU', 'J', 'TM', 'MA', 'SH', 'PR'];
-    return Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Column(children: [
-      for (var i = 0; i < names.length; i++)
-        Padding(padding: const EdgeInsets.only(bottom: 6), child: Material(
-          color: AppColors.surface, borderRadius: BorderRadius.circular(10),
-          child: InkWell(borderRadius: BorderRadius.circular(10), onTap: () => _search(query: names[i]),
-            child: SizedBox(height: 48, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(children: [
-                SizedBox(width: 34, child: Center(child: Text(initials[i], style: _txt(8, weight: FontWeight.w900, color: AppColors.textSecondary)))),
-                const SizedBox(width: 9),
-                Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(names[i], maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(9.5, weight: FontWeight.w800)),
-                  Text(_studioCounts[names[i]] == null ? 'Jumlah tidak tersedia' : '${_studioCounts[names[i]]} anime', style: _txt(7, color: AppColors.textTertiary)),
-                ])),
-                Icon(Icons.chevron_right_rounded, size: 17, color: AppColors.textTertiary),
-              ]))),
-        )),
-    ]));
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Column(
+        children: [
+          for (var i = 0; i < names.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Material(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(10),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => _search(query: names[i]),
+                  child: SizedBox(
+                    height: 48,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 34,
+                            child: Center(
+                              child: Text(
+                                initials[i],
+                                style: _txt(8, weight: FontWeight.w900, color: AppColors.textSecondary),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 9),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  names[i],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: _txt(9.5, weight: FontWeight.w800),
+                                ),
+                                Text(
+                                  _studioCounts[names[i]] == null
+                                      ? 'Jumlah tidak tersedia'
+                                      : '${_studioCounts[names[i]]} anime',
+                                  style: _txt(7, color: AppColors.textTertiary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.chevron_right_rounded, size: 17, color: AppColors.textTertiary),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
