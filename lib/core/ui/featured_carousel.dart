@@ -10,6 +10,8 @@ import 'route_observer.dart';
 import 'featured_hero.dart';
 import 'mobile_hero_art.dart';
 import 'poster_palette.dart';
+import 'featured_hero.dart' show heroTopReserve;
+import 'native_cover_provider.dart';
 
 /// Hero height as a share of the screen, so the banner keeps the same
 /// proportions everywhere instead of the same pixel count.
@@ -45,6 +47,9 @@ enum HeroTransition {
 
   /// Horizontal slide with a parallax blurred background + depth scale.
   parallax,
+
+  /// Centered portrait cards with neighboring cards peeking into view.
+  posterStack,
 }
 
 /// Auto-rotating, infinitely-looping hero carousel (up to 6 trending items).
@@ -134,7 +139,10 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     super.initState();
     _pages = widget.items.take(6).toList();
     _index = _count > 1 ? _startIndex : 0;
-    _pc = PageController(initialPage: _index);
+    _pc = PageController(
+      initialPage: _index,
+      viewportFraction: widget.style == HeroTransition.posterStack ? 0.50 : 1.0,
+    );
     _startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _syncActiveTint();
@@ -294,6 +302,34 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
 
   /// The pager — cinematic cross-fade (A) or parallax slide (B).
   Widget _buildPager() {
+    if (widget.style == HeroTransition.posterStack) {
+      return PageView.builder(
+        controller: _pc,
+        padEnds: true,
+        clipBehavior: Clip.none,
+        onPageChanged: (i) {
+          setState(() => _index = i);
+          _syncActiveTint();
+        },
+        itemBuilder: (context, i) => AnimatedBuilder(
+          animation: _pc,
+          builder: (context, _) {
+            var off = 0.0;
+            if (_pc.hasClients && _pc.position.haveDimensions) {
+              off = (_pc.page ?? _index.toDouble()) - i;
+            }
+            final scale = (1 - off.abs() * 0.13).clamp(0.86, 1.0);
+            return Transform.scale(
+              scale: scale,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                child: _posterStackCard(_pages[i % _count], i % _count),
+              ),
+            );
+          },
+        ),
+      );
+    }
     if (widget.style == HeroTransition.cinematic) {
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -346,6 +382,148 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     );
   }
 
+  Widget _posterStackCard(MediaItem item, int rank) {
+    final cover = mobileHeroArt(item.cover, item.banner);
+    final provider = cover == null || cover.isEmpty
+        ? null
+        : nativeCoverProvider(cover, item.coverHeaders);
+    final score = item.score;
+    final views = item.popularity;
+    final status = item.isUpcoming ? 'Segera' : 'Tayang';
+
+    return GestureDetector(
+      onTap: () => widget.onInfo(item),
+      onLongPress: () => widget.onPlay(item),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (provider != null)
+              Image(image: provider, fit: BoxFit.cover, alignment: Alignment.topCenter)
+            else
+              ColoredBox(color: AppColors.surface2),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x33000000), Colors.transparent, Color(0xF0000000)],
+                  stops: [0, 0.38, 1],
+                ),
+              ),
+            ),
+            Positioned(
+              top: 12,
+              left: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: item.isUpcoming ? const Color(0xFF438BFF) : const Color(0xFF20B96B),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Text(
+                  status,
+                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            if (score != null && score > 0)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.62),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star_rounded, size: 13, color: score >= 75 ? const Color(0xFF55D879) : const Color(0xFFFFC247)),
+                      const SizedBox(width: 2),
+                      Text((score / 10).toStringAsFixed(1), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              ),
+            Positioned(
+              top: 48,
+              left: 10,
+              child: IgnorePointer(
+                child: Text(
+                  '#${rank + 1}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 42,
+                    height: 1,
+                    fontWeight: FontWeight.w800,
+                    shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      if (item.totalEpisodes != null && item.totalEpisodes! > 0)
+                        _posterMetaChip('${item.totalEpisodes} Eps'),
+                      if (item.totalEpisodes != null && item.totalEpisodes! > 0 && views != null)
+                        const SizedBox(width: 7),
+                      if (views != null && views > 0) ...[
+                        const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Text(_compactViews(views), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    item.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.12, fontWeight: FontWeight.w700),
+                  ),
+                  if ((item.format ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    Text(item.format!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.78), fontSize: 12)),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _posterMetaChip(String label) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+    decoration: BoxDecoration(
+      color: Colors.black.withValues(alpha: 0.66),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+  );
+
+  String _compactViews(int value) {
+    if (value >= 1000000) {
+      return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1).replaceAll('.0', '')}jt';
+    }
+    if (value >= 10000) return '${(value / 1000).round()}rb';
+    if (value >= 1000) return '${(value / 1000).toStringAsFixed(1).replaceAll('.0', '')}rb';
+    return '$value';
+  }
+
   @override
   Widget build(BuildContext context) {
     final heroHeight = heroHeightFor(context);
@@ -365,12 +543,23 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
         height: heroHeight,
         child: Stack(
           children: [
-            // ── Pager (cinematic cross-fade or parallax slide) ─────────────
-            _buildPager(),
+            // ── Main poster carousel ───────────────────────────────────────
+            if (widget.style == HeroTransition.posterStack)
+              Positioned.fill(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: heroTopReserve(MediaQuery.paddingOf(context).top),
+                    bottom: 42,
+                  ),
+                  child: _buildPager(),
+                ),
+              )
+            else
+              _buildPager(),
 
             // ── Page dots ─────────────────────────────────────────────────
             Positioned(
-              bottom: 18,
+              bottom: 10,
               left: 0,
               right: 0,
               child: Center(
