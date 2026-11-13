@@ -30,12 +30,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> _load() async {
     try {
       final repo = sl<MetadataRepository>();
-      final data = await Future.wait([repo.home(), repo.filterGenres()]);
+      final rows = await repo.home();
+      final genreSet = <String>{for (final row in rows) for (final item in row.items) ...item.genres};
       final history = sl.isRegistered<WatchHistory>() ? sl<WatchHistory>().all().take(30).toList() : <HistoryEntry>[];
       if (!mounted) return;
       setState(() {
-        _rows = data[0] as List<HomeSection>;
-        _genres = (data[1] as List<String>).where((g) => g.toLowerCase() != 'hentai').toList();
+        _rows = rows;
+        _genres = genreSet.where((g) => g.toLowerCase() != 'hentai').toList()..sort();
         _history = history;
       });
     } catch (_) {}
