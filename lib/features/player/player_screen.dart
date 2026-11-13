@@ -728,9 +728,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
               !background.isFirst) {
             nav.removeRoute(background);
           } else {
-            // The root shell is not a page to remove. Let its normal Back
-            // behaviour switch tabs or handle the double-Back exit gesture.
-            MiniPlayerState.onRootBack?.call();
+            // The root shell's PopScope receives this same system Back event.
+            // Calling onRootBack here as well dispatches the root handler twice:
+            // the first call shows the exit toast and the second can immediately
+            // trigger the double-Back action. Let the shell handle it exactly once.
           }
         },
       ),
