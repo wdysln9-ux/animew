@@ -322,7 +322,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
             if (_pc.hasClients && _pc.position.haveDimensions) {
               off = (_pc.page ?? _index.toDouble()) - i;
             }
-            final scale = (1 - off.abs() * 0.13).clamp(0.86, 1.0);
+            final scale = (1 - off.abs() * 0.16).clamp(0.82, 1.0);
             return Transform.scale(
               scale: scale,
               child: Padding(
@@ -392,6 +392,9 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
         ? null
         : nativeCoverProvider(cover, item.coverHeaders);
     final score = item.score;
+    final scoreColor = score != null && score >= 75
+        ? const Color(0xFF55D879)
+        : const Color(0xFFFFC247);
     final views = item.popularity;
     final status = item.isUpcoming ? 'Segera' : 'Tayang';
 
@@ -455,9 +458,9 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.star_rounded, size: 13, color: score >= 75 ? const Color(0xFF55D879) : const Color(0xFFFFC247)),
+                      Icon(Icons.star_rounded, size: 13, color: scoreColor),
                       const SizedBox(width: 2),
-                      Text((score / 10).toStringAsFixed(1), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                      Text((score / 10).toStringAsFixed(1), style: TextStyle(color: scoreColor, fontSize: 11, fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
@@ -486,19 +489,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      if (item.totalEpisodes != null && item.totalEpisodes! > 0)
-                        _posterMetaChip('${item.totalEpisodes} Eps'),
-                      if (item.totalEpisodes != null && item.totalEpisodes! > 0 && views != null)
-                        const SizedBox(width: 7),
-                      if (views != null && views > 0) ...[
-                        const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
-                        const SizedBox(width: 4),
-                        Text(_compactViews(views), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-                      ],
-                    ],
-                  ),
+                  _posterInfoRow(item, views),
                   const SizedBox(height: 8),
                   Text(
                     item.title,
@@ -520,6 +511,31 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     );
   }
 
+  Widget _posterInfoRow(MediaItem item, int? views) {
+    final knownEpisodes = item.totalEpisodes;
+    final future = knownEpisodes == null || knownEpisodes <= 0
+        ? widget.meta?.call(item)
+        : null;
+    return FutureBuilder<HeroMeta?>(
+      future: future,
+      builder: (context, snapshot) {
+        final episodes = knownEpisodes != null && knownEpisodes > 0
+            ? knownEpisodes
+            : (snapshot.data?.episodeCount ?? 0);
+        return Row(
+          children: [
+            if (episodes > 0) _posterMetaChip('$episodes Eps'),
+            if (episodes > 0 && views != null && views > 0) const SizedBox(width: 7),
+            if (views != null && views > 0) ...[
+              const Icon(Icons.visibility_rounded, size: 14, color: Colors.white),
+              const SizedBox(width: 4),
+              Text(_compactViews(views), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+            ],
+          ],
+        );
+      },
+    );
+  }
   Widget _coverPlaceholder(String? rawColor) {
     final value = rawColor?.trim().replaceFirst('#', '');
     final parsed = value == null ? null : int.tryParse(value, radix: 16);
