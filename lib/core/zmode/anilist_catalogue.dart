@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:dio/dio.dart';
 
 import '../models/episode.dart';
@@ -27,6 +29,9 @@ class AniListCatalogue implements AnimeCatalogue {
 
   final Gql _gql;
   final bool Function() _adultAllowed;
+  int? _maxAnimeId;
+
+  static const String _recommendationsRowId = 'random_anime_recommendations';
 
   static bool _adultOff() => false;
 
@@ -194,7 +199,14 @@ class AniListCatalogue implements AnimeCatalogue {
           return 'r$i: Page(perPage:30){ media(type:${_type(kind)}$_adultExclusion${_format(kind)},$args){ $_listFields } }';
         })
         .join(' ');
+    // Fetch a genuinely random AniList ID sample alongside the normal home
+    // request. Sampling IDs across the full anime ID range means score and
+    // popularity never influence which titles can appear.
+    final recommendationsFuture = kind == ZKind.anime
+        ? _randomAnimePage()
+        : Future.value(const <MediaItem>[]);
     final data = await _gql('query{ $query }', const {});
+    final recommendations = await recommendationsFuture;
     final out = <HomeSection>[];
     for (final (i, (title, args)) in rows.indexed) {
       var items = _itemsFromPage(data?['r$i'], kind);
@@ -222,11 +234,81 @@ class AniListCatalogue implements AnimeCatalogue {
         ),
       );
     }
+    if (kind == ZKind.anime && recommendations.isNotEmpty) {
+      out.add(
+        HomeSection(
+          title: 'Rekomendasi Anime',
+          items: recommendations,
+          more: BrowseMore(
+            sourceId: ZmodeIds.sourceId,
+            kind: 'zm_anime',
+            categoryId: _recommendationsRowId,
+          ),
+        ),
+      );
+    }
     return out;
+  }
+
+  /// Samples unique AniList media IDs uniformly across the full anime ID
+  /// range, then keeps only valid anime returned by AniList. It deliberately
+  /// does not use score, popularity, trending, or a top-N result page.
+  ///
+  /// AniList IDs are sparse, so query in small id_in batches. Six aliases
+  /// keep the request to one round trip while allowing up to 300 candidates.
+  Future<List<MediaItem>> _randomAnimePage() async {
+    try {
+      var maxId = _maxAnimeId;
+      if (maxId == null) {
+        final latest = await _gql(
+          'query{ Media(type:ANIME,sort:ID_DESC){ id } }',
+          const {},
+        );
+        final raw = latest?['Media'];
+        if (raw is! Map || raw['id'] is! int) return const [];
+        maxId = raw['id'] as int;
+        if (maxId < 1) return const [];
+        _maxAnimeId = maxId;
+      }
+
+      final random = math.Random();
+      final count = math.min(300, maxId);
+      final sampledIds = <int>{};
+      while (sampledIds.length < count) {
+        sampledIds.add(random.nextInt(maxId) + 1);
+      }
+
+      final ids = sampledIds.toList()..shuffle(random);
+      final queries = <String>[];
+      for (var start = 0; start < ids.length; start += 50) {
+        final batch = ids.skip(start).take(50).join(',');
+        final alias = 'r${queries.length}';
+        queries.add(
+          '$alias: Page(perPage:50){ media(id_in:[$batch],type:ANIME$_adultExclusion){ ${_listFields} } }',
+        );
+      }
+
+      final data = await _gql('query{ ${queries.join(' ')} }', const {});
+      final found = <String, MediaItem>{};
+      for (var i = 0; i < queries.length; i++) {
+        for (final item in _itemsFromPage(data?['r$i'], ZKind.anime)) {
+          found[item.id] = item;
+        }
+      }
+      final items = found.values.toList()..shuffle(random);
+      return items.take(30).toList();
+    } catch (_) {
+      // Recommendations are additive: an AniList hiccup must not hide the
+      // regular home rows.
+      return const [];
+    }
   }
 
   @override
   Future<List<MediaItem>> browseRow(ZKind kind, String rowId, int page) async {
+    if (kind == ZKind.anime && rowId == _recommendationsRowId) {
+      return _randomAnimePage();
+    }
     final data = await _gql(
       'query{ Page(page:$page,perPage:30){ '
       'media(type:${_type(kind)}$_adultExclusion${_format(kind)},$rowId){ $_listFields } }',
