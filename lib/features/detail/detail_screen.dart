@@ -2056,6 +2056,10 @@ class _DetailViewState extends State<_DetailView> {
     final category = state.category;
     final selectedSeason = state.selectedSeason;
     final eps = detail.episodes;
+    final isSingleMusicVideo =
+        detail.type == ProviderType.anime &&
+        detail.format?.trim().toUpperCase() == 'MUSIC' &&
+        eps.length == 1;
     final store = sl<ResumeStore>();
     // Manga/novel: no player, no sub/dub, no video downloads — drives the
     // Play→Read relabel and hides the download affordances below.
@@ -2146,6 +2150,24 @@ class _DetailViewState extends State<_DetailView> {
     final seasonEps = hasMultipleSeasons
         ? episodesInSeason(eps, currentSeason)
         : eps;
+    // A one-episode AniList MUSIC entry represents a music video: use its
+    // AniList trailer artwork as the episode artwork instead of a generic
+    // source thumbnail, while keeping the original episode objects for play.
+    final musicVideoThumbnail = isSingleMusicVideo
+        ? detail.trailerThumbnail
+        : null;
+    final displayEps = musicVideoThumbnail == null ||
+            musicVideoThumbnail.isEmpty
+        ? eps
+        : eps
+            .map((episode) => episode.copyWith(thumbnail: musicVideoThumbnail))
+            .toList(growable: false);
+    final displaySeasonEps = musicVideoThumbnail == null ||
+            musicVideoThumbnail.isEmpty
+        ? seasonEps
+        : seasonEps
+            .map((episode) => episode.copyWith(thumbnail: musicVideoThumbnail))
+            .toList(growable: false);
 
     // Episodes grouped by season for the download sheet's season chips.
     final episodesBySeason = <int, List<Episode>>{};
@@ -2568,7 +2590,7 @@ class _DetailViewState extends State<_DetailView> {
           ),
 
         // Trailer is part of the same AniList detail response; no follow-up API call.
-        if (!isReading && detail.trailerUrl != null)
+        if (!isReading && !isSingleMusicVideo && detail.trailerUrl != null)
           SliverToBoxAdapter(
             child: _AniListTrailerSection(
               url: detail.trailerUrl!,
@@ -2638,8 +2660,8 @@ class _DetailViewState extends State<_DetailView> {
             padding: const EdgeInsets.only(top: 8),
             child: _EpisodesTab(
             loading: state.episodesLoading,
-            eps: eps,
-            seasonEps: seasonEps,
+            eps: displayEps,
+            seasonEps: displaySeasonEps,
             fillerEps: _fillerEps,
             hasMultipleSeasons: hasMultipleSeasons,
             seasonSet: seasonSet,
