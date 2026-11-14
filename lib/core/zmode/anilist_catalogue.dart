@@ -420,6 +420,11 @@ class AniListCatalogue implements AnimeCatalogue {
     // season + format, etc.) return nothing even when matching titles exist.
     final randomRecommendation =
         f?.sort == MetaSort.recommendation && kind == ZKind.anime;
+    // A new recommendation search gets a fresh random starting page. Keep
+    // that start cached while the user moves through subsequent pages.
+    if (randomRecommendation && page <= 1) {
+      _recommendationPageStarts.clear();
+    }
     // Keep recommendation quality rules only for a pure recommendation sort.
     // A text query or any other selected filter means the user's criteria take
     // priority over the recommendation catalogue's default exclusions.
@@ -499,12 +504,10 @@ class AniListCatalogue implements AnimeCatalogue {
 
     final random = math.Random();
     Future<int> pageFor(String key, String mediaArgs) async {
-      // With explicit filters, keep pagination anchored to the filtered result
-      // set. Randomly jumping to a distant page can make narrow combinations
-      // (especially format + episode range) appear empty or inconsistent.
-      // The returned page is still shuffled below, so recommendation order
-      // remains randomized without discarding the user's filter combination.
-      if (!randomRecommendation || hasAdditionalFilters) return page;
+      // Keep the user's filters in the AniList query, but choose a random
+      // starting page from that already-filtered result set. This randomizes
+      // both which titles appear and their order without dropping any criteria.
+      if (!randomRecommendation) return page;
       final countQuery =
           'query$decl{ Page(page:1,perPage:\$n){ pageInfo{total} media($mediaArgs){ id } } }';
       final countData = await _gql(countQuery, vars);
