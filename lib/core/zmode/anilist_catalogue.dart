@@ -31,6 +31,7 @@ class AniListCatalogue implements AnimeCatalogue {
   final bool Function() _adultAllowed;
   int? _maxAnimeId;
   List<MediaItem> _lastRecommendations = const [];
+  final Map<String, int> _recommendationPageStarts = {};
 
   static const String _recommendationsRowId = 'random_anime_recommendations';
   static const String _completedAnimeRowId = '__anime_selesai__';
@@ -488,7 +489,7 @@ class AniListCatalogue implements AnimeCatalogue {
         if (f.maxEpisodes < 200) 'episodes_lesser:${f.maxEpisodes + 1}',
         if (f.minScore != null) 'averageScore_greater:${f.minScore! - 1}',
         if (!f.adult) 'isAdult:false',
-        'sort:${randomRecommendation ? 'POPULARITY_DESC' : _alSort(f.sort, ascending: f.sortAscending)}',
+        'sort:${randomRecommendation ? 'ID' : _alSort(f.sort, ascending: f.sortAscending)}',
       ],
     ].where((a) => a.isNotEmpty).join(',');
 
@@ -496,12 +497,37 @@ class AniListCatalogue implements AnimeCatalogue {
     final decl = q.trim().isEmpty ? r'($n:Int)' : r'($q:String,$n:Int)';
     if (q.trim().isNotEmpty) vars['q'] = q;
 
+    final random = math.Random();
+    Future<int> pageFor(String key, String mediaArgs) async {
+      if (!randomRecommendation) return page;
+      final countQuery =
+          'query$decl{ Page(page:1,perPage:1){ pageInfo{total} media($mediaArgs){ id } } }';
+      final countData = await _gql(countQuery, vars);
+      final total = ((countData?['Page'] as Map?)?['pageInfo'] as Map?)?['total'];
+      final totalItems = total is int ? total : 0;
+      final totalPages = (totalItems / 50).ceil();
+      if (totalPages <= 1) return 1;
+      if (_recommendationPageStarts.length > 100) {
+        _recommendationPageStarts.clear();
+      }
+      final start = _recommendationPageStarts.putIfAbsent(
+        key,
+        () => random.nextInt(totalPages) + 1,
+      );
+      return ((start + page - 2) % totalPages) + 1;
+    }
+
     late List<MediaItem> items;
     if (seasons.length > 1 && kind == ZKind.anime) {
+      final pageNumbers = <int>[];
+      for (final season in seasons) {
+        final seasonArgs = '$args,season:${season.name.toUpperCase()}';
+        pageNumbers.add(await pageFor('$q|$seasonArgs', seasonArgs));
+      }
       final queries = seasons.indexed.map((entry) {
         final (i, season) = entry;
         final seasonArgs = '$args,season:${season.name.toUpperCase()}';
-        return 's$i: Page(page:$page,perPage:\$n){ media($seasonArgs){ $_listFields } }';
+        return 's$i: Page(page:${pageNumbers[i]},perPage:\$n){ media($seasonArgs){ $_listFields } }';
       }).join(' ');
       final data = await _gql('query$decl{ $queries }', vars);
       final unique = <String, MediaItem>{};
@@ -512,8 +538,9 @@ class AniListCatalogue implements AnimeCatalogue {
       }
       items = unique.values.toList();
     } else {
+      final selectedPage = await pageFor('$q|$args', args);
       final full =
-          'query$decl{ Page(page:$page,perPage:\$n){ media($args){ $_listFields } } }';
+          'query$decl{ Page(page:$selectedPage,perPage:\$n){ media($args){ $_listFields } } }';
       items = _items(await _gql(full, vars), kind);
     }
     if (applyRecommendationEligibility) {
