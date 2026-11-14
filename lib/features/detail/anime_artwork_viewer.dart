@@ -14,6 +14,7 @@ Future<void> showAnimeArtworkViewer(
   String? bannerUrl,
   required String title,
   Map<String, String>? headers,
+  int? malId,
 }) async {
   final images = <({String label, String url})>[
     if (posterUrl.trim().isNotEmpty) (label: 'Poster', url: posterUrl.trim()),
@@ -30,6 +31,7 @@ Future<void> showAnimeArtworkViewer(
       images: images,
       title: title,
       headers: headers,
+      malId: malId,
     ),
   );
 }
@@ -39,11 +41,13 @@ class _AnimeArtworkViewer extends StatefulWidget {
     required this.images,
     required this.title,
     required this.headers,
+    required this.malId,
   });
 
   final List<({String label, String url})> images;
   final String title;
   final Map<String, String>? headers;
+  final int? malId;
 
   @override
   State<_AnimeArtworkViewer> createState() => _AnimeArtworkViewerState();
@@ -53,6 +57,49 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   late final PageController _pages = PageController();
   int _index = 0;
   bool _saving = false;
+  bool _loadingMalPictures = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMalPictures();
+  }
+
+  Future<void> _loadMalPictures() async {
+    final id = widget.malId;
+    if (id == null || id <= 0) return;
+    if (mounted) setState(() => _loadingMalPictures = true);
+    try {
+      final response = await Dio().get<Map<String, dynamic>>(
+        'https://api.jikan.moe/v4/anime/$id/pictures',
+        options: Options(
+          receiveTimeout: const Duration(seconds: 20),
+          headers: const {'Accept': 'application/json'},
+        ),
+      );
+      final data = response.data?['data'];
+      if (data is! List) return;
+      final existing = widget.images.map((image) => image.url).toSet();
+      final additions = <({String label, String url})>[];
+      for (final item in data) {
+        if (item is! Map) continue;
+        final jpg = item['jpg'];
+        final webp = item['webp'];
+        final url = (jpg is Map ? jpg['large_image_url'] : null) as String? ??
+            (webp is Map ? webp['large_image_url'] : null) as String? ??
+            (jpg is Map ? jpg['image_url'] : null) as String? ??
+            (webp is Map ? webp['image_url'] : null) as String?;
+        if (url == null || url.isEmpty || !existing.add(url)) continue;
+        additions.add((label: 'MAL ${additions.length + 1}', url: url));
+      }
+      if (!mounted || additions.isEmpty) return;
+      setState(() => widget.images.addAll(additions));
+    } catch (_) {
+      // MAL pictures are optional; keep the AniList poster and banner usable.
+    } finally {
+      if (mounted) setState(() => _loadingMalPictures = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -182,8 +229,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                     : const Icon(Icons.download_rounded, color: Colors.white),
               ),
             ),
-            if (widget.images.length > 1)
-              Positioned(
+            if (_loadingMalPictures)\n              Positioned(\n                bottom: 18,\n                left: 0,\n                right: 0,\n                child: Center(\n                  child: DecoratedBox(\n                    decoration: BoxDecoration(\n                      color: Colors.black.withValues(alpha: 0.58),\n                      borderRadius: BorderRadius.circular(18),\n                    ),\n                    child: const Padding(\n                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),\n                      child: Row(\n                        mainAxisSize: MainAxisSize.min,\n                        children: [\n                          SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.8, color: Colors.white)),\n                          SizedBox(width: 8),\n                          Text('Memuat gambar MAL...', style: TextStyle(color: Colors.white, fontSize: 12)),\n                        ],\n                      ),\n                    ),\n                  ),\n                ),\n              ),\n            if (widget.images.length > 1)\n              Positioned(
                 left: 0,
                 right: 0,
                 bottom: 18,
