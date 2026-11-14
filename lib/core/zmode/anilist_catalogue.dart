@@ -389,6 +389,9 @@ class AniListCatalogue implements AnimeCatalogue {
     int page = 1,
   }) async {
     final f = filters;
+    final randomRecommendation = f?.sort == MetaSort.recommendation && kind == ZKind.anime;
+    final randomIds = randomRecommendation ? await _sampleAnimeIds() : const <int>[];
+    if (randomRecommendation && randomIds.isEmpty) return const <MediaItem>[];
     final years = f == null ? const <int>[] : f.years;
     final seasons = f == null ? const <MetaSeason>[] : f.seasons;
     final formats = f == null ? const <MetaFormat>[] : f.formats;
@@ -397,6 +400,7 @@ class AniListCatalogue implements AnimeCatalogue {
     final legacyStatus = f != null && statuses.isEmpty ? _alStatus(f.status) : null;
     final args = <String>[
       if (q.trim().isNotEmpty) 'search:\$q',
+      if (randomIds.isNotEmpty) 'id_in:[${randomIds.join(',')}]',
       'type:${_type(kind)}',
       if (_format(kind).isNotEmpty) _format(kind).replaceFirst(',', ''),
       if (f == null) 'isAdult:false',
@@ -446,8 +450,38 @@ class AniListCatalogue implements AnimeCatalogue {
         'query$decl{ Page(page:$page,perPage:\$n){ '
         'media($args){ $_listFields } } }';
     var items = _items(await _gql(full, vars), kind);
-
+    if (randomRecommendation) {
+      // Shuffle the filtered sample locally. Recommendation-only format and
+      // duration exclusions are intentionally not applied to filtered search.
+      items.shuffle(math.Random());
+    }
     return items;
+  }
+
+  Future<List<int>> _sampleAnimeIds() async {
+    try {
+      var maxId = _maxAnimeId;
+      if (maxId == null) {
+        final latest = await _gql(
+          'query{ Media(type:ANIME,sort:ID_DESC){ id } }',
+          const {},
+        );
+        final raw = latest?['Media'];
+        if (raw is! Map || raw['id'] is! int) return const [];
+        maxId = raw['id'] as int;
+        if (maxId < 1) return const [];
+        _maxAnimeId = maxId;
+      }
+      final random = math.Random();
+      final ids = <int>{};
+      final count = math.min(300, maxId);
+      while (ids.length < count) {
+        ids.add(random.nextInt(maxId) + 1);
+      }
+      return ids.toList()..shuffle(random);
+    } catch (_) {
+      return const [];
+    }
   }
 
   static String? _alFormat(MetaFormat? f) => switch (f) {
@@ -480,6 +514,7 @@ class AniListCatalogue implements AnimeCatalogue {
     (MetaSort.newest, false) => 'START_DATE_DESC',
     (MetaSort.newest, true) => 'START_DATE',
     (MetaSort.title, _) => 'TITLE_ROMAJI',
+    (MetaSort.recommendation, _) => 'ID',
   };
 
   Future<MediaDetail> detail(ZCanonical c) async {
