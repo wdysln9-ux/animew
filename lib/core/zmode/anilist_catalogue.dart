@@ -765,11 +765,13 @@ class AniListCatalogue implements AnimeCatalogue {
     final format = item.format?.toUpperCase().replaceAll(' ', '_');
     switch (format) {
       case 'TV_SHORT':
+      case 'MUSIC':
         return false;
       case 'ONA':
         return item.durationMins != null && item.durationMins! > 15;
       case 'MOVIE':
       case 'OVA':
+      case 'SPECIAL':
         return item.durationMins != null && item.durationMins! > 20;
       default:
         return true;
