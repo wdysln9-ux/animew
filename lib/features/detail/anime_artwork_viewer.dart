@@ -5,8 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../core/metadata/jikan_api.dart';
-
 const _galleryChannel = MethodChannel('animew/image_gallery');
 
 final Map<String, Future<Uint8List>> _malArtworkBytes = {};
@@ -96,54 +94,12 @@ class _MalArtworkImageState extends State<_MalArtworkImage> {
   }
 }
 
-/// Shared in-flight/result cache so the detail page can warm MAL artwork before
-/// the viewer is opened. Opening the gallery joins this same request.
-final Map<int, Future<List<String>>> _malPictureRequests = {};
-
-Future<List<String>> preloadAnimeMalPictures(int malId) {
-  if (malId <= 0) return Future.value(const <String>[]);
-  return _malPictureRequests.putIfAbsent(malId, () async {
-    try {
-      // Use the app-wide Jikan scheduler instead of a raw Dio request.
-      // Other detail sections also call Jikan; sharing its rate limit and
-      // retry handling prevents the Pictures request from being rejected
-      // when several Jikan endpoints are loading together.
-      final response = await JikanApi.get(
-        Dio(),
-        'https://api.jikan.moe/v4/anime/$malId/pictures',
-        headers: const {'Accept': 'application/json'},
-      );
-      final data = response is Map ? response['data'] : null;
-      if (data is! List) return const <String>[];
-      final urls = <String>[];
-      final seen = <String>{};
-      for (final item in data) {
-        if (item is! Map) continue;
-        final jpg = item['jpg'];
-        final webp = item['webp'];
-        final url = (jpg is Map ? jpg['large_image_url'] : null) as String? ??
-            (webp is Map ? webp['large_image_url'] : null) as String? ??
-            (jpg is Map ? jpg['image_url'] : null) as String? ??
-            (webp is Map ? webp['image_url'] : null) as String?;
-        if (url != null && url.isNotEmpty && seen.add(url)) urls.add(url);
-      }
-      return urls;
-    } catch (_) {
-      // Do not cache a failed request. The viewer can show the failure and a
-      // later attempt can retry instead of silently looking like success.
-      _malPictureRequests.remove(malId);
-      rethrow;
-    }
-  });
-}
-
 Future<void> showAnimeArtworkViewer(
   BuildContext context, {
   required String posterUrl,
   String? bannerUrl,
   required String title,
   Map<String, String>? headers,
-  int? malId,
 }) async {
   final images = <({String label, String url})>[
     if (posterUrl.trim().isNotEmpty) (label: 'Poster', url: posterUrl.trim()),
@@ -160,7 +116,6 @@ Future<void> showAnimeArtworkViewer(
       images: images,
       title: title,
       headers: headers,
-      malId: malId,
     ),
   );
 }
@@ -170,13 +125,11 @@ class _AnimeArtworkViewer extends StatefulWidget {
     required this.images,
     required this.title,
     required this.headers,
-    required this.malId,
   });
 
   final List<({String label, String url})> images;
   final String title;
   final Map<String, String>? headers;
-  final int? malId;
 
   @override
   State<_AnimeArtworkViewer> createState() => _AnimeArtworkViewerState();
@@ -186,76 +139,10 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   late final PageController _pages = PageController();
   int _index = 0;
   bool _saving = false;
-  bool _loadingMalPictures = false;
-  String? _malLoadMessage;
-  bool _hideMalSuccessMessage = false;
 
   @override
   void initState() {
     super.initState();
-    _loadMalPictures();
-  }
-
-  Future<void> _loadMalPictures() async {
-    final id = widget.malId;
-    if (id == null || id <= 0) {
-      if (mounted) {
-        setState(() {
-          _loadingMalPictures = false;
-          _malLoadMessage = 'ID MAL tidak diterima oleh galeri';
-        });
-      }
-      return;
-    }
-    if (mounted) {
-      setState(() {
-        _loadingMalPictures = true;
-        _malLoadMessage = null;
-        _hideMalSuccessMessage = false;
-      });
-    }
-    try {
-      // Usually this future has already completed while the detail page was
-      // visible; if not, the viewer joins the same request.
-      final urls = await preloadAnimeMalPictures(id);
-      if (!mounted) return;
-      final existing = widget.images.map((image) => image.url).toSet();
-      final additions = <({String label, String url})>[];
-      for (final url in urls) {
-        if (!existing.add(url)) continue;
-        additions.add((label: 'MAL ${additions.length + 1}', url: url));
-      }
-      setState(() {
-        if (additions.isNotEmpty) widget.images.addAll(additions);
-        _malLoadMessage = additions.isEmpty
-            ? 'MAL tidak mengembalikan gambar tambahan'
-            : '${additions.length} gambar MAL ditemukan · geser ke samping';
-        _hideMalSuccessMessage = false;
-      });
-      if (additions.isNotEmpty) {
-        // Start fading as soon as the success message has been painted.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() => _hideMalSuccessMessage = true);
-        });
-      }
-    } catch (error) {
-      if (!mounted) return;
-      final detail = error is DioException
-          ? [
-              if (error.response?.statusCode != null)
-                'HTTP ${error.response!.statusCode}'
-              else
-                error.type.name,
-              if (error.message?.trim().isNotEmpty == true)
-                error.message!.trim(),
-            ].join(' · ')
-          : error.toString();
-      setState(() {
-        _malLoadMessage = 'Gagal memuat gambar MAL: $detail';
-      });
-    } finally {
-      if (mounted) setState(() => _loadingMalPictures = false);
-    }
   }
 
   @override
@@ -269,12 +156,9 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
     setState(() => _saving = true);
     try {
       final image = widget.images[_index];
-      final isMalImage = image.label.startsWith('MAL ');
-      final requestHeaders = isMalImage
-          ? null
-          : (Map<String, String>.from(widget.headers ?? {})
-              ..remove('x-ani-src')
-              ..remove('x-mihon-src'));
+      final requestHeaders = Map<String, String>.from(widget.headers ?? {})
+        ..remove('x-ani-src')
+        ..remove('x-mihon-src');
       final response = await Dio().get<List<int>>(
         image.url,
         options: Options(
@@ -354,26 +238,23 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                     ),
                   );
                 }
-                final isMalImage = image.label.startsWith('MAL ');
                 return Center(
                   child: InteractiveViewer(
                     minScale: 1,
                     maxScale: 4,
-                    child: isMalImage
-                        ? _MalArtworkImage(url: image.url)
-                        : CachedNetworkImage(
-                            imageUrl: image.url,
-                            httpHeaders: widget.headers,
-                            fit: BoxFit.contain,
-                            placeholder: (_, _) => const Center(
-                              child: CircularProgressIndicator(color: Colors.white),
-                            ),
-                            errorWidget: (_, _, _) => const Icon(
-                              Icons.broken_image_outlined,
-                              color: Colors.white70,
-                              size: 42,
-                            ),
-                          ),
+                    child: CachedNetworkImage(
+                      imageUrl: image.url,
+                      httpHeaders: widget.headers,
+                      fit: BoxFit.contain,
+                      placeholder: (_, _) => const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
+                      errorWidget: (_, _, _) => const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white70,
+                        size: 42,
+                      ),
+                    ),
                   ),
                 );
               },
@@ -417,69 +298,6 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                 ),
               ),
             ),
-            if (_loadingMalPictures || _malLoadMessage != null)
-              Positioned(
-                bottom: 18,
-                left: 16,
-                right: 16,
-                child: AnimatedOpacity(
-                  opacity: _hideMalSuccessMessage ? 0 : 1,
-                  duration: const Duration(seconds: 1),
-                  curve: Curves.easeOut,
-                  child: Center(
-                    child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.68),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 9,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (_loadingMalPictures) ...[
-                            const SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.8,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                          ] else ...[
-                            Icon(
-                              _malLoadMessage?.startsWith('Gagal') == true ||
-                                      _malLoadMessage?.startsWith('ID MAL') == true
-                                  ? Icons.error_outline_rounded
-                                  : Icons.photo_library_outlined,
-                              color: Colors.white,
-                              size: 15,
-                            ),
-                            const SizedBox(width: 7),
-                          ],
-                          Flexible(
-                            child: Text(
-                              _loadingMalPictures
-                                  ? 'Memuat gambar MAL...'
-                                  : _malLoadMessage!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ),
-                  ),
-                ),
-              ),
             Positioned(
               top: 14,
               left: 0,
