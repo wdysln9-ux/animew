@@ -405,7 +405,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Color _tastePercentColor(int rank, int total) {
     final progress = total <= 1 ? 0.0 : rank / (total - 1);
-    return Color.lerp(const Color(0xFF43C96B), const Color(0xFFE84B4B), progress)!;
+    if (progress <= 0.5) {
+      return Color.lerp(
+        const Color(0xFF43C96B),
+        const Color(0xFFFFD54F),
+        progress * 2,
+      )!;
+    }
+    return Color.lerp(
+      const Color(0xFFFFD54F),
+      const Color(0xFFE84B4B),
+      (progress - 0.5) * 2,
+    )!;
   }
 
   Widget _taste() {
