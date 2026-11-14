@@ -829,10 +829,25 @@ class AniListCatalogue implements AnimeCatalogue {
     );
   }
 
-  /// Apply the format/duration rules only to the randomized recommendation catalogue.
-  /// A missing duration is deliberately treated as ineligible for ONA, Movie and OVA.
+  /// Apply quality, status, release-year and format rules only to the
+  /// randomized recommendation catalogue.
+  /// Older titles are allowed only when they are TV anime with >5,000
+  /// popularity; all other titles need at least 1,000 popularity.
   static bool _isEligibleRecommendation(MediaItem item) {
+    final popularity = item.popularity ?? 0;
+    if (popularity < 1000) return false;
+
+    // "Segera tayang" (NOT_YET_RELEASED) and "sedang tayang" (RELEASING)
+    // are not part of the completed/available recommendation pool.
+    if (item.isUpcoming || item.status == MediaStatus.ongoing) return false;
+
+    final year = int.tryParse(item.year ?? '');
     final format = item.format?.toUpperCase().replaceAll(' ', '_');
+    if (year != null && year <= 1999) {
+      return format == 'TV' && popularity > 5000;
+    }
+
+    // Keep the existing format/duration exclusions for newer titles.
     switch (format) {
       case 'TV_SHORT':
       case 'MUSIC':
