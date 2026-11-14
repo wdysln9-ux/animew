@@ -650,6 +650,7 @@ class _EpisodesTabState extends State<_EpisodesTab> {
             totalEpisodes: widget.totalEpisodes ?? widget.eps.length,
             isAiring: widget.isAiring,
             isLatestEpisode: widget.isAiring && epNum == _latestEpisodeNumber,
+            isMusicVideo: widget.isMusicVideo,
           ),
         );
       },
@@ -1428,6 +1429,7 @@ class _EpisodeRow extends StatelessWidget {
     this.showPopularity,
     required this.totalEpisodes,
     required this.isAiring,
+    this.isMusicVideo = false,
     this.isLatestEpisode = false,
   });
 
@@ -1438,6 +1440,7 @@ class _EpisodeRow extends StatelessWidget {
   final int? showPopularity;
   final int totalEpisodes;
   final bool isAiring;
+  final bool isMusicVideo;
   final bool isLatestEpisode;
   final String coverUrl;
   final Map<String, String>? coverHeaders;
@@ -1529,6 +1532,112 @@ class _EpisodeRow extends StatelessWidget {
       if (unavailable && ep.unavailable?.trim().isNotEmpty == true) ep.unavailable!.trim(),
     ];
     final metaLine = metaParts.join('  ·  ');
+
+    if (isMusicVideo) {
+      final art = ep.thumbnail?.trim().isNotEmpty == true
+          ? ep.thumbnail!.trim()
+          : coverUrl;
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+        child: Material(
+          color: AppColors.surface2,
+          borderRadius: BorderRadius.circular(12),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        art,
+                        fit: BoxFit.cover,
+                        headers: coverHeaders,
+                        errorBuilder: (_, __, ___) => ColoredBox(
+                          color: AppColors.surface,
+                          child: const Center(
+                            child: Icon(Icons.music_video_rounded, size: 38,
+                                color: AppColors.textSecondary),
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.62),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.play_arrow_rounded,
+                              color: Colors.white, size: 36),
+                        ),
+                      ),
+                      Positioned(
+                        left: 12,
+                        bottom: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 9, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.72),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Music Video',
+                            style: AppText.caption.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (fraction > 0)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: _ThumbnailProgressBar(fraction: fraction),
+                        ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Music Video',
+                          style: AppText.body.copyWith(
+                            color: titleColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (!sl<AppMode>().isTv)
+                        _EpisodeDownloadIcon(
+                          sourceId: sourceId,
+                          showId: showId,
+                          episodeId: ep.id,
+                          onTap: onDownload,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 3, 16, 3),
