@@ -149,7 +149,9 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     Expanded(child: _heading('Urutkan', theme)),
                     TextButton.icon(
                       style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 8)),
-                      onPressed: () => setState(() => f = f.copyWith(sortAscending: !f.sortAscending)),
+                      onPressed: f.sort == MetaSort.recommendation
+                           ? null
+                           : () => setState(() => f = f.copyWith(sortAscending: !f.sortAscending)),
                       icon: Icon(f.sortAscending ? Icons.north : Icons.south, color: AppColors.accent, size: 17),
                       label: Text(f.sortAscending ? 'Naik' : 'Turun', style: const TextStyle(fontSize: 13)),
                     ),
