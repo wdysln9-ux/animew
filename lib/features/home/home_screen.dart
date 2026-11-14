@@ -1731,29 +1731,28 @@ class _HomeViewState extends State<_HomeView>
     return (cover: wide ?? it.cover, headers: it.coverHeaders);
   }
 
-  /// A cover for the Genres card that is NOT the one on the Lists card.
+  /// The Genres card deliberately uses artwork from a Thriller title.
   ///
-  /// The Lists card always shows the last thing watched, so feeding this the
-  /// same [_modeArt] put one image twice in a two-card row. Prefer something
-  /// read rather than watched, else the second distinct thing watched, else
-  /// nothing — at which point the tint below carries the difference.
+  /// Prefer a wide banner from the already-loaded catalogue. If no Thriller
+  /// title is present in the current rows, fall back to the normal catalogue
+  /// artwork rather than leaving the card blank.
   ({String? cover, Map<String, String>? headers}) _genresArt() {
-    for (final m in const [ContentMode.manga, ContentMode.novel]) {
-      final a = _modeArt(m);
-      if (a.cover?.isNotEmpty ?? false) return a;
-    }
-    if (Hive.isBoxOpen(WatchHistory.boxName)) {
-      final seen = <String>{};
-      for (final e in sl<WatchHistory>().all()) {
-        final c = e.thumbnail ?? e.cover;
-        if (c == null || c.isEmpty) continue;
-        // The Lists card took the first, so hand back the second.
-        if (seen.add(c) && seen.length == 2) {
-          return (cover: c, headers: e.coverHeaders);
+    final sections = context.read<HomeCubit>().state.sections ??
+        const <HomeSection>[];
+    for (final section in sections) {
+      for (final item in section.items) {
+        if (item.isAdult ||
+            !item.genres.any((g) => g.toLowerCase() == 'thriller')) {
+          continue;
         }
+        final art = _itemArt(item);
+        if (art.cover?.isNotEmpty ?? false) return art;
       }
     }
-    return (cover: null, headers: null);
+    final fallback = _catalogueArt();
+    return fallback.isNotEmpty
+        ? fallback.first
+        : (cover: null, headers: null);
   }
 
   /// Same card shell again, for [GenresScreen] — the genre list for whatever
@@ -1829,12 +1828,25 @@ class _HomeViewState extends State<_HomeView>
     if (m == ContentMode.anime) {
       if (!Hive.isBoxOpen(WatchHistory.boxName))
         return (cover: null, headers: null);
-      for (final e in sl<WatchHistory>().all()) {
-        final c = e.thumbnail ?? e.cover;
-        if (c != null && c.isNotEmpty)
-          return (cover: c, headers: e.coverHeaders);
+      final history = sl<WatchHistory>().all();
+      if (history.isEmpty) return (cover: null, headers: null);
+      final latest = history.first;
+      // Match the latest watched title against Home's loaded catalogue so the
+      // Schedule & Lists card can use its banner instead of its history poster.
+      final sections = context.read<HomeCubit>().state.sections ??
+          const <HomeSection>[];
+      for (final section in sections) {
+        for (final item in section.items) {
+          final matches =
+              (latest.malId != null && item.malId == latest.malId) ||
+              item.title.toLowerCase() == latest.showTitle.toLowerCase();
+          if (!matches) continue;
+          final art = _itemArt(item);
+          if (art.cover?.isNotEmpty ?? false) return art;
+        }
       }
-      return (cover: null, headers: null);
+      final c = latest.thumbnail ?? latest.cover;
+      return (cover: c, headers: latest.coverHeaders);
     }
     if (!Hive.isBoxOpen(ReadHistory.boxName))
       return (cover: null, headers: null);
