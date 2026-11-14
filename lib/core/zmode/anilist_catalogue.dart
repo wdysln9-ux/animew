@@ -90,7 +90,7 @@ class AniListCatalogue implements AnimeCatalogue {
   /// detail-only half of [_fields] (description, studios, airing schedule)
   /// through it more than doubled the response for data no list cell shows.
   static const _listFields =
-      'id idMal title{romaji english native} coverImage{large color} bannerImage '
+      'id idMal title{romaji english native} coverImage{large color} bannerImage startDate{year} '
       // One int, for the poster's score badge. The rest of the detail fields
       // stay out for the reason above; this one is a number, not a payload.
       'averageScore popularity format episodes duration status genres seasonYear '
@@ -821,7 +821,11 @@ class AniListCatalogue implements AnimeCatalogue {
     if (media is! List) return const [];
     return [
       for (final m in media)
-        if (m is Map) _item(Map<String, dynamic>.from(m), kind),
+        if (m is Map &&
+            (kind != ZKind.anime ||
+                ((m['startDate'] as Map?)?['year'] is int &&
+                    ((m['startDate'] as Map)['year'] as int) > 0)))
+          _item(Map<String, dynamic>.from(m), kind),
     ];
   }
 
