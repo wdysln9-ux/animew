@@ -207,6 +207,24 @@ class _MetaFilterDialogTvState extends State<_MetaFilterDialogTv> {
                               ),
                             ),
                           ),
+                        if (widget.kind == ZKind.anime || widget.kind == ZKind.manga || widget.kind == ZKind.novel)
+                          _row(
+                            key: const ValueKey('tv-meta-filter-country'),
+                            title: 'Negara',
+                            value: _f.countryOfOrigin?.label ?? l10n.any,
+                            on: _f.countryOfOrigin != null,
+                            onTap: () => _pick<MetaCountry>(
+                              title: 'Negara',
+                              values: MetaCountry.values,
+                              current: _f.countryOfOrigin,
+                              label: (v) => v.label,
+                              onPicked: (v) => setState(
+                                () => _f = v == null
+                                    ? _f.copyWith(clearCountryOfOrigin: true)
+                                    : _f.copyWith(countryOfOrigin: v),
+                              ),
+                            ),
+                          ),
                         _row(
                           key: const ValueKey('tv-meta-filter-score'),
                           title: l10n.minimumScore,
