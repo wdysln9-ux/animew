@@ -4152,9 +4152,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                             // The parent Listener owns all touch input in adjustment mode.
                             // Keep the text out of the hit-test path so it cannot block drags.
                             ignoring: true,
-                            child: Opacity(
-                              opacity: prefs.subtitleOverallOpacity,
-                              child: LayoutBuilder(
+                            child: LayoutBuilder(
                               builder: (context, constraints) => Align(
                                 alignment: Alignment(
                                   _subtitleX * 2 - 1,
@@ -4180,7 +4178,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   ),
                                 ),
                               ),
-                            ),
                             ),
                           );
                         },
