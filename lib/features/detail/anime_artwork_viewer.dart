@@ -176,8 +176,18 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
       }
     } catch (error) {
       if (!mounted) return;
+      final detail = error is DioException
+          ? [
+              if (error.response?.statusCode != null)
+                'HTTP ${error.response!.statusCode}'
+              else
+                error.type.name,
+              if (error.message?.trim().isNotEmpty == true)
+                error.message!.trim(),
+            ].join(' · ')
+          : error.toString();
       setState(() {
-        _malLoadMessage = 'Gagal memuat gambar MAL: ${error.runtimeType}';
+        _malLoadMessage = 'Gagal memuat gambar MAL: $detail';
       });
     } finally {
       if (mounted) setState(() => _loadingMalPictures = false);
