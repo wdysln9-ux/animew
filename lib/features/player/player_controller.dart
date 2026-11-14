@@ -1748,7 +1748,10 @@ class PlayerCubit extends Cubit<PlayerState> {
       await player.setSubtitleTrack(
         SubtitleTrack.uri(url, title: title, language: language),
       );
-      if (isCurrent()) _wantedSubId = url;
+      if (isCurrent()) {
+        _wantedSubId = url;
+        await applySubtitleStyle();
+      }
     }
 
     try {
@@ -1781,7 +1784,10 @@ class PlayerCubit extends Cubit<PlayerState> {
       await player.setSubtitleTrack(
         SubtitleTrack.uri(local, title: title, language: language),
       );
-      if (isCurrent()) _wantedSubId = local;
+      if (isCurrent()) {
+        _wantedSubId = local;
+        await applySubtitleStyle();
+      }
     } catch (_) {
       // A request can complete after close() disposed the native player. Do
       // not turn that cancellation into a second, late native call.
@@ -1872,6 +1878,10 @@ class PlayerCubit extends Cubit<PlayerState> {
         );
         _wantedSubId = out.path;
         _subApplied = true;
+        // Apply after selecting the new track: mpv may initialise its
+        // subtitle renderer at track activation, so styling before selection
+        // can be lost on the actual video surface.
+        await applySubtitleStyle();
       }
 
       final srt = await SubtitleTranslateService.instance.translate(
