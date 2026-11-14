@@ -486,7 +486,9 @@ class AniListCatalogue implements AnimeCatalogue {
           'format_in:[${formats.map(_alFormat).whereType<String>().join(',')}]'
         else if (kind == ZKind.anime && legacyFormat != null)
           'format:$legacyFormat',
-        if (statuses.isNotEmpty)
+        if (statuses.length == 1)
+          'status:${_alStatus(statuses.single)}'
+        else if (statuses.length > 1)
           'status_in:[${statuses.map(_alStatus).whereType<String>().join(',')}]'
         else if (legacyStatus != null)
           'status:$legacyStatus',
