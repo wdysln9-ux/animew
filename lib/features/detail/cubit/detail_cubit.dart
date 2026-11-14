@@ -177,11 +177,13 @@ class DetailCubit extends Cubit<DetailState> {
     String? sourceId,
     TitlePrefsStore? prefs,
     int? seedMalId,
+    int? seedAnilistId,
     ProviderType? seedType,
     this.prefer,
   }) : _repo = repo,
        _url = url,
        _sourceId = sourceId,
+       _seedAnilistId = seedAnilistId,
        _prefs = prefs ?? sl<TitlePrefsStore>(),
        // Seed the INITIAL category from the per-title remembered choice so the
        // Sub/Dub toggle reflects the saved value on the very first render (no
@@ -207,6 +209,8 @@ class DetailCubit extends Cubit<DetailState> {
       sl<EpisodeMetadataService>().animeEpisodeMeta(seedMalId);
     }
   }
+
+  final int? _seedAnilistId;
 
   int _characterPage = 0;
   int _recommendationPage = 0;
@@ -672,6 +676,13 @@ class DetailCubit extends Cubit<DetailState> {
       'malId=${detail.malId} tmdbId=${detail.tmdbId} eps=${detail.episodes.length}',
     );
     var d = detail;
+    // The tapped AniList row already carries AniList's media id. Preserve it
+    // when the source detail response omits runtime-only metadata, so the
+    // exact AniList Media(id) { idMal } lookup can run without title search.
+    if (d.anilistId == null && _seedAnilistId != null && _seedAnilistId! > 0) {
+      d = d.copyWith(anilistId: _seedAnilistId);
+      _patchDetail((cur) => cur.copyWith(anilistId: _seedAnilistId));
+    }
     final isAniListDetail = d.sourceId == ZmodeIds.sourceId;
 
     // TMDB fallback: an id-less movie/series (e.g. some CloudStream sources)
