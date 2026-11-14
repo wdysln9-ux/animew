@@ -509,6 +509,18 @@ query($id:Int,$page:Int) {
     return result;
   }
 
+  /// Resolve the MAL cross-reference from AniList's own media id.
+  /// This is exact and avoids an ambiguous title search for AniList detail pages.
+  Future<int?> malIdByMediaId(int mediaId) async {
+    if (mediaId <= 0) return null;
+    final d = await _gql(
+      'query(\$id:Int){ Media(id:\$id,type:ANIME){ idMal } }',
+      {'id': mediaId},
+    );
+    final m = d?['Media'];
+    return m is Map ? (m['idMal'] as num?)?.toInt() : null;
+  }
+
   /// Resolve an AniList media id (+ total episodes, or chapters for
   /// [MediaKind.manga]) from a MAL id. Returns `(id, episodes)` or null when
   /// unmatched.
