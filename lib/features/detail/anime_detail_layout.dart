@@ -842,7 +842,7 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 15)),
+          Text('Sinopsis', style: AppText.headline.copyWith(fontSize: 16)),
           const SizedBox(height: 9),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
