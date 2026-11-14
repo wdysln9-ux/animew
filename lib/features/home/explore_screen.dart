@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
 import '../../core/models/home_section.dart';
@@ -21,6 +22,13 @@ import 'search_screen.dart';
 import 'genres_screen.dart';
 import '../studio/studio_page.dart';
 import '../../core/ui/poster_card.dart';
+
+Color _coverPlaceholderColor(String? raw) {
+  final value = raw?.trim().replaceFirst('#', '');
+  final parsed = value == null ? null : int.tryParse(value, radix: 16);
+  if (parsed == null) return AppColors.surface2;
+  return Color(value!.length == 6 ? 0xFF000000 | parsed : parsed);
+}
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -408,8 +416,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
             child: GestureDetector(onTap: () => _open(m), child: ClipRRect(
               borderRadius: BorderRadius.circular(16), child: Stack(fit: StackFit.expand, children: [
                 if (m.banner != null || m.cover != null)
-                  Image.network(m.banner ?? m.cover!, fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => ColoredBox(color: AppColors.surface2)),
+                  CachedNetworkImage(
+                    imageUrl: m.banner ?? m.cover!,
+                    fit: BoxFit.cover,
+                    memCacheWidth: 1000,
+                    maxWidthDiskCache: 1200,
+                    placeholder: (_, _) => ColoredBox(color: _coverPlaceholderColor(m.coverColor)),
+                    errorWidget: (_, _, _) => ColoredBox(color: _coverPlaceholderColor(m.coverColor)),
+                  ),
                 DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
                   begin: Alignment.topCenter, end: Alignment.bottomCenter,
                   colors: [Colors.black.withValues(alpha: .02), Colors.black.withValues(alpha: .1), Colors.black.withValues(alpha: .9)],

@@ -210,10 +210,9 @@ class AniListCatalogue implements AnimeCatalogue {
         .map((e) {
           final (i, (_, args)) = e;
           if (kind == ZKind.anime && args == _completedAnimeRowId) {
-            return 'r${i}c: Page(perPage:15){ media(type:ANIME$_adultExclusion,status:FINISHED,format_in:[TV,MOVIE],season:$currentSeason,seasonYear:${now.year},sort:START_DATE_DESC){ $_listFields } } '
-                'r${i}p: Page(perPage:15){ media(type:ANIME$_adultExclusion,status:FINISHED,format_in:[TV,MOVIE],season:$previousSeason,seasonYear:$previousYear,sort:START_DATE_DESC){ $_listFields } }';
+            return 'r${i}p: Page(perPage:30){ media(type:ANIME$_adultExclusion,startDate_greater:0,status:FINISHED,format_in:[TV,MOVIE],season:$previousSeason,seasonYear:$previousYear,sort:START_DATE_DESC){ $_listFields } }';
           }
-          return 'r$i: Page(perPage:30){ media(type:${_type(kind)}$_adultExclusion${_format(kind)},$args){ $_listFields } }';
+          return 'r$i: Page(perPage:30){ media(type:${_type(kind)}$_adultExclusion${_format(kind)}${kind == ZKind.anime ? ',startDate_greater:0' : ''},$args){ $_listFields } }';
         })
         .join(' ');
     // Fetch a genuinely random AniList ID sample alongside the normal home
@@ -227,10 +226,7 @@ class AniListCatalogue implements AnimeCatalogue {
     final out = <HomeSection>[];
     for (final (i, (title, args)) in rows.indexed) {
       var items = args == _completedAnimeRowId
-          ? [
-              ..._itemsFromPage(data?['r${i}c'], kind),
-              ..._itemsFromPage(data?['r${i}p'], kind),
-            ]
+          ? _itemsFromPage(data?['r${i}p'], kind)
           : _itemsFromPage(data?['r$i'], kind);
       // Keep the Romance row strict even if a provider response or stale
       // catalogue payload contains titles that do not carry the Romance genre.
@@ -309,7 +305,7 @@ class AniListCatalogue implements AnimeCatalogue {
         final batch = ids.skip(start).take(50).join(',');
         final alias = 'r${queries.length}';
         queries.add(
-          '$alias: Page(perPage:50){ media(id_in:[$batch],type:ANIME$_adultExclusion){ ${_listFields} } }',
+          '$alias: Page(perPage:50){ media(id_in:[$batch],type:ANIME$_adultExclusion,startDate_greater:0){ ${_listFields} } }',
         );
       }
 
@@ -339,14 +335,10 @@ class AniListCatalogue implements AnimeCatalogue {
       final currentSeason = _seasonForMonth(now.month);
       final (previousSeason, previousYear) = _previousSeason(currentSeason, now.year);
       final data = await _gql(
-        'query{ current: Page(page:$page,perPage:15){ media(type:ANIME$_adultExclusion,status:FINISHED,format_in:[TV,MOVIE],season:$currentSeason,seasonYear:${now.year},sort:START_DATE_DESC){ $_listFields } } '
-        'previous: Page(page:$page,perPage:15){ media(type:ANIME$_adultExclusion,status:FINISHED,format_in:[TV,MOVIE],season:$previousSeason,seasonYear:$previousYear,sort:START_DATE_DESC){ $_listFields } } }',
+        'query{ previous: Page(page:$page,perPage:30){ media(type:ANIME$_adultExclusion,startDate_greater:0,status:FINISHED,format_in:[TV,MOVIE],season:$previousSeason,seasonYear:$previousYear,sort:START_DATE_DESC){ $_listFields } } }',
         const {},
       );
-      return [
-        ..._itemsFromPage(data?['current'], kind),
-        ..._itemsFromPage(data?['previous'], kind),
-      ];
+      return _itemsFromPage(data?['previous'], kind);
     }
     if (kind == ZKind.anime && rowId == _recommendationsRowId) {
       // Page 1 is the exact batch already rendered on Home. This also guards
@@ -424,9 +416,11 @@ class AniListCatalogue implements AnimeCatalogue {
     int page = 1,
   }) async {
     final f = filters;
-    final randomRecommendation = f?.sort == MetaSort.recommendation && kind == ZKind.anime;
-    final randomIds = randomRecommendation ? await _sampleAnimeIds() : const <int>[];
-    if (randomRecommendation && randomIds.isEmpty) return const <MediaItem>[];
+    // Recommendation is a randomized ordering of the filtered catalogue.
+    // Sampling only a few random IDs first made narrow combinations (genre +
+    // season + format, etc.) return nothing even when matching titles exist.
+    final randomRecommendation =
+        f?.sort == MetaSort.recommendation && kind == ZKind.anime;
     final years = f == null ? const <int>[] : f.years;
     final seasons = f == null ? const <MetaSeason>[] : f.seasons;
     final formats = f == null ? const <MetaFormat>[] : f.formats;
@@ -434,10 +428,10 @@ class AniListCatalogue implements AnimeCatalogue {
     final legacyFormat = f != null && formats.isEmpty ? _alFormat(f.format) : null;
     final legacyStatus = f != null && statuses.isEmpty ? _alStatus(f.status) : null;
     final args = <String>[
-      if (q.trim().isNotEmpty) 'search:\$q',
-      if (randomIds.isNotEmpty) 'id_in:[${randomIds.join(',')}]',
+      if (q.trim().isNotEmpty) 'search:\\$q',
       'type:${_type(kind)}',
       if (_format(kind).isNotEmpty) _format(kind).replaceFirst(',', ''),
+      if (kind == ZKind.anime) 'startDate_greater:0',
       if (f == null) 'isAdult:false',
       if (f != null) ...[
         if (f.genres.isNotEmpty)
@@ -455,11 +449,11 @@ class AniListCatalogue implements AnimeCatalogue {
           'startDate_greater:${((f.minYear < 1980 ? 1980 : f.minYear) - 1) * 10000 + 1231}',
         if (kind == ZKind.anime && (f.minYear > 1980 || f.maxYear < DateTime.now().year))
           'startDate_lesser:${(f.maxYear > DateTime.now().year ? DateTime.now().year : f.maxYear) + 1}0101',
+        // AniList supports one season per media() request. Multiple selected
+        // seasons are queried as separate aliases below and then merged.
         if (seasons.length == 1)
           'season:${seasons.single.name.toUpperCase()}'
-        else if (seasons.length > 1)
-          'season_in:[${seasons.map((v) => v.name.toUpperCase()).join(',')}]'
-        else if (f.season != null)
+        else if (seasons.isEmpty && f.season != null)
           'season:${f.season!.name.toUpperCase()}',
         if (kind == ZKind.anime && formats.isNotEmpty)
           'format_in:[${formats.map(_alFormat).whereType<String>().join(',')}]'
@@ -473,7 +467,7 @@ class AniListCatalogue implements AnimeCatalogue {
         if (f.maxEpisodes < 200) 'episodes_lesser:${f.maxEpisodes + 1}',
         if (f.minScore != null) 'averageScore_greater:${f.minScore! - 1}',
         if (!f.adult) 'isAdult:false',
-        'sort:${_alSort(f.sort, ascending: f.sortAscending)}',
+        'sort:${randomRecommendation ? 'POPULARITY_DESC' : _alSort(f.sort, ascending: f.sortAscending)}',
       ],
     ].where((a) => a.isNotEmpty).join(',');
 
@@ -481,15 +475,27 @@ class AniListCatalogue implements AnimeCatalogue {
     final decl = q.trim().isEmpty ? r'($n:Int)' : r'($q:String,$n:Int)';
     if (q.trim().isNotEmpty) vars['q'] = q;
 
-    final full =
-        'query$decl{ Page(page:${randomRecommendation ? 1 : page},perPage:\$n){ '
-        'media($args){ $_listFields } } }';
-    var items = _items(await _gql(full, vars), kind);
-    if (randomRecommendation) {
-      // Shuffle the filtered sample locally. Recommendation-only format and
-      // duration exclusions are intentionally not applied to filtered search.
-      items.shuffle(math.Random());
+    late final List<MediaItem> items;
+    if (seasons.length > 1 && kind == ZKind.anime) {
+      final queries = seasons.indexed.map((entry) {
+        final (i, season) = entry;
+        final seasonArgs = '$args,season:${season.name.toUpperCase()}';
+        return 's$i: Page(page:$page,perPage:\\$n){ media($seasonArgs){ $_listFields } }';
+      }).join(' ');
+      final data = await _gql('query$decl{ $queries }', vars);
+      final unique = <String, MediaItem>{};
+      for (var i = 0; i < seasons.length; i++) {
+        for (final item in _itemsFromPage(data?['s$i'], kind)) {
+          unique[item.id] = item;
+        }
+      }
+      items = unique.values.toList();
+    } else {
+      final full =
+          'query$decl{ Page(page:$page,perPage:\\$n){ media($args){ $_listFields } } }';
+      items = _items(await _gql(full, vars), kind);
     }
+    if (randomRecommendation) items.shuffle(math.Random());
     return items;
   }
 
