@@ -707,7 +707,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           controller: _c.videoController,
           controls: NoVideoControls,
           fit: BoxFit.cover,
-          subtitleViewConfiguration: _subtitleConfig(),
+          subtitleViewConfiguration: _subtitleConfig(hideFlutter: true),
         ),
         onBack: () {
           final background = widget.backgroundRoute;
@@ -1901,7 +1901,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _onPointerDown(PointerDownEvent e) {
     _pointers[e.pointer] = e.position;
     if (_subtitleAdjustMode) {
-      if (_pointers.length == 2) {\n        final p = _pointers.values.toList();\n        _subtitleGestureStartSpan = (p[0] - p[1]).distance;\n        _subtitlePinchBase = _subtitleSize;\n      }
+      if (_pointers.length == 2) {
+        final p = _pointers.values.toList();
+        _subtitleGestureStartSpan = (p[0] - p[1]).distance;
+        _subtitlePinchBase = _subtitleSize;
+      }
       return;
     }
     if (_pointers.length == 2 && !_locked) _startPinch();
@@ -3111,7 +3115,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// overlay), NOT libass — so font/colour/size/outline/position all live here.
   /// The [TextStyle] comes from the shared [buildSubtitleTextStyle] so the live
   /// preview in the style sheet matches exactly what renders on the video.
-  SubtitleViewConfiguration _subtitleConfig() {
+  SubtitleViewConfiguration _subtitleConfig({bool hideFlutter = false}) {
     final p = sl<PlaybackPrefs>();
     // position 0 (top) … 100 (bottom). Higher value → nearer the bottom (less
     // bottom padding); lower value lifts the text up the frame.
@@ -4140,7 +4144,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         initialData: _c.player.state.subtitle,
                         builder: (context, snapshot) {
                           final lines = snapshot.data ?? const <String>[];
-                          final caption = lines.where((line) => line.trim().isNotEmpty).join('\\n');
+                          final caption = lines.where((line) => line.trim().isNotEmpty).join('\n');
                           if (caption.isEmpty) return const SizedBox.shrink();
                           final prefs = sl<PlaybackPrefs>();
                           return IgnorePointer(
