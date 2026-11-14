@@ -380,7 +380,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 const SizedBox(width: 10),
               ]))),
             )),
-        ),
     ]);
   }
 
