@@ -442,12 +442,12 @@ class AniListCatalogue implements AnimeCatalogue {
       ],
     ].where((a) => a.isNotEmpty).join(',');
 
-    final vars = <String, dynamic>{'n': 30};
+    final vars = <String, dynamic>{'n': randomRecommendation ? 50 : 30};
     final decl = q.trim().isEmpty ? r'($n:Int)' : r'($q:String,$n:Int)';
     if (q.trim().isNotEmpty) vars['q'] = q;
 
     final full =
-        'query$decl{ Page(page:$page,perPage:\$n){ '
+        'query$decl{ Page(page:${randomRecommendation ? 1 : page},perPage:\$n){ '
         'media($args){ $_listFields } } }';
     var items = _items(await _gql(full, vars), kind);
     if (randomRecommendation) {
@@ -474,7 +474,7 @@ class AniListCatalogue implements AnimeCatalogue {
       }
       final random = math.Random();
       final ids = <int>{};
-      final count = math.min(300, maxId);
+      final count = math.min(50, maxId);
       while (ids.length < count) {
         ids.add(random.nextInt(maxId) + 1);
       }
