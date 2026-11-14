@@ -446,16 +446,27 @@ class HomeCubit extends Cubit<HomeState> {
   /// normally serves cached rows, so invalidate that snapshot before loading;
   /// then refresh the randomized recommendations row as a separate request.
   Future<void> refreshHome() async {
-    if (_repo is MetadataRepository) {
-      _repo.clearHomeCache();
+    // Home may be wired through a CatalogueRepository facade. Resolve the
+    // metadata implementation from DI as well, so a refresh always invalidates
+    // the cache that actually serves the AniList/MAL/TMDB catalogue.
+    final metadata = _repo is MetadataRepository
+        ? _repo as MetadataRepository
+        : (_sl.isRegistered<MetadataRepository>()
+            ? _sl<MetadataRepository>()
+            : null);
+    if (metadata != null) {
+      metadata.clearHomeCache();
       _streamKindCache.clear();
       // Remove the persisted snapshot too, so a later remount cannot paint
       // the pre-refresh catalogue as if it were the latest result.
       await HomeCache.clearSource(ZmodeIds.sourceId);
     }
+
+    // A fresh generation makes any older request harmless: it cannot emit
+    // stale rows over the result of this refresh.
     await load();
     if (isClosed) return;
-    if (_repo is MetadataRepository && _browseKind == ZKind.anime) {
+    if (metadata != null && _browseKind == ZKind.anime) {
       await refreshRecommendations();
     }
   }

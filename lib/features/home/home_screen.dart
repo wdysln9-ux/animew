@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -251,6 +252,38 @@ class _HomeViewState extends State<_HomeView>
 
   void _onThemeRevision() {
     if (mounted) setState(() {});
+  }
+
+  /// Refresh Home from the scroll view itself. Using a sliver refresh control
+  /// avoids relying on a wrapper's notification bubbling through the layered
+  /// Home header and nested horizontal poster rails.
+  Future<void> _refreshHomeContent(BuildContext context) async {
+    _metaCache.clear();
+    _heroPrewarmed = false;
+
+    if (_sourceCatalogueSelected) {
+      await _sourceCatalogueController.refresh();
+      return;
+    }
+
+    final cubit = context.read<HomeCubit>();
+    if (ZModePrefs.enabled) {
+      await cubit.refreshHome();
+      return;
+    }
+
+    if (sl.isRegistered<AuthCubit>()) {
+      unawaited(sl<AuthCubit>().revalidateIfFlagged(force: true));
+    }
+
+    // Provider-backed catalogues can cache HTTP responses independently of
+    // HomeCubit. Clear that layer before asking the source to load again.
+    try {
+      await _repo.clearHttpCache();
+    } catch (_) {
+      // A cache-clear failure must not prevent a normal reload attempt.
+    }
+    await cubit.load(reset: true);
   }
 
   void _onSourceCatalogueSelectionChanged() {
@@ -2064,35 +2097,7 @@ class _HomeViewState extends State<_HomeView>
             // while the setting is on (Theme & colour → Adaptive colour).
             if (ThemeController.adaptiveColour)
               PosterTintLayer(notifier: _heroTint),
-            RefreshIndicator(
-              color: AppColors.accent,
-              // Home has a tall hero/header and several nested horizontal
-              // rails. Allow the pull gesture to start anywhere on the
-              // vertical scrollable instead of requiring an exact edge hit.
-              triggerMode: RefreshIndicatorTriggerMode.anywhere,
-              onRefresh: () async {
-                // Hero metadata is cached separately from HomeCubit rows.
-                // Drop it too, otherwise a refresh can leave the banner
-                // looking unchanged even after the catalogue has reloaded.
-                _metaCache.clear();
-                _heroPrewarmed = false;
-                if (_sourceCatalogueSelected) {
-                  await _sourceCatalogueController.refresh();
-                  return;
-                }
-                if (ZModePrefs.enabled &&
-                    sl<ContentModeCubit>().state == ContentMode.anime) {
-                  await context.read<HomeCubit>().refreshHome();
-                  return;
-                }
-                if (sl.isRegistered<AuthCubit>()) {
-                  unawaited(sl<AuthCubit>().revalidateIfFlagged(force: true));
-                }
-                // Reset the visible rows while the provider fetches so the
-                // user gets a clear refresh rather than a silent cached load.
-                await context.read<HomeCubit>().load(reset: true);
-              },
-              child: BlocBuilder<HomeCubit, HomeState>(
+            BlocBuilder<HomeCubit, HomeState>(
                 builder: (context, state) {
                   final sections = state.sections ?? const <HomeSection>[];
                   // Which sections render as rows (the phone drops a
@@ -2136,8 +2141,15 @@ class _HomeViewState extends State<_HomeView>
                           ContentMode.anime => false,
                         };
                   return CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    // Bouncing + always-scrollable physics lets the sliver
+                    // refresh control receive a pull even when Home is short.
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
                     slivers: [
+                      CupertinoSliverRefreshControl(
+                        onRefresh: () => _refreshHomeContent(context),
+                      ),
                       // ── Hero + floating header (first sliver) ─────────────────
                       SliverToBoxAdapter(
                         child: Builder(
@@ -2277,7 +2289,6 @@ class _HomeViewState extends State<_HomeView>
                   );
                 },
               ),
-            ),
             if (_slashing) _slashOverlay(),
           ],
         ),
