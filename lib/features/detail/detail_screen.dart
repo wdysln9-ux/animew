@@ -2175,7 +2175,14 @@ class _DetailViewState extends State<_DetailView> {
       'TW' => 'Taiwan',
       _ => detail.country,
     };
+    final episodeDuration = detail.durationMins;
+    final durationLabel = episodeDuration == null || episodeDuration <= 0
+        ? null
+        : episodeDuration >= 60
+            ? '${episodeDuration ~/ 60} jam${episodeDuration % 60 == 0 ? '' : ', ${episodeDuration % 60} menit'}'
+            : '$episodeDuration menit';
     final dateLine = [
+      if (durationLabel != null) durationLabel,
       if (countryLabel?.isNotEmpty == true) countryLabel!,
       if (detail.startDate != null)
         '${dateLabel(detail.startDate!)}${detail.endDate == null ? '' : ' – ${dateLabel(detail.endDate!)}'}',
