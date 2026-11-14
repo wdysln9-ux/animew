@@ -39,9 +39,10 @@ Future<List<String>> preloadAnimeMalPictures(int malId) {
       }
       return urls;
     } catch (_) {
-      // A later page visit may retry if Jikan is temporarily unavailable.
+      // Do not cache a failed request. The viewer can show the failure and a
+      // later attempt can retry instead of silently looking like success.
       _malPictureRequests.remove(malId);
-      return const <String>[];
+      rethrow;
     }
   });
 }
@@ -52,17 +53,22 @@ final Map<int, Future<void>> _malImagePreloads = {};
 
 Future<void> preloadAnimeMalArtwork(int malId, BuildContext context) {
   return _malImagePreloads.putIfAbsent(malId, () async {
-    final urls = await preloadAnimeMalPictures(malId);
-    for (final url in urls.take(8)) {
-      if (!context.mounted) {
-        _malImagePreloads.remove(malId);
-        return;
+    try {
+      final urls = await preloadAnimeMalPictures(malId);
+      for (final url in urls.take(8)) {
+        if (!context.mounted) {
+          _malImagePreloads.remove(malId);
+          return;
+        }
+        try {
+          await precacheImage(CachedNetworkImageProvider(url), context);
+        } catch (_) {
+          // One failed image should not block the rest of the gallery.
+        }
       }
-      try {
-        await precacheImage(CachedNetworkImageProvider(url), context);
-      } catch (_) {
-        // One failed image should not block the rest of the gallery.
-      }
+    } catch (_) {
+      // Keep this best-effort: the viewer owns the visible error state.
+      _malImagePreloads.remove(malId);
     }
   });
 }
@@ -117,6 +123,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   int _index = 0;
   bool _saving = false;
   bool _loadingMalPictures = false;
+  String? _malLoadMessage;
 
   @override
   void initState() {
@@ -126,22 +133,43 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
 
   Future<void> _loadMalPictures() async {
     final id = widget.malId;
-    if (id == null || id <= 0) return;
-    if (mounted) setState(() => _loadingMalPictures = true);
+    if (id == null || id <= 0) {
+      if (mounted) {
+        setState(() {
+          _loadingMalPictures = false;
+          _malLoadMessage = 'ID MAL tidak diterima oleh galeri';
+        });
+      }
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        _loadingMalPictures = true;
+        _malLoadMessage = null;
+      });
+    }
     try {
       // Usually this future has already completed while the detail page was
-      // visible; if not, the viewer joins the request instead of duplicating it.
+      // visible; if not, the viewer joins the same request.
       final urls = await preloadAnimeMalPictures(id);
-      if (!mounted || urls.isEmpty) return;
+      if (!mounted) return;
       final existing = widget.images.map((image) => image.url).toSet();
       final additions = <({String label, String url})>[];
       for (final url in urls) {
         if (!existing.add(url)) continue;
         additions.add((label: 'MAL ${additions.length + 1}', url: url));
       }
-      if (additions.isNotEmpty) {
-        setState(() => widget.images.addAll(additions));
-      }
+      setState(() {
+        if (additions.isNotEmpty) widget.images.addAll(additions);
+        _malLoadMessage = additions.isEmpty
+            ? 'MAL tidak mengembalikan gambar tambahan'
+            : '${additions.length} gambar MAL ditemukan · geser ke samping';
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _malLoadMessage = 'Gagal memuat gambar MAL: ${error.runtimeType}';
+      });
     } finally {
       if (mounted) setState(() => _loadingMalPictures = false);
     }
@@ -287,34 +315,57 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                 ),
               ),
             ),
-            if (_loadingMalPictures)
+            if (_loadingMalPictures || _malLoadMessage != null)
               Positioned(
                 bottom: 18,
-                left: 0,
-                right: 0,
+                left: 16,
+                right: 16,
                 child: Center(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.58),
+                      color: Colors.black.withValues(alpha: 0.68),
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 9,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          SizedBox(
-                            width: 12,
-                            height: 12,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 1.8,
-                              color: Colors.white,
+                          if (_loadingMalPictures) ...[
+                            const SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.8,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Memuat gambar MAL...',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            const SizedBox(width: 8),
+                          ] else ...[
+                            Icon(
+                              _malLoadMessage?.startsWith('Gagal') == true ||
+                                      _malLoadMessage?.startsWith('ID MAL') == true
+                                  ? Icons.error_outline_rounded
+                                  : Icons.photo_library_outlined,
+                              color: Colors.white,
+                              size: 15,
+                            ),
+                            const SizedBox(width: 7),
+                          ],
+                          Flexible(
+                            child: Text(
+                              _loadingMalPictures
+                                  ? 'Memuat gambar MAL...'
+                                  : _malLoadMessage!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
                           ),
                         ],
                       ),
