@@ -995,7 +995,6 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setSubtitleShadowAngle(90.0);
     await _prefs.setSubtitleShadowDistance(1.0);
     await _prefs.setSubtitleShadowBlur(0.0);
-    await _prefs.setSubtitleOverallOpacity(1.0);
     await _prefs.setSubtitleScale(1.0);
   });
 
