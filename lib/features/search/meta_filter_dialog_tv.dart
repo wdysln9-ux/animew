@@ -656,6 +656,7 @@ String metaSortLabel(BuildContext c, MetaSort s) => switch (s) {
   MetaSort.trending => c.l10n.sortTrending,
   MetaSort.newest => c.l10n.sortNewest,
   MetaSort.title => c.l10n.sortTitle,
+  MetaSort.recommendation => 'Rekomendasi',
 };
 
 String metaSeasonLabel(MetaSeason s) => switch (s) {

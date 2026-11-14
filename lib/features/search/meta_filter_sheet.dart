@@ -114,7 +114,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       MetaSort.newest: 'Terbaru',
       MetaSort.trending: 'Trending',
       MetaSort.title: 'Judul',
-      if (kind == ZKind.anime) MetaSort.recommendation: 'Rekomendasi',
+      if (widget.kind == ZKind.anime) MetaSort.recommendation: 'Rekomendasi',
     };
 
     return DraggableScrollableSheet(
