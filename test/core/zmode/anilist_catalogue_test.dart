@@ -94,6 +94,20 @@ void main() {
   // "(Provisional Title)" placeholders instead of anything released. The
   // status filter and the date bound are what make it a RECENT row, so both
   // are pinned rather than left to whoever edits the row list next.
+  test('country of origin is sent as AniList countryOfOrigin', () async {
+    late String query;
+    final cat = AniListCatalogue((q, v) async {
+      query = q;
+      return _aliasedResponse(q);
+    });
+    await cat.searchFiltered(
+      '',
+      ZKind.anime,
+      filters: const MetaFilters(countryOfOrigin: MetaCountry.japan),
+    );
+    expect(query, contains('countryOfOrigin:JP'));
+  });
+
   test('the recently-released row excludes anything not out yet', () async {
     for (final kind in ZKind.values) {
       late String query;
