@@ -1856,6 +1856,26 @@ class PlayerCubit extends Cubit<PlayerState> {
     _toast('Translating subtitles…');
     try {
       var lastPct = -1;
+      var partialRevision = 0;
+      var hasAppliedPartial = false;
+      final dir = await getTemporaryDirectory();
+
+      Future<void> applyTranslatedSrt(String srt) async {
+        // Use a fresh path for each partial revision so mpv actually reloads
+        // the subtitle track instead of keeping a cached copy of the old file.
+        partialRevision++;
+        final out = File(
+          '${dir.path}/translated_${targetIso}_${state.currentIndex}_${partialRevision}.srt',
+        );
+        await out.writeAsString(srt, flush: true);
+        await player.setSubtitleTrack(
+          SubtitleTrack.uri(out.path, title: 'Translated', language: targetIso),
+        );
+        _wantedSubId = out.path;
+        _subApplied = true;
+        hasAppliedPartial = true;
+      }
+
       final srt = await SubtitleTranslateService.instance.translate(
         content,
         targetIso,
@@ -1866,21 +1886,11 @@ class PlayerCubit extends Cubit<PlayerState> {
             _toast('Translating subtitles… $pct%');
           }
         },
+        onPartialResult: applyTranslatedSrt,
       );
-      // Write to a real file and load by path: mpv reports a uri sub's id AS its
-      // path, so `_wantedSubId` matches it and the sub-preference watcher won't
-      // stomp it back to the original (a data: sub's id never matched). File subs
-      // also render more reliably on Android than in-memory data.
-      final dir = await getTemporaryDirectory();
-      final out = File(
-        '${dir.path}/translated_${targetIso}_${state.currentIndex}.srt',
-      );
-      await out.writeAsString(srt, flush: true);
-      await player.setSubtitleTrack(
-        SubtitleTrack.uri(out.path, title: 'Translated', language: targetIso),
-      );
-      _wantedSubId = out.path;
-      _subApplied = true;
+      // Always apply the final complete file, including when all cues were
+      // already served from cache and no partial callback was needed.
+      await applyTranslatedSrt(srt);
       _toast('Subtitles translated');
     } catch (_) {
       _toast('Couldn\'t translate subtitles');
