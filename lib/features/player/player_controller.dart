@@ -3679,15 +3679,17 @@ class PlayerCubit extends Cubit<PlayerState> {
     final prefs = sl<PlaybackPrefs>();
     // Text colour: prefer the new hex pref (#RRGGBBAA → mpv #AARRGGBB), else
     // fall back to the legacy white/yellow token.
+    final overallOpacity = prefs.subtitleOverallOpacity;
     final color =
-        _mpvColor(prefs.subtitleColorHex) ??
-        (prefs.subtitleColor == 'yellow' ? '#FFFFFF00' : '#FFFFFFFF');
-    // Box behind subtitles: prefer the new opacity slider (0–1 → alpha over
-    // black), else the legacy on/off toggle. mpv colour is #AARRGGBB.
-    final bgOpacity = prefs.subtitleBgOpacity;
-    final back = bgOpacity > 0
-        ? '#${_alphaHex(bgOpacity)}000000'
-        : (prefs.subtitleBackground ? '#A0000000' : '#00000000');
+        _mpvColor(prefs.subtitleColorHex, opacity: overallOpacity) ??
+        (prefs.subtitleColor == 'yellow'
+            ? '#${_alphaHex(overallOpacity)}FFFF00'
+            : '#${_alphaHex(overallOpacity)}FFFFFFFF');
+    // Master opacity multiplies the background as well as the text and effects.
+    final bgOpacity = prefs.subtitleBgOpacity > 0
+        ? prefs.subtitleBgOpacity
+        : (prefs.subtitleBackground ? 0xA0 / 255 : 0.0);
+    final back = '#${_alphaHex(bgOpacity * overallOpacity)}000000';
     // Each property is set independently so a single rejected value can't abort
     // the rest (the old single try/catch did).
     Future<void> set(String k, String v) async {
@@ -3724,7 +3726,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       prefs.subtitleOutlineWidth,
     );
     final outlineColor =
-        _mpvColor(prefs.subtitleOutlineColorHex) ?? '#FF000000';
+        _mpvColor(prefs.subtitleOutlineColorHex, opacity: overallOpacity) ?? '#${_alphaHex(overallOpacity)}000000';
     await set('sub-border-color', outlineColor);
     await set('sub-border-size', o.border.toStringAsFixed(1));
     // The independent shadow controls are also sent to libass. Flutter's
@@ -3733,7 +3735,7 @@ class PlayerCubit extends Cubit<PlayerState> {
     await set('sub-shadow-offset', prefs.subtitleShadowDistance.toStringAsFixed(1));
     await set(
       'sub-shadow-color',
-      _mpvColor(prefs.subtitleShadowColorHex) ?? '#FF000000',
+      _mpvColor(prefs.subtitleShadowColorHex, opacity: overallOpacity) ?? '#${_alphaHex(overallOpacity)}000000',
     );
     await set('sub-pos', prefs.subtitlePosition.toString());
     // media_kit renders text subtitles via a Flutter overlay (not libass), so
@@ -3745,13 +3747,13 @@ class PlayerCubit extends Cubit<PlayerState> {
   /// Convert a `#RRGGBBAA` (or `#RRGGBB`) hex string into mpv's alpha-first
   /// `#AARRGGBB` form. Returns null on a malformed/empty value so the caller
   /// can fall back to the legacy token.
-  static String? _mpvColor(String hex) {
+  static String? _mpvColor(String hex, {double opacity = 1.0}) {
     final h = hex.replaceFirst('#', '').trim();
-    if (h.length == 6) return '#FF${h.toUpperCase()}';
+    if (h.length == 6) return '#${_alphaHex(opacity)}${h.toUpperCase()}';
     if (h.length == 8) {
       final rgb = h.substring(0, 6);
-      final a = h.substring(6, 8);
-      return '#${a.toUpperCase()}${rgb.toUpperCase()}';
+      final a = int.tryParse(h.substring(6, 8), radix: 16) ?? 255;
+      return '#${_alphaHex((a / 255) * opacity)}${rgb.toUpperCase()}';
     }
     return null;
   }
