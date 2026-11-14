@@ -808,11 +808,11 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
               colors: [Color(0xFF5A4A48), Color(0xFFB87972), Color(0xFF463B3B)])),
           child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
             const Text('Subtitle Non Dialogue', style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontSize: 11)),
-            Opacity(opacity: p.subtitleOverallOpacity, child: Text('Love Anidesu!!!', style: TextStyle(color: parseSubtitleHex(p.subtitleColorHex), fontSize: 14,
-              fontWeight: FontWeight.w700, shadows: buildSubtitleShadows(p.subtitleOutlineType,p.subtitleOutlineWidth,parseSubtitleHex(p.subtitleOutlineColorHex), shadowColor: parseSubtitleHex(p.subtitleShadowColorHex), shadowDistance: p.subtitleShadowDistance, shadowBlur: p.subtitleShadowBlur, shadowAngle: p.subtitleShadowAngle)))),
+            Text('Love Anidesu!!!', style: TextStyle(color: parseSubtitleHex(p.subtitleColorHex, opacity: p.subtitleOverallOpacity), fontSize: 14,
+              fontWeight: FontWeight.w700, shadows: buildSubtitleShadows(p.subtitleOutlineType,p.subtitleOutlineWidth,parseSubtitleHex(p.subtitleOutlineColorHex, opacity: p.subtitleOverallOpacity), shadowColor: parseSubtitleHex(p.subtitleShadowColorHex, opacity: p.subtitleOverallOpacity), shadowDistance: p.subtitleShadowDistance, shadowBlur: p.subtitleShadowBlur, shadowAngle: p.subtitleShadowAngle))),
             const SizedBox(height: 12),
             const Text('Subtitle Dialogue', style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontSize: 11)),
-            Opacity(opacity: p.subtitleOverallOpacity, child: Text('Love Anidesu!!!', style: buildSubtitleTextStyle(p,fontSize: 18))),
+            Text('Love Anidesu!!!', style: buildSubtitleTextStyle(p,fontSize: 18)),
             const SizedBox(height: 18),
           ])))),
         InkWell(onTap: _font, child: _card(Row(children: [
