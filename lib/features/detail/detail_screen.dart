@@ -2043,6 +2043,14 @@ class _DetailViewState extends State<_DetailView> {
     bool sourceMetadataReady = true,
   }) {
     final item = widget.item;
+    final malArtworkId = detail.malId ?? item.malId;
+    if (detail.type == ProviderType.anime &&
+        malArtworkId != null &&
+        malArtworkId > 0) {
+      // Start loading MAL gallery images as soon as the anime detail is painted.
+      // The viewer reuses this in-flight/completed future when the poster is tapped.
+      unawaited(preloadAnimeMalPictures(malArtworkId));
+    }
     final cubit = context.read<DetailCubit>();
     final category = state.category;
     final selectedSeason = state.selectedSeason;
