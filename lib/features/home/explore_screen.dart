@@ -364,7 +364,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _recommendationCarousel(List<MediaItem> items) {
     if (items.isEmpty) return const SizedBox(height: 184);
-    final width = posterRowWidth(context);
+    final width = MediaQuery.sizeOf(context).width * .80;
     final height = posterRowHeight(context);
     return SizedBox(
       height: height,
@@ -581,7 +581,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   borderRadius: BorderRadius.circular(10),
                   onTap: () => Navigator.of(context).push(StudioPage.route(names[i])),
                   child: SizedBox(
-                    height: 48,
+                    height: 56,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: Row(
