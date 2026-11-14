@@ -70,6 +70,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       f.seasons.length + f.formats.length + f.statuses.length +
       (f.minEpisodes > 0 || f.maxEpisodes < 200 ? 1 : 0) +
       (f.minTagRank > 0 ? 1 : 0) +
+      (f.countryOfOrigin != null ? 1 : 0) +
       (f.sort != MetaSort.popularity ? 1 : 0);
 
   @override
@@ -168,6 +169,19 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     _chips(MetaStatus.values.where((v) => v != MetaStatus.cancelled).map((v) =>
                       _ChipData(_statusLabel(v), f.statuses.contains(v),
                         () => _toggle<MetaStatus>(f.statuses, v, (xs) => f = f.copyWith(statuses: xs)))).toList(), cs),
+                  ],
+                  if (isAniList) ...[
+                    const SizedBox(height: 22),
+                    _heading('Negara', theme),
+                    _chips([
+                      _ChipData('Semua', f.countryOfOrigin == null,
+                        () => setState(() => f = f.copyWith(clearCountryOfOrigin: true))),
+                      ...MetaCountry.values.map((v) => _ChipData(
+                        v.label,
+                        f.countryOfOrigin == v,
+                        () => setState(() => f = f.copyWith(countryOfOrigin: v)),
+                      )),
+                    ], cs),
                   ],
                   const SizedBox(height: 22),
                   _heading('Tahun Rilis', theme),
