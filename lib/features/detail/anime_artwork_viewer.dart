@@ -8,6 +8,44 @@ import 'package:flutter/services.dart';
 
 const _galleryChannel = MethodChannel('animew/image_gallery');
 
+/// Shared in-flight/result cache so the detail page can warm MAL artwork before
+/// the viewer is opened. Opening the gallery joins this same request.
+final Map<int, Future<List<String>>> _malPictureRequests = {};
+
+Future<List<String>> preloadAnimeMalPictures(int malId) {
+  if (malId <= 0) return Future.value(const <String>[]);
+  return _malPictureRequests.putIfAbsent(malId, () async {
+    try {
+      final response = await Dio().get<Map<String, dynamic>>(
+        'https://api.jikan.moe/v4/anime/$malId/pictures',
+        options: Options(
+          receiveTimeout: const Duration(seconds: 20),
+          headers: const {'Accept': 'application/json'},
+        ),
+      );
+      final data = response.data?['data'];
+      if (data is! List) return const <String>[];
+      final urls = <String>[];
+      final seen = <String>{};
+      for (final item in data) {
+        if (item is! Map) continue;
+        final jpg = item['jpg'];
+        final webp = item['webp'];
+        final url = (jpg is Map ? jpg['large_image_url'] : null) as String? ??
+            (webp is Map ? webp['large_image_url'] : null) as String? ??
+            (jpg is Map ? jpg['image_url'] : null) as String? ??
+            (webp is Map ? webp['image_url'] : null) as String?;
+        if (url != null && url.isNotEmpty && seen.add(url)) urls.add(url);
+      }
+      return urls;
+    } catch (_) {
+      // A later page visit may retry if Jikan is temporarily unavailable.
+      _malPictureRequests.remove(malId);
+      return const <String>[];
+    }
+  });
+}
+
 Future<void> showAnimeArtworkViewer(
   BuildContext context, {
   required String posterUrl,
@@ -70,32 +108,19 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
     if (id == null || id <= 0) return;
     if (mounted) setState(() => _loadingMalPictures = true);
     try {
-      final response = await Dio().get<Map<String, dynamic>>(
-        'https://api.jikan.moe/v4/anime/$id/pictures',
-        options: Options(
-          receiveTimeout: const Duration(seconds: 20),
-          headers: const {'Accept': 'application/json'},
-        ),
-      );
-      final data = response.data?['data'];
-      if (data is! List) return;
+      // Usually this future has already completed while the detail page was
+      // visible; if not, the viewer joins the request instead of duplicating it.
+      final urls = await preloadAnimeMalPictures(id);
+      if (!mounted || urls.isEmpty) return;
       final existing = widget.images.map((image) => image.url).toSet();
       final additions = <({String label, String url})>[];
-      for (final item in data) {
-        if (item is! Map) continue;
-        final jpg = item['jpg'];
-        final webp = item['webp'];
-        final url = (jpg is Map ? jpg['large_image_url'] : null) as String? ??
-            (webp is Map ? webp['large_image_url'] : null) as String? ??
-            (jpg is Map ? jpg['image_url'] : null) as String? ??
-            (webp is Map ? webp['image_url'] : null) as String?;
-        if (url == null || url.isEmpty || !existing.add(url)) continue;
+      for (final url in urls) {
+        if (!existing.add(url)) continue;
         additions.add((label: 'MAL ${additions.length + 1}', url: url));
       }
-      if (!mounted || additions.isEmpty) return;
-      setState(() => widget.images.addAll(additions));
-    } catch (_) {
-      // MAL pictures are optional; keep the AniList poster and banner usable.
+      if (additions.isNotEmpty) {
+        setState(() => widget.images.addAll(additions));
+      }
     } finally {
       if (mounted) setState(() => _loadingMalPictures = false);
     }
