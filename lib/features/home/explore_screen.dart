@@ -576,7 +576,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ('Siap Maraton', Icons.playlist_play_rounded, const MetaFilters(minEpisodes: 24)),
       ('Anime Baru', Icons.fiber_new_rounded, const MetaFilters(sort: MetaSort.newest)),
     ];
-    return SizedBox(height: 44, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
+    return SizedBox(height: 44, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 14),
       children: [for (final c in choices) Padding(padding: const EdgeInsets.only(right: 7),
         child: _pill(c.$1, () => _search(filters: c.$3), icon: Icon(c.$2, size: 12, color: AppColors.accent)))]));
   }
