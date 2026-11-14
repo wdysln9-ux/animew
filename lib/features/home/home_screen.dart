@@ -2152,16 +2152,15 @@ class _HomeViewState extends State<_HomeView>
                           ),
                           ContentMode.anime => false,
                         };
-                  return CustomScrollView(
-                    // Bouncing + always-scrollable physics lets the sliver
-                    // refresh control receive a pull even when Home is short.
-                    physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
-                    ),
-                    slivers: [
-                      CupertinoSliverRefreshControl(
-                        onRefresh: () => _refreshHomeContent(context),
-                      ),
+                  return RefreshIndicator(
+                    // Match Explore: show the circular refresh indicator
+                    // without using a Cupertino sliver that stretches Home.
+                    color: AppColors.accent,
+                    backgroundColor: AppColors.surface,
+                    onRefresh: () => _refreshHomeContent(context),
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
                       // ── Hero + floating header (first sliver) ─────────────────
                       SliverToBoxAdapter(
                         child: Builder(
@@ -2297,7 +2296,8 @@ class _HomeViewState extends State<_HomeView>
                           height: MediaQuery.paddingOf(context).bottom,
                         ),
                       ),
-                    ],
+                      ],
+                    ),
                   );
                 },
               ),
