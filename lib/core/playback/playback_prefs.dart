@@ -1123,6 +1123,34 @@ class PlaybackPrefs {
   Future<void> setSubtitleApiKey(String value) =>
       _box.put('subtitleApiKey', value);
 
+  /// Per-anime freeform layout for ordinary Flutter-rendered subtitles.
+  Map<String, double> subtitleLayoutFor(String key) {
+    final raw = _box.get('subtitleLayouts', defaultValue: <String, dynamic>{});
+    final all = raw is Map ? raw : <dynamic, dynamic>{};
+    final value = all[key];
+    if (value is! Map) return const {'x': 0.5, 'y': 0.88, 'scale': 1.0};
+    return {
+      'x': (value['x'] as num?)?.toDouble().clamp(0.04, 0.96) ?? 0.5,
+      'y': (value['y'] as num?)?.toDouble().clamp(0.08, 0.94) ?? 0.88,
+      'scale': (value['scale'] as num?)?.toDouble().clamp(0.5, 2.5) ?? 1.0,
+    };
+  }
+
+  Future<void> setSubtitleLayoutFor(
+    String key, {required double x, required double y, required double scale}
+  ) async {
+    final raw = _box.get('subtitleLayouts', defaultValue: <String, dynamic>{});
+    final all = raw is Map
+        ? Map<String, dynamic>.from(raw)
+        : <String, dynamic>{};
+    all[key] = {
+      'x': x.clamp(0.04, 0.96),
+      'y': y.clamp(0.08, 0.94),
+      'scale': scale.clamp(0.5, 2.5),
+    };
+    await _box.put('subtitleLayouts', all);
+  }
+
   /// Vertical subtitle position (0 = top, 100 = bottom), maps to mpv `sub-pos`.
   /// Default 95 keeps subtitles near the bottom edge.
   int get subtitlePosition =>
