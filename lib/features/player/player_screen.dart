@@ -3127,7 +3127,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _ => TextAlign.center,
     };
     return SubtitleViewConfiguration(
-      visible: false,
+      visible: !hideFlutter,
       textAlign: textAlign,
       padding: EdgeInsets.fromLTRB(16, 0, 16, bottom),
       style: buildSubtitleTextStyle(p, fontSize: 32.0 * p.subtitleScale),
@@ -4064,6 +4064,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             // Passive Listener tracks raw pointers for pinch-to-zoom so it never
             // competes with the 1-finger gesture detector inside the Stack.
             final playerStack = Stack(
+                key: _playerStackKey,
                 fit: StackFit.expand,
                 children: [
                   // Ambient layer reuses the current video texture. The main
