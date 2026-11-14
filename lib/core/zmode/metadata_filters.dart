@@ -25,6 +25,7 @@ class MetaFilters {
     this.season,
     this.format,
     this.status,
+    this.countryOfOrigin,
     this.sort = MetaSort.popularity,
     this.sortAscending = false,
     this.minScore,
@@ -55,6 +56,8 @@ class MetaFilters {
   final MetaSeason? season;
   final MetaFormat? format;
   final MetaStatus? status;
+  /// AniList country-of-origin filter (JP, CN, KR, TW).
+  final MetaCountry? countryOfOrigin;
   final MetaSort sort;
   final bool sortAscending;
 
@@ -84,6 +87,7 @@ class MetaFilters {
       season == null &&
       format == null &&
       status == null &&
+      countryOfOrigin == null &&
       minScore == null &&
       !adult &&
       sort == MetaSort.popularity &&
@@ -113,6 +117,7 @@ class MetaFilters {
       season != null ||
       format != null ||
       status != null ||
+      countryOfOrigin != null ||
       minScore != null ||
       sort != MetaSort.popularity;
 
@@ -132,6 +137,7 @@ class MetaFilters {
     MetaSeason? season,
     MetaFormat? format,
     MetaStatus? status,
+    MetaCountry? countryOfOrigin,
     MetaSort? sort,
     bool? sortAscending,
     int? minScore,
@@ -140,6 +146,7 @@ class MetaFilters {
     bool clearSeason = false,
     bool clearFormat = false,
     bool clearStatus = false,
+    bool clearCountryOfOrigin = false,
     bool clearScore = false,
   }) => MetaFilters(
     genres: genres ?? this.genres,
@@ -157,6 +164,7 @@ class MetaFilters {
     season: clearSeason ? null : (season ?? this.season),
     format: clearFormat ? null : (format ?? this.format),
     status: clearStatus ? null : (status ?? this.status),
+    countryOfOrigin: clearCountryOfOrigin ? null : (countryOfOrigin ?? this.countryOfOrigin),
     sort: sort ?? this.sort,
     sortAscending: sortAscending ?? this.sortAscending,
     minScore: clearScore ? null : (minScore ?? this.minScore),
@@ -182,6 +190,7 @@ class MetaFilters {
     if (season != null) 's': season!.name,
     if (format != null) 'f': format!.name,
     if (status != null) 'st': status!.name,
+    if (countryOfOrigin != null) 'co': countryOfOrigin!.name,
     if (minScore != null) 'ms': minScore,
     if (adult) 'a': true,
     'so': sort.name,
@@ -210,6 +219,7 @@ class MetaFilters {
         season: pick(MetaSeason.values, m['s'] as String?),
         format: pick(MetaFormat.values, m['f'] as String?),
         status: pick(MetaStatus.values, m['st'] as String?),
+        countryOfOrigin: pick(MetaCountry.values, m['co'] as String?),
         minScore: m['ms'] as int?,
         adult: m['a'] == true,
         sort: pick(MetaSort.values, m['so'] as String?) ?? MetaSort.popularity,
@@ -227,6 +237,24 @@ enum MetaSeason { winter, spring, summer, fall }
 enum MetaFormat { tv, movie, ona, ova, special, manga, novel, oneShot }
 
 enum MetaStatus { releasing, finished, notYetReleased, cancelled }
+
+enum MetaCountry { japan, china, southKorea, taiwan }
+
+extension MetaCountryDetails on MetaCountry {
+  String get aniListCode => switch (this) {
+    MetaCountry.japan => 'JP',
+    MetaCountry.china => 'CN',
+    MetaCountry.southKorea => 'KR',
+    MetaCountry.taiwan => 'TW',
+  };
+
+  String get label => switch (this) {
+    MetaCountry.japan => 'Jepang',
+    MetaCountry.china => 'China',
+    MetaCountry.southKorea => 'Korea Selatan',
+    MetaCountry.taiwan => 'Taiwan',
+  };
+}
 
 enum MetaSort { popularity, score, trending, newest, title, recommendation }
 
