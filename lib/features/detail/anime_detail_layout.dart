@@ -1456,7 +1456,13 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                     cards.add(SizedBox(
                       width: width,
                       child: PosterCard(
-                        title: relation.title,
+                        // Source-supplied relations may store the English
+                        // title in [title] even when the app is set to Romaji.
+                        // AniList provides the Romaji variant separately.
+                        title: titleLanguagePref == TitleLanguage.romaji &&
+                                relation.romaji?.trim().isNotEmpty == true
+                            ? relation.romaji!.trim()
+                            : relation.title,
                         imageUrl: relation.cover,
                         imageColor: relation.coverColor,
                         cellWidth: width,
