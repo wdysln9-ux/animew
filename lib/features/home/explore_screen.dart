@@ -633,7 +633,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'),
           if (hidden.isNotEmpty) _posterRail(hidden)
           else Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('Belum ada anime tersembunyi yang cocok.', style: _txt(11, color: AppColors.textTertiary))),
-          _heading('Lagi pengen apa?', marked: true), _quickPicks(),
+          _heading('Lagi pengen apa?'), _quickPicks(),
           _heading('Telusuri Musim'), _seasons(),
           _heading('Genre', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen()))), _genreGrid(),
           _heading('Telusuri Tahun', topPadding: 9), _years(),
