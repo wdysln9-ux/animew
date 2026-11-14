@@ -4178,7 +4178,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                       constraints: BoxConstraints(
                                         maxWidth: constraints.maxWidth * 0.9,
                                       ),
-                                      child: Text(
+                                      child: Opacity(
+                                        opacity: prefs.subtitleOverallOpacity,
+                                        child: Text(
                                         caption,
                                         textAlign: switch (prefs.subtitleJustification) {
                                           'left' => TextAlign.left,
@@ -4187,6 +4189,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                         },
                                         style: buildSubtitleTextStyle(
                                           prefs, fontSize: 32.0 * prefs.subtitleScale,
+                                        ),
                                         ),
                                       ),
                                     ),
