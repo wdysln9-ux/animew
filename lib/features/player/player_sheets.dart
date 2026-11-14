@@ -638,7 +638,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
     await p.setSubtitleFont(''); await p.setSubtitleScale(1);
     await p.setSubtitleFontWeight(500); await p.setSubtitleColorHex('#FFFFFFFF');
     await p.setSubtitleOutlineWidth(2); await p.setSubtitleOutlineColorHex('#000000FF');
-    await p.setSubtitleShadowAngle(90); await p.setSubtitleShadowDistance(1);
+    await p.setSubtitleShadowAngle(90); await p.setSubtitleShadowDistance(2);
     await p.setSubtitleShadowBlur(0); await p.setSubtitleShadowColorHex('#000000FF');
     await p.setSubtitleBgOpacity(0); await p.setSubtitleTextOpacity(1);
   });
@@ -661,20 +661,125 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
   }
 
   Future<void> _color(String label, String current, Future<void> Function(String) save) async {
-    final c = TextEditingController(text: current.replaceFirst('#', '').substring(0, 6));
-    final result = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: card, title: Text(label, style: const TextStyle(color: Colors.white)),
-      content: TextField(controller: c, maxLength: 6, style: const TextStyle(color: Colors.white),
-        decoration: const InputDecoration(prefixText: '#', counterText: '')),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-        TextButton(onPressed: () {
-          final v = c.text.toUpperCase();
-          if (RegExp(r'^[0-9A-F]{6}$').hasMatch(v)) Navigator.pop(ctx, '#'+v+'FF');
-        }, child: const Text('Pilih')),
-      ],
-    ));
-    c.dispose();
+    final input = TextEditingController(
+      text: current.replaceFirst('#', '').substring(0, 6),
+    );
+    var selected = parseSubtitleHex(current);
+    var alpha = selected.opacity;
+    String toHex(Color color, double opacity) {
+      String two(int v) => v.toRadixString(16).padLeft(2, '0').toUpperCase();
+      return '#${two((color.r * 255).round())}${two((color.g * 255).round())}${two((color.b * 255).round())}${two((opacity * 255).round())}';
+    }
+    const palette = <Color>[
+      Color(0xFFFFFFFF), Color(0xFFFFD54F), Color(0xFFFFEB3B),
+      Color(0xFF80DEEA), Color(0xFF29B6F6), Color(0xFF81C784),
+      Color(0xFF4CAF50), Color(0xFFFF8A65), Color(0xFFEF5350),
+      Color(0xFFCE93D8), Color(0xFFB0BEC5), Color(0xFF000000),
+    ];
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, refresh) => AlertDialog(
+          backgroundColor: card,
+          title: Text(label, style: const TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final swatch in palette)
+                    InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () {
+                        refresh(() {
+                          selected = swatch;
+                          input.text = toHex(swatch, 1).substring(1, 7);
+                        });
+                      },
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: swatch,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: selected.toARGB32() == swatch.toARGB32()
+                                ? orange : Colors.white30,
+                            width: selected.toARGB32() == swatch.toARGB32() ? 3 : 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              TextField(
+                controller: input,
+                maxLength: 6,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Kode warna',
+                  prefixText: '#',
+                  counterText: '',
+                ),
+                onChanged: (value) {
+                  final v = value.toUpperCase();
+                  if (RegExp(r'^[0-9A-F]{6}$').hasMatch(v)) {
+                    refresh(() {
+                      selected = Color(int.parse('FF$v', radix: 16));
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text('Transparansi', style: TextStyle(color: Colors.white)),
+                  ),
+                  Text('${(alpha * 100).round()}%', style: const TextStyle(color: muted)),
+                ],
+              ),
+              Slider(
+                value: alpha,
+                min: 0,
+                max: 1,
+                divisions: 100,
+                activeColor: orange,
+                onChanged: (value) => refresh(() => alpha = value),
+              ),
+              Container(
+                height: 34,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: toHex(selected, alpha).isNotEmpty
+                      ? selected.withValues(alpha: alpha) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white24),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            TextButton(
+              onPressed: () {
+                final v = input.text.toUpperCase();
+                if (RegExp(r'^[0-9A-F]{6}$').hasMatch(v)) {
+                  selected = Color(int.parse('FF$v', radix: 16));
+                }
+                Navigator.pop(ctx, toHex(selected, alpha));
+              },
+              child: const Text('Pilih'),
+            ),
+          ],
+        ),
+      ),
+    );
+    input.dispose();
     if (result != null) await _apply(() => save(result));
   }
 
@@ -721,7 +826,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
           child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
             const Text('Subtitle Non Dialogue', style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontSize: 11)),
             Text('Love Anidesu!!!', style: TextStyle(color: parseSubtitleHex(p.subtitleColorHex), fontSize: 14,
-              fontWeight: FontWeight.w700, shadows: buildSubtitleShadows(p.subtitleOutlineType,p.subtitleOutlineWidth,parseSubtitleHex(p.subtitleOutlineColorHex)))),
+              fontWeight: FontWeight.w700, shadows: buildSubtitleShadows(p.subtitleOutlineType,p.subtitleOutlineWidth,parseSubtitleHex(p.subtitleOutlineColorHex), shadowColor: parseSubtitleHex(p.subtitleShadowColorHex), shadowDistance: p.subtitleShadowDistance, shadowBlur: p.subtitleShadowBlur, shadowAngle: p.subtitleShadowAngle))),
             const SizedBox(height: 12),
             const Text('Subtitle Dialogue', style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontSize: 11)),
             Text('Love Anidesu!!!', style: buildSubtitleTextStyle(p,fontSize: 18)),
@@ -741,7 +846,8 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
         _step('Ketebalan Garis Tepi',p.subtitleOutlineWidth.toStringAsFixed(1)+' px',p.subtitleOutlineWidth,0.5,0,8,p.setSubtitleOutlineWidth),
         _colorRow('Warna Garis Tepi',p.subtitleOutlineColorHex,p.setSubtitleOutlineColorHex),
         _step('Sudut Bayangan',p.subtitleShadowAngle.round().toString()+'°',p.subtitleShadowAngle,15,0,360,p.setSubtitleShadowAngle),
-        _step('Ketebalan Bayangan',p.subtitleShadowBlur.toStringAsFixed(1)+' px',p.subtitleShadowBlur,0.5,0,20,p.setSubtitleShadowBlur),
+        _step('Jarak Bayangan',p.subtitleShadowDistance.toStringAsFixed(1)+' px',p.subtitleShadowDistance,0.5,0,20,p.setSubtitleShadowDistance),
+        _step('Ukuran Sebaran Bayangan',p.subtitleShadowBlur.toStringAsFixed(1)+' px',p.subtitleShadowBlur,0.5,0,20,p.setSubtitleShadowBlur),
         _colorRow('Warna Bayangan',p.subtitleShadowColorHex,p.setSubtitleShadowColorHex),
         _colorRow('Warna Latar','#000000FF', (v)=>p.setSubtitleBgOpacity(0)),
         _card(const Text('Subtitle dialog mengikuti semua pengaturan tampilan. Subtitle non-dialog hanya mengikuti gaya font yang dipilih.',
