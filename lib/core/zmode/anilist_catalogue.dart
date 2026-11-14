@@ -419,6 +419,30 @@ class AniListCatalogue implements AnimeCatalogue {
     // season + format, etc.) return nothing even when matching titles exist.
     final randomRecommendation =
         f?.sort == MetaSort.recommendation && kind == ZKind.anime;
+    // Keep recommendation quality rules only for a pure recommendation sort.
+    // A text query or any other selected filter means the user's criteria take
+    // priority over the recommendation catalogue's default exclusions.
+    final hasAdditionalFilters = q.trim().isNotEmpty ||
+        (f != null &&
+            (f.genres.isNotEmpty ||
+                f.tags.isNotEmpty ||
+                f.years.isNotEmpty ||
+                f.seasons.isNotEmpty ||
+                f.formats.isNotEmpty ||
+                f.statuses.isNotEmpty ||
+                f.minEpisodes > 0 ||
+                f.maxEpisodes < 200 ||
+                f.minTagRank > 0 ||
+                f.minYear > 1980 ||
+                f.maxYear < DateTime.now().year ||
+                f.year != null ||
+                f.season != null ||
+                f.format != null ||
+                f.status != null ||
+                f.minScore != null ||
+                f.adult));
+    final applyRecommendationEligibility =
+        randomRecommendation && !hasAdditionalFilters;
     final years = f == null ? const <int>[] : f.years;
     final seasons = f == null ? const <MetaSeason>[] : f.seasons;
     final formats = f == null ? const <MetaFormat>[] : f.formats;
@@ -492,6 +516,9 @@ class AniListCatalogue implements AnimeCatalogue {
       final full =
           'query$decl{ Page(page:$page,perPage:\$n){ media($args){ $_listFields } } }';
       items = _items(await _gql(full, vars), kind);
+    }
+    if (applyRecommendationEligibility) {
+      items = items.where(_isEligibleRecommendation).toList();
     }
     if (randomRecommendation) items.shuffle(math.Random());
     return items;
@@ -857,7 +884,7 @@ class AniListCatalogue implements AnimeCatalogue {
       case 'MUSIC':
         return false;
       case 'ONA':
-        return item.durationMins != null && item.durationMins! > 15;
+        return item.durationMins != null && item.durationMins! > 20;
       case 'MOVIE':
       case 'OVA':
       case 'SPECIAL':
