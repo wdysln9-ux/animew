@@ -1899,60 +1899,66 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   // ── Two-finger horizontal stretch ───────────────────────────────────────
   void _onPointerDown(PointerDownEvent e) {
+    // Subtitle adjustment is handled only by the GestureDetector attached to
+    // the rendered caption. Do not let the full-player stretch listener move it.
+    if (_subtitleAdjustMode) return;
     _pointers[e.pointer] = e.position;
-    if (_subtitleAdjustMode) {
-      if (_pointers.length == 2) {
-        final p = _pointers.values.toList();
-        _subtitleGestureStartSpan = (p[0] - p[1]).distance;
-        _subtitlePinchBase = _subtitleSize;
-      }
-      return;
-    }
     if (_pointers.length == 2 && !_locked) _startPinch();
   }
 
   void _onPointerMove(PointerMoveEvent e) {
-    if (!_pointers.containsKey(e.pointer)) return;
+    if (_subtitleAdjustMode || !_pointers.containsKey(e.pointer)) return;
     _pointers[e.pointer] = e.position;
-    if (_subtitleAdjustMode) {
-      _updateSubtitleAdjustment();
-      return;
-    }
     if (_pinching && _pointers.length >= 2) _updatePinch();
   }
 
   void _onPointerUp(PointerEvent e) {
+    if (_subtitleAdjustMode) return;
     _pointers.remove(e.pointer);
-    if (_subtitleAdjustMode) {
-      if (_pointers.isEmpty) _saveSubtitleLayout();
-      return;
-    }
     if (_pointers.length < 2 && _pinching) _endPinch();
   }
 
-  void _updateSubtitleAdjustment() {
-    final box = _playerStackKey.currentContext?.findRenderObject();
-    if (box is! RenderBox || !box.hasSize || _pointers.isEmpty) return;
-    final local = _pointers.values.map(box.globalToLocal).toList();
-    if (local.length >= 2) {
-      final span = (local[0] - local[1]).distance;
-      final previous = (_subtitlePinchBase <= 0 ? 1.0 : _subtitlePinchBase);
-      final initial = _subtitleGestureStartSpan;
-      if (initial > 0) {
-        setState(() => _subtitleSize =
-            (previous * span / initial).clamp(0.5, 2.5).toDouble());
-      }
-      return;
-    }
-    final size = box.size;
-    var x = (local.first.dx / size.width).clamp(0.04, 0.96).toDouble();
-    var y = (local.first.dy / size.height).clamp(0.08, 0.94).toDouble();
-    if ((x - 0.5).abs() < 0.025) x = 0.5;
-    if ((y - 0.5).abs() < 0.025) y = 0.5;
-    setState(() { _subtitleX = x; _subtitleY = y; });
+  Offset _subtitleScaleStartFocal = Offset.zero;
+  double _subtitleScaleStartX = 0.5;
+  double _subtitleScaleStartY = 0.88;
+  double _subtitleScaleStartSize = 1.0;
+
+  void _onSubtitleScaleStart(ScaleStartDetails details) {
+    _subtitleScaleStartFocal = details.focalPoint;
+    _subtitleScaleStartX = _subtitleX;
+    _subtitleScaleStartY = _subtitleY;
+    _subtitleScaleStartSize = _subtitleSize;
   }
 
-  double _subtitleGestureStartSpan = 0;
+  void _onSubtitleScaleUpdate(ScaleUpdateDetails details) {
+    final object = _playerStackKey.currentContext?.findRenderObject();
+    if (object is! RenderBox || !object.hasSize) return;
+    final local = object.globalToLocal(details.focalPoint);
+    final size = object.size;
+    var x = (_subtitleScaleStartX +
+            (local.dx - object.globalToLocal(_subtitleScaleStartFocal).dx) /
+                size.width)
+        .clamp(0.04, 0.96)
+        .toDouble();
+    var y = (_subtitleScaleStartY +
+            (local.dy - object.globalToLocal(_subtitleScaleStartFocal).dy) /
+                size.height)
+        .clamp(0.08, 0.94)
+        .toDouble();
+    if ((x - 0.5).abs() < 0.025) x = 0.5;
+    if ((y - 0.5).abs() < 0.025) y = 0.5;
+    setState(() {
+      _subtitleX = x;
+      _subtitleY = y;
+      if (details.pointerCount >= 2) {
+        _subtitleSize = (_subtitleScaleStartSize * details.scale)
+            .clamp(0.5, 2.5)
+            .toDouble();
+      }
+    });
+  }
+
+  void _onSubtitleScaleEnd(ScaleEndDetails details) => _saveSubtitleLayout();
 
   void _saveSubtitleLayout() {
     unawaited(sl<PlaybackPrefs>().setSubtitleLayoutFor(
@@ -4148,31 +4154,40 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           final caption = lines.where((line) => line.trim().isNotEmpty).join('\n');
                           if (caption.isEmpty) return const SizedBox.shrink();
                           final prefs = sl<PlaybackPrefs>();
-                          return IgnorePointer(
-                            // The parent Listener owns all touch input in adjustment mode.
-                            // Keep the text out of the hit-test path so it cannot block drags.
-                            ignoring: true,
-                            child: LayoutBuilder(
-                              builder: (context, constraints) => Align(
-                                alignment: Alignment(
-                                  _subtitleX * 2 - 1,
-                                  _subtitleY * 2 - 1,
-                                ),
-                                child: Transform.scale(
-                                  scale: _subtitleSize,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      maxWidth: constraints.maxWidth * 0.9,
-                                    ),
-                                    child: Text(
-                                      caption,
-                                      textAlign: switch (prefs.subtitleJustification) {
-                                        'left' => TextAlign.left,
-                                        'right' => TextAlign.right,
-                                        _ => TextAlign.center,
-                                      },
-                                      style: buildSubtitleTextStyle(
-                                        prefs, fontSize: 32.0 * prefs.subtitleScale,
+                          return LayoutBuilder(
+                            builder: (context, constraints) => Align(
+                              alignment: Alignment(
+                                _subtitleX * 2 - 1,
+                                _subtitleY * 2 - 1,
+                              ),
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.translucent,
+                                onScaleStart: _onSubtitleScaleStart,
+                                onScaleUpdate: _onSubtitleScaleUpdate,
+                                onScaleEnd: _onSubtitleScaleEnd,
+                                child: Padding(
+                                  // A small touch margin makes the caption easier
+                                  // to grab without turning the whole screen draggable.
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  child: Transform.scale(
+                                    scale: _subtitleSize,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxWidth: constraints.maxWidth * 0.9,
+                                      ),
+                                      child: Text(
+                                        caption,
+                                        textAlign: switch (prefs.subtitleJustification) {
+                                          'left' => TextAlign.left,
+                                          'right' => TextAlign.right,
+                                          _ => TextAlign.center,
+                                        },
+                                        style: buildSubtitleTextStyle(
+                                          prefs, fontSize: 32.0 * prefs.subtitleScale,
+                                        ),
                                       ),
                                     ),
                                   ),
