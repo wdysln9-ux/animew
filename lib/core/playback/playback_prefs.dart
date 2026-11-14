@@ -1115,6 +1115,14 @@ class PlaybackPrefs {
   Future<void> setSubtitleTextOpacity(double value) =>
       _box.put('subtitleTextOpacity', value.clamp(0.1, 1.0));
 
+  /// Master subtitle opacity. Multiplies text, outline, shadow and background.
+  double get subtitleOverallOpacity =>
+      (_box.get('subtitleOverallOpacity', defaultValue: 1.0) as num)
+          .toDouble()
+          .clamp(0.0, 1.0);
+  Future<void> setSubtitleOverallOpacity(double value) =>
+      _box.put('subtitleOverallOpacity', value.clamp(0.0, 1.0));
+
   /// OpenSubtitles REST API key (https://www.opensubtitles.com/consumers).
   /// Empty by default — the user pastes a free key in Settings to enable online
   /// subtitle search/download. Stored verbatim (trimmed at use sites).
