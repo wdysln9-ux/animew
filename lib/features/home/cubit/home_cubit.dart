@@ -190,6 +190,7 @@ class HomeCubit extends Cubit<HomeState> {
         score: entry.score,
         popularity: entry.popularity,
         totalEpisodes: entry.totalEpisodes,
+        year: entry.airsAtLocal.year.toString(),
         genres: entry.genres,
         status: entry.status,
         isUpcoming: entry.airsAtLocal.isAfter(DateTime.now()),
