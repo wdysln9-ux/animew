@@ -365,6 +365,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _stretchBaseSpan = 0;
   double _stretchBaseX = 1.0;
   double? _stretchSnapRatio;
+  bool _subtitleAdjustMode = false;
+  final GlobalKey _playerStackKey = GlobalKey();
+  late double _subtitleX =
+      sl<PlaybackPrefs>().subtitleLayoutFor(_stretchPreferenceKey)['x']!;
+  late double _subtitleY =
+      sl<PlaybackPrefs>().subtitleLayoutFor(_stretchPreferenceKey)['y']!;
+  late double _subtitleSize =
+      sl<PlaybackPrefs>().subtitleLayoutFor(_stretchPreferenceKey)['scale']!;
+  double _subtitlePinchBase = 1.0;
+
 
   String get _stretchPreferenceKey {
     final malId = widget.malId;
@@ -1890,18 +1900,77 @@ class _PlayerScreenState extends State<PlayerScreen> {
   // ── Two-finger horizontal stretch ───────────────────────────────────────
   void _onPointerDown(PointerDownEvent e) {
     _pointers[e.pointer] = e.position;
+    if (_subtitleAdjustMode) {
+      if (_pointers.length == 2) {\n        final p = _pointers.values.toList();\n        _subtitleGestureStartSpan = (p[0] - p[1]).distance;\n        _subtitlePinchBase = _subtitleSize;\n      }
+      return;
+    }
     if (_pointers.length == 2 && !_locked) _startPinch();
   }
 
   void _onPointerMove(PointerMoveEvent e) {
     if (!_pointers.containsKey(e.pointer)) return;
     _pointers[e.pointer] = e.position;
+    if (_subtitleAdjustMode) {
+      _updateSubtitleAdjustment();
+      return;
+    }
     if (_pinching && _pointers.length >= 2) _updatePinch();
   }
 
   void _onPointerUp(PointerEvent e) {
     _pointers.remove(e.pointer);
+    if (_subtitleAdjustMode) {
+      if (_pointers.isEmpty) _saveSubtitleLayout();
+      return;
+    }
     if (_pointers.length < 2 && _pinching) _endPinch();
+  }
+
+  void _updateSubtitleAdjustment() {
+    final box = _playerStackKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.hasSize || _pointers.isEmpty) return;
+    final local = _pointers.values.map(box.globalToLocal).toList();
+    if (local.length >= 2) {
+      final span = (local[0] - local[1]).distance;
+      final previous = (_subtitlePinchBase <= 0 ? 1.0 : _subtitlePinchBase);
+      final initial = _subtitleGestureStartSpan;
+      if (initial > 0) {
+        setState(() => _subtitleSize =
+            (previous * span / initial).clamp(0.5, 2.5).toDouble());
+      }
+      return;
+    }
+    final size = box.size;
+    var x = (local.first.dx / size.width).clamp(0.04, 0.96).toDouble();
+    var y = (local.first.dy / size.height).clamp(0.08, 0.94).toDouble();
+    if ((x - 0.5).abs() < 0.025) x = 0.5;
+    if ((y - 0.5).abs() < 0.025) y = 0.5;
+    setState(() { _subtitleX = x; _subtitleY = y; });
+  }
+
+  double _subtitleGestureStartSpan = 0;
+
+  void _saveSubtitleLayout() {
+    unawaited(sl<PlaybackPrefs>().setSubtitleLayoutFor(
+      _stretchPreferenceKey, x: _subtitleX, y: _subtitleY, scale: _subtitleSize,
+    ));
+  }
+
+  void _toggleSubtitleAdjustment() {
+    if (sl<PlaybackPrefs>().styledSubtitles) return;
+    setState(() {
+      _subtitleAdjustMode = !_subtitleAdjustMode;
+      _pointers.clear();
+      _pinching = false;
+      _stretchSnapRatio = null;
+      _hudVisible = false;
+    });
+    if (!_subtitleAdjustMode) {
+      _saveSubtitleLayout();
+      _bumpControls();
+    } else {
+      _controlsVisible = false;
+    }
   }
 
   void _startPinch() {
@@ -2028,6 +2097,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
               _openAudioSubsSheet();
             },
           ),
+          if (!sl<PlaybackPrefs>().styledSubtitles &&
+              _c.activeSubtitleTrack.id != 'no')
+            _QuickSettingRow(
+              icon: Icons.open_with_rounded,
+              label: 'Atur posisi & ukuran subtitle',
+              value: 'Geser / cubit',
+              onTap: () {
+                Navigator.pop(context);
+                _toggleSubtitleAdjustment();
+              },
+            ),
           _QuickSettingRow(
             icon: Icons.photo_camera_outlined,
             label: 'Screenshot',
@@ -3043,6 +3123,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _ => TextAlign.center,
     };
     return SubtitleViewConfiguration(
+      visible: false,
       textAlign: textAlign,
       padding: EdgeInsets.fromLTRB(16, 0, 16, bottom),
       style: buildSubtitleTextStyle(p, fontSize: 32.0 * p.subtitleScale),
@@ -4052,6 +4133,78 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     ),
                   ),
 
+                  if (!sl<PlaybackPrefs>().styledSubtitles)
+                    Positioned.fill(
+                      child: StreamBuilder<List<String>>(
+                        stream: _c.player.stream.subtitle,
+                        initialData: _c.player.state.subtitle,
+                        builder: (context, snapshot) {
+                          final lines = snapshot.data ?? const <String>[];
+                          final caption = lines.where((line) => line.trim().isNotEmpty).join('\\n');
+                          if (caption.isEmpty) return const SizedBox.shrink();
+                          final prefs = sl<PlaybackPrefs>();
+                          return IgnorePointer(
+                            ignoring: !_subtitleAdjustMode,
+                            child: LayoutBuilder(
+                              builder: (context, constraints) => Align(
+                                alignment: Alignment(
+                                  _subtitleX * 2 - 1,
+                                  _subtitleY * 2 - 1,
+                                ),
+                                child: Transform.scale(
+                                  scale: _subtitleSize,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxWidth: constraints.maxWidth * 0.9,
+                                    ),
+                                    child: Text(
+                                      caption,
+                                      textAlign: switch (prefs.subtitleJustification) {
+                                        'left' => TextAlign.left,
+                                        'right' => TextAlign.right,
+                                        _ => TextAlign.center,
+                                      },
+                                      style: buildSubtitleTextStyle(
+                                        prefs, fontSize: 32.0 * prefs.subtitleScale,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  if (_subtitleAdjustMode)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          painter: _SubtitleCenterGuidesPainter(
+                            vertical: (_subtitleX - 0.5).abs() < 0.025,
+                            horizontal: (_subtitleY - 0.5).abs() < 0.025,
+                            accent: AppColors.accent,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (_subtitleAdjustMode)
+                    Positioned(
+                      top: 18,
+                      right: 18,
+                      child: SafeArea(
+                        child: FilledButton.icon(
+                          onPressed: _toggleSubtitleAdjustment,
+                          icon: const Icon(Icons.check, size: 18),
+                          label: const Text('Selesai'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.accent,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
                   // Aspect-ratio guides appear only while adjusting the stretch.
                   if (_pinching)
                     Positioned.fill(
@@ -4858,6 +5011,42 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
 // Draws full-height aspect-ratio frames. The outer Stack is edge-to-edge in
 // fullscreen, so these guides and the stretched video also reach the notch.
+class _SubtitleCenterGuidesPainter extends CustomPainter {
+  const _SubtitleCenterGuidesPainter({
+    required this.vertical,
+    required this.horizontal,
+    required this.accent,
+  });
+  final bool vertical;
+  final bool horizontal;
+  final Color accent;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = accent.withValues(alpha: 0.72)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+    if (vertical) {
+      canvas.drawLine(Offset(size.width / 2, 0),
+          Offset(size.width / 2, size.height), paint);
+    }
+    if (horizontal) {
+      canvas.drawLine(Offset(0, size.height / 2),
+          Offset(size.width, size.height / 2), paint);
+    }
+    if (vertical || horizontal) {
+      paint.strokeWidth = 2;
+      canvas.drawCircle(Offset(size.width / 2, size.height / 2), 5, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SubtitleCenterGuidesPainter old) =>
+      old.vertical != vertical || old.horizontal != horizontal ||
+      old.accent != accent;
+}
+
 class _StretchGuidesPainter extends CustomPainter {
   const _StretchGuidesPainter({
     required this.ratios,
