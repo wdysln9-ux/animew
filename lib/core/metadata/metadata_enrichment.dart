@@ -204,10 +204,21 @@ class MetadataEnrichment {
   static const String _tmdbBase = 'https://api.themoviedb.org/3';
   static const String _img = 'https://image.tmdb.org/t/p';
 
-  /// Resolve an id-less anime directly against Jikan/MAL, never AniList.
+  /// Resolve an id-less anime's MAL cross-reference.
+  /// Prefer AniList's exact media id when available; only use Jikan title
+  /// search for sources that do not provide an AniList id.
   Future<int?> resolveMalId(MediaDetail d) async {
     if (d.malId != null) return d.malId;
     if (d.type != ProviderType.anime || d.title.trim().isEmpty) return null;
+    final anilistId = d.anilistId;
+    if (anilistId != null && anilistId > 0) {
+      try {
+        final exact = await _anilist.malIdByMediaId(anilistId);
+        if (exact != null && exact > 0) return exact;
+      } catch (_) {
+        // Keep the existing Jikan title fallback below.
+      }
+    }
     final titles = <String>{
       if (d.englishTitle?.trim().isNotEmpty == true) d.englishTitle!.trim(),
       d.title.trim(),
