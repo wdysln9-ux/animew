@@ -120,14 +120,20 @@ TextStyle buildSubtitleTextStyle(PlaybackPrefs p, {required double fontSize}) {
     fontFamily: p.subtitleFont.isEmpty ? null : p.subtitleFont,
     fontWeight: FontWeight.values[(p.subtitleFontWeight ~/ 100).clamp(1, 9).toInt() - 1],
     fontStyle: p.subtitleItalic ? FontStyle.italic : FontStyle.normal,
-    color: parseSubtitleHex(p.subtitleColorHex, opacity: p.subtitleTextOpacity),
-    backgroundColor:
-        Color.fromRGBO(0, 0, 0, p.subtitleBgOpacity.clamp(0.0, 1.0)),
+    color: parseSubtitleHex(
+      p.subtitleColorHex,
+      opacity: p.subtitleTextOpacity * p.subtitleOverallOpacity,
+    ),
+    backgroundColor: Color.fromRGBO(
+      0, 0, 0, p.subtitleBgOpacity.clamp(0.0, 1.0) * p.subtitleOverallOpacity,
+    ),
     shadows: buildSubtitleShadows(
       p.subtitleOutlineType,
       p.subtitleOutlineWidth,
-      parseSubtitleHex(p.subtitleOutlineColorHex),
-      shadowColor: parseSubtitleHex(p.subtitleShadowColorHex),
+      parseSubtitleHex(p.subtitleOutlineColorHex, opacity: p.subtitleOverallOpacity),
+      shadowColor: parseSubtitleHex(
+        p.subtitleShadowColorHex, opacity: p.subtitleOverallOpacity,
+      ),
       shadowDistance: p.subtitleShadowDistance,
       shadowBlur: p.subtitleShadowBlur,
       shadowAngle: p.subtitleShadowAngle,
