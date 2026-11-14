@@ -98,9 +98,15 @@ List<AiringEntry> sortHomeAiringsByLatestRelease(
   DateTime? now,
 }) {
   final current = now ?? DateTime.now();
-  // These presentation filters belong to Home's "Anime Tayang" row, not the
-  // general airing feed: keep TV_SHORT and short ONA available to other views.
+  // Home's "Anime Tayang" row is a list of episodes that have ALREADY
+  // aired for series that are still RELEASING. The schedule window starts
+  // yesterday, so yesterday's releases remain visible; future episodes and
+  // FINISHED/NOT_YET_RELEASED titles do not belong in this row.
+  // These presentation filters stay local to Home; the calendar keeps its
+  // broader schedule, including TV_SHORT and short ONA.
   final sorted = entries.where((entry) {
+    if (entry.status != MediaStatus.ongoing) return false;
+    if (entry.airsAtLocal.isAfter(current)) return false;
     if (entry.format == 'TV_SHORT') return false;
     if (entry.format == 'ONA' &&
         entry.durationMinutes != null &&
