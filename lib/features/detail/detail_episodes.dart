@@ -30,6 +30,7 @@ class _EpisodesTab extends StatefulWidget {
     this.showPopularity,
     this.totalEpisodes,
     this.isAiring = false,
+    this.isMusicVideo = false,
     required this.onOpen,
     this.onEpisodeMenu,
     this.onRefresh,
@@ -86,6 +87,7 @@ class _EpisodesTab extends StatefulWidget {
   final int? showPopularity;
   final int? totalEpisodes;
   final bool isAiring;
+  final bool isMusicVideo;
   final void Function(int fullIndex) onOpen;
 
   /// Long-press an episode → pick which player opens it, this once. Null on
