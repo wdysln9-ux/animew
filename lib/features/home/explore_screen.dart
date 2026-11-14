@@ -409,29 +409,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _taste() {
-    var stats = _viewerGenreCounts.entries
+    final stats = _viewerGenreCounts.entries
         .where((entry) => entry.value > 0)
-        .toList();
-    // If the viewer's AniList library is unavailable, derive taste shares
-    // from genres of anime present in the local watch history.
-    if (stats.isEmpty && _history.isNotEmpty) {
-      final watchedIds = _history.map((e) => e.malId).whereType<int>().toSet();
-      final watchedTitles = _history.map((e) => e.showTitle.toLowerCase()).toSet();
-      final counts = <String, int>{};
-      for (final anime in _all) {
-        if ((anime.malId != null && watchedIds.contains(anime.malId)) ||
-            watchedTitles.contains(anime.title.toLowerCase())) {
-          for (final genre in anime.genres) {
-            counts.update(genre, (value) => value + 1, ifAbsent: () => 1);
-          }
-        }
-      }
-      stats = counts.entries.toList();
-    }
-    stats.sort((a, b) => b.value.compareTo(a.value));
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     final total = stats.fold<int>(0, (sum, entry) => sum + entry.value);
     final fallback = stats.isEmpty
-        ? const ['Comedy', 'Fantasy', 'Action', 'Adventure']
+        ? (_history.isEmpty ? const ['Comedy', 'Fantasy', 'Action', 'Adventure'] : _tasteGenres)
         : const <String>[];
     return SizedBox(
       height: 44,
