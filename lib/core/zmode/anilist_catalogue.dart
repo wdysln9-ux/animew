@@ -496,7 +496,7 @@ class AniListCatalogue implements AnimeCatalogue {
     final decl = q.trim().isEmpty ? r'($n:Int)' : r'($q:String,$n:Int)';
     if (q.trim().isNotEmpty) vars['q'] = q;
 
-    late final List<MediaItem> items;
+    late List<MediaItem> items;
     if (seasons.length > 1 && kind == ZKind.anime) {
       final queries = seasons.indexed.map((entry) {
         final (i, season) = entry;
