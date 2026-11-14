@@ -700,6 +700,7 @@ class _SearchViewState extends State<_SearchView>
         (f.season != null ? 1 : 0) +
         (f.format != null ? 1 : 0) +
         (f.status != null ? 1 : 0) +
+        (f.countryOfOrigin != null ? 1 : 0) +
         (f.minScore != null ? 1 : 0) +
         (f.adult ? 1 : 0) +
         (f.sort != MetaSort.popularity || f.sortAscending ? 1 : 0);
