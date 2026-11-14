@@ -606,6 +606,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: GridView.builder(
         shrinkWrap: true,
+        padding: EdgeInsets.zero,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: genres.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
