@@ -39,7 +39,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Map<String, int> _viewerGenreCounts = const {};
   bool _viewerGenreStatsLoaded = false;
   Map<String, int> _studioFavourites = const {};
-  final PageController _heroController = PageController(viewportFraction: .96);
+  final PageController _heroController = PageController(viewportFraction: .88);
 
   @override
   void initState() { super.initState(); _load(); }
@@ -254,8 +254,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<MediaItem> get _recommendations => _row('Rekomendasi Anime');
   List<MediaItem> get _heroes {
     final unique = <String, MediaItem>{};
-    for (final m in [..._recommendations, ..._trending, ..._row('Populer')]) {
+    // The top carousel previews the same recommendations shown in the
+    // "Karena kamu menonton" poster catalogue below.
+    for (final m in _becauseCarousel.take(5)) {
       if (m.banner != null || m.cover != null) unique.putIfAbsent(m.id, () => m);
+    }
+    if (unique.isEmpty) {
+      for (final m in [..._recommendations, ..._trending, ..._row('Populer')]) {
+        if (m.banner != null || m.cover != null) unique.putIfAbsent(m.id, () => m);
+      }
     }
     return unique.values.take(5).toList();
   }
@@ -411,13 +418,29 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _taste() {
-    final stats = _viewerGenreCounts.entries
+    var stats = _viewerGenreCounts.entries
         .where((entry) => entry.value > 0)
-        .toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+        .toList();
+    // If the viewer's AniList library is unavailable, derive taste shares
+    // from genres of anime present in the local watch history.
+    if (stats.isEmpty && _history.isNotEmpty) {
+      final watchedIds = _history.map((e) => e.malId).whereType<int>().toSet();
+      final watchedTitles = _history.map((e) => e.showTitle.toLowerCase()).toSet();
+      final counts = <String, int>{};
+      for (final anime in _all) {
+        if ((anime.malId != null && watchedIds.contains(anime.malId)) ||
+            watchedTitles.contains(anime.title.toLowerCase())) {
+          for (final genre in anime.genres) {
+            counts.update(genre, (value) => value + 1, ifAbsent: () => 1);
+          }
+        }
+      }
+      stats = counts.entries.toList();
+    }
+    stats.sort((a, b) => b.value.compareTo(a.value));
     final total = stats.fold<int>(0, (sum, entry) => sum + entry.value);
     final fallback = stats.isEmpty
-        ? (_history.isEmpty ? const ['Comedy', 'Fantasy', 'Action', 'Adventure'] : _tasteGenres)
+        ? const ['Comedy', 'Fantasy', 'Action', 'Adventure']
         : const <String>[];
     return SizedBox(
       height: 44,
