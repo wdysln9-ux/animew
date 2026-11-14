@@ -169,9 +169,10 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
         _hideMalSuccessMessage = false;
       });
       if (additions.isNotEmpty) {
-        // Keep the success confirmation briefly, then fade it out over 1s.
-        await Future<void>.delayed(const Duration(seconds: 1));
-        if (mounted) setState(() => _hideMalSuccessMessage = true);
+        // Start fading as soon as the success message has been painted.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _hideMalSuccessMessage = true);
+        });
       }
     } catch (error) {
       if (!mounted) return;
