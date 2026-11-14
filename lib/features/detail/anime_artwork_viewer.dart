@@ -229,45 +229,68 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                     : const Icon(Icons.download_rounded, color: Colors.white),
               ),
             ),
-            if (_loadingMalPictures)\n              Positioned(\n                bottom: 18,\n                left: 0,\n                right: 0,\n                child: Center(\n                  child: DecoratedBox(\n                    decoration: BoxDecoration(\n                      color: Colors.black.withValues(alpha: 0.58),\n                      borderRadius: BorderRadius.circular(18),\n                    ),\n                    child: const Padding(\n                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),\n                      child: Row(\n                        mainAxisSize: MainAxisSize.min,\n                        children: [\n                          SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.8, color: Colors.white)),\n                          SizedBox(width: 8),\n                          Text('Memuat gambar MAL...', style: TextStyle(color: Colors.white, fontSize: 12)),\n                        ],\n                      ),\n                    ),\n                  ),\n                ),\n              ),\n            if (widget.images.length > 1)\n              Positioned(
+            if (_loadingMalPictures)
+              Positioned(
+                bottom: 18,
                 left: 0,
                 right: 0,
-                bottom: 18,
                 child: Center(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.58),
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          for (var i = 0; i < widget.images.length; i++) ...[
-                            if (i > 0) const SizedBox(width: 12),
-                            GestureDetector(
-                              onTap: () => _pages.animateToPage(
-                                i,
-                                duration: const Duration(milliseconds: 220),
-                                curve: Curves.easeOut,
-                              ),
-                              child: Text(
-                                widget.images[i].label,
-                                style: TextStyle(
-                                  color: i == _index ? Colors.white : Colors.white60,
-                                  fontSize: 12,
-                                  fontWeight: i == _index ? FontWeight.w700 : FontWeight.w500,
-                                ),
-                              ),
+                          SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.8,
+                              color: Colors.white,
                             ),
-                          ],
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Memuat gambar MAL...',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
                         ],
                       ),
                     ),
                   ),
                 ),
               ),
+            Positioned(
+              top: 14,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.58),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    child: Text(
+                      '${_index + 1}/${widget.images.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
