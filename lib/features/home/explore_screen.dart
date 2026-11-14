@@ -273,9 +273,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return _becauseCarousel.skip(10).take(5).toList();
   }
 
-  void _search({String query = '', MetaFilters? filters}) {
+  void _search({String query = '', MetaFilters? filters, bool hideMyAnime = false}) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) =>
-      SearchScreen(initialQuery: query.isEmpty ? null : query, initialFilters: filters)));
+      SearchScreen(initialQuery: query.isEmpty ? null : query, initialFilters: filters, initialHideMyAnime: hideMyAnime)));
   }
   void _open(MediaItem m) => Navigator.of(context).push(DetailScreen.route(m));
   TextStyle _txt(double size, {FontWeight weight = FontWeight.w500, Color? color, double height = 1.1}) =>
@@ -571,14 +571,45 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _quickPicks() {
     final choices = [
-      ('Tonton Singkat', Icons.bolt_rounded, const MetaFilters(maxEpisodes: 13)),
-      ('Film', Icons.movie_rounded, const MetaFilters(formats: [MetaFormat.movie])),
-      ('Siap Maraton', Icons.playlist_play_rounded, const MetaFilters(minEpisodes: 24)),
-      ('Anime Baru', Icons.fiber_new_rounded, const MetaFilters(sort: MetaSort.newest)),
+      (
+        'Tonton Singkat',
+        Icons.bolt_rounded,
+        const MetaFilters(
+          formats: [MetaFormat.tv],
+          maxEpisodes: 13,
+          statuses: [MetaStatus.finished],
+          sort: MetaSort.recommendation,
+        ),
+      ),
+      (
+        'Film',
+        Icons.movie_rounded,
+        const MetaFilters(
+          formats: [MetaFormat.movie],
+          sort: MetaSort.trending,
+        ),
+      ),
+      (
+        'Marathon',
+        Icons.air_rounded,
+        const MetaFilters(
+          formats: [MetaFormat.tv],
+          minEpisodes: 24,
+          sort: MetaSort.recommendation,
+        ),
+      ),
+      (
+        'Anime Baru',
+        Icons.auto_awesome_rounded,
+        const MetaFilters(
+          statuses: [MetaStatus.finished],
+          sort: MetaSort.newest,
+        ),
+      ),
     ];
     return SizedBox(height: 44, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 14),
       children: [for (final c in choices) Padding(padding: const EdgeInsets.only(right: 7),
-        child: _pill(c.$1, () => _search(filters: c.$3), textSize: 11.5, textColor: Colors.white, icon: Icon(c.$2, size: 12, color: AppColors.accent)))]));
+        child: _pill(c.$1, () => _search(filters: c.$3, hideMyAnime: true), textSize: 11.5, textColor: Colors.white, icon: Icon(c.$2, size: 12, color: AppColors.accent)))]));
   }
 
   Widget _seasons() {
