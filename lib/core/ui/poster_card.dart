@@ -378,7 +378,7 @@ class _PosterCardState extends State<PosterCard> {
             children: [
               Expanded(
                 child: ClipRSuperellipse(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
