@@ -499,7 +499,12 @@ class AniListCatalogue implements AnimeCatalogue {
 
     final random = math.Random();
     Future<int> pageFor(String key, String mediaArgs) async {
-      if (!randomRecommendation) return page;
+      // With explicit filters, keep pagination anchored to the filtered result
+      // set. Randomly jumping to a distant page can make narrow combinations
+      // (especially format + episode range) appear empty or inconsistent.
+      // The returned page is still shuffled below, so recommendation order
+      // remains randomized without discarding the user's filter combination.
+      if (!randomRecommendation || hasAdditionalFilters) return page;
       final countQuery =
           'query$decl{ Page(page:1,perPage:\$n){ pageInfo{total} media($mediaArgs){ id } } }';
       final countData = await _gql(countQuery, vars);
