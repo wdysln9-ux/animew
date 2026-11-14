@@ -445,6 +445,7 @@ class AniListCatalogue implements AnimeCatalogue {
                 f.season != null ||
                 f.format != null ||
                 f.status != null ||
+                f.countryOfOrigin != null ||
                 f.minScore != null ||
                 f.adult));
     final applyRecommendationEligibility =
@@ -492,6 +493,8 @@ class AniListCatalogue implements AnimeCatalogue {
           'status_in:[${statuses.map(_alStatus).whereType<String>().join(',')}]'
         else if (legacyStatus != null)
           'status:$legacyStatus',
+        if (f.countryOfOrigin != null)
+          'countryOfOrigin:${f.countryOfOrigin!.aniListCode}',
         if (f.minEpisodes > 0) 'episodes_greater:${f.minEpisodes - 1}',
         if (f.maxEpisodes < 200) 'episodes_lesser:${f.maxEpisodes + 1}',
         if (f.minScore != null) 'averageScore_greater:${f.minScore! - 1}',
