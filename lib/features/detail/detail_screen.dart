@@ -2097,7 +2097,9 @@ class _DetailViewState extends State<_DetailView> {
               : context.l10n.read)
         : (resume.hasResume
               ? context.l10n.continueEpisode(episodeNum)
-              : context.l10n.play);
+              : (detail.type == ProviderType.anime
+                    ? 'Tonton Ep $episodeNum'
+                    : context.l10n.play));
     final resumeMark = !isReading && eps.isNotEmpty
         ? store.get(item.sourceId, item.url, eps[resumeIdx].id)
         : null;
@@ -2404,7 +2406,7 @@ class _DetailViewState extends State<_DetailView> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: Color.lerp(AppColors.surface2, tint ?? AppColors.surface2, 0.52),
+                    color: Color.lerp(AppColors.bg, tint ?? AppColors.bg, 0.62),
                     border: Border.all(color: AppColors.textTertiary.withValues(alpha: 0.48)),
                     borderRadius: BorderRadius.circular(28),
                   ),
