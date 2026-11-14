@@ -809,7 +809,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
           child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
             const Text('Subtitle Non Dialogue', style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontSize: 11)),
             Opacity(opacity: p.subtitleOverallOpacity, child: Text('Love Anidesu!!!', style: TextStyle(color: parseSubtitleHex(p.subtitleColorHex), fontSize: 14,
-              fontWeight: FontWeight.w700, shadows: buildSubtitleShadows(p.subtitleOutlineType,p.subtitleOutlineWidth,parseSubtitleHex(p.subtitleOutlineColorHex, opacity: p.subtitleOverallOpacity), shadowColor: parseSubtitleHex(p.subtitleShadowColorHex, opacity: p.subtitleOverallOpacity), shadowDistance: p.subtitleShadowDistance, shadowBlur: p.subtitleShadowBlur, shadowAngle: p.subtitleShadowAngle)))),
+              fontWeight: FontWeight.w700, shadows: buildSubtitleShadows(p.subtitleOutlineType,p.subtitleOutlineWidth,parseSubtitleHex(p.subtitleOutlineColorHex), shadowColor: parseSubtitleHex(p.subtitleShadowColorHex), shadowDistance: p.subtitleShadowDistance, shadowBlur: p.subtitleShadowBlur, shadowAngle: p.subtitleShadowAngle, shadowWidth: p.subtitleShadowWidth)))),
             const SizedBox(height: 12),
             const Text('Subtitle Dialogue', style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontSize: 11)),
             Opacity(opacity: p.subtitleOverallOpacity, child: Text('Love Anidesu!!!', style: buildSubtitleTextStyle(p,fontSize: 18))),
@@ -829,6 +829,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
         _step('Ketebalan Garis Tepi',p.subtitleOutlineWidth.toStringAsFixed(1)+' px',p.subtitleOutlineWidth,0.5,0,8,p.setSubtitleOutlineWidth),
         _colorRow('Warna Garis Tepi',p.subtitleOutlineColorHex,p.setSubtitleOutlineColorHex),
         _step('Sudut Bayangan',p.subtitleShadowAngle.round().toString()+'°',p.subtitleShadowAngle,15,0,360,p.setSubtitleShadowAngle),
+        _step('Ketebalan Bayangan',p.subtitleShadowWidth.toStringAsFixed(1)+' px',p.subtitleShadowWidth,0.25,0,8,p.setSubtitleShadowWidth),
         _step('Jarak Bayangan',p.subtitleShadowDistance.toStringAsFixed(1)+' px',p.subtitleShadowDistance,0.5,0,20,p.setSubtitleShadowDistance),
         _step('Ukuran Sebaran Bayangan',p.subtitleShadowBlur.toStringAsFixed(1)+' px',p.subtitleShadowBlur,0.5,0,20,p.setSubtitleShadowBlur),
         _colorRow('Warna Bayangan',p.subtitleShadowColorHex,p.setSubtitleShadowColorHex),
