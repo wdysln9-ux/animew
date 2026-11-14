@@ -253,7 +253,7 @@ class _AnimeDetailHeroDelegate extends SliverPersistentHeaderDelegate {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 15,
+                bottom: 15.5,
                 child: Center(
                   child: GestureDetector(
                     onTap: onPosterTap,
