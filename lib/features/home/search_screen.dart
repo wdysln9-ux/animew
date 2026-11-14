@@ -1383,7 +1383,7 @@ class _SearchViewState extends State<_SearchView>
         }}${f.sortAscending ? ' ↑' : ''}',
           f.copyWith(sort: MetaSort.popularity, sortAscending: false)),
     ];
-    if (chips.isEmpty) return const SizedBox.shrink();
+    if (chips.isEmpty && !_hideMyAnime) return const SizedBox.shrink();
     return SizedBox(
       height: 46,
       child: ListView(
@@ -1401,7 +1401,14 @@ class _SearchViewState extends State<_SearchView>
                 },
               ),
             ),
-
+          if (_hideMyAnime)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 8),
+              child: _ActiveFilterChip(
+                label: 'Hide My Anime',
+                onRemove: () => setState(() => _hideMyAnime = false),
+              ),
+            ),
         ],
       ),
     );
