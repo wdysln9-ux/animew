@@ -742,7 +742,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             _heading('Lagi pengen apa?'), _quickPicks(),
             _heading('Telusuri Musim'), _seasons(),
             _heading('Genre', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen())), bottomPadding: 5), _genreGrid(),
-            _heading('Telusuri Tahun', topPadding: 0), _years(),
+            _heading('Telusuri Tahun', topPadding: 14), _years(),
             _heading('Studio Populer'), _studios(),
           ],
           const SizedBox(height: 100),
