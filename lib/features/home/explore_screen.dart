@@ -4,6 +4,8 @@ import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
 import '../../core/models/home_section.dart';
 import '../../core/models/media_item.dart';
+import '../../core/models/media_detail.dart' show MediaStatus;
+import '../../core/zmode/zmode_ids.dart';
 import '../../core/models/provider_info.dart' show ProviderType;
 import '../../core/mode/content_mode_cubit.dart';
 import '../../core/zmode/genre_catalog.dart';
@@ -36,10 +38,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   int _becauseGeneration = 0;
   String _selected = 'Untukmu';
   int _heroIndex = 0;
+  List<MediaItem> _rankedItems = const [];
+  bool _rankedLoading = false;
+  int _rankedGeneration = 0;
   Map<String, int> _viewerGenreCounts = const {};
   bool _viewerGenreStatsLoaded = false;
   Map<String, int> _studioFavourites = const {};
-  final PageController _heroController = PageController(viewportFraction: .88);
+  final PageController _heroController = PageController(viewportFraction: .90, initialPage: 10000);
 
   @override
   void initState() { super.initState(); _load(); }
@@ -133,15 +138,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
             englishTitle: r.romaji,
             cover: r.cover,
             coverColor: r.coverColor,
-            url: 'https://anilist.co/anime/${r.anilistId}',
+            banner: r.banner,
+            url: ZmodeIds.showUrl(ZCanonical(ZKind.anime, 'al:${r.anilistId}')),
             type: ProviderType.anime,
-            sourceId: 'anilist',
+            sourceId: ZmodeIds.sourceId,
             malId: r.malId,
             anilistId: r.anilistId,
             genres: r.genres,
             score: r.score,
             popularity: r.popularity,
             format: r.format,
+            status: switch (r.status?.toUpperCase()) { 'RELEASING' => MediaStatus.ongoing, 'FINISHED' => MediaStatus.completed, 'HIATUS' => MediaStatus.hiatus, 'CANCELLED' => MediaStatus.cancelled, _ => MediaStatus.unknown },
             totalEpisodes: r.episodes,
             year: r.year?.toString(),
           ));
@@ -266,12 +273,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
   TextStyle _txt(double size, {FontWeight weight = FontWeight.w500, Color? color, double height = 1.1}) =>
       AppText.body.copyWith(fontSize: size + 1.5, height: height, fontWeight: weight, color: color ?? AppColors.textPrimary);
 
-  Widget _heading(String title, {String? action, String? subtitle, VoidCallback? onAction, bool marked = false, double topPadding = 23, double bottomPadding = 11}) =>
+  Widget _heading(String title, {String? action, String? subtitle, Color? subtitleColor, VoidCallback? onAction, bool marked = false, double topPadding = 23, double bottomPadding = 11}) =>
     Padding(padding: EdgeInsets.fromLTRB(16, topPadding, 16, bottomPadding), child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
       if (marked) Container(width: 3, height: 30, margin: const EdgeInsets.only(right: 9), decoration: BoxDecoration(color: AppColors.textPrimary, borderRadius: BorderRadius.circular(3))),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
         Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(14, weight: FontWeight.w800)),
-        if (subtitle != null) Padding(padding: const EdgeInsets.only(top: 2), child: Text(subtitle, style: _txt(9, color: AppColors.textTertiary))),
+        if (subtitle != null) Padding(padding: const EdgeInsets.only(top: 2), child: Text(subtitle, style: _txt(9, color: subtitleColor ?? AppColors.textTertiary))),
       ])),
       if (action != null) GestureDetector(onTap: onAction, child: Text(action, style: _txt(10.5, weight: FontWeight.w800, color: AppColors.accent))),
     ]));
@@ -298,16 +305,93 @@ class _ExploreScreenState extends State<ExploreScreen> {
             if (suffix != null) ...[const SizedBox(width: 5), Text(suffix, style: _txt(7.5, weight: FontWeight.w900, color: suffixColor ?? AppColors.accent))],
           ]))));
 
+  Future<void> _loadRankedItems(int index) async {
+    final generation = ++_rankedGeneration;
+    setState(() => _rankedLoading = true);
+    try {
+      final filters = switch (index) {
+        1 => const MetaFilters(sort: MetaSort.popularity),
+        2 => const MetaFilters(sort: MetaSort.score),
+        3 => const MetaFilters(statuses: [MetaStatus.releasing], sort: MetaSort.popularity),
+        _ => const MetaFilters(sort: MetaSort.trending),
+      };
+      final items = await sl<MetadataRepository>().searchFiltered('', filters: filters);
+      if (!mounted || generation != _rankedGeneration) return;
+      setState(() {
+        _rankedItems = items.where((m) => !m.isAdult).toList();
+        _rankedLoading = false;
+      });
+    } catch (_) {
+      if (mounted && generation == _rankedGeneration) setState(() => _rankedLoading = false);
+    }
+  }
+
+  Widget _rankedList() {
+    if (_rankedLoading && _rankedItems.isEmpty) {
+      return Padding(padding: const EdgeInsets.all(28),
+        child: Center(child: CircularProgressIndicator(color: AppColors.accent)));
+    }
+    if (_rankedItems.isEmpty) {
+      return Padding(padding: const EdgeInsets.all(24),
+        child: Center(child: Text('Belum ada anime yang bisa ditampilkan.', style: _txt(11, color: AppColors.textTertiary))));
+    }
+    return Column(children: [
+      for (var i = 0; i < _rankedItems.length; i++)
+        Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+          child: Material(color: AppColors.surface, borderRadius: BorderRadius.circular(10),
+            child: InkWell(borderRadius: BorderRadius.circular(10), onTap: () => _open(_rankedItems[i]),
+              child: SizedBox(height: 104, child: Row(children: [
+                SizedBox(width: 42, child: Center(child: Text('#${i + 1}',
+                  style: _txt(14, weight: FontWeight.w900, color: AppColors.accent)))),
+                ClipRRect(borderRadius: BorderRadius.circular(7),
+                  child: SizedBox(width: 62, height: 92,
+                    child: _rankedItems[i].cover == null
+                      ? ColoredBox(color: AppColors.surface2)
+                      : Image.network(_rankedItems[i].cover!, fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => ColoredBox(color: AppColors.surface2)))),
+                const SizedBox(width: 11),
+                Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(_rankedItems[i].title, maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: _txt(11, weight: FontWeight.w800)),
+                    const SizedBox(height: 5),
+                    Text([
+                      if (_rankedItems[i].format != null) _rankedItems[i].format!,
+                      if (_rankedItems[i].year != null) _rankedItems[i].year!,
+                      if (_rankedItems[i].totalEpisodes != null) '${_rankedItems[i].totalEpisodes} eps',
+                    ].join(' • '), maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: _txt(9, color: AppColors.textTertiary)),
+                    const SizedBox(height: 5),
+                    Row(children: [
+                      const Icon(Icons.star_rounded, size: 12, color: Color(0xFFFFC857)),
+                      const SizedBox(width: 3),
+                      Text(_rankedItems[i].score == null ? '—' : (_rankedItems[i].score! / 10).toStringAsFixed(1),
+                        style: _txt(9, weight: FontWeight.w800)),
+                      const SizedBox(width: 9),
+                      Text(switch (_rankedItems[i].status) {
+                        MediaStatus.ongoing => 'Sedang tayang',
+                        MediaStatus.completed => 'Selesai',
+                        MediaStatus.hiatus => 'Hiatus',
+                        MediaStatus.cancelled => 'Dibatalkan',
+                        _ => '',
+                      }, style: _txt(8.5, color: AppColors.textSecondary)),
+                    ]),
+                  ])),
+                const SizedBox(width: 10),
+              ]))),
+            )),
+        ),
+    ]);
+  }
+
   Widget _sorts() {
     const names = ['Untukmu', 'Populer', 'Nilai Tertinggi', 'Sedang Tayang'];
     return SizedBox(height: 42, child: ListView(scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16), children: [
         for (var i = 0; i < names.length; i++)
           Padding(padding: const EdgeInsets.only(right: 8), child: _pill(names[i], () {
-            setState(() => _selected = names[i]);
-            if (i == 1) _search(filters: const MetaFilters(sort: MetaSort.popularity));
-            if (i == 2) _search(filters: const MetaFilters(sort: MetaSort.score));
-            if (i == 3) _search(filters: const MetaFilters(statuses: [MetaStatus.releasing]));
+            setState(() { _selected = names[i]; _rankedItems = const []; });
+            if (i == 0) { ++_rankedGeneration; setState(() => _rankedLoading = false); } else { _loadRankedItems(i); }
           }, selected: _selected == names[i], compact: true)),
       ]));
   }
@@ -316,11 +400,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final items = _heroes;
     if (items.isEmpty) return const SizedBox(height: 8);
     return Column(children: [
-      SizedBox(height: 178, child: PageView.builder(controller: _heroController, itemCount: items.length,
-        onPageChanged: (i) => setState(() => _heroIndex = i),
-        itemBuilder: (_, i) {
+      SizedBox(height: 178, child: PageView.builder(controller: _heroController,
+        onPageChanged: (i) => setState(() => _heroIndex = i % items.length),
+        itemBuilder: (_, page) {
+          final i = page % items.length;
           final m = items[i];
-          return Padding(padding: const EdgeInsets.only(left: 16, right: 5),
+          return Padding(padding: const EdgeInsets.symmetric(horizontal: 5),
             child: GestureDetector(onTap: () => _open(m), child: ClipRRect(
               borderRadius: BorderRadius.circular(16), child: Stack(fit: StackFit.expand, children: [
                 if (m.banner != null || m.cover != null)
@@ -484,14 +569,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _seasons() {
-    final now = DateTime.now();
-    final current = (now.month - 1) ~/ 3;
     const names = ['Winter', 'Spring', 'Summer', 'Fall'];
-    final order = [for (var i = 0; i < 4; i++) (current - i + 4) % 4];
+    final now = DateTime.now();
+    final chips = <(int, int)>[];
+    if (!now.isBefore(DateTime(2026, 12, 1))) chips.add((2027, 0));
+    for (var ordinal = 2026 * 4 + 3; ordinal >= 2012 * 4; ordinal--) {
+      chips.add((ordinal ~/ 4, ordinal % 4));
+    }
     return SizedBox(height: 38, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
-      children: [for (final i in order) Padding(padding: const EdgeInsets.only(right: 7),
-        child: _pill('${names[i]} ${i > current ? now.year - 1 : now.year}', () => _search(filters: MetaFilters(
-          years: [i > current ? now.year - 1 : now.year], seasons: [MetaSeason.values[i]]))))]));
+      children: [for (final chip in chips) Padding(padding: const EdgeInsets.only(right: 7),
+        child: _pill('${names[chip.$2]} ${chip.$1}', () => _search(filters: MetaFilters(
+          years: [chip.$1], seasons: [MetaSeason.values[chip.$2]]))))]));
   }
 
   Widget _genreGrid() {
@@ -525,8 +613,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget _years() {
     final y = DateTime.now().year;
     return SizedBox(height: 38, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
-      children: [for (var i = 0; i < 12; i++) Padding(padding: const EdgeInsets.only(right: 7),
-        child: _pill('${y - i}', () => _search(filters: MetaFilters(years: [y - i]))))]));
+      children: [for (var year = y; year >= 2000; year--) Padding(padding: const EdgeInsets.only(right: 7),
+        child: _pill('$year', () => _search(filters: MetaFilters(years: [year]))))]));
   }
 
   Widget _studios() {
@@ -626,18 +714,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
       child: CustomScrollView(physics: const AlwaysScrollableScrollPhysics(), slivers: [
         SliverToBoxAdapter(child: SafeArea(bottom: false, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),
-          _searchBar(), _sorts(), const SizedBox(height: 10), _hero(),
-          _heading('Selera Kamu'), _taste(),
-          _heading('Karena kamu menonton $watched'),
-          _posterRail(_becauseCarousel.take(10).toList(), recommendationMode: true),
-          _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'),
-          if (hidden.isNotEmpty) _posterRail(hidden)
-          else Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('Belum ada anime tersembunyi yang cocok.', style: _txt(11, color: AppColors.textTertiary))),
-          _heading('Lagi pengen apa?'), _quickPicks(),
-          _heading('Telusuri Musim'), _seasons(),
-          _heading('Genre', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen())), bottomPadding: 5), _genreGrid(),
-          _heading('Telusuri Tahun', topPadding: 0), _years(),
-          _heading('Studio Populer'), _studios(),
+          _searchBar(), _sorts(),
+          if (_selected != 'Untukmu') ...[
+            const SizedBox(height: 14), _rankedList(),
+          ] else ...[
+            const SizedBox(height: 10), _hero(),
+            _heading('Selera Kamu'), _taste(),
+            _heading('Karena kamu menonton $watched'),
+            _posterRail(_becauseCarousel.take(10).toList(), recommendationMode: true),
+            _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik', subtitleColor: AppColors.textSecondary),
+            if (hidden.isNotEmpty) _posterRail(hidden)
+            else Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('Belum ada anime tersembunyi yang cocok.', style: _txt(11, color: AppColors.textTertiary))),
+            _heading('Lagi pengen apa?'), _quickPicks(),
+            _heading('Telusuri Musim'), _seasons(),
+            _heading('Genre', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen())), bottomPadding: 5), _genreGrid(),
+            _heading('Telusuri Tahun', topPadding: 0), _years(),
+            _heading('Studio Populer'), _studios(),
+          ],
           const SizedBox(height: 100),
         ]))),
       ]),

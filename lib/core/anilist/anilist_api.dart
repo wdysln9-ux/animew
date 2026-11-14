@@ -438,6 +438,7 @@ query($id:Int,$page:Int) {
       edges { node { rating mediaRecommendation {
         id idMal type format title { romaji english native }
         coverImage { large color }
+        bannerImage
         averageScore popularity status episodes seasonYear genres isAdult
       } } }
     }
@@ -952,6 +953,7 @@ query($id:Int,$page:Int) {
             coverColor: (rec['coverImage'] is Map)
                 ? rec['coverImage']['color'] as String?
                 : null,
+            banner: rec['bannerImage'] as String?,
             relation: 'Recommended',
             recommendationRating: (node['rating'] as num?)?.toInt(),
             malId: (rec['idMal'] as num?)?.toInt(),
