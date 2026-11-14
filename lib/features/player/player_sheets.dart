@@ -808,11 +808,11 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
               colors: [Color(0xFF5A4A48), Color(0xFFB87972), Color(0xFF463B3B)])),
           child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
             const Text('Subtitle Non Dialogue', style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontSize: 11)),
-            Text('Love Anidesu!!!', style: TextStyle(color: parseSubtitleHex(p.subtitleColorHex, opacity: p.subtitleOverallOpacity), fontSize: 14,
-              fontWeight: FontWeight.w700, shadows: buildSubtitleShadows(p.subtitleOutlineType,p.subtitleOutlineWidth,parseSubtitleHex(p.subtitleOutlineColorHex, opacity: p.subtitleOverallOpacity), shadowColor: parseSubtitleHex(p.subtitleShadowColorHex, opacity: p.subtitleOverallOpacity), shadowDistance: p.subtitleShadowDistance, shadowBlur: p.subtitleShadowBlur, shadowAngle: p.subtitleShadowAngle))),
+            Opacity(opacity: p.subtitleOverallOpacity, child: Text('Love Anidesu!!!', style: TextStyle(color: parseSubtitleHex(p.subtitleColorHex), fontSize: 14,
+              fontWeight: FontWeight.w700, shadows: buildSubtitleShadows(p.subtitleOutlineType,p.subtitleOutlineWidth,parseSubtitleHex(p.subtitleOutlineColorHex, opacity: p.subtitleOverallOpacity), shadowColor: parseSubtitleHex(p.subtitleShadowColorHex, opacity: p.subtitleOverallOpacity), shadowDistance: p.subtitleShadowDistance, shadowBlur: p.subtitleShadowBlur, shadowAngle: p.subtitleShadowAngle)))),
             const SizedBox(height: 12),
             const Text('Subtitle Dialogue', style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontSize: 11)),
-            Text('Love Anidesu!!!', style: buildSubtitleTextStyle(p,fontSize: 18)),
+            Opacity(opacity: p.subtitleOverallOpacity, child: Text('Love Anidesu!!!', style: buildSubtitleTextStyle(p,fontSize: 18))),
             const SizedBox(height: 18),
           ])))),
         InkWell(onTap: _font, child: _card(Row(children: [
@@ -845,8 +845,6 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
             activeColor: orange,
             onChanged: (value) => _apply(() => p.setSubtitleOverallOpacity(value)),
           ),
-          const Text('Mengatur transparansi teks, garis tepi, bayangan, dan latar subtitle sekaligus.',
-            style: TextStyle(color: muted, fontSize: 12, height: 1.4)),
         ])),
         _colorRow('Warna Latar','#000000FF', (v)=>p.setSubtitleBgOpacity(0)),
         _card(const Text('Subtitle dialog mengikuti semua pengaturan tampilan. Subtitle non-dialog hanya mengikuti gaya font yang dipilih.',
@@ -995,6 +993,7 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setSubtitleShadowAngle(90.0);
     await _prefs.setSubtitleShadowDistance(1.0);
     await _prefs.setSubtitleShadowBlur(0.0);
+    await _prefs.setSubtitleShadowWidth(1.0);
     await _prefs.setSubtitleScale(1.0);
   });
 
@@ -1231,6 +1230,15 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
           divisions: 8,
           label: _prefs.subtitleFontWeight.toString(),
           onChanged: (v) => _apply(() => _prefs.setSubtitleFontWeight(v.round())),
+        ),
+        _SheetSectionHeader('Ketebalan bayangan'),
+        _SliderRow(
+          value: _prefs.subtitleShadowWidth,
+          min: 0,
+          max: 8,
+          divisions: 32,
+          label: _prefs.subtitleShadowWidth.toStringAsFixed(1),
+          onChanged: (v) => _apply(() => _prefs.setSubtitleShadowWidth(v)),
         ),
         _SheetSectionHeader('Jarak bayangan'),
         _SliderRow(
