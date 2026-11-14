@@ -1857,7 +1857,6 @@ class PlayerCubit extends Cubit<PlayerState> {
     try {
       var lastPct = -1;
       var partialRevision = 0;
-      var hasAppliedPartial = false;
       final dir = await getTemporaryDirectory();
 
       Future<void> applyTranslatedSrt(String srt) async {
@@ -1873,7 +1872,6 @@ class PlayerCubit extends Cubit<PlayerState> {
         );
         _wantedSubId = out.path;
         _subApplied = true;
-        hasAppliedPartial = true;
       }
 
       final srt = await SubtitleTranslateService.instance.translate(
