@@ -35,34 +35,44 @@ List<Shadow> _stroke(Color color, double radius) {
 }
 
 /// The shadow list implementing a named outline preset.
-List<Shadow> buildSubtitleShadows(String type, double width, Color outline) {
-  switch (type) {
-    case 'none':
-      return const [];
-    case 'outline':
-      return _stroke(outline, width);
-    case 'bold':
-      return _stroke(outline, width * 1.8);
-    case 'shadow':
-      return [
-        ..._stroke(outline, width * 0.6),
-        Shadow(
-          color: const Color(0xB3000000),
-          offset: Offset(width, width),
-          blurRadius: 2,
-        ),
-      ];
-    case 'glow':
-      return [
-        ..._stroke(outline.withValues(alpha: 0.55), width * 0.5),
-        Shadow(color: outline, blurRadius: 8 + width * 2),
-      ];
-    case 'soft':
-    default:
-      // Reproduces the legacy soft-shadow look (a soft dark halo) so the
-      // default appearance is unchanged for existing users.
-      return [Shadow(color: outline.withValues(alpha: 0.8), blurRadius: 4 + width)];
+List<Shadow> buildSubtitleShadows(
+  String type,
+  double width,
+  Color outline, {
+  Color? shadowColor,
+  double shadowDistance = 1,
+  double shadowBlur = 2,
+  double shadowAngle = 45,
+}) {
+  final preset = switch (type) {
+    'none' => <Shadow>[],
+    'outline' => _stroke(outline, width),
+    'bold' => _stroke(outline, width * 1.8),
+    'shadow' => _stroke(outline, width * 0.35),
+    'glow' => <Shadow>[
+      ..._stroke(outline.withValues(alpha: 0.55), width * 0.5),
+      Shadow(color: outline, blurRadius: 8 + width * 2),
+    ],
+    _ => <Shadow>[
+      Shadow(color: outline.withValues(alpha: 0.8), blurRadius: 4 + width),
+    ],
+  };
+  final shade = shadowColor ?? const Color(0xB3000000);
+  if (shade.alpha == 0 || (shadowDistance <= 0 && shadowBlur <= 0)) {
+    return preset;
   }
+  final radians = shadowAngle * math.pi / 180;
+  return [
+    ...preset,
+    Shadow(
+      color: shade,
+      offset: Offset(
+        math.cos(radians) * shadowDistance,
+        math.sin(radians) * shadowDistance,
+      ),
+      blurRadius: shadowBlur,
+    ),
+  ];
 }
 
 /// The same presets, expressed as libass numbers: border thickness, blur and
@@ -117,6 +127,10 @@ TextStyle buildSubtitleTextStyle(PlaybackPrefs p, {required double fontSize}) {
       p.subtitleOutlineType,
       p.subtitleOutlineWidth,
       parseSubtitleHex(p.subtitleOutlineColorHex),
+      shadowColor: parseSubtitleHex(p.subtitleShadowColorHex),
+      shadowDistance: p.subtitleShadowDistance,
+      shadowBlur: p.subtitleShadowBlur,
+      shadowAngle: p.subtitleShadowAngle,
     ),
   );
 }
