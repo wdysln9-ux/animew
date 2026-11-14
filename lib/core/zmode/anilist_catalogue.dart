@@ -92,7 +92,7 @@ class AniListCatalogue implements AnimeCatalogue {
       'id idMal title{romaji english native} coverImage{large color} bannerImage '
       // One int, for the poster's score badge. The rest of the detail fields
       // stay out for the reason above; this one is a number, not a payload.
-      'averageScore popularity format episodes status genres seasonYear '
+      'averageScore popularity format episodes duration status genres seasonYear '
       // Tiny integer used for the latest-episode poster label on airing anime.
       'nextAiringEpisode{episode}';
 
@@ -299,7 +299,8 @@ class AniListCatalogue implements AnimeCatalogue {
           found[item.id] = item;
         }
       }
-      final items = found.values.toList()..shuffle(random);
+      final items = found.values.where(_isEligibleRecommendation).toList()
+        ..shuffle(random);
       final selected = items.take(30).toList();
       _lastRecommendations = List<MediaItem>.unmodifiable(selected);
       return selected;
@@ -748,6 +749,7 @@ class AniListCatalogue implements AnimeCatalogue {
       isUpcoming: m['status'] == 'NOT_YET_RELEASED',
       format: _prettyFormat(m['format'] as String?),
       totalEpisodes: m['episodes'] as int?,
+      durationMins: m['duration'] as int?,
       year: (m['seasonYear'] as int?)?.toString(),
       latestEpisode: m['status'] == 'RELEASING' && nextAiringEpisode != null
           ? nextAiringEpisode - 1
@@ -755,6 +757,23 @@ class AniListCatalogue implements AnimeCatalogue {
       status: _status(m['status'] as String?),
       isAdult: m['isAdult'] == true,
     );
+  }
+
+  /// Apply the format/duration rules only to the randomized recommendation catalogue.
+  /// A missing duration is deliberately treated as ineligible for ONA, Movie and OVA.
+  static bool _isEligibleRecommendation(MediaItem item) {
+    final format = item.format?.toUpperCase().replaceAll(' ', '_');
+    switch (format) {
+      case 'TV_SHORT':
+        return false;
+      case 'ONA':
+        return item.durationMins != null && item.durationMins! > 15;
+      case 'MOVIE':
+      case 'OVA':
+        return item.durationMins != null && item.durationMins! > 20;
+      default:
+        return true;
+    }
   }
 
   /// Anime: 1..episodes, or 1..(next-1) while airing. Manga/novel: 1..chapters.

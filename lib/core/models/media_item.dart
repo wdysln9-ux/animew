@@ -125,6 +125,8 @@ class MediaItem extends Equatable {
   final String? format;
   @JsonKey(includeFromJson: false, includeToJson: false)
   final int? totalEpisodes;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final int? durationMins;
 
   /// Release year from the metadata catalogue, when available.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -166,6 +168,7 @@ class MediaItem extends Equatable {
     this.isUpcoming = false,
     this.format,
     this.totalEpisodes,
+    this.durationMins,
     this.year,
     this.latestEpisode,
     this.isAdult = false,
@@ -220,6 +223,7 @@ class MediaItem extends Equatable {
     totalEpisodes: totalEpisodes,
     year: year,
     latestEpisode: latestEpisode,
+    durationMins: durationMins ?? this.durationMins,
     isAdult: isAdult,
   );
 
@@ -253,6 +257,7 @@ class MediaItem extends Equatable {
     totalEpisodes,
     year,
     latestEpisode,
+    durationMins,
     isAdult,
   ];
 }
