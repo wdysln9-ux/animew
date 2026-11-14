@@ -439,7 +439,7 @@ query($id:Int,$page:Int) {
         id idMal type format title { romaji english native }
         coverImage { large color }
         bannerImage
-        averageScore popularity status episodes seasonYear genres isAdult
+        averageScore popularity status episodes seasonYear startDate{year} genres isAdult
       } } }
     }
   }
@@ -964,7 +964,7 @@ query($id:Int,$page:Int) {
             format: rec['format'] as String?,
             status: rec['status'] as String?,
             episodes: (rec['episodes'] as num?)?.toInt(),
-            year: (rec['seasonYear'] as num?)?.toInt(),
+            year: (rec['seasonYear'] as num?)?.toInt() ?? ((rec['startDate'] as Map?)?['year'] as num?)?.toInt(),
             genres: [for (final g in (rec['genres'] as List? ?? const [])) '$g'],
             isAdult: rec['isAdult'] == true,
           ),
