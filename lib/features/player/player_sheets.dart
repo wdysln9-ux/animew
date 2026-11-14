@@ -665,10 +665,9 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
       text: current.replaceFirst('#', '').substring(0, 6),
     );
     var selected = parseSubtitleHex(current);
-    var alpha = selected.opacity;
-    String toHex(Color color, double opacity) {
+    String toHex(Color color) {
       String two(int v) => v.toRadixString(16).padLeft(2, '0').toUpperCase();
-      return '#${two((color.r * 255).round())}${two((color.g * 255).round())}${two((color.b * 255).round())}${two((opacity * 255).round())}';
+      return '#${two((color.r * 255).round())}${two((color.g * 255).round())}${two((color.b * 255).round())}FF';
     }
     const palette = <Color>[
       Color(0xFFFFFFFF), Color(0xFFFFD54F), Color(0xFFFFEB3B),
@@ -696,7 +695,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
                       onTap: () {
                         refresh(() {
                           selected = swatch;
-                          input.text = toHex(swatch, 1).substring(1, 7);
+                          input.text = toHex(swatch).substring(1, 7);
                         });
                       },
                       child: Container(
@@ -735,28 +734,11 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text('Transparansi', style: TextStyle(color: Colors.white)),
-                  ),
-                  Text('${(alpha * 100).round()}%', style: const TextStyle(color: muted)),
-                ],
-              ),
-              Slider(
-                value: alpha,
-                min: 0,
-                max: 1,
-                divisions: 100,
-                activeColor: orange,
-                onChanged: (value) => refresh(() => alpha = value),
-              ),
               Container(
                 height: 34,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: toHex(selected, alpha).isNotEmpty
-                      ? selected.withValues(alpha: alpha) : Colors.transparent,
+                  color: selected,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.white24),
                 ),
@@ -771,7 +753,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
                 if (RegExp(r'^[0-9A-F]{6}$').hasMatch(v)) {
                   selected = Color(int.parse('FF$v', radix: 16));
                 }
-                Navigator.pop(ctx, toHex(selected, alpha));
+                Navigator.pop(ctx, toHex(selected));
               },
               child: const Text('Pilih'),
             ),
@@ -825,11 +807,11 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
               colors: [Color(0xFF5A4A48), Color(0xFFB87972), Color(0xFF463B3B)])),
           child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
             const Text('Subtitle Non Dialogue', style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontSize: 11)),
-            Text('Love Anidesu!!!', style: TextStyle(color: parseSubtitleHex(p.subtitleColorHex), fontSize: 14,
-              fontWeight: FontWeight.w700, shadows: buildSubtitleShadows(p.subtitleOutlineType,p.subtitleOutlineWidth,parseSubtitleHex(p.subtitleOutlineColorHex), shadowColor: parseSubtitleHex(p.subtitleShadowColorHex), shadowDistance: p.subtitleShadowDistance, shadowBlur: p.subtitleShadowBlur, shadowAngle: p.subtitleShadowAngle))),
+            Opacity(opacity: p.subtitleOverallOpacity, child: Text('Love Anidesu!!!', style: TextStyle(color: parseSubtitleHex(p.subtitleColorHex), fontSize: 14,
+              fontWeight: FontWeight.w700, shadows: buildSubtitleShadows(p.subtitleOutlineType,p.subtitleOutlineWidth,parseSubtitleHex(p.subtitleOutlineColorHex), shadowColor: parseSubtitleHex(p.subtitleShadowColorHex), shadowDistance: p.subtitleShadowDistance, shadowBlur: p.subtitleShadowBlur, shadowAngle: p.subtitleShadowAngle)))),
             const SizedBox(height: 12),
             const Text('Subtitle Dialogue', style: TextStyle(color: Colors.white, backgroundColor: Colors.black54, fontSize: 11)),
-            Text('Love Anidesu!!!', style: buildSubtitleTextStyle(p,fontSize: 18)),
+            Opacity(opacity: p.subtitleOverallOpacity, child: Text('Love Anidesu!!!', style: buildSubtitleTextStyle(p,fontSize: 18))),
             const SizedBox(height: 18),
           ])))),
         InkWell(onTap: _font, child: _card(Row(children: [
@@ -849,6 +831,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
         _step('Jarak Bayangan',p.subtitleShadowDistance.toStringAsFixed(1)+' px',p.subtitleShadowDistance,0.5,0,20,p.setSubtitleShadowDistance),
         _step('Ukuran Sebaran Bayangan',p.subtitleShadowBlur.toStringAsFixed(1)+' px',p.subtitleShadowBlur,0.5,0,20,p.setSubtitleShadowBlur),
         _colorRow('Warna Bayangan',p.subtitleShadowColorHex,p.setSubtitleShadowColorHex),
+        _step('Transparansi Subtitle','${(p.subtitleOverallOpacity * 100).round()}%',p.subtitleOverallOpacity,0.05,0,1,p.setSubtitleOverallOpacity),
         _colorRow('Warna Latar','#000000FF', (v)=>p.setSubtitleBgOpacity(0)),
         _card(const Text('Subtitle dialog mengikuti semua pengaturan tampilan. Subtitle non-dialog hanya mengikuti gaya font yang dipilih.',
           style: TextStyle(color: muted, fontSize: 13, height: 1.5))),
