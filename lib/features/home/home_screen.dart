@@ -1488,7 +1488,7 @@ class _HomeViewState extends State<_HomeView>
     } else if (normalized == 'paling dinanti') {
       filters = MetaFilters(seasons: [nextSeason], years: [nextYear], statuses: const [MetaStatus.notYetReleased], sort: MetaSort.popularity);
     } else if (normalized == 'anime selesai') {
-      filters = MetaFilters(seasons: [season, previousSeason], years: [now.year, previousYear].toSet().toList(), formats: const [MetaFormat.tv, MetaFormat.movie], statuses: const [MetaStatus.finished], sort: MetaSort.newest);
+      filters = MetaFilters(seasons: [previousSeason], years: [previousYear], formats: const [MetaFormat.tv, MetaFormat.movie], statuses: const [MetaStatus.finished], sort: MetaSort.newest);
     } else {
       final parts = title.trim().split(' ').where((part) => part.isNotEmpty).toList();
       final year = parts.length == 2 ? int.tryParse(parts[1]) : null;
