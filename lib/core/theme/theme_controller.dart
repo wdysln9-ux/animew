@@ -135,6 +135,21 @@ class ThemeController {
   static ({Color bg, Color surface, Color surface2}) _paletteFromAccent(
     Color color,
   ) {
+    // Near-neutral colours (white, off-white and grey) have no reliable hue.
+    // HSL can assign them an arbitrary hue, which creates surprising tinted
+    // backgrounds such as red for white or olive for near-white. Keep those
+    // themes on the app's neutral dark palette instead.
+    final channels = [color.red, color.green, color.blue];
+    final maxChannel = channels.reduce((a, b) => a > b ? a : b);
+    final minChannel = channels.reduce((a, b) => a < b ? a : b);
+    if (maxChannel - minChannel <= 18) {
+      return (
+        bg: AppColors.defaultBg,
+        surface: AppColors.defaultSurface,
+        surface2: AppColors.defaultSurface2,
+      );
+    }
+
     final hue = HSLColor.fromColor(color).hue;
     return (
       bg: HSLColor.fromAHSL(1, hue, 0.30, 0.07).toColor(),
