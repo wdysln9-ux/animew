@@ -1123,11 +1123,10 @@ class PlaybackPrefs {
   Future<void> setSubtitleApiKey(String value) =>
       _box.put('subtitleApiKey', value);
 
-  /// Per-anime freeform layout for ordinary Flutter-rendered subtitles.
-  Map<String, double> subtitleLayoutFor(String key) {
-    final raw = _box.get('subtitleLayouts', defaultValue: <String, dynamic>{});
-    final all = raw is Map ? raw : <dynamic, dynamic>{};
-    final value = all[key];
+  /// Global freeform layout shared by ordinary Flutter-rendered subtitles
+  /// across every anime. The key parameter remains for compatibility.
+  Map<String, double> subtitleLayoutFor([String? key]) {
+    final value = _box.get('subtitleLayout');
     if (value is! Map) return const {'x': 0.5, 'y': 0.88, 'scale': 1.0};
     return {
       'x': (value['x'] as num?)?.toDouble().clamp(0.04, 0.96).toDouble() ?? 0.5,
@@ -1139,16 +1138,11 @@ class PlaybackPrefs {
   Future<void> setSubtitleLayoutFor(
     String key, {required double x, required double y, required double scale}
   ) async {
-    final raw = _box.get('subtitleLayouts', defaultValue: <String, dynamic>{});
-    final all = raw is Map
-        ? Map<String, dynamic>.from(raw)
-        : <String, dynamic>{};
-    all[key] = {
-      'x': x.clamp(0.04, 0.96),
-      'y': y.clamp(0.08, 0.94),
-      'scale': scale.clamp(0.5, 2.5),
-    };
-    await _box.put('subtitleLayouts', all);
+    await _box.put('subtitleLayout', {
+      'x': x.clamp(0.04, 0.96).toDouble(),
+      'y': y.clamp(0.08, 0.94).toDouble(),
+      'scale': scale.clamp(0.5, 2.5).toDouble(),
+    });
   }
 
   /// Vertical subtitle position (0 = top, 100 = bottom), maps to mpv `sub-pos`.
