@@ -726,7 +726,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       color: AppColors.accent, backgroundColor: AppColors.surface, onRefresh: () => _load(refresh: true),
       child: CustomScrollView(physics: const AlwaysScrollableScrollPhysics(), slivers: [
         SliverToBoxAdapter(child: SafeArea(bottom: false, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),
+          Padding(padding: const EdgeInsets.fromLTRB(16, 18, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),
           _searchBar(), _sorts(),
           if (_selected != 'Untukmu') ...[
             const SizedBox(height: 14), _rankedList(),
