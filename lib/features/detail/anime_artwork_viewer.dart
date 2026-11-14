@@ -50,32 +50,6 @@ Future<List<String>> preloadAnimeMalPictures(int malId) {
   });
 }
 
-/// Also warms the actual image bytes (not just the Jikan URL list), so opening
-/// the gallery can paint from CachedNetworkImage's disk cache.
-final Map<int, Future<void>> _malImagePreloads = {};
-
-Future<void> preloadAnimeMalArtwork(int malId, BuildContext context) {
-  return _malImagePreloads.putIfAbsent(malId, () async {
-    try {
-      final urls = await preloadAnimeMalPictures(malId);
-      for (final url in urls.take(8)) {
-        if (!context.mounted) {
-          _malImagePreloads.remove(malId);
-          return;
-        }
-        try {
-          await precacheImage(CachedNetworkImageProvider(url), context);
-        } catch (_) {
-          // One failed image should not block the rest of the gallery.
-        }
-      }
-    } catch (_) {
-      // Keep this best-effort: the viewer owns the visible error state.
-      _malImagePreloads.remove(malId);
-    }
-  });
-}
-
 Future<void> showAnimeArtworkViewer(
   BuildContext context, {
   required String posterUrl,
@@ -208,14 +182,17 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
     setState(() => _saving = true);
     try {
       final image = widget.images[_index];
-      final requestHeaders = Map<String, String>.from(widget.headers ?? {})
-        ..remove('x-ani-src')
-        ..remove('x-mihon-src');
+      final isMalImage = image.label.startsWith('MAL ');
+      final requestHeaders = isMalImage
+          ? null
+          : (Map<String, String>.from(widget.headers ?? {})
+              ..remove('x-ani-src')
+              ..remove('x-mihon-src'));
       final response = await Dio().get<List<int>>(
         image.url,
         options: Options(
           responseType: ResponseType.bytes,
-          headers: requestHeaders.isEmpty ? null : requestHeaders,
+          headers: requestHeaders == null || requestHeaders.isEmpty ? null : requestHeaders,
           receiveTimeout: const Duration(seconds: 30),
         ),
       );
@@ -277,13 +254,28 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
               onPageChanged: (index) => setState(() => _index = index),
               itemBuilder: (context, index) {
                 final image = widget.images[index];
+                // PageView may build neighbouring pages before the user
+                // reaches them. Keep those pages inert: fetch image bytes only
+                // for the page currently selected by a swipe.
+                if (index != _index) {
+                  return const Center(
+                    child: Icon(
+                      Icons.photo_outlined,
+                      color: Colors.white38,
+                      size: 34,
+                    ),
+                  );
+                }
+                final isMalImage = image.label.startsWith('MAL ');
                 return Center(
                   child: InteractiveViewer(
                     minScale: 1,
                     maxScale: 4,
                     child: CachedNetworkImage(
                       imageUrl: image.url,
-                      httpHeaders: widget.headers,
+                      // Source-specific headers can cause 403s on Jikan's
+                      // image CDN. MAL artwork is public and needs no headers.
+                      httpHeaders: isMalImage ? null : widget.headers,
                       fit: BoxFit.contain,
                       placeholder: (_, _) => const Center(
                         child: CircularProgressIndicator(color: Colors.white),
