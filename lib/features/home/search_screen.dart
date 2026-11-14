@@ -100,6 +100,7 @@ class SearchScreen extends StatefulWidget {
     this.forceMode,
     this.fixedSourceId,
     this.initialFilters,
+    this.initialHideMyAnime = false,
   });
 
   final String? initialQuery;
@@ -137,6 +138,7 @@ class SearchScreen extends StatefulWidget {
   /// genre or tag chip on a detail page: the point of that tap is to land on
   /// the results, not on an empty filter sheet.
   final MetaFilters? initialFilters;
+  final bool initialHideMyAnime;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -210,6 +212,7 @@ class _SearchScreenState extends State<SearchScreen> {
               forceMode: widget.forceMode,
               fixedSourceId: widget.fixedSourceId,
               initialFilters: widget.initialFilters,
+              initialHideMyAnime: widget.initialHideMyAnime,
             ),
     );
   }
@@ -240,6 +243,7 @@ class _SearchView extends StatefulWidget {
     this.forceMode,
     this.fixedSourceId,
     this.initialFilters,
+    this.initialHideMyAnime = false,
   });
 
   final String? initialQuery;
@@ -249,6 +253,7 @@ class _SearchView extends StatefulWidget {
   final ContentMode? forceMode;
   final String? fixedSourceId;
   final MetaFilters? initialFilters;
+  final bool initialHideMyAnime;
 
   @override
   State<_SearchView> createState() => _SearchViewState();
@@ -358,6 +363,11 @@ class _SearchViewState extends State<_SearchView>
       // Seed the default Trending sort before the first query, so both a
       // typed search and an empty genre browse use the same ordering.
       _applyMetaFilters(browseDefaults: true);
+    }
+    if (widget.initialHideMyAnime) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _toggleHideMyAnime();
+      });
     }
   }
 
