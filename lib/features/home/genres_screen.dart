@@ -28,12 +28,12 @@ import 'search_screen.dart';
 /// A cover to stand behind a genre tile.
 typedef GenreArt = ({String url, Map<String, String>? headers});
 
-/// One cover per genre, picked out of rows that are already on screen.
+/// One banner per genre, picked out of rows that are already on screen.
 ///
 /// Every catalogue that can filter also returns `genres` on its media, so a
 /// representative image costs nothing — no request per tile, and no hand-kept
-/// table of genre artwork to rot. Two rules make it look deliberate rather
-/// than arbitrary:
+/// table of genre artwork to rot. Banners are preferred; covers are a fallback
+/// for titles whose catalogue entry has no banner. Two rules make it look deliberate:
 ///
 /// * first match wins, so the order Home loaded its rows in decides, and the
 ///   grid does not reshuffle between visits;
@@ -47,7 +47,7 @@ Map<String, GenreArt> genreArtFrom(List<HomeSection> sections) {
   final used = <String>{};
   for (final s in sections) {
     for (final MediaItem m in s.items) {
-      final url = m.cover;
+      final url = m.banner ?? m.cover;
       if (url == null || url.isEmpty || m.genres.isEmpty) continue;
       for (final g in m.genres) {
         if (out.containsKey(g)) continue;
@@ -104,7 +104,7 @@ class GenresScreen extends StatefulWidget {
 }
 
 class _GenresScreenState extends State<GenresScreen> {
-  /// Cover for the adult tile, which cannot come from Home.
+  /// Banner (or cover fallback) for the adult tile, which cannot come from Home.
   ///
   /// Home never asks for adult titles, so nothing on screen carries that
   /// genre and [genreArtFrom] can never fill it — it was the one permanently
@@ -113,7 +113,7 @@ class _GenresScreenState extends State<GenresScreen> {
   /// tint behind.
   GenreArt? _adultArt;
 
-  /// One cover per genre, from rows Home has ALREADY loaded.
+  /// One banner per genre, from rows Home has ALREADY loaded.
   ///
   /// Nothing is registered in some shells and Home may not have loaded yet,
   /// and neither is worth failing over — the tiles fall back to their tint.
@@ -171,7 +171,8 @@ class _GenresScreenState extends State<GenresScreen> {
       final withCover = res.where((m) => m.cover?.isNotEmpty ?? false);
       if (withCover.isEmpty || !mounted) return;
       final hit = withCover.first;
-      setState(() => _adultArt = (url: hit.cover!, headers: hit.coverHeaders));
+      final artwork = hit.banner ?? hit.cover!;
+      setState(() => _adultArt = (url: artwork, headers: hit.coverHeaders));
     } catch (_) {
       // A blank tile is a fine outcome; the grid must not fail over artwork.
     }
