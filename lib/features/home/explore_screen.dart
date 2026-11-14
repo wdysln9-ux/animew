@@ -266,8 +266,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   TextStyle _txt(double size, {FontWeight weight = FontWeight.w500, Color? color, double height = 1.1}) =>
       AppText.body.copyWith(fontSize: size + 1.5, height: height, fontWeight: weight, color: color ?? AppColors.textPrimary);
 
-  Widget _heading(String title, {String? action, String? subtitle, VoidCallback? onAction, bool marked = false, double topPadding = 23}) =>
-    Padding(padding: EdgeInsets.fromLTRB(16, topPadding, 16, 11), child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+  Widget _heading(String title, {String? action, String? subtitle, VoidCallback? onAction, bool marked = false, double topPadding = 23, double bottomPadding = 11}) =>
+    Padding(padding: EdgeInsets.fromLTRB(16, topPadding, 16, bottomPadding), child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
       if (marked) Container(width: 3, height: 30, margin: const EdgeInsets.only(right: 9), decoration: BoxDecoration(color: AppColors.textPrimary, borderRadius: BorderRadius.circular(3))),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
         Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(14, weight: FontWeight.w800)),
@@ -635,8 +635,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
           else Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('Belum ada anime tersembunyi yang cocok.', style: _txt(11, color: AppColors.textTertiary))),
           _heading('Lagi pengen apa?'), _quickPicks(),
           _heading('Telusuri Musim'), _seasons(),
-          _heading('Genre', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen()))), _genreGrid(),
-          _heading('Telusuri Tahun', topPadding: 9), _years(),
+          _heading('Genre', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen())), bottomPadding: 5), _genreGrid(),
+          _heading('Telusuri Tahun', topPadding: 0), _years(),
           _heading('Studio Populer'), _studios(),
           const SizedBox(height: 100),
         ]))),
