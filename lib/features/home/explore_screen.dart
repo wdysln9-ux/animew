@@ -253,18 +253,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   // Do not synthesize a second recommendation list from genres/history here.
   List<MediaItem> get _recommendations => _row('Rekomendasi Anime');
   List<MediaItem> get _heroes {
-    final unique = <String, MediaItem>{};
-    // The top carousel previews the same recommendations shown in the
-    // "Karena kamu menonton" poster catalogue below.
-    for (final m in _becauseCarousel.take(5)) {
-      if (m.banner != null || m.cover != null) unique.putIfAbsent(m.id, () => m);
-    }
-    if (unique.isEmpty) {
-      for (final m in [..._recommendations, ..._trending, ..._row('Populer')]) {
-        if (m.banner != null || m.cover != null) unique.putIfAbsent(m.id, () => m);
-      }
-    }
-    return unique.values.take(5).toList();
+    // The first 10 recommendations are shown in the poster catalogue;
+    // the following 5 are reserved for the top carousel.
+    return _becauseCarousel.skip(10).take(5).toList();
   }
 
   void _search({String query = '', MetaFilters? filters}) {
@@ -643,7 +634,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _searchBar(), _sorts(), const SizedBox(height: 10), _hero(),
           _heading('Selera Kamu'), _taste(),
           _heading('Karena kamu menonton $watched'),
-          _posterRail(_becauseCarousel, recommendationMode: true),
+          _posterRail(_becauseCarousel.take(10).toList(), recommendationMode: true),
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'),
           if (hidden.isNotEmpty) _posterRail(hidden)
           else Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('Belum ada anime tersembunyi yang cocok.', style: _txt(11, color: AppColors.textTertiary))),
