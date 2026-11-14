@@ -2685,6 +2685,7 @@ class _DetailViewState extends State<_DetailView> {
             showPopularity: detail.popularity,
             totalEpisodes: eps.length,
             isAiring: detail.status == MediaStatus.ongoing,
+            isMusicVideo: isSingleMusicVideo,
             onOpen: (fullIndex) {
               if (isReading) {
                 _openPlayer(eps, fullIndex, detail, category);
