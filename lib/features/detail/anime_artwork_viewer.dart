@@ -251,28 +251,40 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
             Positioned(
               top: 8,
               left: 8,
-              child: IconButton(
-                tooltip: 'Tutup',
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close_rounded, color: Colors.white),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.42),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  tooltip: 'Tutup',
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                ),
               ),
             ),
             Positioned(
               top: 8,
               right: 8,
-              child: IconButton(
-                tooltip: 'Unduh ${current.label}',
-                onPressed: _saving ? null : _saveCurrent,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 21,
-                        height: 21,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.download_rounded, color: Colors.white),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.42),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  tooltip: 'Unduh ${current.label}',
+                  onPressed: _saving ? null : _saveCurrent,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 21,
+                          height: 21,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.download_rounded, color: Colors.white),
+                ),
               ),
             ),
             if (_loadingMalPictures)
@@ -322,15 +334,15 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: 16,
+                      vertical: 9,
                     ),
                     child: Text(
                       '${_index + 1}/${widget.images.length}',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
