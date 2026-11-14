@@ -1130,9 +1130,9 @@ class PlaybackPrefs {
     final value = all[key];
     if (value is! Map) return const {'x': 0.5, 'y': 0.88, 'scale': 1.0};
     return {
-      'x': (value['x'] as num?)?.toDouble().clamp(0.04, 0.96) ?? 0.5,
-      'y': (value['y'] as num?)?.toDouble().clamp(0.08, 0.94) ?? 0.88,
-      'scale': (value['scale'] as num?)?.toDouble().clamp(0.5, 2.5) ?? 1.0,
+      'x': (value['x'] as num?)?.toDouble().clamp(0.04, 0.96).toDouble() ?? 0.5,
+      'y': (value['y'] as num?)?.toDouble().clamp(0.08, 0.94).toDouble() ?? 0.88,
+      'scale': (value['scale'] as num?)?.toDouble().clamp(0.5, 2.5).toDouble() ?? 1.0,
     };
   }
 
