@@ -1414,10 +1414,10 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                   insets: const EdgeInsets.only(bottom: 1),
                 ),
                 labelStyle: AppText.headline.copyWith(
-                  fontSize: 16, height: 1.2, fontWeight: FontWeight.w700,
+                  fontSize: 15, height: 1.2, fontWeight: FontWeight.w700,
                 ),
                 unselectedLabelStyle: AppText.headline.copyWith(
-                  fontSize: 16, height: 1.2, fontWeight: FontWeight.w500,
+                  fontSize: 15, height: 1.2, fontWeight: FontWeight.w500,
                 ),
                 labelColor: AppColors.textPrimary,
                 unselectedLabelColor: AppColors.textSecondary,
