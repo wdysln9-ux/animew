@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
 import '../../core/models/home_section.dart';
@@ -37,8 +38,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   int _heroIndex = 0;
   Map<String, int> _viewerGenreCounts = const {};
   bool _viewerGenreStatsLoaded = false;
+  Map<String, int> _studioFavourites = const {};
   final PageController _heroController = PageController(viewportFraction: .96);
-  final PageController _recommendationController = PageController(viewportFraction: .34);
+  final PageController _recommendationController = PageController(viewportFraction: .82);
 
   @override
   void initState() { super.initState(); _load(); }
@@ -78,6 +80,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       });
       if (!_viewerGenreStatsLoaded) _loadViewerGenreStats();
       _loadBecauseRecommendations(force: refresh);
+      if (_studioFavourites.isEmpty) _loadStudioFavourites();
     } catch (_) {}
   }
 
@@ -181,6 +184,41 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  Future<void> _loadStudioFavourites() async {
+    const names = ['Toei Animation', 'Sunrise', 'J.C.Staff', 'TMS Entertainment',
+      'Madhouse', 'Shanghai Animation Film Studio', 'Production I.G'];
+    final fields = [
+      for (var i = 0; i < names.length; i++)
+        'studio$i: Studio(search: "${names[i]}") { favourites }'
+    ].join('\n');
+    try {
+      final response = await sl<Dio>().post<dynamic>(
+        'https://graphql.anilist.co',
+        data: {'query': 'query { $fields }'},
+        options: Options(
+          headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+      final data = response.data;
+      if (data is! Map || data['data'] is! Map) return;
+      final result = <String, int>{};
+      for (var i = 0; i < names.length; i++) {
+        final studio = (data['data'] as Map)['studio$i'];
+        if (studio is Map && studio['favourites'] is int) {
+          result[names[i]] = studio['favourites'] as int;
+        }
+      }
+      if (mounted) setState(() => _studioFavourites = result);
+    } catch (_) {}
+  }
+
+  String _formatFavouriteCount(int value) {
+    if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
+    if (value >= 1000) return '${(value / 1000).toStringAsFixed(1)}K';
+    return value.toString();
+  }
+
   List<MediaItem> get _all => _rows.expand((r) => r.items).where((m) => !m.isAdult).toList();
   List<String> get _tasteGenres {
     final ids = _history.map((e) => e.malId).whereType<int>().toSet();
@@ -231,8 +269,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   TextStyle _txt(double size, {FontWeight weight = FontWeight.w500, Color? color, double height = 1.1}) =>
       AppText.body.copyWith(fontSize: size + 1.5, height: height, fontWeight: weight, color: color ?? AppColors.textPrimary);
 
-  Widget _heading(String title, {String? action, String? subtitle, VoidCallback? onAction, bool marked = false}) =>
-    Padding(padding: const EdgeInsets.fromLTRB(16, 23, 16, 11), child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+  Widget _heading(String title, {String? action, String? subtitle, VoidCallback? onAction, bool marked = false, double topPadding = 23}) =>
+    Padding(padding: EdgeInsets.fromLTRB(16, topPadding, 16, 11), child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
       if (marked) Container(width: 3, height: 30, margin: const EdgeInsets.only(right: 9), decoration: BoxDecoration(color: AppColors.textPrimary, borderRadius: BorderRadius.circular(3))),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
         Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: _txt(14, weight: FontWeight.w800)),
@@ -253,12 +291,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _pill(String label, VoidCallback tap, {bool selected = false, bool compact = false, Widget? icon, String? suffix, Color? suffixColor}) =>
     Material(color: selected ? AppColors.accent : AppColors.surface,
-      borderRadius: BorderRadius.circular(compact ? 18 : 10),
-      child: InkWell(borderRadius: BorderRadius.circular(compact ? 18 : 10), onTap: tap,
+      borderRadius: BorderRadius.circular(compact ? 24 : 10),
+      child: InkWell(borderRadius: BorderRadius.circular(compact ? 24 : 10), onTap: tap,
         child: Padding(padding: EdgeInsets.symmetric(horizontal: compact ? 15 : 14, vertical: compact ? 10 : 11.5),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             if (icon != null) ...[icon, const SizedBox(width: 5)],
-            Text(label, style: _txt(compact ? 10 : 10.5, weight: FontWeight.w700,
+            Text(label, style: _txt(compact ? 11 : 10.5, weight: FontWeight.w700,
               color: selected ? Colors.white : AppColors.textSecondary)),
             if (suffix != null) ...[const SizedBox(width: 5), Text(suffix, style: _txt(7.5, weight: FontWeight.w900, color: suffixColor ?? AppColors.accent))],
           ]))));
@@ -411,34 +449,61 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  Color _tastePercentColor(int percent) {
-    if (percent >= 75) return const Color(0xFF55D879);
-    if (percent >= 60) return const Color(0xFFFFC247);
-    return const Color(0xFFFF7168);
+  Color _tastePercentColor(int rank, int total) {
+    final progress = total <= 1 ? 0.0 : rank / (total - 1);
+    return Color.lerp(const Color(0xFF43C96B), const Color(0xFFE84B4B), progress)!;
   }
 
   Widget _taste() {
-    final stats = _viewerGenreCounts.entries.toList()
+    final stats = _viewerGenreCounts.entries
+        .where((entry) => entry.value > 0)
+        .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final genres = stats.isNotEmpty
-        ? stats.take(4).map((entry) => entry.key).toList()
-        : (_history.isEmpty ? const ['Comedy', 'Fantasy', 'Action', 'Adventure'] : _tasteGenres);
     final total = stats.fold<int>(0, (sum, entry) => sum + entry.value);
-    return SizedBox(height: 40, child: ListView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      children: [for (final g in genres)
-        Padding(padding: const EdgeInsets.only(right: 8), child: _pill(
-          g,
-          () => _search(filters: MetaFilters(genres: [g])),
-          suffix: _viewerGenreStatsLoaded && total > 0 && _viewerGenreCounts.containsKey(g)
-              ? '${(_viewerGenreCounts[g]! * 100 / total).round()}%'
-              : null,
-          suffixColor: _viewerGenreStatsLoaded && total > 0 && _viewerGenreCounts.containsKey(g)
-              ? _tastePercentColor((_viewerGenreCounts[g]! * 100 / total).round())
-              : null,
-        ))],
-    ));
+    final fallback = stats.isEmpty
+        ? (_history.isEmpty ? const ['Comedy', 'Fantasy', 'Action', 'Adventure'] : _tasteGenres)
+        : const <String>[];
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        children: [
+          for (var i = 0; i < stats.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Material(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(24),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: () => _search(filters: MetaFilters(genres: [stats[i].key])),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(stats[i].key, style: _txt(11, weight: FontWeight.w700, color: Colors.white)),
+                        const SizedBox(width: 7),
+                        Text(
+                          '${(stats[i].value * 100 / total).round()}%',
+                          style: _txt(9.5, weight: FontWeight.w900, color: _tastePercentColor(i, stats.length)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          for (final genre in fallback)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _pill(genre, () => _search(filters: MetaFilters(genres: [genre])),
+                  compact: true),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _quickPicks() {
@@ -542,6 +607,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   overflow: TextOverflow.ellipsis,
                                   style: _txt(11, weight: FontWeight.w800),
                                 ),
+                                if (_studioFavourites.containsKey(names[i])) ...[
+                                  const SizedBox(height: 2),
+                                  Text('${_formatFavouriteCount(_studioFavourites[names[i]]!)} Favorit',
+                                    style: _txt(8.5, color: AppColors.textTertiary)),
+                                ],
                               ],
                             ),
                           ),
@@ -592,7 +662,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         SliverToBoxAdapter(child: SafeArea(bottom: false, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),
           _searchBar(), _sorts(), const SizedBox(height: 10), _hero(),
-          _heading('Selera Kamu', marked: true), _taste(),
+          _heading('Selera Kamu'), _taste(),
           _heading('Karena kamu menonton $watched'), _recommendationCarousel(_becauseCarousel),
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'),
           if (hidden.isNotEmpty) _posterRail(hidden)
@@ -600,8 +670,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _heading('Lagi pengen apa?', marked: true), _quickPicks(),
           _heading('Telusuri Musim'), _seasons(),
           _heading('Genre', action: 'Lihat Semua →', onAction: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GenresScreen()))), _genreGrid(),
-          _heading('Telusuri Tahun'), _years(),
-          _heading('Studio Populer', marked: true), _studios(),
+          _heading('Telusuri Tahun', topPadding: 9), _years(),
+          _heading('Studio Populer'), _studios(),
           const SizedBox(height: 100),
         ]))),
       ]),
