@@ -301,14 +301,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
             Text('Cari anime, genre, studio...', style: _txt(11, color: AppColors.textTertiary)),
           ]))))));
 
-  Widget _pill(String label, VoidCallback tap, {bool selected = false, bool compact = false, Widget? icon, String? suffix, Color? suffixColor}) =>
+  Widget _pill(String label, VoidCallback tap, {bool selected = false, bool compact = false, double? textSize, Widget? icon, String? suffix, Color? suffixColor}) =>
     Material(color: selected ? AppColors.accent : AppColors.surface,
       borderRadius: BorderRadius.circular(compact ? 24 : 10),
       child: InkWell(borderRadius: BorderRadius.circular(compact ? 24 : 10), onTap: tap,
         child: Padding(padding: EdgeInsets.symmetric(horizontal: compact ? 15 : 14, vertical: compact ? 10 : 11.5),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             if (icon != null) ...[icon, const SizedBox(width: 5)],
-            Text(label, style: _txt(compact ? 11 : 10.5, weight: FontWeight.w700,
+            Text(label, style: _txt(textSize ?? (compact ? 11 : 10.5), weight: FontWeight.w700,
               color: selected ? Colors.white : AppColors.textSecondary)),
             if (suffix != null) ...[const SizedBox(width: 5), Text(suffix, style: _txt(7.5, weight: FontWeight.w900, color: suffixColor ?? AppColors.accent))],
           ]))));
@@ -578,7 +578,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     ];
     return SizedBox(height: 44, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 14),
       children: [for (final c in choices) Padding(padding: const EdgeInsets.only(right: 7),
-        child: _pill(c.$1, () => _search(filters: c.$3), icon: Icon(c.$2, size: 12, color: AppColors.accent)))]));
+        child: _pill(c.$1, () => _search(filters: c.$3), textSize: 11.5, icon: Icon(c.$2, size: 12, color: AppColors.accent)))]));
   }
 
   Widget _seasons() {
