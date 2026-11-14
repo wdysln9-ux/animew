@@ -1968,12 +1968,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _pinching = false;
       _stretchSnapRatio = null;
       _hudVisible = false;
+      if (_subtitleAdjustMode) _controlsVisible = false;
     });
     if (!_subtitleAdjustMode) {
       _saveSubtitleLayout();
       _bumpControls();
-    } else {
-      _controlsVisible = false;
     }
   }
 
@@ -4150,8 +4149,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           if (caption.isEmpty) return const SizedBox.shrink();
                           final prefs = sl<PlaybackPrefs>();
                           return IgnorePointer(
-                            ignoring: !_subtitleAdjustMode,
-                            child: LayoutBuilder(
+                            // The parent Listener owns all touch input in adjustment mode.
+                            // Keep the text out of the hit-test path so it cannot block drags.
+                            ignoring: true,
+                            child: Opacity(
+                              opacity: prefs.subtitleOverallOpacity,
+                              child: LayoutBuilder(
                               builder: (context, constraints) => Align(
                                 alignment: Alignment(
                                   _subtitleX * 2 - 1,
@@ -4177,6 +4180,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   ),
                                 ),
                               ),
+                            ),
                             ),
                           );
                         },
@@ -4876,6 +4880,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ],
               );
             return Listener(
+              behavior: HitTestBehavior.opaque,
               onPointerDown: _onPointerDown,
               onPointerMove: _onPointerMove,
               onPointerUp: _onPointerUp,
