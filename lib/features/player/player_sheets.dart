@@ -641,6 +641,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
     await p.setSubtitleShadowAngle(90); await p.setSubtitleShadowDistance(2);
     await p.setSubtitleShadowBlur(0); await p.setSubtitleShadowColorHex('#000000FF');
     await p.setSubtitleBgOpacity(0); await p.setSubtitleTextOpacity(1);
+    await p.setSubtitleOverallOpacity(1);
   });
 
   Future<void> _font() async {
@@ -831,7 +832,22 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
         _step('Jarak Bayangan',p.subtitleShadowDistance.toStringAsFixed(1)+' px',p.subtitleShadowDistance,0.5,0,20,p.setSubtitleShadowDistance),
         _step('Ukuran Sebaran Bayangan',p.subtitleShadowBlur.toStringAsFixed(1)+' px',p.subtitleShadowBlur,0.5,0,20,p.setSubtitleShadowBlur),
         _colorRow('Warna Bayangan',p.subtitleShadowColorHex,p.setSubtitleShadowColorHex),
-        _step('Transparansi Subtitle','${(p.subtitleOverallOpacity * 100).round()}%',p.subtitleOverallOpacity,0.05,0,1,p.setSubtitleOverallOpacity),
+        _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Expanded(child: Text('Transparansi Subtitle', style: TextStyle(color: Colors.white, fontSize: 14))),
+            Text('${(p.subtitleOverallOpacity * 100).round()}%', style: const TextStyle(color: muted, fontSize: 13)),
+          ]),
+          Slider(
+            value: p.subtitleOverallOpacity,
+            min: 0,
+            max: 1,
+            divisions: 100,
+            activeColor: orange,
+            onChanged: (value) => _apply(() => p.setSubtitleOverallOpacity(value)),
+          ),
+          const Text('Mengatur transparansi teks, garis tepi, bayangan, dan latar subtitle sekaligus.',
+            style: TextStyle(color: muted, fontSize: 12, height: 1.4)),
+        ])),
         _colorRow('Warna Latar','#000000FF', (v)=>p.setSubtitleBgOpacity(0)),
         _card(const Text('Subtitle dialog mengikuti semua pengaturan tampilan. Subtitle non-dialog hanya mengikuti gaya font yang dipilih.',
           style: TextStyle(color: muted, fontSize: 13, height: 1.5))),
@@ -979,6 +995,7 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setSubtitleShadowAngle(90.0);
     await _prefs.setSubtitleShadowDistance(1.0);
     await _prefs.setSubtitleShadowBlur(0.0);
+    await _prefs.setSubtitleOverallOpacity(1.0);
     await _prefs.setSubtitleScale(1.0);
   });
 
@@ -1017,6 +1034,7 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setSubtitleShadowDistance(1.0);
     await _prefs.setSubtitleShadowBlur(0.0);
     await _prefs.setSubtitleShadowColorHex('#000000FF');
+    await _prefs.setSubtitleOverallOpacity(1.0);
     await _prefs.setSubtitleBgOpacity(0.0);
     await _prefs.setSubtitlePosition(95);
     await _prefs.setSubtitleScale(1.0);
