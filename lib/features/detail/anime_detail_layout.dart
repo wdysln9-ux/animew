@@ -643,13 +643,9 @@ class _AnimeDetailMetadataChip extends StatelessWidget {
     final isUpcoming = value.contains('segera') || value.contains('upcoming');
     final statusColor = isCompleted ? const Color(0xFF4E8DFF) : (isAiring ? const Color(0xFF24A765) : const Color(0xFFB86A2A));
     final background = isFormat ? AppColors.accent : statusColor.withValues(alpha: 0.20);
-    final foreground = isFormat
-        ? Colors.white
-        : value.contains('selesai') || value.contains('completed')
-        ? const Color(0xFF9CC7FF)
-        : value.contains('tayang') || value.contains('ongoing')
-            ? const Color(0xFF8BE0AE)
-            : (isUpcoming ? const Color(0xFFFFC58A) : const Color(0xFFFFC58A));
+    // Status text uses the same solid color as its outline, matching
+    // the studio chip's text/border treatment.
+    final foreground = isFormat ? Colors.white : statusColor;
     return Container(
       constraints: const BoxConstraints(minHeight: 24),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
