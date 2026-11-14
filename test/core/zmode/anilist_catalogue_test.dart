@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:watch_app/core/models/provider_info.dart';
 import 'package:watch_app/core/zmode/anilist_catalogue.dart';
+import 'package:watch_app/core/zmode/metadata_filters.dart';
 import 'package:watch_app/core/zmode/zmode_ids.dart';
 
 Map<String, dynamic> _media({
@@ -220,6 +221,34 @@ void main() {
     await cat.detail(const ZCanonical(ZKind.anime, 'al:77'));
     expect(vars[0], {'idMal': 100});
     expect(vars[1], {'id': 77});
+  });
+
+  test('recommendation sort combines with each single status filter', () async {
+    for (final entry in [
+      (MetaStatus.releasing, 'RELEASING'),
+      (MetaStatus.notYetReleased, 'NOT_YET_RELEASED'),
+    ]) {
+      final queries = <String>[];
+      final cat = AniListCatalogue((q, v) async {
+        queries.add(q);
+        if (q.contains('pageInfo{total}')) {
+          return {'Page': {'pageInfo': {'total': 1}, 'media': []}};
+        }
+        return {'Page': {'media': []}};
+      });
+      await cat.searchFiltered(
+        '',
+        ZKind.anime,
+        filters: MetaFilters(
+          sort: MetaSort.recommendation,
+          statuses: [entry.$1],
+        ),
+      );
+      expect(queries, hasLength(2));
+      expect(queries.every((q) => q.contains('status:${entry.$2}')), isTrue);
+      expect(queries.every((q) => !q.contains('status_in:')), isTrue);
+      expect(queries.every((q) => q.contains('sort:ID')), isTrue);
+    }
   });
 
   test('detail carries the banner image through', () async {
