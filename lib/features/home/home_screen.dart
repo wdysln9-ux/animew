@@ -2066,21 +2066,31 @@ class _HomeViewState extends State<_HomeView>
               PosterTintLayer(notifier: _heroTint),
             RefreshIndicator(
               color: AppColors.accent,
-              onRefresh: () {
+              // Home has a tall hero/header and several nested horizontal
+              // rails. Allow the pull gesture to start anywhere on the
+              // vertical scrollable instead of requiring an exact edge hit.
+              triggerMode: RefreshIndicatorTriggerMode.anywhere,
+              onRefresh: () async {
+                // Hero metadata is cached separately from HomeCubit rows.
+                // Drop it too, otherwise a refresh can leave the banner
+                // looking unchanged even after the catalogue has reloaded.
+                _metaCache.clear();
+                _heroPrewarmed = false;
                 if (_sourceCatalogueSelected) {
-                  return _sourceCatalogueController.refresh();
+                  await _sourceCatalogueController.refresh();
+                  return;
                 }
-                // In AniList anime mode, pull-to-refresh is scoped to the
-                // random recommendations row. Other Home data stays intact.
                 if (ZModePrefs.enabled &&
                     sl<ContentModeCubit>().state == ContentMode.anime) {
-                  return context.read<HomeCubit>().refreshHome();
+                  await context.read<HomeCubit>().refreshHome();
+                  return;
                 }
-                // Keep the existing refresh behaviour for non-AniList modes.
                 if (sl.isRegistered<AuthCubit>()) {
                   unawaited(sl<AuthCubit>().revalidateIfFlagged(force: true));
                 }
-                return context.read<HomeCubit>().load();
+                // Reset the visible rows while the provider fetches so the
+                // user gets a clear refresh rather than a silent cached load.
+                await context.read<HomeCubit>().load(reset: true);
               },
               child: BlocBuilder<HomeCubit, HomeState>(
                 builder: (context, state) {
