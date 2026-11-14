@@ -663,6 +663,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),
           _searchBar(), _sorts(), const SizedBox(height: 10), _hero(),
           _heading('Selera Kamu'), _taste(),
+          if (_personalized.isNotEmpty) ...[
+            _heading('Karena kamu suka'),
+            _posterRail(_personalized),
+          ],
           _heading('Karena kamu menonton $watched'), _recommendationCarousel(_becauseCarousel),
           _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik'),
           if (hidden.isNotEmpty) _posterRail(hidden)
