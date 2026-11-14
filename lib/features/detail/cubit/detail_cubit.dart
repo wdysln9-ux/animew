@@ -702,10 +702,10 @@ class DetailCubit extends Cubit<DetailState> {
       } catch (_) {/* keep going with what we have */}
     }
 
-    // Id-less anime (Aniyomi, most CloudStream): resolve the MAL id from title
-    // via Jikan and store it, so the player, scrobbler AND the filler-episode
-    // lookup all key off a real id instead of nothing.
-    if (!isAniListDetail && d.malId == null && d.type == ProviderType.anime) {
+    // Resolve the MAL id for every anime missing one. AniList detail pages
+    // use their exact AniList media id first; other sources fall back to Jikan
+    // title matching. This also unlocks the MAL artwork gallery preload.
+    if (d.malId == null && d.type == ProviderType.anime) {
       try {
         final resolved = await sl<MetadataEnrichment>().resolveMalId(d);
         if (isClosed) return;
