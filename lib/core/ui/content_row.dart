@@ -18,6 +18,8 @@ class ContentRow extends StatelessWidget {
     this.itemWidth = 124,
     this.itemHeight = 210,
     this.onSeeAll,
+    this.seeAllLabel,
+    this.seeAllIcon,
   });
 
   final String title;
@@ -27,6 +29,8 @@ class ContentRow extends StatelessWidget {
   final double itemWidth;
   final double itemHeight;
   final VoidCallback? onSeeAll;
+  final String? seeAllLabel;
+  final IconData? seeAllIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +38,7 @@ class ContentRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _Header(title: title, overline: overline, onSeeAll: onSeeAll),
+        _Header(title: title, overline: overline, onSeeAll: onSeeAll, seeAllLabel: seeAllLabel, seeAllIcon: seeAllIcon),
         SizedBox(
           height: itemHeight,
           child: ListView.builder(
@@ -68,11 +72,13 @@ class ContentRow extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.title, this.overline, this.onSeeAll});
+  const _Header({required this.title, this.overline, this.onSeeAll, this.seeAllLabel, this.seeAllIcon});
 
   final String title;
   final String? overline;
   final VoidCallback? onSeeAll;
+  final String? seeAllLabel;
+  final IconData? seeAllIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -102,9 +108,18 @@ class _Header extends StatelessWidget {
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
                     padding: const EdgeInsetsDirectional.only(start: 8),
-                    child: Text(
-                      'Lihat Semua',
-                      style: AppText.caption.copyWith(color: AppColors.accent),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          seeAllLabel ?? 'Lihat Semua',
+                          style: AppText.caption.copyWith(color: AppColors.accent),
+                        ),
+                        if (seeAllIcon != null) ...[
+                          const SizedBox(width: 4),
+                          Icon(seeAllIcon, size: 15, color: AppColors.accent),
+                        ],
+                      ],
                     ),
                   ),
                 ),
