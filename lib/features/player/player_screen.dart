@@ -707,7 +707,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           controller: _c.videoController,
           controls: NoVideoControls,
           fit: BoxFit.cover,
-          subtitleViewConfiguration: _subtitleConfig(hideFlutter: true),
+          subtitleViewConfiguration: _subtitleConfig(),
         ),
         onBack: () {
           final background = widget.backgroundRoute;
@@ -4087,6 +4087,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                     controller: _c.videoController,
                                     controls: NoVideoControls,
                                     fit: BoxFit.cover,
+                                    subtitleViewConfiguration: _subtitleConfig(hideFlutter: true),
                                   ),
                                   if (_cinematicBrightness < 0)
                                     ColoredBox(color: Colors.black.withValues(
@@ -4132,7 +4133,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           controls: NoVideoControls,
                           fit: _fits[_fitIndex].$1,
                           fill: Colors.transparent,
-                          subtitleViewConfiguration: _subtitleConfig(),
+                          subtitleViewConfiguration: _subtitleConfig(hideFlutter: true),
                         ),
                       ),
                     ),
