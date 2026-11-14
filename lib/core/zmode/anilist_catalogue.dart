@@ -426,7 +426,7 @@ class AniListCatalogue implements AnimeCatalogue {
     final legacyFormat = f != null && formats.isEmpty ? _alFormat(f.format) : null;
     final legacyStatus = f != null && statuses.isEmpty ? _alStatus(f.status) : null;
     final args = <String>[
-      if (q.trim().isNotEmpty) 'search:\\$q',
+      if (q.trim().isNotEmpty) 'search:\$q',
       'type:${_type(kind)}',
       if (_format(kind).isNotEmpty) _format(kind).replaceFirst(',', ''),
       if (kind == ZKind.anime && (f == null || (f.minYear <= 1980 && f.maxYear >= DateTime.now().year))) 'startDate_greater:0',
@@ -478,7 +478,7 @@ class AniListCatalogue implements AnimeCatalogue {
       final queries = seasons.indexed.map((entry) {
         final (i, season) = entry;
         final seasonArgs = '$args,season:${season.name.toUpperCase()}';
-        return 's$i: Page(page:$page,perPage:\\$n){ media($seasonArgs){ $_listFields } }';
+        return 's$i: Page(page:$page,perPage:\$n){ media($seasonArgs){ $_listFields } }';
       }).join(' ');
       final data = await _gql('query$decl{ $queries }', vars);
       final unique = <String, MediaItem>{};
@@ -490,7 +490,7 @@ class AniListCatalogue implements AnimeCatalogue {
       items = unique.values.toList();
     } else {
       final full =
-          'query$decl{ Page(page:$page,perPage:\\$n){ media($args){ $_listFields } } }';
+          'query$decl{ Page(page:$page,perPage:\$n){ media($args){ $_listFields } } }';
       items = _items(await _gql(full, vars), kind);
     }
     if (randomRecommendation) items.shuffle(math.Random());
