@@ -592,7 +592,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return SizedBox(height: 38, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [for (final chip in chips) Padding(padding: const EdgeInsets.only(right: 7),
         child: _pill('${names[chip.$2]} ${chip.$1}', () => _search(filters: MetaFilters(
-          years: [chip.$1], seasons: [MetaSeason.values[chip.$2]]), textColor: Colors.white)))]));
+          years: [chip.$1], seasons: [MetaSeason.values[chip.$2]]), textColor: Colors.white)))]]));
   }
 
   Widget _genreGrid() {
