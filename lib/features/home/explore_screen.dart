@@ -138,7 +138,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       while (items.length < 15 && hasNextPage) {
         final result = await api.mediaRecommendations(anilistId, page: page);
         for (final r in result.recommendations) {
-          if (r.isReading || r.isAdult || r.anilistId == null || !seen.add(r.anilistId!)) continue;
+          if (r.isReading || r.isAdult || r.year == null || r.anilistId == null || !seen.add(r.anilistId!)) continue;
           ratings[r.anilistId!] = r.recommendationRating ?? 0;
           items.add(MediaItem(
             id: 'anilist:${r.anilistId}',
