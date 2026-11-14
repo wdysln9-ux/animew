@@ -414,6 +414,7 @@ class DetailScreen extends StatelessWidget {
         sourceId: item.sourceId,
         prefs: sl<TitlePrefsStore>(),
         seedMalId: item.malId,
+        seedAnilistId: item.anilistId,
         seedType: item.type,
         // An explicit preference (opened from a tracker) wins; otherwise a
         // saved title is READ from wherever it was saved, so the page and its
