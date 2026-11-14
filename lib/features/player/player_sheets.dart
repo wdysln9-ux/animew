@@ -2489,10 +2489,10 @@ class _RemoteFileSizeLabelState extends State<_RemoteFileSizeLabel> {
   Widget _step(String label, String value, double current, double step, double minValue, double maxValue,
       Future<void> Function(double) save) => _card(Row(children: [
     Expanded(child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 14))),
-    IconButton(onPressed: current > minValue ? () => _apply(() => save((current-step).clamp(minValue,maxValue))) : null,
+    IconButton(onPressed: current > minValue ? () => _apply(() => save((current-step).clamp(minValue,maxValue).toDouble())) : null,
       icon: const Icon(Icons.remove_circle_outline, color: muted)),
     Text(value, style: const TextStyle(color: Colors.white, fontSize: 14)),
-    IconButton(onPressed: current < maxValue ? () => _apply(() => save((current+step).clamp(minValue,maxValue))) : null,
+    IconButton(onPressed: current < maxValue ? () => _apply(() => save((current+step).clamp(minValue,maxValue).toDouble())) : null,
       icon: const Icon(Icons.add_circle_outline, color: orange)),
   ]));
 
