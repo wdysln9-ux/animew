@@ -1086,6 +1086,14 @@ class PlaybackPrefs {
   Future<void> setSubtitleShadowBlur(double value) =>
       _box.put('subtitleShadowBlur', value.clamp(0.0, 20.0));
 
+  /// Thickness of the drop shadow around subtitle glyphs (0–8).
+  double get subtitleShadowWidth =>
+      (_box.get('subtitleShadowWidth', defaultValue: 1.0) as num)
+          .toDouble()
+          .clamp(0.0, 8.0);
+  Future<void> setSubtitleShadowWidth(double value) =>
+      _box.put('subtitleShadowWidth', value.clamp(0.0, 8.0));
+
   /// Subtitle shadow colour as `#RRGGBBAA` (default opaque black).
   String get subtitleShadowColorHex =>
       _box.get('subtitleShadowColorHex', defaultValue: '#000000FF') as String;
