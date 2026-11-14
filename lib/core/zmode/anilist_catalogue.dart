@@ -209,9 +209,9 @@ class AniListCatalogue implements AnimeCatalogue {
         .map((e) {
           final (i, (_, args)) = e;
           if (kind == ZKind.anime && args == _completedAnimeRowId) {
-            return 'r${i}p: Page(perPage:30){ media(type:ANIME$_adultExclusion,startDate_greater:0,status:FINISHED,format_in:[TV,MOVIE],season:$previousSeason,seasonYear:$previousYear,sort:START_DATE_DESC){ $_listFields } }';
+            return 'r${i}p: Page(perPage:30){ media(type:ANIME$_adultExclusion,status:FINISHED,format_in:[TV,MOVIE],season:$previousSeason,seasonYear:$previousYear,sort:START_DATE_DESC){ $_listFields } }';
           }
-          return 'r$i: Page(perPage:30){ media(type:${_type(kind)}$_adultExclusion${_format(kind)}${kind == ZKind.anime ? ',startDate_greater:0' : ''},$args){ $_listFields } }';
+          return 'r$i: Page(perPage:30){ media(type:${_type(kind)}$_adultExclusion${_format(kind)},$args){ $_listFields } }';
         })
         .join(' ');
     // Fetch a genuinely random AniList ID sample alongside the normal home
@@ -304,7 +304,7 @@ class AniListCatalogue implements AnimeCatalogue {
         final batch = ids.skip(start).take(50).join(',');
         final alias = 'r${queries.length}';
         queries.add(
-          '$alias: Page(perPage:50){ media(id_in:[$batch],type:ANIME$_adultExclusion,startDate_greater:0){ ${_listFields} } }',
+          '$alias: Page(perPage:50){ media(id_in:[$batch],type:ANIME$_adultExclusion){ ${_listFields} } }',
         );
       }
 
@@ -453,7 +453,6 @@ class AniListCatalogue implements AnimeCatalogue {
       if (q.trim().isNotEmpty) 'search:\$q',
       'type:${_type(kind)}',
       if (_format(kind).isNotEmpty) _format(kind).replaceFirst(',', ''),
-      if (kind == ZKind.anime && (f == null || (f.minYear <= 1980 && f.maxYear >= DateTime.now().year))) 'startDate_greater:0',
       if (f == null) 'isAdult:false',
       if (f != null) ...[
         if (f.genres.isNotEmpty)
@@ -823,6 +822,7 @@ class AniListCatalogue implements AnimeCatalogue {
       for (final m in media)
         if (m is Map &&
             (kind != ZKind.anime ||
+                m['status'] == 'NOT_YET_RELEASED' ||
                 ((m['startDate'] as Map?)?['year'] is int &&
                     ((m['startDate'] as Map)['year'] as int) > 0)))
           _item(Map<String, dynamic>.from(m), kind),
