@@ -33,6 +33,7 @@ class AniListCatalogue implements AnimeCatalogue {
   List<MediaItem> _lastRecommendations = const [];
 
   static const String _recommendationsRowId = 'random_anime_recommendations';
+  static const String _completedAnimeRowId = '__anime_selesai__';
 
   static bool _adultOff() => false;
 
@@ -96,6 +97,20 @@ class AniListCatalogue implements AnimeCatalogue {
       // Tiny integer used for the latest-episode poster label on airing anime.
       'nextAiringEpisode{episode}';
 
+  static String _seasonForMonth(int month) => switch (month) {
+    1 || 2 || 3 => 'WINTER',
+    4 || 5 || 6 => 'SPRING',
+    7 || 8 || 9 => 'SUMMER',
+    _ => 'FALL',
+  };
+
+  static (String, int) _previousSeason(String season, int year) => switch (season) {
+    'WINTER' => ('FALL', year - 1),
+    'SPRING' => ('WINTER', year),
+    'SUMMER' => ('SPRING', year),
+    _ => ('SUMMER', year),
+  };
+
   static String _type(ZKind k) => k == ZKind.anime ? 'ANIME' : 'MANGA';
   static String _format(ZKind k) => switch (k) {
     ZKind.novel => ',format_in:[NOVEL]',
@@ -140,22 +155,15 @@ class AniListCatalogue implements AnimeCatalogue {
     // instead of anything that has actually come out. The date bound plus the
     // status filter is what makes it a RECENT row rather than an upcoming one.
     final today = now.year * 10000 + now.month * 100 + now.day;
-    // Popularity floor: AniList carries a long tail of doujin/obscure entries
-    // that are genuinely the most recent thing published and genuinely not
-    // worth a home row.
-    String recent(int minPopularity) =>
+    // No popularity cutoff: the row should include newly released anime even
+    // when they are not yet popular. startDate_lesser also excludes entries
+    // without a known release date and titles that have not premiered.
+    String recent() =>
         'sort:START_DATE_DESC,status_in:[RELEASING,FINISHED],'
-        'popularity_greater:$minPopularity,startDate_lesser:$today';
+        'startDate_lesser:$today';
     if (k != ZKind.anime) {
       return [
-        // Recently released leads; the opening row also feeds the hero
-        // banner, which Home repeats as a row (firstRepeatsAsRow), so it
-        // shows BOTH places — spotlight on top, row right under it.
-        // Light novels carry far smaller popularity numbers than manga, so
-        // the manga floor pushed this row back to titles years old. Verified
-        // against the live API: >1000 returned 2023 entries, >50 returns the
-        // current month.
-        ('Recently released', recent(k == ZKind.novel ? 50 : 1000)),
+        ('Recently released', recent()),
         ('Sedang Trending', 'sort:TRENDING_DESC'),
         ('Popular', 'sort:POPULARITY_DESC'),
         ('Top rated', 'sort:SCORE_DESC'),
@@ -170,7 +178,7 @@ class AniListCatalogue implements AnimeCatalogue {
       _ => ('WINTER', now.year + 1),
     };
     return [
-      ('Anime Baru', recent(2000)),
+      ('Anime Baru', recent()),
       ('Trending', 'sort:TRENDING_DESC'),
       (
         '$seasonTitle ${now.year}',
@@ -183,8 +191,9 @@ class AniListCatalogue implements AnimeCatalogue {
       ),
       ('Populer', 'sort:POPULARITY_DESC'),
       ('Skor Tinggi', 'sort:SCORE_DESC'),
-      ('Action', 'genre_in:["Action"],sort:TRENDING_DESC'),
-      ('Romantis', 'genre_in:["Romance"],sort:TRENDING_DESC'),
+      ('Action', 'genre_in:["Action"],status:FINISHED,sort:TRENDING_DESC'),
+      ('Romantis', 'genre_in:["Romance"],status:FINISHED,sort:TRENDING_DESC'),
+      ('Anime Selesai', _completedAnimeRowId),
     ];
   }
 
@@ -194,9 +203,16 @@ class AniListCatalogue implements AnimeCatalogue {
   /// all) just drops that row rather than throwing.
   Future<List<HomeSection>> home(ZKind kind) async {
     final rows = _rows(kind);
+    final now = DateTime.now();
+    final currentSeason = _seasonForMonth(now.month);
+    final (previousSeason, previousYear) = _previousSeason(currentSeason, now.year);
     final query = rows.indexed
         .map((e) {
           final (i, (_, args)) = e;
+          if (kind == ZKind.anime && args == _completedAnimeRowId) {
+            return 'r${i}c: Page(perPage:15){ media(type:ANIME$_adultExclusion,status:FINISHED,format_in:[TV,MOVIE],season:$currentSeason,seasonYear:${now.year},sort:START_DATE_DESC){ $_listFields } } '
+                'r${i}p: Page(perPage:15){ media(type:ANIME$_adultExclusion,status:FINISHED,format_in:[TV,MOVIE],season:$previousSeason,seasonYear:$previousYear,sort:START_DATE_DESC){ $_listFields } }';
+          }
           return 'r$i: Page(perPage:30){ media(type:${_type(kind)}$_adultExclusion${_format(kind)},$args){ $_listFields } }';
         })
         .join(' ');
@@ -210,7 +226,12 @@ class AniListCatalogue implements AnimeCatalogue {
     final recommendations = await recommendationsFuture;
     final out = <HomeSection>[];
     for (final (i, (title, args)) in rows.indexed) {
-      var items = _itemsFromPage(data?['r$i'], kind);
+      var items = args == _completedAnimeRowId
+          ? [
+              ..._itemsFromPage(data?['r${i}c'], kind),
+              ..._itemsFromPage(data?['r${i}p'], kind),
+            ]
+          : _itemsFromPage(data?['r$i'], kind);
       // Keep the Romance row strict even if a provider response or stale
       // catalogue payload contains titles that do not carry the Romance genre.
       if (title == 'Romantis' || title == 'Romance') {
@@ -313,6 +334,20 @@ class AniListCatalogue implements AnimeCatalogue {
 
   @override
   Future<List<MediaItem>> browseRow(ZKind kind, String rowId, int page) async {
+    if (kind == ZKind.anime && rowId == _completedAnimeRowId) {
+      final now = DateTime.now();
+      final currentSeason = _seasonForMonth(now.month);
+      final (previousSeason, previousYear) = _previousSeason(currentSeason, now.year);
+      final data = await _gql(
+        'query{ current: Page(page:$page,perPage:15){ media(type:ANIME$_adultExclusion,status:FINISHED,format_in:[TV,MOVIE],season:$currentSeason,seasonYear:${now.year},sort:START_DATE_DESC){ $_listFields } } '
+        'previous: Page(page:$page,perPage:15){ media(type:ANIME$_adultExclusion,status:FINISHED,format_in:[TV,MOVIE],season:$previousSeason,seasonYear:$previousYear,sort:START_DATE_DESC){ $_listFields } } }',
+        const {},
+      );
+      return [
+        ..._itemsFromPage(data?['current'], kind),
+        ..._itemsFromPage(data?['previous'], kind),
+      ];
+    }
     if (kind == ZKind.anime && rowId == _recommendationsRowId) {
       // Page 1 is the exact batch already rendered on Home. This also guards
       // callers that request page 1 instead of passing the initial items.
