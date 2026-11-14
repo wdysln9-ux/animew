@@ -849,9 +849,9 @@ class _AnimeDetailSynopsisSectionState extends State<AnimeDetailSynopsisSection>
               alignment: Alignment.topCenter,
               child: _expanded
                   ? AniListMarkdown(data: data, textStyle: AppText.body.copyWith(
-                      fontSize: 14, height: 1.45, color: AppColors.textSecondary))
+                      fontSize: 13.5, height: 1.45, color: AppColors.textSecondary))
                   : Text(data, maxLines: 3, overflow: TextOverflow.ellipsis,
-                      style: AppText.body.copyWith(fontSize: 14, height: 1.45, color: AppColors.textSecondary)),
+                      style: AppText.body.copyWith(fontSize: 13.5, height: 1.45, color: AppColors.textSecondary)),
             ),
           ),
           const SizedBox(height: 6),
