@@ -204,8 +204,7 @@ class AniListCatalogue implements AnimeCatalogue {
   Future<List<HomeSection>> home(ZKind kind) async {
     final rows = _rows(kind);
     final now = DateTime.now();
-    final currentSeason = _seasonForMonth(now.month);
-    final (previousSeason, previousYear) = _previousSeason(currentSeason, now.year);
+    final (previousSeason, previousYear) = _previousSeason(_seasonForMonth(now.month), now.year);
     final query = rows.indexed
         .map((e) {
           final (i, (_, args)) = e;
@@ -332,8 +331,7 @@ class AniListCatalogue implements AnimeCatalogue {
   Future<List<MediaItem>> browseRow(ZKind kind, String rowId, int page) async {
     if (kind == ZKind.anime && rowId == _completedAnimeRowId) {
       final now = DateTime.now();
-      final currentSeason = _seasonForMonth(now.month);
-      final (previousSeason, previousYear) = _previousSeason(currentSeason, now.year);
+      final (previousSeason, previousYear) = _previousSeason(_seasonForMonth(now.month), now.year);
       final data = await _gql(
         'query{ previous: Page(page:$page,perPage:30){ media(type:ANIME$_adultExclusion,startDate_greater:0,status:FINISHED,format_in:[TV,MOVIE],season:$previousSeason,seasonYear:$previousYear,sort:START_DATE_DESC){ $_listFields } } }',
         const {},
@@ -348,7 +346,7 @@ class AniListCatalogue implements AnimeCatalogue {
     }
     final data = await _gql(
       'query{ Page(page:$page,perPage:30){ '
-      'media(type:${_type(kind)}$_adultExclusion${_format(kind)},$rowId){ $_listFields } }',
+      'media(type:${_type(kind)}$_adultExclusion${_format(kind)}${kind == ZKind.anime ? ',startDate_greater:0' : ''},$rowId){ $_listFields } }',
       const {},
     );
     final items = _itemsFromPage(data?['Page'], kind);
@@ -431,7 +429,7 @@ class AniListCatalogue implements AnimeCatalogue {
       if (q.trim().isNotEmpty) 'search:\\$q',
       'type:${_type(kind)}',
       if (_format(kind).isNotEmpty) _format(kind).replaceFirst(',', ''),
-      if (kind == ZKind.anime) 'startDate_greater:0',
+      if (kind == ZKind.anime && (f == null || (f.minYear <= 1980 && f.maxYear >= DateTime.now().year))) 'startDate_greater:0',
       if (f == null) 'isAdult:false',
       if (f != null) ...[
         if (f.genres.isNotEmpty)
