@@ -208,17 +208,19 @@ class MetadataEnrichment {
   /// Prefer AniList's exact media id when available; only use Jikan title
   /// search for sources that do not provide an AniList id.
   Future<int?> resolveMalId(MediaDetail d) async {
-    if (d.malId != null) return d.malId;
     if (d.type != ProviderType.anime || d.title.trim().isEmpty) return null;
     final anilistId = d.anilistId;
     if (anilistId != null && anilistId > 0) {
       try {
+        // AniList's idMal is the authoritative cross-reference. Prefer it
+        // even when the source supplied a different/stale MAL id.
         final exact = await _anilist.malIdByMediaId(anilistId);
         if (exact != null && exact > 0) return exact;
       } catch (_) {
-        // Keep the existing Jikan title fallback below.
+        // If AniList is unavailable, retain a source-provided MAL id.
       }
     }
+    if (d.malId != null && d.malId! > 0) return d.malId;
     final titles = <String>{
       if (d.englishTitle?.trim().isNotEmpty == true) d.englishTitle!.trim(),
       d.title.trim(),
