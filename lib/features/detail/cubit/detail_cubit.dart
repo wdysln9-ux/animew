@@ -716,11 +716,12 @@ class DetailCubit extends Cubit<DetailState> {
     // Resolve the MAL id for every anime missing one. AniList detail pages
     // use their exact AniList media id first; other sources fall back to Jikan
     // title matching. This also unlocks the MAL artwork gallery preload.
-    if (d.malId == null && d.type == ProviderType.anime) {
+    if (d.type == ProviderType.anime &&
+        (d.malId == null || d.anilistId != null)) {
       try {
         final resolved = await sl<MetadataEnrichment>().resolveMalId(d);
         if (isClosed) return;
-        if (resolved != null) {
+        if (resolved != null && resolved != d.malId) {
           d = d.copyWith(malId: resolved);
           _patchDetail((cur) => cur.copyWith(malId: resolved));
         }
