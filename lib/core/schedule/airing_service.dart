@@ -34,18 +34,19 @@ List<AiringEntry> parseAiringSchedules(Map<String, dynamic> data) {
     final titleMap = media['title'];
     final english = (titleMap is Map) ? titleMap['english'] as String? : null;
     final romaji = (titleMap is Map) ? titleMap['romaji'] as String? : null;
-    final title = (english != null && english.isNotEmpty)
-        ? english
-        : (romaji ?? '');
+    // Home's Anime Tayang cards follow the app's Romaji title preference.
+    // Keep English as the alternate title for matching and other fallbacks.
+    final title = (romaji != null && romaji.isNotEmpty)
+        ? romaji
+        : (english ?? '');
     if (title.isEmpty) continue;
     final airingAt = raw['airingAt'];
     if (airingAt is! int) continue;
     final coverImage = media['coverImage'];
     final cover = coverImage is Map ? coverImage['large'] as String? : null;
     final coverColor = coverImage is Map ? coverImage['color'] as String? : null;
-    final alt = (english != null && english.isNotEmpty && romaji != null &&
-            romaji.isNotEmpty && romaji != english)
-        ? romaji
+    final alt = (english != null && english.isNotEmpty && title != english)
+        ? english
         : null;
     out.add(AiringEntry(
       altTitle: alt,
