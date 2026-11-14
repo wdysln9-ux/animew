@@ -2049,7 +2049,7 @@ class _DetailViewState extends State<_DetailView> {
         malArtworkId > 0) {
       // Start loading MAL gallery images as soon as the anime detail is painted.
       // The viewer reuses this in-flight/completed future when the poster is tapped.
-      unawaited(preloadAnimeMalPictures(malArtworkId));
+      unawaited(preloadAnimeMalArtwork(malArtworkId, context));
     }
     final cubit = context.read<DetailCubit>();
     final category = state.category;
