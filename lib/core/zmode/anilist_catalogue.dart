@@ -501,7 +501,7 @@ class AniListCatalogue implements AnimeCatalogue {
     Future<int> pageFor(String key, String mediaArgs) async {
       if (!randomRecommendation) return page;
       final countQuery =
-          'query$decl{ Page(page:1,perPage:1){ pageInfo{total} media($mediaArgs){ id } } }';
+          'query$decl{ Page(page:1,perPage:\$n){ pageInfo{total} media($mediaArgs){ id } } }';
       final countData = await _gql(countQuery, vars);
       final total = ((countData?['Page'] as Map?)?['pageInfo'] as Map?)?['total'];
       final totalItems = total is int ? total : 0;
