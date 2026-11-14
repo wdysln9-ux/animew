@@ -1174,7 +1174,7 @@ class _HomeViewState extends State<_HomeView>
         itemHeight: posterRowHeight(context),
         itemCount: items.length,
         onSeeAll: () {
-          if (isAiringCatalogue && !sourceCatalogue) {
+          if (isAiringCatalogue) {
             Navigator.of(context).push(
               MaterialPageRoute<void>(builder: (_) => const ScheduleScreen()),
             );
