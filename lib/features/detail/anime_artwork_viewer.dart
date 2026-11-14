@@ -124,6 +124,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   bool _saving = false;
   bool _loadingMalPictures = false;
   String? _malLoadMessage;
+  bool _hideMalSuccessMessage = false;
 
   @override
   void initState() {
@@ -146,6 +147,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
       setState(() {
         _loadingMalPictures = true;
         _malLoadMessage = null;
+        _hideMalSuccessMessage = false;
       });
     }
     try {
@@ -164,7 +166,13 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
         _malLoadMessage = additions.isEmpty
             ? 'MAL tidak mengembalikan gambar tambahan'
             : '${additions.length} gambar MAL ditemukan · geser ke samping';
+        _hideMalSuccessMessage = false;
       });
+      if (additions.isNotEmpty) {
+        // Keep the success confirmation briefly, then fade it out over 1s.
+        await Future<void>.delayed(const Duration(seconds: 1));
+        if (mounted) setState(() => _hideMalSuccessMessage = true);
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -320,8 +328,12 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                 bottom: 18,
                 left: 16,
                 right: 16,
-                child: Center(
-                  child: DecoratedBox(
+                child: AnimatedOpacity(
+                  opacity: _hideMalSuccessMessage ? 0 : 1,
+                  duration: const Duration(seconds: 1),
+                  curve: Curves.easeOut,
+                  child: Center(
+                    child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.68),
                       borderRadius: BorderRadius.circular(18),
@@ -369,6 +381,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                           ),
                         ],
                       ),
+                    ),
                     ),
                   ),
                 ),
