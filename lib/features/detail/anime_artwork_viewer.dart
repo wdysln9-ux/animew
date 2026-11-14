@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/metadata/jikan_api.dart';
 
 const _galleryChannel = MethodChannel('animew/image_gallery');
 
@@ -16,14 +17,16 @@ Future<List<String>> preloadAnimeMalPictures(int malId) {
   if (malId <= 0) return Future.value(const <String>[]);
   return _malPictureRequests.putIfAbsent(malId, () async {
     try {
-      final response = await Dio().get<Map<String, dynamic>>(
+      // Use the app-wide Jikan scheduler instead of a raw Dio request.
+      // Other detail sections also call Jikan; sharing its rate limit and
+      // retry handling prevents the Pictures request from being rejected
+      // when several Jikan endpoints are loading together.
+      final response = await JikanApi.get(
+        Dio(),
         'https://api.jikan.moe/v4/anime/$malId/pictures',
-        options: Options(
-          receiveTimeout: const Duration(seconds: 20),
-          headers: const {'Accept': 'application/json'},
-        ),
+        headers: const {'Accept': 'application/json'},
       );
-      final data = response.data?['data'];
+      final data = response is Map ? response['data'] : null;
       if (data is! List) return const <String>[];
       final urls = <String>[];
       final seen = <String>{};
