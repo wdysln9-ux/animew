@@ -1490,7 +1490,7 @@ class _HomeViewState extends State<_HomeView>
     } else if (normalized == 'anime selesai') {
       filters = MetaFilters(seasons: [season, previousSeason], years: [now.year, previousYear].toSet().toList(), formats: const [MetaFormat.tv, MetaFormat.movie], statuses: const [MetaStatus.finished], sort: MetaSort.newest);
     } else {
-      final parts = title.trim().split(RegExp(r'\\s+'));
+      final parts = title.trim().split(' ').where((part) => part.isNotEmpty).toList();
       final year = parts.length == 2 ? int.tryParse(parts[1]) : null;
       final pickedSeason = parts.isEmpty ? null : switch (parts.first.toLowerCase()) {
         'winter' => MetaSeason.winter,
