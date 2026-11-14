@@ -2282,6 +2282,7 @@ class _DetailViewState extends State<_DetailView> {
             bannerUrl: detail.banner ?? item.banner,
             title: detail.title,
             headers: coverHeaders,
+            malId: detail.malId ?? item.malId,
           ),
           maxHeight: _expandedHeight,
         ),
