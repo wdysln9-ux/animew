@@ -39,6 +39,7 @@ int metaFilterActiveCount(MetaFilters filters) {
       (filters.season != null ? 1 : 0) +
       (filters.format != null ? 1 : 0) +
       (filters.status != null ? 1 : 0) +
+      (filters.countryOfOrigin != null ? 1 : 0) +
       (filters.minScore != null ? 1 : 0) +
       (filters.sort != MetaSort.popularity ? 1 : 0);
 }
