@@ -13,6 +13,7 @@ void main() {
       season: MetaSeason.fall,
       format: MetaFormat.movie,
       status: MetaStatus.finished,
+      countryOfOrigin: MetaCountry.japan,
       minScore: 75,
       sort: MetaSort.score,
     );
@@ -24,6 +25,7 @@ void main() {
     expect(back.season, MetaSeason.fall);
     expect(back.format, MetaFormat.movie);
     expect(back.status, MetaStatus.finished);
+    expect(back.countryOfOrigin, MetaCountry.japan);
     expect(back.minScore, 75);
     expect(back.sort, MetaSort.score);
   });
