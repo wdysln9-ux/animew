@@ -9,6 +9,93 @@ import '../../core/metadata/jikan_api.dart';
 
 const _galleryChannel = MethodChannel('animew/image_gallery');
 
+final Map<String, Future<Uint8List>> _malArtworkBytes = {};
+
+Future<Uint8List> _loadMalArtworkBytes(String url) {
+  return _malArtworkBytes.putIfAbsent(url, () async {
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 60),
+        sendTimeout: const Duration(seconds: 20),
+        responseType: ResponseType.bytes,
+      ),
+    );
+    try {
+      final response = await dio.get<List<int>>(url);
+      final bytes = response.data;
+      if (bytes == null || bytes.isEmpty) {
+        throw StateError('Gambar kosong');
+      }
+      // Keep only a small in-memory cache so swiping back does not redownload
+      // the same artwork, without retaining an unlimited number of images.
+      if (_malArtworkBytes.length > 12) {
+        _malArtworkBytes.remove(_malArtworkBytes.keys.first);
+      }
+      return Uint8List.fromList(bytes);
+    } catch (_) {
+      _malArtworkBytes.remove(url);
+      rethrow;
+    } finally {
+      dio.close();
+    }
+  });
+}
+
+class _MalArtworkImage extends StatefulWidget {
+  const _MalArtworkImage({required this.url});
+
+  final String url;
+
+  @override
+  State<_MalArtworkImage> createState() => _MalArtworkImageState();
+}
+
+class _MalArtworkImageState extends State<_MalArtworkImage> {
+  late Future<Uint8List> _image;
+
+  @override
+  void initState() {
+    super.initState();
+    _image = _loadMalArtworkBytes(widget.url);
+  }
+
+  void _retry() {
+    setState(() => _image = _loadMalArtworkBytes(widget.url));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List>(
+      future: _image,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return Image.memory(snapshot.data!, fit: BoxFit.contain);
+        }
+        if (snapshot.hasError) {
+          return GestureDetector(
+            onTap: _retry,
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.refresh_rounded, color: Colors.white70, size: 42),
+                SizedBox(height: 8),
+                Text(
+                  'Gagal memuat · ketuk untuk coba lagi',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          );
+        }
+        return const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        );
+      },
+    );
+  }
+}
+
 /// Shared in-flight/result cache so the detail page can warm MAL artwork before
 /// the viewer is opened. Opening the gallery joins this same request.
 final Map<int, Future<List<String>>> _malPictureRequests = {};
@@ -193,7 +280,8 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
         options: Options(
           responseType: ResponseType.bytes,
           headers: requestHeaders == null || requestHeaders.isEmpty ? null : requestHeaders,
-          receiveTimeout: const Duration(seconds: 30),
+          connectTimeout: const Duration(seconds: 20),
+          receiveTimeout: const Duration(seconds: 60),
         ),
       );
       final bytes = response.data;
@@ -271,21 +359,21 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                   child: InteractiveViewer(
                     minScale: 1,
                     maxScale: 4,
-                    child: CachedNetworkImage(
-                      imageUrl: image.url,
-                      // Source-specific headers can cause 403s on Jikan's
-                      // image CDN. MAL artwork is public and needs no headers.
-                      httpHeaders: isMalImage ? null : widget.headers,
-                      fit: BoxFit.contain,
-                      placeholder: (_, _) => const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      ),
-                      errorWidget: (_, _, _) => const Icon(
-                        Icons.broken_image_outlined,
-                        color: Colors.white70,
-                        size: 42,
-                      ),
-                    ),
+                    child: isMalImage
+                        ? _MalArtworkImage(url: image.url)
+                        : CachedNetworkImage(
+                            imageUrl: image.url,
+                            httpHeaders: widget.headers,
+                            fit: BoxFit.contain,
+                            placeholder: (_, _) => const Center(
+                              child: CircularProgressIndicator(color: Colors.white),
+                            ),
+                            errorWidget: (_, _, _) => const Icon(
+                              Icons.broken_image_outlined,
+                              color: Colors.white70,
+                              size: 42,
+                            ),
+                          ),
                   ),
                 );
               },
