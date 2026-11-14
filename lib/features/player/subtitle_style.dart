@@ -43,6 +43,7 @@ List<Shadow> buildSubtitleShadows(
   double shadowDistance = 1,
   double shadowBlur = 2,
   double shadowAngle = 45,
+  double shadowWidth = 1,
 }) {
   final preset = switch (type) {
     'none' => <Shadow>[],
@@ -62,16 +63,25 @@ List<Shadow> buildSubtitleShadows(
     return preset;
   }
   final radians = shadowAngle * math.pi / 180;
+  final baseOffset = Offset(
+    math.cos(radians) * shadowDistance,
+    math.sin(radians) * shadowDistance,
+  );
+  final shadowStroke = _stroke(shade, shadowWidth);
+  if (shadowStroke.isEmpty) {
+    return [
+      ...preset,
+      Shadow(color: shade, offset: baseOffset, blurRadius: shadowBlur),
+    ];
+  }
   return [
     ...preset,
-    Shadow(
-      color: shade,
-      offset: Offset(
-        math.cos(radians) * shadowDistance,
-        math.sin(radians) * shadowDistance,
+    for (final edge in shadowStroke)
+      Shadow(
+        color: edge.color,
+        offset: baseOffset + edge.offset,
+        blurRadius: shadowBlur,
       ),
-      blurRadius: shadowBlur,
-    ),
   ];
 }
 
@@ -122,21 +132,22 @@ TextStyle buildSubtitleTextStyle(PlaybackPrefs p, {required double fontSize}) {
     fontStyle: p.subtitleItalic ? FontStyle.italic : FontStyle.normal,
     color: parseSubtitleHex(
       p.subtitleColorHex,
-      opacity: p.subtitleTextOpacity * p.subtitleOverallOpacity,
+      opacity: p.subtitleTextOpacity,
     ),
     backgroundColor: Color.fromRGBO(
-      0, 0, 0, p.subtitleBgOpacity.clamp(0.0, 1.0) * p.subtitleOverallOpacity,
+      0, 0, 0, p.subtitleBgOpacity.clamp(0.0, 1.0),
     ),
     shadows: buildSubtitleShadows(
       p.subtitleOutlineType,
       p.subtitleOutlineWidth,
-      parseSubtitleHex(p.subtitleOutlineColorHex, opacity: p.subtitleOverallOpacity),
+      parseSubtitleHex(p.subtitleOutlineColorHex),
       shadowColor: parseSubtitleHex(
-        p.subtitleShadowColorHex, opacity: p.subtitleOverallOpacity,
+        p.subtitleShadowColorHex,
       ),
       shadowDistance: p.subtitleShadowDistance,
       shadowBlur: p.subtitleShadowBlur,
       shadowAngle: p.subtitleShadowAngle,
+      shadowWidth: p.subtitleShadowWidth,
     ),
   );
 }
