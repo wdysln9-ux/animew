@@ -46,6 +46,27 @@ Future<List<String>> preloadAnimeMalPictures(int malId) {
   });
 }
 
+/// Also warms the actual image bytes (not just the Jikan URL list), so opening
+/// the gallery can paint from CachedNetworkImage's disk cache.
+final Map<int, Future<void>> _malImagePreloads = {};
+
+Future<void> preloadAnimeMalArtwork(int malId, BuildContext context) {
+  return _malImagePreloads.putIfAbsent(malId, () async {
+    final urls = await preloadAnimeMalPictures(malId);
+    for (final url in urls.take(8)) {
+      if (!context.mounted) {
+        _malImagePreloads.remove(malId);
+        return;
+      }
+      try {
+        await precacheImage(CachedNetworkImageProvider(url), context);
+      } catch (_) {
+        // One failed image should not block the rest of the gallery.
+      }
+    }
+  });
+}
+
 Future<void> showAnimeArtworkViewer(
   BuildContext context, {
   required String posterUrl,
