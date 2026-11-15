@@ -6,6 +6,7 @@ class _SeekRow extends StatefulWidget {
     required this.controller,
     required this.duration,
     required this.onInteract,
+    this.leading,
     this.trailing,
   });
 
@@ -16,6 +17,7 @@ class _SeekRow extends StatefulWidget {
   /// Sits at the far end of the timestamp's line (the MegaSkip pill). Riding
   /// the same row costs no extra height — it used to own a line to itself,
   /// which pushed it well clear of the bar it belongs to.
+  final Widget? leading;
   final Widget? trailing;
 
   @override
@@ -174,8 +176,18 @@ class _SeekRowState extends State<_SeekRow> {
                 ),
                   ),
                 ),
+                if (widget.leading != null) ...[
+                  const SizedBox(width: 8),
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: widget.leading!,
+                    ),
+                  ),
+                ],
                 if (widget.trailing != null) ...[
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Align(
                       alignment: Alignment.centerRight,
