@@ -128,11 +128,23 @@ class _SeekIndicator extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Plain white seek icon; no theme tint or +/- seconds badge.
+              // White seek icon and accumulated seconds, without a background.
               Icon(
                 left ? Icons.fast_rewind_rounded : Icons.fast_forward_rounded,
                 color: Colors.white,
                 size: 30,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${left ? '−' : '+'}${accumSeconds}s',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  shadows: [
+                    Shadow(color: Colors.black54, blurRadius: 4),
+                  ],
+                ),
               ),
             ],
           ),
