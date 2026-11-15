@@ -1954,7 +1954,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     var y = (_subtitleScaleStartY +
             (local.dy - object.globalToLocal(_subtitleScaleStartFocal).dy) /
                 size.height)
-        .clamp(0.08, 0.94)
+        .clamp(0.0, 1.0)
         .toDouble();
     if ((x - 0.5).abs() < 0.025) x = 0.5;
     if ((y - 0.5).abs() < 0.025) y = 0.5;
