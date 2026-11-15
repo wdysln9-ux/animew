@@ -1570,15 +1570,34 @@ class PlayerCubit extends Cubit<PlayerState> {
   /// SubtitleTrack.uri shows up in mpv's track list with its URL as the id,
   /// which would duplicate the entry already listed under source subtitles
   /// (and pile up on every re-apply). Those are surfaced via [softSubs] instead.
-  List<SubtitleTrack> get mediaSubtitleTracks => state.tracks.subtitle
-      .where(
-        (t) =>
-            t.id != 'auto' &&
-            t.id != 'no' &&
-            !t.id.startsWith('http') &&
-            !t.id.startsWith('/'),
-      )
-      .toList();
+  List<SubtitleTrack> get mediaSubtitleTracks {
+    final seen = <String>{};
+    return state.tracks.subtitle.where((t) {
+      final id = t.id.trim().toLowerCase();
+      final title = t.title?.trim().toLowerCase() ?? '';
+      // Translations and downloaded/URI subtitles are external tracks. mpv
+      // can report their ids as a plain path, file:// URI, or native track id;
+      // hide them here because source soft-subs and translated output are
+      // managed separately by the app.
+      final isGeneratedTranslation = title == 'translated' ||
+          id.contains('translated_');
+      final isExternal = id.startsWith('http://') ||
+          id.startsWith('https://') ||
+          id.startsWith('file://') ||
+          id.startsWith('/') ||
+          id.contains('/softsub_') ||
+          id.contains('/translated_');
+      if (id.isEmpty ||
+          id == 'auto' ||
+          id == 'no' ||
+          isGeneratedTranslation ||
+          isExternal) {
+        return false;
+      }
+      // Some demuxers emit the same embedded track more than once.
+      return seen.add(id);
+    }).toList();
+  }
 
   /// Currently-selected audio track (id == 'auto'/'no' for the synthetic ones).
   AudioTrack get activeAudioTrack => player.state.track.audio;
@@ -1693,7 +1712,15 @@ class PlayerCubit extends Cubit<PlayerState> {
   }
 
   /// External "soft" subtitles advertised by the active source.
-  List<Subtitle> get softSubs => state.active?.subtitles ?? const [];
+  /// Providers occasionally repeat the same URL in their subtitle metadata;
+  /// keep the first entry so the picker does not show duplicate languages.
+  List<Subtitle> get softSubs {
+    final seen = <String>{};
+    return (state.active?.subtitles ?? const <Subtitle>[]).where((s) {
+      final key = s.url.trim();
+      return key.isNotEmpty && seen.add(key);
+    }).toList();
+  }
 
   /// Load one of the source's soft-subs by URL.
   Future<void> setSoftSub(Subtitle s) async {
