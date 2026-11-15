@@ -3853,9 +3853,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF100D0B),
+                  color: AppColors.settingsCard,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF302923)),
+                  border: Border.all(color: AppColors.hairline),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -3886,7 +3886,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppText.body.copyWith(
-                        color: const Color(0xFF91A396),
+                        color: AppColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -3895,7 +3895,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     AutoTranslatedText(
                       text: summary,
                       style: AppText.body.copyWith(
-                        color: const Color(0xFFE1E1E1),
+                        color: AppColors.textPrimary,
                         fontSize: 14,
                         height: 1.45,
                       ),
