@@ -683,59 +683,9 @@ class _ControlsOverlay extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              // Keep the spinner visible until buffering really ends. If the
-              // user requests Pause while buffering, defer the pause command
-              // until the buffer reports false instead of changing the button
-              // state halfway through the loading cycle.
-              StreamBuilder<bool>(
-                stream: c.player.stream.playing,
-                builder: (context, pSnap) {
-                  final playing = pSnap.data ?? c.player.state.playing;
-                  return StreamBuilder<bool>(
-                    stream: c.player.stream.buffering,
-                    builder: (context, bSnap) {
-                      final buffering =
-                          bSnap.data ?? c.player.state.buffering;
-                      if (buffering && playing) {
-                        return SizedBox(
-                          width: 51,
-                          height: 51,
-                          child: Material(
-                            color: Colors.transparent,
-                            shape: const CircleBorder(),
-                            child: InkWell(
-                              customBorder: const CircleBorder(),
-                              onTap: () {
-                                // Never wait for buffering to finish here: a
-                                // stalled stream may never emit `false`, which
-                                // used to make this control effectively inert.
-                                c.togglePlay();
-                                onInteract();
-                              },
-                              child: Center(
-                                child: SizedBox(
-                                  width: 29,
-                                  height: 29,
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.accent,
-                                    strokeWidth: 3,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      return _AnimatedPlayPause(
-                        playing: playing,
-                        onTap: () {
-                          c.togglePlay();
-                          onInteract();
-                        },
-                      );
-                    },
-                  );
-                },
+              _BufferAwarePlayPause(
+                controller: c,
+                onInteract: onInteract,
               ),
               if (multiEpisode && !compactEpisodePortrait) ...[
                 const SizedBox(width: 8),
@@ -898,3 +848,107 @@ class _EpisodePickerButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Seek row — current time + slider (stream-bound) + total time.
 // ─────────────────────────────────────────────────────────────────────────────
+
+
+// A pause requested during buffering is held until playback has genuinely
+// resumed and the position has advanced, avoiding a pause against a stalled
+// decoder/buffer state.
+class _BufferAwarePlayPause extends StatefulWidget {
+  const _BufferAwarePlayPause({
+    required this.controller,
+    required this.onInteract,
+  });
+
+  final PlayerCubit controller;
+  final VoidCallback onInteract;
+
+  @override
+  State<_BufferAwarePlayPause> createState() => _BufferAwarePlayPauseState();
+}
+
+class _BufferAwarePlayPauseState extends State<_BufferAwarePlayPause> {
+  StreamSubscription<Duration>? _positionSub;
+  bool _pendingPause = false;
+  Duration _positionAtRequest = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _positionSub = widget.controller.player.stream.position.listen(_onPosition);
+  }
+
+  void _onPosition(Duration position) {
+    if (!_pendingPause) return;
+    final player = widget.controller.player;
+    if (!player.state.buffering &&
+        player.state.playing &&
+        position - _positionAtRequest >= const Duration(milliseconds: 300)) {
+      _pendingPause = false;
+      widget.controller.togglePlay();
+      widget.onInteract();
+    }
+  }
+
+  void _onTap() {
+    final player = widget.controller.player;
+    if (player.state.buffering && player.state.playing) {
+      _pendingPause = true;
+      _positionAtRequest = player.state.position;
+    } else {
+      _pendingPause = false;
+      widget.controller.togglePlay();
+    }
+    widget.onInteract();
+  }
+
+  @override
+  void dispose() {
+    _positionSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<bool>(
+      stream: widget.controller.player.stream.playing,
+      builder: (context, pSnap) {
+        final playing = pSnap.data ?? widget.controller.player.state.playing;
+        return StreamBuilder<bool>(
+          stream: widget.controller.player.stream.buffering,
+          builder: (context, bSnap) {
+            final buffering =
+                bSnap.data ?? widget.controller.player.state.buffering;
+            if (buffering && playing) {
+              return SizedBox(
+                width: 51,
+                height: 51,
+                child: Material(
+                  color: Colors.transparent,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: _onTap,
+                    child: Center(
+                      child: SizedBox(
+                        width: 29,
+                        height: 29,
+                        child: CircularProgressIndicator(
+                          color: AppColors.accent,
+                          strokeWidth: 3,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return _AnimatedPlayPause(
+              playing: playing,
+              onTap: _onTap,
+            );
+          },
+        );
+      },
+    );
+  }
+}
