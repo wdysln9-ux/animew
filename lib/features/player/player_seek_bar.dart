@@ -186,7 +186,7 @@ class _SeekRowState extends State<_SeekRow> {
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: EdgeInsets.zero,
                         child: widget.trailing!,
                       ),
                     ),
