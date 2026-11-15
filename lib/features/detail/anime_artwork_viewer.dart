@@ -212,7 +212,44 @@ Future<List<({String label, String url})>> _loadLiveChartArtwork(String title) {
       final absoluteAnimeUri = animeUri.hasScheme
           ? animeUri
           : Uri.parse('https://www.livechart.me').resolveUri(animeUri);
-      final basePath = absoluteAnimeUri.path.replaceFirst(RegExp(r'/
+      final basePath = absoluteAnimeUri.path.replaceFirst(RegExp(r'/$'), '');
+      final visualsUri = absoluteAnimeUri.replace(
+        path: '$basePath/visuals',
+        query: null,
+        fragment: null,
+      );
+      final visualsResponse = await dio.get<String>(visualsUri.toString());
+      if (visualsResponse.statusCode != 200 || visualsResponse.data == null) {
+        return const [];
+      }
+      final visualsDocument = html_parser.parse(visualsResponse.data);
+      final result = <({String label, String url})>[];
+      final seen = <String>{};
+      for (final element
+          in visualsDocument.querySelectorAll('[data-anime-visual-url-value]')) {
+        var value =
+            element.attributes['data-anime-visual-url-value']?.trim() ?? '';
+        if (value.isEmpty) continue;
+        final uri = Uri.tryParse(value);
+        if (uri == null) continue;
+        if (!uri.hasScheme) {
+          value = Uri.parse('https://www.livechart.me').resolveUri(uri).toString();
+        } else if (uri.scheme != 'https' && uri.scheme != 'http') {
+          continue;
+        }
+        if (seen.add(value)) {
+          result.add((label: 'Artwork · LiveChart', url: value));
+        }
+      }
+      return result;
+    } catch (_) {
+      _liveChartArtworkCache.remove(cacheKey);
+      return const [];
+    } finally {
+      dio.close();
+    }
+  });
+}
 
 Future<List<({String label, String url})>> _loadAniZipArtwork({
   int? anilistId,
