@@ -314,8 +314,8 @@ class _AnimatedPlayPause extends StatelessWidget {
           customBorder: const CircleBorder(),
           splashColor: Colors.white.withValues(alpha: 0.18),
           child: SizedBox(
-            width: 51,
-            height: 51,
+            width: 70,
+            height: 70,
             child: Center(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
@@ -422,8 +422,8 @@ class _TransportButton extends StatelessWidget {
             onTap: onTap,
             customBorder: const CircleBorder(),
             child: SizedBox(
-              width: 51,
-              height: 51,
+              width: 70,
+              height: 70,
               child: Center(
                 child: Icon(
                   icon,
