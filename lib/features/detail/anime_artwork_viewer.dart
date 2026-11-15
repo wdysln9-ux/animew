@@ -94,6 +94,57 @@ class _MalArtworkImageState extends State<_MalArtworkImage> {
   }
 }
 
+final Map<String, Future<List<({String label, String url})>>> _malPicturesCache = {};
+
+Future<List<({String label, String url})>> _loadMyAnimeListArtwork(int? malId) {
+  if (malId == null || malId <= 0) return Future.value(const []);
+  return _malPicturesCache.putIfAbsent('mal:$malId', () async {
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 12),
+        receiveTimeout: const Duration(seconds: 20),
+        responseType: ResponseType.json,
+        headers: const {'Accept': 'application/json'},
+      ),
+    );
+    try {
+      final response = await dio.get<dynamic>(
+        'https://api.jikan.moe/v4/anime/$malId/pictures',
+      );
+      final body = response.data;
+      final rawPictures = body is Map ? body['data'] : null;
+      if (rawPictures is! List) return const [];
+      final result = <({String label, String url})>[];
+      final seen = <String>{};
+      for (final raw in rawPictures) {
+        if (raw is! Map) continue;
+        final jpg = raw['jpg'];
+        final webp = raw['webp'];
+        final url = (jpg is Map
+                ? jpg['large_image_url'] ?? jpg['image_url']
+                : null) ??
+            (webp is Map
+                ? webp['large_image_url'] ?? webp['image_url']
+                : null);
+        final value = url?.toString().trim() ?? '';
+        final uri = Uri.tryParse(value);
+        if (uri == null ||
+            (uri.scheme != 'https' && uri.scheme != 'http') ||
+            !seen.add(value)) {
+          continue;
+        }
+        result.add((label: 'Artwork · MyAnimeList', url: value));
+      }
+      return result;
+    } catch (_) {
+      _malPicturesCache.remove('mal:$malId');
+      return const [];
+    } finally {
+      dio.close();
+    }
+  });
+}
+
 final Map<String, Future<List<({String label, String url})>>> _aniZipArtworkCache = {};
 
 Future<List<({String label, String url})>> _loadAniZipArtwork({
@@ -189,10 +240,10 @@ Future<void> showAnimeArtworkViewer(
   Map<String, String>? headers,
 }) async {
   final images = <({String label, String url})>[
-    if (posterUrl.trim().isNotEmpty) (label: 'Poster', url: posterUrl.trim()),
+    if (posterUrl.trim().isNotEmpty) (label: 'Poster · AniList', url: posterUrl.trim()),
     if (bannerUrl?.trim().isNotEmpty == true &&
         bannerUrl!.trim() != posterUrl.trim())
-      (label: 'Banner', url: bannerUrl.trim()),
+      (label: 'Banner · AniList', url: bannerUrl.trim()),
   ];
   if (images.isEmpty) return;
 
@@ -232,7 +283,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   late final PageController _pages = PageController();
   int _index = 0;
   bool _saving = false;
-  bool _loadingAniZip = false;
+  bool _loadingAdditionalArtwork = false;
 
   @override
   void initState() {
@@ -243,22 +294,26 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   Future<void> _loadAdditionalArtwork() async {
     if ((widget.anilistId == null || widget.anilistId! <= 0) &&
         (widget.malId == null || widget.malId! <= 0)) return;
-    setState(() => _loadingAniZip = true);
-    final extra = await _loadAniZipArtwork(
-      anilistId: widget.anilistId,
-      malId: widget.malId,
-    );
+    setState(() => _loadingAdditionalArtwork = true);
+    // AniZip contributes typed artwork (poster, banner, fanart, clearlogo),
+    // while Jikan contributes the extra pictures listed by MyAnimeList.
+    final results = await Future.wait([
+      _loadAniZipArtwork(
+        anilistId: widget.anilistId,
+        malId: widget.malId,
+      ),
+      _loadMyAnimeListArtwork(widget.malId),
+    ]);
     if (!mounted) return;
     final existing = widget.images.map((image) => image.url).toSet();
-    final additions = extra.where((image) => !existing.contains(image.url));
-    if (additions.isNotEmpty) {
-      setState(() {
-        widget.images.addAll(additions);
-        _loadingAniZip = false;
-      });
-    } else {
-      setState(() => _loadingAniZip = false);
-    }
+    final additions = results
+        .expand((images) => images)
+        .where((image) => existing.add(image.url))
+        .toList();
+    setState(() {
+      widget.images.addAll(additions);
+      _loadingAdditionalArtwork = false;
+    });
   }
 
   @override
@@ -424,7 +479,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                 ),
               ),
             ),
-            if (_loadingAniZip)
+            if (_loadingAdditionalArtwork)
               Positioned(
                 bottom: 14,
                 left: 0,
@@ -438,7 +493,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       child: Text(
-                        'Memuat artwork AniZip…',
+                        'Memuat artwork AniZip & MyAnimeList…',
                         style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ),
