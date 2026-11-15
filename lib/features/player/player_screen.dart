@@ -1955,6 +1955,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _subtitleScaleStartSize = 1.0;
 
   void _onSubtitleScaleStart(ScaleStartDetails details) {
+    if (sl<PlaybackPrefs>().subtitlePositionLocked) return;
     setState(() => _subtitleGestureActive = true);
     _subtitleScaleStartFocal = details.focalPoint;
     _subtitleScaleStartX = _subtitleX;
@@ -1963,6 +1964,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onSubtitleScaleUpdate(ScaleUpdateDetails details) {
+    if (sl<PlaybackPrefs>().subtitlePositionLocked) return;
     final object = _playerStackKey.currentContext?.findRenderObject();
     if (object is! RenderBox || !object.hasSize) return;
     final local = object.globalToLocal(details.focalPoint);
