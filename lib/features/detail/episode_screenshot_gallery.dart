@@ -671,28 +671,3 @@ class _ViewerCircleButton extends StatelessWidget {
   }
 }
 
-String _episodeLabel(Episode episode, int index) {
-  final n = episode.number;
-  if (n != null) return n.toString().replaceFirst(RegExp(r'\.0$'), '');
-  return '${index + 1}';
-}
-
-class _GalleryMessage extends StatelessWidget {
-  const _GalleryMessage(this.message);
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      child: Center(
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white54, fontSize: 12),
-        ),
-      ),
-    );
-  }
-}
