@@ -2473,17 +2473,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _bumpControls();
     showDialog<void>(
       context: context,
+      barrierDismissible: true,
       builder: (dialogContext) => Dialog(
         backgroundColor: const Color(0xFF17151C),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 36, vertical: 28),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           side: BorderSide(color: Colors.white.withValues(alpha: 0.07)),
         ),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560, maxHeight: 330),
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 280),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 16, 22, 14),
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2498,12 +2499,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 10),
                 const Text(
                   'Ringkasan Episode',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -2554,7 +2555,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       fontSize: 13,
                     ),
                   ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 9),
                 Flexible(
                   child: SingleChildScrollView(
                     child: (description != null && description.isNotEmpty)
@@ -2562,28 +2563,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
                             text: description,
                             style: const TextStyle(
                               color: Color(0xFFE8E5ED),
-                              fontSize: 14,
-                              height: 1.55,
+                              fontSize: 13.5,
+                              height: 1.45,
                             ),
                           )
                         : const Text(
                             'Deskripsi episode tidak tersedia di metadata untuk episode ini.',
                             style: TextStyle(
                               color: Color(0xFFB8B3C2),
-                              fontSize: 14,
-                              height: 1.5,
+                              fontSize: 13.5,
+                              height: 1.45,
                             ),
                           ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: Text(context.l10n.close),
-                  ),
-                ),
+
               ],
             ),
           ),
