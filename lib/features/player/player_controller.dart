@@ -1571,32 +1571,64 @@ class PlayerCubit extends Cubit<PlayerState> {
   /// which would duplicate the entry already listed under source subtitles
   /// (and pile up on every re-apply). Those are surfaced via [softSubs] instead.
   List<SubtitleTrack> get mediaSubtitleTracks {
-    final seen = <String>{};
-    return state.tracks.subtitle.where((t) {
+    final tracks = state.tracks.subtitle;
+    final activeId = activeSubtitleTrack.id.trim().toLowerCase();
+    final wantedId = (_wantedSubId ?? '').trim().toLowerCase();
+    final translated = tracks.where((t) {
       final id = t.id.trim().toLowerCase();
       final title = t.title?.trim().toLowerCase() ?? '';
-      // Translations and downloaded/URI subtitles are external tracks. mpv
-      // can report their ids as a plain path, file:// URI, or native track id;
-      // hide them here because source soft-subs and translated output are
-      // managed separately by the app.
-      final isGeneratedTranslation = title == 'translated' ||
-          id.contains('translated_');
+      return title == 'translated' || id.contains('translated_');
+    }).toList();
+
+    // Keep exactly one generated translation: the newest one we selected.
+    // Older partial revisions may still exist inside mpv's track list.
+    SubtitleTrack? latestTranslated;
+    for (final track in translated) {
+      final id = track.id.trim().toLowerCase();
+      final title = track.title?.trim().toLowerCase() ?? '';
+      if (wantedId.isNotEmpty && id == wantedId) {
+        latestTranslated = track;
+        break;
+      }
+      if (id == activeId && title == 'translated') {
+        latestTranslated = track;
+      }
+    }
+    latestTranslated ??= translated.isNotEmpty ? translated.last : null;
+
+    final seen = <String>{};
+    final visible = <SubtitleTrack>[];
+    for (final t in tracks) {
+      final id = t.id.trim().toLowerCase();
+      final title = t.title?.trim().toLowerCase() ?? '';
+      final isGeneratedTranslation =
+          title == 'translated' || id.contains('translated_');
+      if (isGeneratedTranslation) {
+        if (identical(t, latestTranslated)) visible.add(t);
+        continue;
+      }
       final isExternal = id.startsWith('http://') ||
           id.startsWith('https://') ||
           id.startsWith('file://') ||
           id.startsWith('/') ||
-          id.contains('/softsub_') ||
-          id.contains('/translated_');
-      if (id.isEmpty ||
-          id == 'auto' ||
-          id == 'no' ||
-          isGeneratedTranslation ||
-          isExternal) {
-        return false;
-      }
-      // Some demuxers emit the same embedded track more than once.
-      return seen.add(id);
-    }).toList();
+          id.contains('/softsub_');
+      if (id.isEmpty || id == 'auto' || id == 'no' || isExternal) continue;
+
+      // Demuxers sometimes expose the same English (or other language) track
+      // repeatedly under different native ids. Deduplicate by its actual
+      // language/title identity while preserving genuinely different labels
+      // such as English SDH vs English commentary.
+      final language = (t.language ?? '').trim().toLowerCase();
+      final normalizedLanguage = switch (language) {
+        'eng' || 'english' => 'en',
+        'jpn' || 'japanese' => 'ja',
+        'ind' || 'indonesian' => 'id',
+        _ => language,
+      };
+      final key = '$normalizedLanguage|$title';
+      if (seen.add(key)) visible.add(t);
+    }
+    return visible;
   }
 
   /// Currently-selected audio track (id == 'auto'/'no' for the synthetic ones).
@@ -1889,15 +1921,13 @@ class PlayerCubit extends Cubit<PlayerState> {
     _toast('Translating subtitles…');
     try {
       var lastPct = -1;
-      var partialRevision = 0;
       final dir = await getTemporaryDirectory();
 
       Future<void> applyTranslatedSrt(String srt) async {
-        // Use a fresh path for each partial revision so mpv actually reloads
-        // the subtitle track instead of keeping a cached copy of the old file.
-        partialRevision++;
+        // Load only the completed translation. Applying every partial revision
+        // creates a new mpv track each time and floods the subtitle picker.
         final out = File(
-          '${dir.path}/translated_${targetIso}_${state.currentIndex}_${partialRevision}.srt',
+          '${dir.path}/translated_${targetIso}_${state.currentIndex}_latest.srt',
         );
         await out.writeAsString(srt, flush: true);
         await player.setSubtitleTrack(
@@ -1921,7 +1951,6 @@ class PlayerCubit extends Cubit<PlayerState> {
             _toast('Translating subtitles… $pct%');
           }
         },
-        onPartialResult: applyTranslatedSrt,
       );
       // Always apply the final complete file, including when all cues were
       // already served from cache and no partial callback was needed.
