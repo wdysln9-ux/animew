@@ -4420,26 +4420,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     builder: (context, snap) {
                       final show = (snap.data ?? _c.player.state.buffering) &&
                           !_controlsVisible;
+                      // The loading spinner is purely visual. It must never
+                      // consume taps: while buffering, touches still need to
+                      // reach the player tap zones so controls/seek work without
+                      // accidentally pausing the stream.
                       return IgnorePointer(
-                        // Opacity does not remove a widget from hit testing.
-                        // Without this guard, the invisible full-screen spinner
-                        // sits above the tap zones and makes the video feel dead.
-                        ignoring: !show,
+                        ignoring: true,
                         child: AnimatedOpacity(
                           opacity: show ? 1 : 0,
                           duration: const Duration(milliseconds: 150),
                           child: TickerMode(
                             enabled: show,
-                            child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: show
-                                ? () {
-                                    // Tapping the unobstructed loading indicator
-                                    // pauses playback and reveals the full controls.
-                                    _c.player.pause();
-                                    _bumpControls();
-                                  }
-                                : null,
                             child: Center(
                               child: SizedBox(
                                 width: 36,
@@ -4449,7 +4440,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   strokeWidth: 2.5,
                                 ),
                               ),
-                            ),
                             ),
                           ),
                         ),
