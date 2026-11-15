@@ -320,7 +320,7 @@ class _AnimatedPlayPause extends StatelessWidget {
               child: Icon(
                 playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
                 color: Colors.white,
-                size: 70,
+                size: 50,
               ),
             ),
           ),
@@ -417,7 +417,7 @@ class _TransportButton extends StatelessWidget {
                 child: Icon(
                   icon,
                   color: Colors.white.withValues(alpha: enabled ? 0.9 : 0.28),
-                  size: 70,
+                  size: 50,
                 ),
               ),
             ),
