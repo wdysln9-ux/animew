@@ -251,6 +251,8 @@ Future<List<({String label, String url})>> _loadLiveChartArtwork(String title) {
   });
 }
 
+final Map<String, Future<List<({String label, String url})>>> _aniZipArtworkCache = {};
+
 Future<List<({String label, String url})>> _loadAniZipArtwork({
   int? anilistId,
   int? malId,
