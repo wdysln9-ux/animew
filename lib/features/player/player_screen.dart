@@ -1868,6 +1868,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _onHDragStart(DragStartDetails d) {
     if (_pinching || _pointers.length >= 2) {
       _pinchConsumedSeek = true;
+      _hSeekBlocked = true;
       return;
     }
     // A previous pinch may not have produced a horizontal-drag end callback.
@@ -1930,7 +1931,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
     // This prevents the player's stretch/seek/volume gestures from competing.
     if (_subtitleGestureActive || _isInsideSubtitle(e.position)) return;
     _pointers[e.pointer] = e.position;
-    if (_pointers.length == 2 && !_locked) _startPinch();
+
+    // The moment a second finger lands, cancel any in-progress one-finger
+    // scrub and consume its eventual drag-end callback. This makes two-finger
+    // stretch reliable even when the first finger had already entered seek.
+    if (_pointers.length >= 2) {
+      _pinchConsumedSeek = true;
+      _hSeekBlocked = true;
+      if (_hSeeking) setState(() => _hSeeking = false);
+      if (!_locked && !_pinching) _startPinch();
+    }
   }
 
   void _onPointerMove(PointerMoveEvent e) {
