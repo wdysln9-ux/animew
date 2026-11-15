@@ -265,15 +265,12 @@ class _ControlsOverlay extends StatelessWidget {
                 builder: (context, _) {
                   final castCtrl = sl<CastController>();
                   if (!castCtrl.castSupported) return const SizedBox.shrink();
-                  return IconButton(
-                    icon: Icon(
-                      castCtrl.state == CastState.connected
-                          ? Icons.cast_connected
-                          : Icons.cast,
-                      color: Colors.white,
-                    ),
+                  return _BarButton(
+                    icon: castCtrl.state == CastState.connected
+                        ? Icons.cast_connected
+                        : Icons.cast,
                     tooltip: context.l10n.cast,
-                    onPressed: () => castCtrl.pickDevice(),
+                    onTap: () => castCtrl.pickDevice(),
                   );
                 },
               ),
@@ -282,13 +279,10 @@ class _ControlsOverlay extends StatelessWidget {
         case 'info':
           if (onInfo != null) {
             out.add(
-              IconButton(
-                icon: Icon(
-                  Icons.info_outline_rounded,
-                  color: infoOpen ? AppColors.accent : Colors.white,
-                ),
+              _BarButton(
+                icon: Icons.info_outline_rounded,
                 tooltip: context.l10n.playbackStats,
-                onPressed: onInfo,
+                onTap: onInfo!,
               ),
             );
           }
@@ -296,16 +290,22 @@ class _ControlsOverlay extends StatelessWidget {
           final spec = _specFor(context, id);
           if (spec != null) {
             out.add(
-              IconButton(
-                icon: Icon(spec.$1, color: Colors.white),
+              _BarButton(
+                icon: spec.$1,
                 tooltip: spec.$2,
-                onPressed: spec.$3,
+                onTap: spec.$3,
               ),
             );
           }
       }
     }
-    return out;
+    if (out.isEmpty) return out;
+    return [
+      for (var i = 0; i < out.length; i++) ...[
+        if (i > 0) const SizedBox(width: 21),
+        out[i],
+      ],
+    ];
   }
 
   /// Icon, tooltip and action for the controls that render the same wherever
@@ -621,44 +621,44 @@ class _ControlsOverlay extends StatelessWidget {
                   if (!compactEpisodePortrait &&
                       sleepActive &&
                       !_placedAnywhere('sleep'))
-                    IconButton(
-                      icon: Icon(
-                        Icons.bedtime_rounded,
-                        color: AppColors.accent,
+                    Padding(
+                      padding: const EdgeInsets.only(left: 21),
+                      child: _BarButton(
+                        icon: Icons.bedtime_rounded,
+                        tooltip: context.l10n.sleepTimerOn,
+                        onTap: onSleep,
                       ),
-                      tooltip: context.l10n.sleepTimerOn,
-                      onPressed: onSleep,
                     ),
                   // Episodes and ⋮ More live in the bottom bar now — a second
                   // copy up here just split the same action across two places.
                   // Lock stays: it's the one control you want reachable without
                   // looking down at the bar you're about to hide.
                   if (!compactEpisodePortrait)
-                    IconButton(
-                    icon: const Icon(
-                      Icons.lock_open_rounded,
-                      color: Colors.white,
-                    ),
-                    tooltip: context.l10n.lockControls,
-                    onPressed: onLock,
-                  ),
-                  if (!compactEpisodePortrait)
-                    IconButton(
-                    icon: const Icon(
-                      Icons.more_vert_rounded,
-                      color: Colors.white,
-                    ),
-                    tooltip: context.l10n.settingsTooltip,
-                    onPressed: onSettings,
-                  ),
-                  if (!compactEpisodePortrait && onChat != null)
-                    IconButton(
-                      icon: const Icon(
-                        Icons.chat_bubble_outline_rounded,
-                        color: Colors.white,
+                    Padding(
+                      padding: const EdgeInsets.only(left: 21),
+                      child: _BarButton(
+                        icon: Icons.lock_open_rounded,
+                        tooltip: context.l10n.lockControls,
+                        onTap: onLock,
                       ),
-                      tooltip: context.l10n.chat,
-                      onPressed: onChat,
+                    ),
+                  if (!compactEpisodePortrait)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 21),
+                      child: _BarButton(
+                        icon: Icons.more_vert_rounded,
+                        tooltip: context.l10n.settingsTooltip,
+                        onTap: onSettings,
+                      ),
+                    ),
+                  if (!compactEpisodePortrait && onChat != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 21),
+                      child: _BarButton(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        tooltip: context.l10n.chat,
+                        onTap: onChat!,
+                      ),
                     ),
                 ],
               ),
@@ -698,8 +698,8 @@ class _ControlsOverlay extends StatelessWidget {
                           bSnap.data ?? c.player.state.buffering;
                       if (buffering) {
                         return SizedBox(
-                          width: 52,
-                          height: 52,
+                          width: 51,
+                          height: 51,
                           child: Material(
                             color: Colors.transparent,
                             shape: const CircleBorder(),
@@ -785,7 +785,7 @@ class _ControlsOverlay extends StatelessWidget {
                   compactEpisodePortrait ? 4 : 16,
                   0,
                   compactEpisodePortrait ? 4 : 16,
-                  compactEpisodePortrait ? 2 : 8,
+                  15,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
