@@ -1923,16 +1923,23 @@ class PlayerCubit extends Cubit<PlayerState> {
       var lastPct = -1;
       final dir = await getTemporaryDirectory();
 
+      final out = File(
+        '${dir.path}/translated_${targetIso}_${state.currentIndex}_latest.srt',
+      );
+      var translatedTrackReady = false;
+
       Future<void> applyTranslatedSrt(String srt) async {
-        // Load only the completed translation. Applying every partial revision
-        // creates a new mpv track each time and floods the subtitle picker.
-        final out = File(
-          '${dir.path}/translated_${targetIso}_${state.currentIndex}_latest.srt',
-        );
+        // Reuse one stable file/track for every partial update. Re-selecting
+        // the same URI refreshes mpv's subtitle renderer without accumulating
+        // a new translated track for every batch.
         await out.writeAsString(srt, flush: true);
+        if (translatedTrackReady) {
+          await player.setSubtitleTrack(SubtitleTrack.no());
+        }
         await player.setSubtitleTrack(
           SubtitleTrack.uri(out.path, title: 'Translated', language: targetIso),
         );
+        translatedTrackReady = true;
         _wantedSubId = out.path;
         _subApplied = true;
         // Apply after selecting the new track: mpv may initialise its
@@ -1951,6 +1958,7 @@ class PlayerCubit extends Cubit<PlayerState> {
             _toast('Translating subtitles… $pct%');
           }
         },
+        onPartialResult: applyTranslatedSrt,
       );
       // Always apply the final complete file, including when all cues were
       // already served from cache and no partial callback was needed.
