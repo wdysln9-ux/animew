@@ -1644,6 +1644,35 @@ class _TvStepperRowState extends State<_TvStepperRow> {
 /// Soft, rounded play/pause — the stock [AnimatedIcons]
 /// morph uses sharp, blocky shapes; the `_rounded` variants have the pill
 /// corners we want. Cross-fades + gently scales between the two on toggle.
+/// Compact player panels use the same centered footprint as the episode
+/// summary dialog, with a slightly taller content area for selectable rows.
+class _CompactPlayerDialog extends StatelessWidget {
+  const _CompactPlayerDialog({
+    required this.child,
+    this.maxHeight = 360,
+  });
+
+  final Widget child;
+  final double maxHeight;
+
+  @override
+  Widget build(BuildContext context) => Dialog(
+    backgroundColor: AppColors.surface,
+    insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(18),
+      side: const BorderSide(color: AppColors.hairline),
+    ),
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: 500, maxHeight: maxHeight),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: child,
+      ),
+    ),
+  );
+}
+
 class _SheetSurface extends StatelessWidget {
   const _SheetSurface({
     bool blur = true,
