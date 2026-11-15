@@ -4598,6 +4598,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           controller: _c,
                           state: state,
                           visible: _controlsVisible,
+                          multiTouchActive: _pointers.length >= 2,
                           showTitle: widget.showTitle,
                           duration: _duration,
                           zoomLabel: _fits[_fitIndex].$2,
