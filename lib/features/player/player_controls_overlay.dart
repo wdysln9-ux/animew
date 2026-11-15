@@ -276,6 +276,14 @@ class _ControlsOverlay extends StatelessWidget {
               ),
             );
           }
+        case 'lock':
+          out.add(
+            _BarButton(
+              icon: Icons.lock_open_rounded,
+              tooltip: context.l10n.lockControls,
+              onTap: onLock,
+            ),
+          );
         case 'info':
           if (onInfo != null) {
             out.add(
@@ -632,17 +640,6 @@ class _ControlsOverlay extends StatelessWidget {
                     ),
                   // Episodes and ⋮ More live in the bottom bar now — a second
                   // copy up here just split the same action across two places.
-                  // Lock stays: it's the one control you want reachable without
-                  // looking down at the bar you're about to hide.
-                  if (!compactEpisodePortrait)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 1),
-                      child: _BarButton(
-                        icon: Icons.lock_open_rounded,
-                        tooltip: context.l10n.lockControls,
-                        onTap: onLock,
-                      ),
-                    ),
                   if (!compactEpisodePortrait)
                     Padding(
                       padding: const EdgeInsets.only(left: 1),
