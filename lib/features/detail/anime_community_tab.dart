@@ -289,13 +289,26 @@ class _EpisodeThreadsSectionState extends State<EpisodeThreadsSection> {
 
   Future<List<Map<String, dynamic>>> _load() async {
     final api = sl<AniListService>().api;
-    final mediaId = await api.communityMediaId(anilistId: null, malId: widget.malId, title: widget.showTitle);
-    if (mediaId == null) return const [];
-    final parsedNumber = int.tryParse(widget.episodeNumber.trim().replaceFirst(RegExp(r'\.0$'), ''));
+    final parsedNumber = int.tryParse(
+      widget.episodeNumber.trim().replaceFirst(RegExp(r'\.0$'), ''),
+    );
     if (parsedNumber == null) return const [];
+
+    // Resolve by MAL id first, then title inside communityMediaId. A failed
+    // lookup should not leave the whole comment panel in a Future error state.
+    int? mediaId;
+    try {
+      mediaId = await api.communityMediaId(
+        anilistId: null,
+        malId: widget.malId,
+        title: widget.showTitle,
+      );
+    } catch (_) {
+      mediaId = null;
+    }
+    if (mediaId == null) return const [];
+
     final padded = parsedNumber.toString().padLeft(2, '0');
-    // AniList episode threads use several title conventions: "Episode 1",
-    // "Ep. 01", "01", or "#01". Search both named and number-only forms.
     final queries = <String>{
       'Episode $parsedNumber',
       'Episode $padded',
@@ -303,35 +316,48 @@ class _EpisodeThreadsSectionState extends State<EpisodeThreadsSection> {
       'Ep $padded',
       'Ep. $parsedNumber',
       'Ep. $padded',
+      'E$parsedNumber',
+      '#$padded',
       padded,
       parsedNumber.toString(),
-      '#$padded',
     };
     final found = <int, Map<String, dynamic>>{};
+
+    // Search variants independently. AniList can reject a particular search
+    // query; that must not prevent the remaining variants from loading.
     for (final query in queries) {
-      final rows = await api.fetchThreads(mediaId, search: query);
-      for (final row in rows) {
-        final id = (row['id'] as num?)?.toInt();
-        if (id != null) found[id] = row;
+      try {
+        final rows = await api.fetchThreads(mediaId, search: query);
+        for (final row in rows) {
+          final id = (row['id'] as num?)?.toInt();
+          if (id != null) found[id] = row;
+        }
+      } catch (_) {
+        continue;
       }
     }
-    // Search results may not index number-only titles reliably. Include the
-    // recent unfiltered thread pages as a fallback for titles such as "01".
+
+    // Search indexing is inconsistent for number-only episode titles, so
+    // inspect recent unfiltered pages as a fallback.
     for (var page = 1; page <= 5; page++) {
-      final rows = await api.fetchThreads(mediaId, page: page);
-      if (rows.isEmpty) break;
-      for (final row in rows) {
-        final id = (row['id'] as num?)?.toInt();
-        if (id != null) found[id] = row;
+      try {
+        final rows = await api.fetchThreads(mediaId, page: page);
+        if (rows.isEmpty) break;
+        for (final row in rows) {
+          final id = (row['id'] as num?)?.toInt();
+          if (id != null) found[id] = row;
+        }
+        if (rows.length < 50) break;
+      } catch (_) {
+        break;
       }
-      if (rows.length < 50) break;
     }
+
     final number = RegExp.escape(parsedNumber.toString());
-    // NOTE: raw Dart regex strings need a single backslash (\\s), not \\\\s.
     final titlePatterns = [
-      RegExp(r'^\s*0*' + number + r'\s*$', caseSensitive: false),
-      RegExp(r'^\s*#?\s*0*' + number + r'(?:\s*[-:|].*)?$', caseSensitive: false),
-      RegExp(r'(^|[^a-z0-9])(?:episode|ep\.?|e)\s*#?0*' + number + r'([^0-9]|$)', caseSensitive: false),
+      RegExp(r'^\\s*#?\\s*0*' + number + r'\\s*$', caseSensitive: false),
+      RegExp(r'^\\s*#?\\s*0*' + number + r'(?:\\s*[-:|].*)?$', caseSensitive: false),
+      RegExp(r'(^|[^a-z0-9])(?:episode|ep\\.?|e)\\s*#?0*' + number + r'([^0-9]|$)', caseSensitive: false),
     ];
     return found.values.where((row) {
       final title = (row['title'] ?? '').toString().trim();
