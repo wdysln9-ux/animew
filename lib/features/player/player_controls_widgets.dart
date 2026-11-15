@@ -149,7 +149,7 @@ class _RoundIconButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.symmetric(horizontal: 7.75, vertical: 10),
             child: Icon(icon, color: Colors.white, size: 25),
           ),
         ),
