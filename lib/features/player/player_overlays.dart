@@ -128,32 +128,11 @@ class _SeekIndicator extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Bare seek icon: no circular background, border or glow.
+              // Plain white seek icon; no theme tint or +/- seconds badge.
               Icon(
                 left ? Icons.fast_rewind_rounded : Icons.fast_forward_rounded,
-                color: AppColors.accent,
+                color: Colors.white,
                 size: 30,
-              ),
-              const SizedBox(height: 10),
-              // Running-total pill remains so the seek amount is readable.
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: AppColors.surface2.withValues(alpha: 0.78),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 7,
-                  ),
-                  child: Text(
-                    '${left ? '−' : '+'}${accumSeconds}s',
-                    style: AppText.caption.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
               ),
             ],
           ),
