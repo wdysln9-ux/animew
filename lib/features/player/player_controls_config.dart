@@ -24,9 +24,8 @@ class PlayerControl {
 /// Every arrangeable control, in the order they appear in Settings' Hidden
 /// section.
 ///
-/// Back, Lock and Settings are deliberately absent: they're fixed in the top
-/// bar. Losing the way out of the player, or the route to the screen that
-/// arranges all this, isn't something to leave one tap away behind a toggle.
+/// Back and Settings stay fixed in the top bar. Lock is arrangeable like the
+/// other controls, but remains on the top bar by default.
 const List<PlayerControl> kPlayerControls = [
   PlayerControl('speed', 'Speed', Icons.speed_rounded),
   PlayerControl('tracks', 'Audio & subs', Icons.subtitles_rounded),
@@ -40,6 +39,7 @@ const List<PlayerControl> kPlayerControls = [
   PlayerControl('rotate', 'Portrait', Icons.screen_rotation_rounded),
   PlayerControl('cast', 'Cast', Icons.cast),
   PlayerControl('info', 'Playback stats', Icons.info_outline_rounded),
+  PlayerControl('lock', 'Lock controls', Icons.lock_open_rounded),
   PlayerControl('decoder', 'Decoder', Icons.memory_rounded),
   PlayerControl('enhance', 'Anime4K', Icons.auto_awesome_rounded),
   PlayerControl('colour', 'Colour', Icons.palette_outlined),
@@ -93,7 +93,7 @@ class PlayerControlsConfig {
   /// is a hard cap rather than something to discover in the player.
   static const int maxTop = 5;
 
-  static const List<String> defaultTop = ['cast', 'info'];
+  static const List<String> defaultTop = ['cast', 'info', 'lock'];
   static const List<String> defaultLeft = [
     'speed',
     'tracks',
