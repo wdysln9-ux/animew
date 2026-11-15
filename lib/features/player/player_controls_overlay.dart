@@ -696,7 +696,7 @@ class _ControlsOverlay extends StatelessWidget {
                     builder: (context, bSnap) {
                       final buffering =
                           bSnap.data ?? c.player.state.buffering;
-                      if (buffering) {
+                      if (buffering && playing) {
                         return SizedBox(
                           width: 51,
                           height: 51,
