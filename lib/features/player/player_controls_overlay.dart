@@ -323,6 +323,8 @@ class _ControlsOverlay extends StatelessWidget {
   (IconData, String, VoidCallback)? _specFor(BuildContext context, String id) {
     final c = controller;
     switch (id) {
+      case 'lock':
+        return (Icons.lock_open_rounded, context.l10n.lockControls, onLock);
       case 'speed':
         return (Icons.speed_rounded, 'Playback speed', onSpeed);
       case 'tracks':
