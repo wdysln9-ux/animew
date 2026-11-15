@@ -683,47 +683,45 @@ class _ControlsOverlay extends StatelessWidget {
                 ),
                 const SizedBox(width: 54),
               ],
+              // Read playing state first: buffering can remain true after a
+              // pause request. In that case the spinner must disappear and the
+              // normal Play button must be shown immediately.
               StreamBuilder<bool>(
-                stream: c.player.stream.buffering,
-                builder: (context, bSnap) {
-                  final buffering = bSnap.data ?? c.player.state.buffering;
-                  // While buffering, show the spinner IN PLACE OF the play/pause
-                  // button — no more spinner-over-button overlap. 58px matches
-                  // _AnimatedPlayPause's disc exactly, so the episode arrows
-                  // don't twitch every time playback stalls.
-                  if (buffering) {
-                    // Keep the loading indicator in place until buffering ends,
-                    // even if the user taps it to pause during the load.
-                    return SizedBox(
-                      width: 58,
-                      height: 58,
-                      child: Material(
-                        color: Colors.transparent,
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () {
-                            c.togglePlay();
-                            onInteract();
-                          },
-                          child: Center(
-                            child: SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: CircularProgressIndicator(
-                                color: AppColors.accent,
-                                strokeWidth: 3,
+                stream: c.player.stream.playing,
+                builder: (context, pSnap) {
+                  final playing = pSnap.data ?? c.player.state.playing;
+                  return StreamBuilder<bool>(
+                    stream: c.player.stream.buffering,
+                    builder: (context, bSnap) {
+                      final buffering =
+                          (bSnap.data ?? c.player.state.buffering) && playing;
+                      if (buffering) {
+                        return SizedBox(
+                          width: 58,
+                          height: 58,
+                          child: Material(
+                            color: Colors.transparent,
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () {
+                                c.togglePlay();
+                                onInteract();
+                              },
+                              child: Center(
+                                child: SizedBox(
+                                  width: 32,
+                                  height: 32,
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.accent,
+                                    strokeWidth: 3,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    );
-                  }
-                  return StreamBuilder<bool>(
-                    stream: c.player.stream.playing,
-                    builder: (context, snap) {
-                      final playing = snap.data ?? c.player.state.playing;
+                        );
+                      }
                       return _AnimatedPlayPause(
                         playing: playing,
                         onTap: () {
