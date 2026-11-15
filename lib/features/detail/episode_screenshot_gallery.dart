@@ -117,11 +117,18 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
                 children: [
                   Text('Gallery', style: AppText.headline.copyWith(fontSize: 16)),
                   const SizedBox(width: 7),
-                  Text(
-                    '${episodeNumbers.length}',
-                    style: AppText.caption.copyWith(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                  FutureBuilder<List<_EpisodeStill>>(
+                    future: _loadAllEpisodeStills(
+                      episodes: widget.episodes,
+                      malId: widget.malId,
+                      tmdbId: widget.tmdbId,
+                    ),
+                    builder: (context, snapshot) => Text(
+                      snapshot.hasData ? '${snapshot.data!.length}' : '…',
+                      style: AppText.caption.copyWith(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                   const Spacer(),
