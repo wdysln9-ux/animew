@@ -60,7 +60,6 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
       stream: c.player.stream.track,
       builder: (context, snap) {
         final track = snap.data ?? c.player.state.track;
-        final audioId = track.audio.id;
         final subId = track.subtitle.id;
         return Padding(
           padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
@@ -77,20 +76,9 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: h * 0.5),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: _audioColumn(c, audioId)),
-                      Container(
-                        width: 0.5,
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        color: AppColors.hairline,
-                      ),
-                      Expanded(child: _subColumn(c, subId)),
-                    ],
-                  ),
+                SizedBox(
+                  height: h * 0.5,
+                  child: _subColumn(c, subId),
                 ),
                 if (!widget.castMode) ...[
                   const Divider(color: AppColors.hairline, height: 18),
@@ -123,89 +111,12 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                       widget.onInteract();
                     },
                   ),
-                  _SheetRow(
-                    label: context.l10n.subtitleStyle,
-                    icon: Icons.text_fields_rounded,
-                    active: false,
-                    onTap: () {
-                      widget.onInteract();
-                      openSubtitleStyleSheet(context, c, widget.onInteract);
-                    },
-                  ),
-                  _SheetRow(
-                    label: context.l10n.styledSubtitlesLibass,
-                    subtitle: context.l10n.styledSubtitlesLibassSubtitle,
-                    toggleValue: c.styledSubtitlesOn,
-                    active: false,
-                    onTap: () {
-                      c.toggleStyledSubtitles();
-                      if (mounted) setState(() {});
-                      widget.onInteract();
-                    },
-                  ),
                 ],
               ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _audioColumn(PlayerCubit c, String audioId) {
-    final cats = c.categories;
-    final tracks = c.mediaAudioTracks;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _SheetSectionHeader(context.l10n.audio),
-        Flexible(
-          child: ListView(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            children: [
-              if (cats.length > 1)
-                for (final cat in cats)
-                  _SheetRow(
-                    label: cat.toUpperCase(),
-                    active: _category == cat,
-                    onTap: () async {
-                      await c.switchCategory(cat);
-                      if (!mounted) return;
-                      setState(() => _category = cat);
-                      widget.onInteract();
-                      widget.onAfterChange?.call();
-                    },
-                  ),
-              if (!widget.castMode)
-                for (final (i, t) in tracks.indexed)
-                  _SheetRow(
-                    label: _trackLabel(
-                      t.title,
-                      t.language,
-                      '${context.l10n.audio} ${i + 1}',
-                      titleSaysSomething: _titlesSaySomething(
-                        tracks.map((t) => t.title),
-                      ),
-                    ),
-                    subtitle: c.audioDetail(t),
-                    active: audioId == t.id,
-                    onTap: () {
-                      c.setAudioTrack(t);
-                      widget.onInteract();
-                    },
-                  ),
-              if (cats.length <= 1 && (widget.castMode || tracks.length <= 1))
-                _SheetRow(
-                  label: context.l10n.defaultLabel,
-                  active: true,
-                  onTap: () {},
-                ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -223,30 +134,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
             padding: EdgeInsets.zero,
             children: [
               _SheetRow(
-                label: () {
-                  final p = sl<PlaybackPrefs>().subtitlePreference;
-                  final name = p.isEmpty
-                      ? context.l10n.auto
-                      : (p == 'off'
-                            ? context.l10n.off
-                            : (languageByPref(p)?.name ?? p.toUpperCase()));
-                  return context.l10n.preferredLanguageColon(name);
-                }(),
-                icon: Icons.language_rounded,
-                active: false,
-                onTap: () async {
-                  final picked = await showSubtitleLanguagePicker(
-                    context,
-                    sl<PlaybackPrefs>().subtitlePreference,
-                  );
-                  if (picked == null) return;
-                  await sl<PlaybackPrefs>().setSubtitlePreference(picked);
-                  c.reapplyPreferredSubtitle();
-                  widget.onInteract();
-                },
-              ),
-              _SheetRow(
-                label: context.l10n.off,
+                label: 'No',
                 active: subId == 'no',
                 onTap: () {
                   widget.onSubtitlesOff?.call();
@@ -256,25 +144,31 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                 },
               ),
               if (!widget.castMode)
-                for (final t in embedded)
+                for (final t in _orderedSubtitleTracks(embedded))
                   _SheetRow(
-                    label: _trackLabel(
-                      t.title,
-                      t.language,
-                      t.id,
-                      titleSaysSomething: _titlesSaySomething(
-                        embedded.map((t) => t.title),
-                      ),
-                    ),
+                    label: _isTranslatedTrack(t)
+                        ? 'Indonesia (translated)'
+                        : (_isEnglishSubtitle(t.language, t.title)
+                            ? 'Inggris'
+                            : _trackLabel(
+                                t.title,
+                                t.language,
+                                t.id,
+                                titleSaysSomething: _titlesSaySomething(
+                                  embedded.map((t) => t.title),
+                                ),
+                              )),
                     active: subId == t.id,
                     onTap: () {
                       c.setSubtitle(t);
                       widget.onInteract();
                     },
                   ),
-              for (final s in soft)
+              for (final s in _orderedSoftSubs(soft))
                 _SheetRow(
-                  label: s.label ?? s.lang,
+                  label: _isEnglishSubtitle(s.lang, s.label)
+                      ? 'Inggris'
+                      : (s.label ?? s.lang),
                   // A URI soft-sub is applied via SubtitleTrack.uri(s.url), whose
                   // media_kit track id IS the url — so the active one highlights.
                   active: subId == s.url,
@@ -286,6 +180,26 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                   },
                 ),
               if (!widget.castMode) ...[
+                _SheetRow(
+                  label: context.l10n.styledSubtitlesLibass,
+                  subtitle: context.l10n.styledSubtitlesLibassSubtitle,
+                  toggleValue: c.styledSubtitlesOn,
+                  active: false,
+                  onTap: () {
+                    c.toggleStyledSubtitles();
+                    if (mounted) setState(() {});
+                    widget.onInteract();
+                  },
+                ),
+                _SheetRow(
+                  label: context.l10n.subtitleStyle,
+                  icon: Icons.text_fields_rounded,
+                  active: false,
+                  onTap: () {
+                    widget.onInteract();
+                    openSubtitleStyleSheet(context, c, widget.onInteract);
+                  },
+                ),
                 _SheetRow(
                   label: context.l10n.searchSubtitlesOnline,
                   icon: Icons.search_rounded,
@@ -311,6 +225,38 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
         ),
       ],
     );
+  }
+
+  bool _isTranslatedTrack(SubtitleTrack t) {
+    final title = t.title?.trim().toLowerCase() ?? '';
+    final id = t.id.trim().toLowerCase();
+    return title == 'translated' || id.contains('translated_');
+  }
+
+  bool _isEnglishSubtitle(String? language, String? title) {
+    final lang = (language ?? '').trim().toLowerCase();
+    final name = (title ?? '').trim().toLowerCase();
+    return lang == 'en' || lang.startsWith('en-') ||
+        name.contains('english') || name == 'eng' || name.startsWith('eng ');
+  }
+
+  List<SubtitleTrack> _orderedSubtitleTracks(List<SubtitleTrack> tracks) {
+    final result = [...tracks];
+    result.sort((a, b) {
+      int rank(SubtitleTrack t) => _isEnglishSubtitle(t.language, t.title)
+          ? 0
+          : (_isTranslatedTrack(t) ? 1 : 2);
+      return rank(a).compareTo(rank(b));
+    });
+    return result;
+  }
+
+  List<SoftSubtitle> _orderedSoftSubs(List<SoftSubtitle> subs) {
+    final result = [...subs];
+    result.sort((a, b) =>
+        (_isEnglishSubtitle(a.lang, a.label) ? 0 : 1)
+            .compareTo(_isEnglishSubtitle(b.lang, b.label) ? 0 : 1));
+    return result;
   }
 }
 
