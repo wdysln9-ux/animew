@@ -355,9 +355,9 @@ class _EpisodeThreadsSectionState extends State<EpisodeThreadsSection> {
 
     final number = RegExp.escape(parsedNumber.toString());
     final titlePatterns = [
-      RegExp(r'^\\s*#?\\s*0*' + number + r'\\s*$', caseSensitive: false),
-      RegExp(r'^\\s*#?\\s*0*' + number + r'(?:\\s*[-:|].*)?$', caseSensitive: false),
-      RegExp(r'(^|[^a-z0-9])(?:episode|ep\\.?|e)\\s*#?0*' + number + r'([^0-9]|$)', caseSensitive: false),
+      RegExp(r'^\s*#?\s*0*' + number + r'\s*$', caseSensitive: false),
+      RegExp(r'^\s*#?\s*0*' + number + r'(?:\s*[-:|].*)?$', caseSensitive: false),
+      RegExp(r'(^|[^a-z0-9])(?:episode|ep\.?|e)\s*#?0*' + number + r'([^0-9]|$)', caseSensitive: false),
     ];
     return found.values.where((row) {
       final title = (row['title'] ?? '').toString().trim();
