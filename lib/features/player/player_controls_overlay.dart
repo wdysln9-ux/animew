@@ -493,14 +493,14 @@ class _ControlsOverlay extends StatelessWidget {
           bottom: 0,
           left: 0,
           right: 0,
-          height: compactEpisodePortrait ? 112 : 170,
+          height: compactEpisodePortrait ? 96 : 132,
           child: IgnorePointer(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Color(0x8C000000), Color(0x00000000)],
+                  colors: [Color(0x70000000), Color(0x00000000)],
                 ),
               ),
             ),
@@ -529,8 +529,8 @@ class _ControlsOverlay extends StatelessWidget {
               // the back arrow on 44 — the exact line the bottom capsules start
               // at. Writing 44 here would land it at 56 and overshoot inward.
               padding: EdgeInsets.symmetric(
-                horizontal: compactEpisodePortrait ? 10 : 32,
-                vertical: compactEpisodePortrait ? 0 : 4,
+                horizontal: compactEpisodePortrait ? 10 : 22,
+                vertical: compactEpisodePortrait ? 0 : 2,
               ),
               child: Row(
                 children: [
@@ -748,8 +748,7 @@ class _ControlsOverlay extends StatelessWidget {
           ),
         ),
 
-        // Bottom: seek row + buttons. Rises into place as it fades in — the
-        // motion reads as instant even when the tap resolves a beat later.
+        // Bottom: a compact timestamp / shortcut row above a thin seek line.
         Positioned(
           bottom: 0,
           left: 0,
@@ -769,10 +768,10 @@ class _ControlsOverlay extends StatelessWidget {
                 // both button groups share it, so every edge lines up. Kept wide
                 // so the controls sit clear of the screen edges.
                 padding: EdgeInsets.fromLTRB(
-                  compactEpisodePortrait ? 4 : 24,
+                  compactEpisodePortrait ? 4 : 28,
                   0,
-                  compactEpisodePortrait ? 4 : 24,
-                  compactEpisodePortrait ? 2 : 14,
+                  compactEpisodePortrait ? 4 : 28,
+                  compactEpisodePortrait ? 2 : 8,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
