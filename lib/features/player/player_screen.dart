@@ -4127,64 +4127,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     ),
                   ),
 
-                  if (!sl<PlaybackPrefs>().styledSubtitles)
-                    Positioned.fill(
-                      child: StreamBuilder<List<String>>(
-                        stream: _c.player.stream.subtitle,
-                        initialData: _c.player.state.subtitle,
-                        builder: (context, snapshot) {
-                          final lines = snapshot.data ?? const <String>[];
-                          final caption = lines.where((line) => line.trim().isNotEmpty).join('\n');
-                          if (caption.isEmpty) return const SizedBox.shrink();
-                          final prefs = sl<PlaybackPrefs>();
-                          return LayoutBuilder(
-                            builder: (context, constraints) => Align(
-                              alignment: Alignment(
-                                _subtitleX * 2 - 1,
-                                _subtitleY * 2 - 1,
-                              ),
-                              child: GestureDetector(
-                                key: _subtitleGestureKey,
-                                behavior: HitTestBehavior.opaque,
-                                onScaleStart: _onSubtitleScaleStart,
-                                onScaleUpdate: _onSubtitleScaleUpdate,
-                                onScaleEnd: _onSubtitleScaleEnd,
-                                child: Padding(
-                                  // A small touch margin makes the caption easier
-                                  // to grab without turning the whole screen draggable.
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 10,
-                                  ),
-                                  child: Transform.scale(
-                                    scale: _subtitleSize,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        maxWidth: constraints.maxWidth * 0.9,
-                                      ),
-                                      child: Opacity(
-                                        opacity: prefs.subtitleOverallOpacity,
-                                        child: Text(
-                                        caption,
-                                        textAlign: switch (prefs.subtitleJustification) {
-                                          'left' => TextAlign.left,
-                                          'right' => TextAlign.right,
-                                          _ => TextAlign.center,
-                                        },
-                                        style: buildSubtitleTextStyle(
-                                          prefs, fontSize: 32.0 * prefs.subtitleScale,
-                                        ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
                   if (_subtitleGestureActive)
                     Positioned.fill(
                       child: IgnorePointer(
@@ -4859,6 +4801,60 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       );
                     },
                   ),
+                  // Keep the subtitle gesture layer above the player's full-screen
+                  // touch/seek overlay so it can receive drag and pinch gestures.
+                  // The GestureDetector itself wraps only the rendered text bounds.
+                  if (!sl<PlaybackPrefs>().styledSubtitles)
+                    Positioned.fill(
+                      child: StreamBuilder<List<String>>(
+                        stream: _c.player.stream.subtitle,
+                        initialData: _c.player.state.subtitle,
+                        builder: (context, snapshot) {
+                          final lines = snapshot.data ?? const <String>[];
+                          final caption = lines.where((line) => line.trim().isNotEmpty).join('\n');
+                          if (caption.isEmpty) return const SizedBox.shrink();
+                          final prefs = sl<PlaybackPrefs>();
+                          return LayoutBuilder(
+                            builder: (context, constraints) => Align(
+                              alignment: Alignment(
+                                _subtitleX * 2 - 1,
+                                _subtitleY * 2 - 1,
+                              ),
+                              child: GestureDetector(
+                                key: _subtitleGestureKey,
+                                // Hit-test only the rendered caption bounds, not a padded box.
+                                behavior: HitTestBehavior.opaque,
+                                onScaleStart: _onSubtitleScaleStart,
+                                onScaleUpdate: _onSubtitleScaleUpdate,
+                                onScaleEnd: _onSubtitleScaleEnd,
+                                child: Transform.scale(
+                                    scale: _subtitleSize,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxWidth: constraints.maxWidth * 0.9,
+                                      ),
+                                      child: Opacity(
+                                        opacity: prefs.subtitleOverallOpacity,
+                                        child: Text(
+                                        caption,
+                                        textAlign: switch (prefs.subtitleJustification) {
+                                          'left' => TextAlign.left,
+                                          'right' => TextAlign.right,
+                                          _ => TextAlign.center,
+                                        },
+                                        style: buildSubtitleTextStyle(
+                                          prefs, fontSize: 32.0 * prefs.subtitleScale,
+                                        ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                 ],
               );
             return Listener(
