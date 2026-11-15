@@ -94,25 +94,59 @@ class _MalArtworkImageState extends State<_MalArtworkImage> {
   }
 }
 
-final Map<int, Future<List<({String label, String url})>>> _aniZipArtworkCache = {};
+final Map<String, Future<List<({String label, String url})>>> _aniZipArtworkCache = {};
 
-Future<List<({String label, String url})>> _loadAniZipArtwork(int anilistId) {
-  return _aniZipArtworkCache.putIfAbsent(anilistId, () async {
+Future<List<({String label, String url})>> _loadAniZipArtwork({
+  int? anilistId,
+  int? malId,
+}) {
+  final cacheKey = 'a:${anilistId ?? 0}:m:${malId ?? 0}';
+  return _aniZipArtworkCache.putIfAbsent(cacheKey, () async {
     final dio = Dio(
       BaseOptions(
         connectTimeout: const Duration(seconds: 12),
         receiveTimeout: const Duration(seconds: 20),
         responseType: ResponseType.json,
+        headers: const {'Accept': 'application/json'},
       ),
     );
     try {
-      final response = await dio.get<dynamic>(
-        'https://hayase.ani.zip/v1/episodes',
-        queryParameters: {'anilist_id': anilistId},
-      );
-      final data = response.data;
+      var resolvedAniListId = anilistId;
+      if ((resolvedAniListId == null || resolvedAniListId <= 0) &&
+          malId != null && malId > 0) {
+        final mapping = await dio.get<dynamic>(
+          'https://api.ani.zip/v1/mappings',
+          queryParameters: {'mal_id': malId},
+        );
+        final mappingData = mapping.data;
+        if (mappingData is Map) {
+          final rawId = mappingData['anilist_id'] ??
+              (mappingData['mappings'] is Map
+                  ? mappingData['mappings']['anilist_id']
+                  : null);
+          resolvedAniListId = int.tryParse(rawId?.toString() ?? '');
+        }
+      }
+      if (resolvedAniListId == null || resolvedAniListId <= 0) {
+        return const [];
+      }
+
+      dynamic data;
+      for (final host in ['https://api.ani.zip', 'https://hayase.ani.zip']) {
+        try {
+          final response = await dio.get<dynamic>(
+            '$host/v1/episodes',
+            queryParameters: {'anilist_id': resolvedAniListId},
+          );
+          data = response.data;
+          if (data is Map && data['images'] is List) break;
+        } catch (_) {
+          // Try the compatible AniZip endpoint host.
+        }
+      }
       if (data is! Map) return const [];
-      final rawImages = data['images'];
+      final rawImages = data['images'] ??
+          (data['data'] is Map ? data['data']['images'] : null);
       if (rawImages is! List) return const [];
       const labels = {
         'Poster': 'Poster · AniZip',
@@ -137,7 +171,7 @@ Future<List<({String label, String url})>> _loadAniZipArtwork(int anilistId) {
       }
       return result;
     } catch (_) {
-      _aniZipArtworkCache.remove(anilistId);
+      _aniZipArtworkCache.remove(cacheKey);
       return const [];
     } finally {
       dio.close();
@@ -150,6 +184,7 @@ Future<void> showAnimeArtworkViewer(
   required String posterUrl,
   String? bannerUrl,
   int? anilistId,
+  int? malId,
   required String title,
   Map<String, String>? headers,
 }) async {
@@ -169,6 +204,7 @@ Future<void> showAnimeArtworkViewer(
       title: title,
       headers: headers,
       anilistId: anilistId,
+      malId: malId,
     ),
   );
 }
@@ -179,12 +215,14 @@ class _AnimeArtworkViewer extends StatefulWidget {
     required this.title,
     required this.headers,
     this.anilistId,
+    this.malId,
   });
 
   final List<({String label, String url})> images;
   final String title;
   final Map<String, String>? headers;
   final int? anilistId;
+  final int? malId;
 
   @override
   State<_AnimeArtworkViewer> createState() => _AnimeArtworkViewerState();
@@ -203,10 +241,13 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   }
 
   Future<void> _loadAdditionalArtwork() async {
-    final id = widget.anilistId;
-    if (id == null || id <= 0) return;
+    if ((widget.anilistId == null || widget.anilistId! <= 0) &&
+        (widget.malId == null || widget.malId! <= 0)) return;
     setState(() => _loadingAniZip = true);
-    final extra = await _loadAniZipArtwork(id);
+    final extra = await _loadAniZipArtwork(
+      anilistId: widget.anilistId,
+      malId: widget.malId,
+    );
     if (!mounted) return;
     final existing = widget.images.map((image) => image.url).toSet();
     final additions = extra.where((image) => !existing.contains(image.url));
