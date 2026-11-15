@@ -151,43 +151,49 @@ class _SeekRowState extends State<_SeekRow> {
             // to the opposite edge. The seek line gets its own full-width row.
             Row(
               children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    setState(() => _showRemaining = !_showRemaining);
-                    widget.onInteract();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Text(
-                      '${_fmt(shownPos)} / ${_showRemaining ? '-${_fmt(widget.duration - shownPos)}' : _fmt(widget.duration)}',
-                      style: AppText.caption.copyWith(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        height: 1.1,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                // Keep the left controls inside their own flexible region.
+                // The right group is a separate, fixed-width trailing child, so
+                // adding more left shortcuts can only make the left rail scroll;
+                // it can never push or reposition the right rail.
+                Expanded(
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          setState(() => _showRemaining = !_showRemaining);
+                          widget.onInteract();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          child: Text(
+                            '${_fmt(shownPos)} / ${_showRemaining ? '-${_fmt(widget.duration - shownPos)}' : _fmt(widget.duration)}',
+                            style: AppText.caption.copyWith(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              height: 1.1,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      if (widget.leading != null) ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: widget.leading!,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                if (widget.leading != null) ...[
-                  const SizedBox(width: 12),
-                  Flexible(
-                    fit: FlexFit.loose,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: widget.leading!,
-                    ),
-                  ),
+                if (widget.trailing != null) ...[
+                  const SizedBox(width: 8),
+                  widget.trailing!,
                 ],
-                if (widget.trailing != null)
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: widget.trailing!,
-                    ),
-                  ),
               ],
             ),
             SizedBox(
