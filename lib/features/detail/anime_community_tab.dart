@@ -134,7 +134,20 @@ class _ThreadCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _ThreadPage(data: data, anime: anime))),
+        onTap: () => showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          useSafeArea: true,
+          backgroundColor: Colors.transparent,
+          barrierColor: Colors.black54,
+          builder: (sheetContext) => FractionallySizedBox(
+            heightFactor: 0.94,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              child: _ThreadPage(data: data, anime: anime),
+            ),
+          ),
+        ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 13, 14, 5),
@@ -711,22 +724,6 @@ class _Comment extends StatelessWidget {
       padding: EdgeInsets.only(left: depth == 0 ? 0 : 3, bottom: depth == 0 ? 2 : 0),
       child: Stack(
         children: [
-          if (depth > 0)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: CustomPaint(
-                  painter: const _CommentThreadConnectorPainter(),
-                ),
-              ),
-            ),
-          if (children.isNotEmpty)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: CustomPaint(
-                  painter: _CommentThreadRailPainter(x: 15.0 + (17.0 * depth)),
-                ),
-              ),
-            ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -849,60 +846,6 @@ class _Comment extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Draws the elbow into this reply. The final sibling also masks the
-/// ancestor rail below its avatar, so the line cannot hang past the thread.
-class _CommentThreadConnectorPainter extends CustomPainter {
-  const _CommentThreadConnectorPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const trunkX = 1.0;
-    const branchY = 16.0;
-    const avatarCenterX = 32.0;
-
-    // Do not erase the ancestor rail for the full height of the last
-    // reply. A reply can itself contain several nested branches; masking its
-    // whole box disconnects those sibling rails. The parent's rail naturally
-    // ends at the bottom of its complete child subtree.
-    
-    final paint = Paint()
-      ..color = const Color(0xFF555860)
-      ..strokeWidth = 1.4
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    final branch = Path()
-      ..moveTo(trunkX, branchY - 4)
-      ..quadraticBezierTo(trunkX, branchY, trunkX + 4, branchY)
-      ..lineTo(avatarCenterX, branchY);
-    canvas.drawPath(branch, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CommentThreadConnectorPainter oldDelegate) =>
-      false;
-}
-
-/// Keeps the ancestor's vertical rail behind all replies. The final reply's
-/// connector masks the rail at its avatar center.
-class _CommentThreadRailPainter extends CustomPainter {
-  const _CommentThreadRailPainter({required this.x});
-  final double x;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF555860)
-      ..strokeWidth = 1.4
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(x, 15), Offset(x, size.height), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CommentThreadRailPainter oldDelegate) =>
-      oldDelegate.x != x;
 }
 
 class _CurrentProfileAvatar extends StatelessWidget {
