@@ -317,21 +317,10 @@ class _AnimatedPlayPause extends StatelessWidget {
             width: 70,
             height: 70,
             child: Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                transitionBuilder: (child, anim) => FadeTransition(
-                  opacity: anim,
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 0.82, end: 1).animate(anim),
-                    child: child,
-                  ),
-                ),
-                child: Icon(
-                  playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  key: ValueKey<bool>(playing),
-                  color: Colors.white,
-                  size: 70,
-                ),
+              child: Icon(
+                playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 70,
               ),
             ),
           ),
