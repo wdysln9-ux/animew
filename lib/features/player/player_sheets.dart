@@ -77,7 +77,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                   ),
                 ),
                 SizedBox(
-                  height: h * 0.5,
+                  height: h * 0.44,
                   child: _subColumn(c, subId),
                 ),
               ],
@@ -2001,8 +2001,8 @@ class _QuickSettingRow extends StatelessWidget {
     child: InkWell(
       onTap: onTap,
       child: Container(
-        constraints: const BoxConstraints(minHeight: 56),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        constraints: const BoxConstraints(minHeight: 44),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         child: Row(
           children: [
             Icon(icon, size: 24, color: AppColors.textPrimary),
@@ -2079,7 +2079,7 @@ class _SheetColumn extends StatelessWidget {
         Flexible(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.6,
+              maxHeight: MediaQuery.of(context).size.height * 0.48,
             ),
             child: ListView(shrinkWrap: true, children: children),
           ),
