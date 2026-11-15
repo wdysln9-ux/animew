@@ -735,6 +735,7 @@ class _ControlsOverlay extends StatelessWidget {
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Duration tracker (off-screen listener via StreamBuilder).
                     StreamBuilder<Duration>(
