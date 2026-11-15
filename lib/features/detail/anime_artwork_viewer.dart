@@ -371,7 +371,9 @@ Future<List<({String label, String url})>> _loadTmdbPosterArtwork(
   bool isTv,
   int? malId,
 ) async {
-  if (tmdbId == null || tmdbId <= 0) return const [];
+  if ((tmdbId == null || tmdbId <= 0) && (malId == null || malId <= 0)) {
+    return const [];
+  }
   final url = await sl<EpisodeMetadataService>().tmdbPosterUrl(
     tmdbId,
     isTv: isTv,
