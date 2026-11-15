@@ -563,7 +563,7 @@ class _ControlsOverlay extends StatelessWidget {
                                           : AppText.headline)
                                       .copyWith(
                                         color: Colors.white,
-                                        fontSize: compactEpisodePortrait ? null : 18,
+                                        fontSize: compactEpisodePortrait ? null : 16,
                                         fontWeight: FontWeight.w600,
                                         height: 1.15,
                                       ),
@@ -597,8 +597,8 @@ class _ControlsOverlay extends StatelessWidget {
                                 text: secondaryLine,
                                 style: AppText.caption.copyWith(
                                   color: Colors.white70,
-                                  fontSize: 14,
-                                  height: 1.2,
+                                  fontSize: 12,
+                                  height: 1.15,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -681,7 +681,7 @@ class _ControlsOverlay extends StatelessWidget {
                   label: context.l10n.previousEpisode,
                   onTap: onPrev,
                 ),
-                const SizedBox(width: 54),
+                const SizedBox(width: 42),
               ],
               // Keep the spinner visible until buffering really ends. If the
               // user requests Pause while buffering, defer the pause command
@@ -698,8 +698,8 @@ class _ControlsOverlay extends StatelessWidget {
                           bSnap.data ?? c.player.state.buffering;
                       if (buffering) {
                         return SizedBox(
-                          width: 58,
-                          height: 58,
+                          width: 52,
+                          height: 52,
                           child: Material(
                             color: Colors.transparent,
                             shape: const CircleBorder(),
@@ -722,8 +722,8 @@ class _ControlsOverlay extends StatelessWidget {
                               },
                               child: Center(
                                 child: SizedBox(
-                                  width: 32,
-                                  height: 32,
+                                  width: 29,
+                                  height: 29,
                                   child: CircularProgressIndicator(
                                     color: AppColors.accent,
                                     strokeWidth: 3,
@@ -746,7 +746,7 @@ class _ControlsOverlay extends StatelessWidget {
                 },
               ),
               if (multiEpisode && !compactEpisodePortrait) ...[
-                const SizedBox(width: 24),
+                const SizedBox(width: 18),
                 _TransportButton(
                   icon: Icons.skip_next_rounded,
                   label: context.l10n.nextEpisode2,
@@ -782,9 +782,9 @@ class _ControlsOverlay extends StatelessWidget {
                 // both button groups share it, so every edge lines up. Kept wide
                 // so the controls sit clear of the screen edges.
                 padding: EdgeInsets.fromLTRB(
-                  compactEpisodePortrait ? 4 : 28,
+                  compactEpisodePortrait ? 4 : 16,
                   0,
-                  compactEpisodePortrait ? 4 : 28,
+                  compactEpisodePortrait ? 4 : 16,
                   compactEpisodePortrait ? 2 : 8,
                 ),
                 child: Column(
