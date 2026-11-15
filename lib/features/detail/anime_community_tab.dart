@@ -36,6 +36,16 @@ class _AnimeCommunityTabState extends State<AnimeCommunityTab> {
   }
 
   @override
+  void didUpdateWidget(covariant EpisodeThreadsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.showTitle != widget.showTitle ||
+        oldWidget.malId != widget.malId ||
+        oldWidget.episodeNumber != widget.episodeNumber) {
+      future = _load();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) => FutureBuilder<List<Map<String, dynamic>>>(
     future: future,
     builder: (context, s) {
@@ -373,7 +383,15 @@ class _EpisodeThreadsSectionState extends State<EpisodeThreadsSection> {
         return const Padding(padding: EdgeInsets.only(top: 22), child: Center(child: CircularProgressIndicator()));
       }
       final rows = snapshot.data ?? const [];
-      if (rows.isEmpty) return const SizedBox.shrink();
+      if (rows.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.only(top: 22),
+          child: Text(
+            'Belum ada diskusi untuk episode ini.',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          ),
+        );
+      }
       return Padding(
         padding: const EdgeInsets.only(top: 22),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
