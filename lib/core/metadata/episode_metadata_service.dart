@@ -197,6 +197,105 @@ class EpisodeMetadataService {
     }
   }
 
+  final Map<String, Future<List<String>>> _screenshotInflight = {};
+  final Map<String, List<String>> _screenshotCache = {};
+
+  /// Fetch real still frames for one episode. Anime resolves the TMDB
+  /// season/episode pair from AniZip's MAL mapping; TV titles can pass the
+  /// TMDB coordinates directly. Empty means TMDB has no stills for this
+  /// exact episode (never substitute a poster or another episode).
+  Future<List<String>> episodeScreenshots({
+    int? malId,
+    int? tmdbId,
+    int? season,
+    int? episodeNumber,
+  }) async {
+    if (episodeNumber == null || episodeNumber <= 0) return const [];
+    var resolvedTmdbId = tmdbId;
+    var resolvedSeason = season;
+    var resolvedEpisode = episodeNumber;
+
+    if (malId != null && malId > 0) {
+      final payload = await _readDisk('a:$malId') ?? await _fetchAniZipPayload(malId);
+      resolvedTmdbId ??= parseAniZipTmdbId(payload);
+      final rawEpisodes = payload is Map ? payload['episodes'] : null;
+      final rawEpisode = rawEpisodes is Map
+          ? rawEpisodes['$episodeNumber'] ?? rawEpisodes[episodeNumber]
+          : null;
+      if (rawEpisode is Map) {
+        resolvedSeason ??= (rawEpisode['seasonNumber'] as num?)?.toInt();
+        resolvedEpisode =
+            (rawEpisode['episodeNumber'] as num?)?.toInt() ?? resolvedEpisode;
+      }
+      // A mapping without explicit episode coordinates is not reliable enough
+      // to guess across split cours or season-number resets.
+    }
+
+    if (resolvedTmdbId == null ||
+        resolvedSeason == null ||
+        resolvedSeason <= 0 ||
+        resolvedEpisode <= 0) {
+      return const [];
+    }
+
+    final key = '$resolvedTmdbId:$resolvedSeason:$resolvedEpisode';
+    final memo = _screenshotCache[key];
+    if (memo != null) return memo;
+    return _screenshotInflight.putIfAbsent(key, () async {
+      try {
+        final disk = await _readDisk('screens:$key');
+        if (disk is List) {
+          final cached = disk.whereType<String>().toList(growable: false);
+          _screenshotCache[key] = cached;
+          return cached;
+        }
+        final response = await _dio
+            .get<dynamic>(
+              '$_tmdbBase/tv/$resolvedTmdbId/season/$resolvedSeason/episode/$resolvedEpisode/images',
+              options: Options(validateStatus: (s) => s != null && s < 500),
+            )
+            .timeout(const Duration(seconds: 8));
+        final body = response.data;
+        final rawStills = body is Map ? body['stills'] : null;
+        if (rawStills is! List) return const [];
+        final seen = <String>{};
+        final urls = <String>[];
+        for (final still in rawStills) {
+          if (still is! Map) continue;
+          final path = still['file_path']?.toString().trim() ?? '';
+          if (path.isEmpty || !seen.add(path)) continue;
+          urls.add('https://image.tmdb.org/t/p/w780$path');
+        }
+        final result = List<String>.unmodifiable(urls);
+        _screenshotCache[key] = result;
+        await _writeDisk('screens:$key', result);
+        return result;
+      } catch (_) {
+        return const [];
+      } finally {
+        _screenshotInflight.remove(key);
+      }
+    });
+  }
+
+  Future<Object?> _fetchAniZipPayload(int malId) async {
+    try {
+      final response = await _dio
+          .get<dynamic>(
+            'https://api.ani.zip/mappings?mal_id=$malId',
+            options: Options(validateStatus: (s) => s != null && s < 500),
+          )
+          .timeout(const Duration(seconds: 7));
+      final payload = response.data;
+      if (payload is Map && payload['episodes'] is Map) {
+        await _writeDisk('a:$malId', payload);
+      }
+      return payload;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Map<int, EpisodeMeta>> tvEpisodeMeta(int tmdbId, int season) {
     final key = '$tmdbId:$season';
     final memo = _tvCache[key];
