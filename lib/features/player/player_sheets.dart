@@ -251,7 +251,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
     return result;
   }
 
-  List<SoftSubtitle> _orderedSoftSubs(List<SoftSubtitle> subs) {
+  List<Subtitle> _orderedSoftSubs(List<Subtitle> subs) {
     final result = [...subs];
     result.sort((a, b) =>
         (_isEnglishSubtitle(a.lang, a.label) ? 0 : 1)
