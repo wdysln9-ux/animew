@@ -4145,7 +4145,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               ),
                               child: GestureDetector(
                                 key: _subtitleGestureKey,
-                                behavior: HitTestBehavior.translucent,
+                                behavior: HitTestBehavior.opaque,
                                 onScaleStart: _onSubtitleScaleStart,
                                 onScaleUpdate: _onSubtitleScaleUpdate,
                                 onScaleEnd: _onSubtitleScaleEnd,
@@ -4153,8 +4153,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   // A small touch margin makes the caption easier
                                   // to grab without turning the whole screen draggable.
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
+                                    horizontal: 12,
+                                    vertical: 10,
                                   ),
                                   child: Transform.scale(
                                     scale: _subtitleSize,
