@@ -45,6 +45,7 @@ class _ControlsOverlay extends StatelessWidget {
     required this.onCinematicLighting,
     required this.onEpisodeSummary,
     this.visible = true,
+    required this.multiTouchActive,
   });
 
   final PlayerCubit controller;
@@ -95,6 +96,7 @@ class _ControlsOverlay extends StatelessWidget {
   final VoidCallback onCinematicLighting;
   final VoidCallback onEpisodeSummary;
   final bool visible; // drives the bars' slide-in (top drops, bottom rises)
+  final bool multiTouchActive; // disables seek while two-finger stretch is active
 
   /// Overflow panel that slides in from the RIGHT (like the episodes panel) —
   /// holds the occasional actions so the control bars stay clean.
@@ -755,6 +757,7 @@ class _ControlsOverlay extends StatelessWidget {
                           controller: c,
                           duration: d > Duration.zero ? d : duration,
                           onInteract: onInteract,
+                          multiTouchActive: multiTouchActive,
                           leading: left.isEmpty
                               ? null
                               : Row(
