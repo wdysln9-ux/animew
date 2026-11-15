@@ -200,8 +200,7 @@ class _PlayerControlsScreenState extends State<PlayerControlsScreen> {
             padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
             child: Column(
               children: [
-                // Top bar: back, the title, then whatever's been put up here,
-                // then the fixed lock + settings.
+                // Top bar: back, title, arranged controls, then fixed settings.
                 Row(
                   children: [
                     const Icon(
@@ -222,12 +221,6 @@ class _PlayerControlsScreenState extends State<PlayerControlsScreen> {
                       ),
                     ),
                     icons(_top),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.lock_open_rounded,
-                      size: 16,
-                      color: Colors.white,
-                    ),
                     const SizedBox(width: 8),
                     const Icon(
                       Icons.settings_rounded,
