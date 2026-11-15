@@ -94,10 +94,62 @@ class _MalArtworkImageState extends State<_MalArtworkImage> {
   }
 }
 
+final Map<int, Future<List<({String label, String url})>>> _aniZipArtworkCache = {};
+
+Future<List<({String label, String url})>> _loadAniZipArtwork(int anilistId) {
+  return _aniZipArtworkCache.putIfAbsent(anilistId, () async {
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 12),
+        receiveTimeout: const Duration(seconds: 20),
+        responseType: ResponseType.json,
+      ),
+    );
+    try {
+      final response = await dio.get<dynamic>(
+        'https://hayase.ani.zip/v1/episodes',
+        queryParameters: {'anilist_id': anilistId},
+      );
+      final data = response.data;
+      if (data is! Map) return const [];
+      final rawImages = data['images'];
+      if (rawImages is! List) return const [];
+      const labels = {
+        'Poster': 'Poster · AniZip',
+        'Banner': 'Banner · AniZip',
+        'Fanart': 'Fanart · AniZip',
+        'Clearlogo': 'Clearlogo · AniZip',
+      };
+      final result = <({String label, String url})>[];
+      final seen = <String>{};
+      for (final raw in rawImages) {
+        if (raw is! Map) continue;
+        final type = raw['coverType']?.toString();
+        final url = raw['url']?.toString().trim() ?? '';
+        final uri = Uri.tryParse(url);
+        if (!labels.containsKey(type) ||
+            uri == null ||
+            (uri.scheme != 'https' && uri.scheme != 'http') ||
+            !seen.add(url)) {
+          continue;
+        }
+        result.add((label: labels[type]!, url: url));
+      }
+      return result;
+    } catch (_) {
+      _aniZipArtworkCache.remove(anilistId);
+      return const [];
+    } finally {
+      dio.close();
+    }
+  });
+}
+
 Future<void> showAnimeArtworkViewer(
   BuildContext context, {
   required String posterUrl,
   String? bannerUrl,
+  int? anilistId,
   required String title,
   Map<String, String>? headers,
 }) async {
@@ -116,6 +168,7 @@ Future<void> showAnimeArtworkViewer(
       images: images,
       title: title,
       headers: headers,
+      anilistId: anilistId,
     ),
   );
 }
@@ -125,11 +178,13 @@ class _AnimeArtworkViewer extends StatefulWidget {
     required this.images,
     required this.title,
     required this.headers,
+    this.anilistId,
   });
 
   final List<({String label, String url})> images;
   final String title;
   final Map<String, String>? headers;
+  final int? anilistId;
 
   @override
   State<_AnimeArtworkViewer> createState() => _AnimeArtworkViewerState();
@@ -139,10 +194,30 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   late final PageController _pages = PageController();
   int _index = 0;
   bool _saving = false;
+  bool _loadingAniZip = false;
 
   @override
   void initState() {
     super.initState();
+    _loadAdditionalArtwork();
+  }
+
+  Future<void> _loadAdditionalArtwork() async {
+    final id = widget.anilistId;
+    if (id == null || id <= 0) return;
+    setState(() => _loadingAniZip = true);
+    final extra = await _loadAniZipArtwork(id);
+    if (!mounted) return;
+    final existing = widget.images.map((image) => image.url).toSet();
+    final additions = extra.where((image) => !existing.contains(image.url));
+    if (additions.isNotEmpty) {
+      setState(() {
+        widget.images.addAll(additions);
+        _loadingAniZip = false;
+      });
+    } else {
+      setState(() => _loadingAniZip = false);
+    }
   }
 
   @override
