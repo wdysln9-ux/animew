@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:html/parser.dart' as html_parser;
 
+import '../../core/di/injector.dart';
+import '../../core/metadata/episode_metadata_service.dart';
+
 const _galleryChannel = MethodChannel('animew/image_gallery');
 
 final Map<String, Future<Uint8List>> _malArtworkBytes = {};
@@ -105,7 +108,10 @@ Future<List<({String label, String url})>> _loadMyAnimeListArtwork(int? malId) {
         connectTimeout: const Duration(seconds: 12),
         receiveTimeout: const Duration(seconds: 20),
         responseType: ResponseType.json,
-        headers: const {'Accept': 'application/json'},
+        headers: const {
+          'Accept': 'application/json',
+          'User-Agent': 'AnimeW/1.0 (Android)',
+        },
       ),
     );
     try {
@@ -177,34 +183,41 @@ Future<List<({String label, String url})>> _loadLiveChartArtwork(String title) {
         return const [];
       }
       final searchDocument = html_parser.parse(searchResponse.data);
-      final cards = searchDocument.querySelectorAll('.anime-item');
+      final query = normalizedTitle.toLowerCase().replaceAll(
+        RegExp(r'[^a-z0-9]+'),
+        '',
+      );
+      final cards = searchDocument.querySelectorAll(
+        '.anime-card, .anime-item, [data-anime-id]',
+      );
       String? animePath;
-      if (cards.isNotEmpty) {
-        final query = normalizedTitle.toLowerCase().replaceAll(
-          RegExp(r'[^a-z0-9]+'),
-          '',
+      var bestScore = -1;
+      for (final card in cards) {
+        final link = card.querySelector(
+          'a[href^="/anime/"], a[href*="livechart.me/anime/"]',
         );
-        var selected = cards.first;
-        for (final card in cards) {
-          final candidate = (card.attributes['data-title'] ??
-                  card.querySelector('.anime-item__body__title a')?.text ??
-                  '')
-              .toLowerCase()
-              .replaceAll(RegExp(r'[^a-z0-9]+'), '');
-          if (candidate == query ||
-              (candidate.isNotEmpty &&
-                  query.isNotEmpty &&
-                  (candidate.contains(query) || query.contains(candidate)))) {
-            selected = card;
-            break;
-          }
+        final href = link?.attributes['href'];
+        if (href == null || !RegExp(r'/anime/\\d+').hasMatch(href)) continue;
+        final candidate = (
+          card.attributes['data-title'] ??
+          card.querySelector('h3.main-title, .main-title, .anime-item__body__title a')?.text ??
+          link?.text ??
+          ''
+        ).toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
+        final score = candidate == query
+            ? 3
+            : candidate.isNotEmpty &&
+                    query.isNotEmpty &&
+                    (candidate.contains(query) || query.contains(candidate))
+                ? 2
+                : 0;
+        if (score > bestScore) {
+          bestScore = score;
+          animePath = href;
         }
-        animePath = selected
-            .querySelector('.anime-item__body__title a')
-            ?.attributes['href'];
       }
       animePath ??= searchDocument
-          .querySelector('.callout .media-body a')
+          .querySelector('a[href^="/anime/"]')
           ?.attributes['href'];
       if (animePath == null || animePath.trim().isEmpty) return const [];
 
@@ -225,16 +238,34 @@ Future<List<({String label, String url})>> _loadLiveChartArtwork(String title) {
       final visualsDocument = html_parser.parse(visualsResponse.data);
       final result = <({String label, String url})>[];
       final seen = <String>{};
-      for (final element
-          in visualsDocument.querySelectorAll('[data-anime-visual-url-value]')) {
-        var value =
-            element.attributes['data-anime-visual-url-value']?.trim() ?? '';
-        if (value.isEmpty) continue;
+      final visualElements = visualsDocument.querySelectorAll(
+        '[data-anime-visual-url-value], [data-visual-url], .anime-visual img, img',
+      );
+      for (final element in visualElements) {
+        var value = (
+          element.attributes['data-anime-visual-url-value'] ??
+          element.attributes['data-visual-url'] ??
+          element.attributes['data-src'] ??
+          element.attributes['src'] ??
+          element.attributes['content'] ??
+          ''
+        ).trim();
+        if (value.isEmpty || value.startsWith('data:')) continue;
+        if (value.contains(',')) {
+          value = value.split(',').first.trim().split(' ').first;
+        }
         final uri = Uri.tryParse(value);
         if (uri == null) continue;
         if (!uri.hasScheme) {
           value = Uri.parse('https://www.livechart.me').resolveUri(uri).toString();
         } else if (uri.scheme != 'https' && uri.scheme != 'http') {
+          continue;
+        }
+        final host = Uri.tryParse(value)?.host.toLowerCase() ?? '';
+        if (host.isEmpty ||
+            host.contains('google') ||
+            host.contains('facebook') ||
+            host.contains('livechart.me') && !value.contains('/uploads/')) {
           continue;
         }
         if (seen.add(value)) {
@@ -336,12 +367,27 @@ Future<List<({String label, String url})>> _loadAniZipArtwork({
   });
 }
 
+Future<List<({String label, String url})>> _loadTmdbPosterArtwork(
+  int? tmdbId,
+  bool isTv,
+) async {
+  if (tmdbId == null || tmdbId <= 0) return const [];
+  final url = await sl<EpisodeMetadataService>().tmdbPosterUrl(
+    tmdbId,
+    isTv: isTv,
+  );
+  if (url == null || url.isEmpty) return const [];
+  return [(label: 'Poster · TMDB', url: url)];
+}
+
 Future<void> showAnimeArtworkViewer(
   BuildContext context, {
   required String posterUrl,
   String? bannerUrl,
   int? anilistId,
   int? malId,
+  int? tmdbId,
+  bool tmdbIsTv = false,
   required String title,
   Map<String, String>? headers,
 }) async {
@@ -362,6 +408,8 @@ Future<void> showAnimeArtworkViewer(
       headers: headers,
       anilistId: anilistId,
       malId: malId,
+      tmdbId: tmdbId,
+      tmdbIsTv: tmdbIsTv,
     ),
   );
 }
@@ -373,6 +421,8 @@ class _AnimeArtworkViewer extends StatefulWidget {
     required this.headers,
     this.anilistId,
     this.malId,
+    this.tmdbId,
+    this.tmdbIsTv = false,
   });
 
   final List<({String label, String url})> images;
@@ -380,6 +430,8 @@ class _AnimeArtworkViewer extends StatefulWidget {
   final Map<String, String>? headers;
   final int? anilistId;
   final int? malId;
+  final int? tmdbId;
+  final bool tmdbIsTv;
 
   @override
   State<_AnimeArtworkViewer> createState() => _AnimeArtworkViewerState();
@@ -399,7 +451,8 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
 
   Future<void> _loadAdditionalArtwork() async {
     if ((widget.anilistId == null || widget.anilistId! <= 0) &&
-        (widget.malId == null || widget.malId! <= 0)) return;
+        (widget.malId == null || widget.malId! <= 0) &&
+        (widget.tmdbId == null || widget.tmdbId! <= 0)) return;
     setState(() => _loadingAdditionalArtwork = true);
     // Combine AniZip's typed artwork, MAL's additional pictures, and
     // LiveChart's public anime visuals page. Each source fails independently.
@@ -410,6 +463,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
       ),
       _loadMyAnimeListArtwork(widget.malId),
       _loadLiveChartArtwork(widget.title),
+      _loadTmdbPosterArtwork(widget.tmdbId, widget.tmdbIsTv),
     ]);
     if (!mounted) return;
     final existing = widget.images.map((image) => image.url).toSet();
@@ -429,19 +483,31 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
     super.dispose();
   }
 
+  Map<String, String> _headersForArtwork(String label) {
+    final headers = Map<String, String>.from(widget.headers ?? {});
+    headers['User-Agent'] =
+        'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36';
+    if (label.contains('MyAnimeList')) {
+      headers['Referer'] = 'https://myanimelist.net/';
+    } else if (label.contains('LiveChart')) {
+      headers['Referer'] = 'https://www.livechart.me/';
+    }
+    return headers;
+  }
+
   Future<void> _saveCurrent() async {
     if (_saving) return;
     setState(() => _saving = true);
     try {
       final image = widget.images[_index];
-      final requestHeaders = Map<String, String>.from(widget.headers ?? {})
+      final requestHeaders = _headersForArtwork(image.label)
         ..remove('x-ani-src')
         ..remove('x-mihon-src');
       final response = await Dio().get<List<int>>(
         image.url,
         options: Options(
           responseType: ResponseType.bytes,
-          headers: requestHeaders == null || requestHeaders.isEmpty ? null : requestHeaders,
+          headers: requestHeaders.isEmpty ? null : requestHeaders,
           connectTimeout: const Duration(seconds: 20),
           receiveTimeout: const Duration(seconds: 60),
         ),
@@ -494,7 +560,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   Widget build(BuildContext context) {
     final current = widget.images[_index];
     return Material(
-      color: Colors.black.withValues(alpha: 0.50),
+      color: Colors.transparent,
       child: SafeArea(
         child: Stack(
           children: [
@@ -531,7 +597,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                     maxScale: 4,
                     child: CachedNetworkImage(
                       imageUrl: image.url,
-                      httpHeaders: widget.headers,
+                      httpHeaders: _headersForArtwork(image.label),
                       fit: BoxFit.contain,
                       fadeInDuration: Duration.zero,
                       placeholder: (_, _) => const Center(
