@@ -403,7 +403,6 @@ class _ControlsOverlay extends StatelessWidget {
   List<Widget> _barButtons(BuildContext context, List<String> ids) {
     final buttons = <Widget>[];
     for (final id in ids) {
-      if (id == 'episodes') continue;
       final spec = _specFor(context, id);
       if (spec == null) continue;
       buttons.add(
@@ -755,11 +754,7 @@ class _ControlsOverlay extends StatelessWidget {
           bottom: 0,
           left: 0,
           right: 0,
-          child: AnimatedSlide(
-            offset: visible ? Offset.zero : const Offset(0, 0.14),
-            duration: const Duration(milliseconds: 240),
-            curve: Curves.easeOutCubic,
-            child: SafeArea(
+          child: SafeArea(
               top: false,
               bottom: !compactEpisodePortrait,
               // Vertical inset only — the bottom one keeps the bar clear of the
@@ -792,37 +787,30 @@ class _ControlsOverlay extends StatelessWidget {
                         });
                         final left = _barButtons(context, barConfig.left);
                         final right = _barButtons(context, barConfig.right);
-                        final showEpisodePicker = !portraitMode &&
-                            controller.episodes.length > 1 &&
-                            onEpisodes != null;
-                        final quickActions = <Widget>[
+                        final rightActions = <Widget>[
                           if (megaSkipEnabled)
                             _BarButton(
                               icon: Icons.fast_forward_rounded,
                               tooltip: 'Skip $megaSkipSeconds seconds',
                               onTap: onMegaSkip,
                             ),
-                          ...left,
                           ...right,
-                          if (showEpisodePicker)
-                            _BarButton(
-                              icon: Icons.video_library_outlined,
-                              tooltip: 'Episode lainnya',
-                              onTap: () {
-                                onEpisodes!();
-                                onInteract();
-                              },
-                            ),
                         ];
                         return _SeekRow(
                           controller: c,
                           duration: d > Duration.zero ? d : duration,
                           onInteract: onInteract,
-                          trailing: quickActions.isEmpty
+                          leading: left.isEmpty
                               ? null
                               : Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: quickActions,
+                                  children: left,
+                                ),
+                          trailing: rightActions.isEmpty
+                              ? null
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: rightActions,
                                 ),
                         );
                       },
@@ -831,7 +819,6 @@ class _ControlsOverlay extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
           ),
         ),
       ],
