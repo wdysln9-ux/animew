@@ -339,29 +339,39 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
             PageView.builder(
               controller: _pages,
               itemCount: widget.images.length,
-              onPageChanged: (index) => setState(() => _index = index),
+              onPageChanged: (index) {
+                setState(() => _index = index);
+                // Warm the pages on either side so a quick swipe back and
+                // forth can reuse the image cache instead of showing a blank
+                // placeholder while the same artwork is fetched again.
+                for (final adjacent in [index - 1, index + 1]) {
+                  if (adjacent < 0 || adjacent >= widget.images.length) {
+                    continue;
+                  }
+                  final adjacentImage = widget.images[adjacent];
+                  precacheImage(
+                    CachedNetworkImageProvider(
+                      adjacentImage.url,
+                      headers: widget.headers,
+                    ),
+                    context,
+                  ).catchError((_) {});
+                }
+              },
               itemBuilder: (context, index) {
                 final image = widget.images[index];
-                // PageView may build neighbouring pages before the user
-                // reaches them. Keep those pages inert: fetch image bytes only
-                // for the page currently selected by a swipe.
-                if (index != _index) {
-                  return const Center(
-                    child: Icon(
-                      Icons.photo_outlined,
-                      color: Colors.white38,
-                      size: 34,
-                    ),
-                  );
-                }
+                // Keep every page mounted as an image page. CachedNetworkImage
+                // reuses its disk/memory cache when the user returns to it.
                 return Center(
                   child: InteractiveViewer(
+                    key: ValueKey(image.url),
                     minScale: 1,
                     maxScale: 4,
                     child: CachedNetworkImage(
                       imageUrl: image.url,
                       httpHeaders: widget.headers,
                       fit: BoxFit.contain,
+                      fadeInDuration: Duration.zero,
                       placeholder: (_, _) => const Center(
                         child: CircularProgressIndicator(color: Colors.white),
                       ),
