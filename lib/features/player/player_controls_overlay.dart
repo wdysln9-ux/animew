@@ -281,6 +281,7 @@ class _ControlsOverlay extends StatelessWidget {
             out.add(
               _BarButton(
                 icon: Icons.info_outline_rounded,
+                color: infoOpen ? AppColors.accent : Colors.white,
                 tooltip: context.l10n.playbackStats,
                 onTap: onInfo!,
               ),
