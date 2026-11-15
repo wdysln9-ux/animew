@@ -529,8 +529,8 @@ class _ControlsOverlay extends StatelessWidget {
               // the back arrow on 44 — the exact line the bottom capsules start
               // at. Writing 44 here would land it at 56 and overshoot inward.
               padding: EdgeInsets.symmetric(
-                horizontal: compactEpisodePortrait ? 10 : 22,
-                vertical: compactEpisodePortrait ? 0 : 2,
+                horizontal: compactEpisodePortrait ? 10 : 12,
+                vertical: compactEpisodePortrait ? 0 : 0,
               ),
               child: Row(
                 children: [
@@ -563,7 +563,9 @@ class _ControlsOverlay extends StatelessWidget {
                                           : AppText.headline)
                                       .copyWith(
                                         color: Colors.white,
-                                        fontWeight: FontWeight.w700,
+                                        fontSize: compactEpisodePortrait ? null : 18,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.15,
                                       ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -595,6 +597,8 @@ class _ControlsOverlay extends StatelessWidget {
                                 text: secondaryLine,
                                 style: AppText.caption.copyWith(
                                   color: Colors.white70,
+                                  fontSize: 14,
+                                  height: 1.2,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -677,7 +681,7 @@ class _ControlsOverlay extends StatelessWidget {
                   label: context.l10n.previousEpisode,
                   onTap: onPrev,
                 ),
-                const SizedBox(width: 24),
+                const SizedBox(width: 54),
               ],
               StreamBuilder<bool>(
                 stream: c.player.stream.buffering,
