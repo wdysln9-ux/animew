@@ -1740,13 +1740,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _seekTick++; // re-key the indicator so its slide/fade replays each tap
     _seekLabelTimer?.cancel();
     setState(() {}); // the indicator updates instantly for immediate feedback
-    // Debounce the real jump: only seek once tapping settles, so rapid taps are
-    // one smooth jump instead of a re-buffer per tap.
-    _seekDebounceTimer?.cancel();
-    _seekDebounceTimer = Timer(
-      const Duration(milliseconds: 350),
-      _flushPendingSeek,
-    );
+    // Apply the seek immediately on the double-tap; no extra debounce wait.
+    _flushPendingSeek();
     _seekLabelTimer = Timer(const Duration(milliseconds: 800), () {
       if (mounted) {
         setState(() {
