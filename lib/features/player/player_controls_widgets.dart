@@ -211,7 +211,7 @@ class _BarButton extends StatelessWidget {
     required this.onTap,
     this.tooltip,
     this.color,
-    this.rightPadding = 10,
+    this.rightPadding = 7.5,
   });
 
   final IconData icon;
@@ -231,7 +231,7 @@ class _BarButton extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           child: Padding(
-            padding: EdgeInsets.fromLTRB(10, 10, rightPadding, 10),
+            padding: EdgeInsets.fromLTRB(7.5, 10, rightPadding, 10),
             child: Icon(icon, color: color ?? Colors.white, size: 24),
           ),
         ),
