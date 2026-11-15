@@ -230,7 +230,7 @@ class _SeekRowState extends State<_SeekRow> {
                                 trackHeight: 3,
                                 // Thumb grows while scrubbing (YouTube-style).
                                 thumbShape: RoundSliderThumbShape(
-                                  enabledThumbRadius: _dragMs != null ? 10 : 9,
+                                  enabledThumbRadius: _dragMs != null ? 8 : 0.1,
                                 ),
                                 overlayShape: const RoundSliderOverlayShape(
                                   overlayRadius: 14,
