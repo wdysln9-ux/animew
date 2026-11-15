@@ -6,6 +6,7 @@ class _SeekRow extends StatefulWidget {
     required this.controller,
     required this.duration,
     required this.onInteract,
+    required this.multiTouchActive,
     this.leading,
     this.trailing,
   });
@@ -13,6 +14,7 @@ class _SeekRow extends StatefulWidget {
   final PlayerCubit controller;
   final Duration duration;
   final VoidCallback onInteract;
+  final bool multiTouchActive;
 
   /// Sits at the far end of the timestamp's line (the MegaSkip pill). Riding
   /// the same row costs no extra height — it used to own a line to itself,
@@ -101,6 +103,17 @@ class _SeekRowState extends State<_SeekRow> {
 
   void _requestPreview(double ms) =>
       _preview?.request(Duration(milliseconds: ms.round()));
+
+  @override
+  void didUpdateWidget(covariant _SeekRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.multiTouchActive && !oldWidget.multiTouchActive) {
+      // A second finger cancels any in-progress scrub so a stretch gesture
+      // can never commit the seek position when the fingers are released.
+      _dragMs = null;
+      _dragStartMs = null;
+    }
+  }
 
   @override
   void dispose() {
@@ -252,7 +265,7 @@ class _SeekRowState extends State<_SeekRow> {
                                   horizontal: 12,
                                   vertical: 2,
                                 ),
-                                onChangeStart: totalMs <= 0
+                                onChangeStart: totalMs <= 0 || widget.multiTouchActive
                                     ? null
                                     : (v) {
                                         _ensurePreview();
@@ -263,14 +276,14 @@ class _SeekRowState extends State<_SeekRow> {
                                         _requestPreview(v);
                                         widget.onInteract();
                                       },
-                                onChanged: totalMs <= 0
+                                onChanged: totalMs <= 0 || widget.multiTouchActive
                                     ? null
                                     : (v) {
                                         setState(() => _dragMs = v);
                                         _requestPreview(v);
                                         widget.onInteract();
                                       },
-                                onChangeEnd: totalMs <= 0
+                                onChangeEnd: totalMs <= 0 || widget.multiTouchActive
                                     ? null
                                     : (v) {
                                         final startMs = _dragStartMs ?? streamMs;
