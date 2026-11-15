@@ -2095,10 +2095,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
         : (subtitleTrack.title?.trim().isNotEmpty == true
             ? subtitleTrack.title!
             : null);
-    _sheet<void>(
-      _SheetColumn(
-        header: 'Setelan',
-        children: [
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => _CompactPlayerDialog(
+        maxHeight: 340,
+        child: _SheetColumn(
+          header: 'Setelan',
+          children: [
           _QuickSettingRow(
             icon: Icons.tune_rounded,
             label: 'Kualitas video',
@@ -2151,7 +2155,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
               _openPlaybackSettings();
             },
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -3153,14 +3158,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// Netflix-style combined Audio | Subtitles panel (two columns, live
   /// selection without closing).
   void _openAudioSubsSheet({bool castMode = false}) {
-    showModalBottomSheet<void>(
+    showDialog<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => _SheetSurface(
-        blur: true,
-        opacity: 0.82,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      barrierDismissible: true,
+      builder: (_) => _CompactPlayerDialog(
+        maxHeight: 400,
         child: SafeArea(
           top: false,
           child: _AudioSubsSheet(
