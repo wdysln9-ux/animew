@@ -185,8 +185,9 @@ class _SeekRowState extends State<_SeekRow> {
                   Expanded(
                     child: Align(
                       alignment: Alignment.centerRight,
-                      child: Padding(
-                        padding: EdgeInsets.zero,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        reverse: true,
                         child: widget.trailing!,
                       ),
                     ),
