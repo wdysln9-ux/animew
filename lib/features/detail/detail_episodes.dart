@@ -1049,34 +1049,45 @@ class _RangeChips extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 38,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-        itemCount: count,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final sel = i == selected;
-          return Material(
-            color: sel ? AppColors.accent : AppColors.surface2,
-            borderRadius: BorderRadius.circular(9),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => onSelect(i),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Center(
-                  child: Text(
-                    labelFor(i),
-                    style: AppText.caption.copyWith(
-                      color: sel ? Colors.white : AppColors.textSecondary,
-                      fontWeight: FontWeight.w700,
+      child: LayoutBuilder(
+        builder: (context, constraints) => Transform.translate(
+          // Extend the rail to the screen edge while keeping the first chip
+          // aligned with the page's 16dp content inset.
+          offset: const Offset(-16, 0),
+          child: SizedBox(
+            width: constraints.maxWidth + 16,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.hardEdge,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+              itemCount: count,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final sel = i == selected;
+                return Material(
+                  color: sel ? AppColors.accent : AppColors.surface2,
+                  borderRadius: BorderRadius.circular(9),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => onSelect(i),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Center(
+                        child: Text(
+                          labelFor(i),
+                          style: AppText.caption.copyWith(
+                            color: sel ? Colors.white : AppColors.textSecondary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
