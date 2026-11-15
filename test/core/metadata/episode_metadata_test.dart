@@ -63,7 +63,7 @@ void main() {
     // AniZip only fills `overview` on early episodes for long shows (Naruto
     // Shippuden: 1–32). The rest ship `summary` only — without this fallback
     // ranges 51–100+ look bare (no description) even when titles exist.
-    test('summary fills overview when overview is absent', () {
+    test('summary takes priority and overview is the fallback', () {
       final m = EpisodeMetadataService.parseAniZip({
         'episodes': {
           '51': {
@@ -79,7 +79,7 @@ void main() {
       });
       expect(m[51]?.title, 'Reunion');
       expect(m[51]?.overview, 'Team Kakashi learns Sai`s true mission.');
-      expect(m[1]?.overview, 'Prefer overview when both exist.');
+      expect(m[1]?.overview, 'Ignored summary.');
     });
 
     test('reads themoviedb_id from mappings', () {
