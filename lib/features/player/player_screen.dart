@@ -2401,69 +2401,68 @@ class _PlayerScreenState extends State<PlayerScreen> {
         ? number.toInt().toString()
         : number.toString();
     _bumpControls();
-    showGeneralDialog<void>(
+    showModalBottomSheet<void>(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: 'Tutup komentar episode',
-      barrierColor: Colors.black45,
-      transitionDuration: const Duration(milliseconds: 240),
-      pageBuilder: (dialogContext, _, __) {
-        final screenWidth = MediaQuery.of(dialogContext).size.width;
-        final panelWidth = (screenWidth * 0.36).clamp(320.0, 440.0).toDouble();
-        return Align(
-          alignment: Alignment.centerRight,
-          child: Material(
-            color: const Color(0xFF0E0F11),
-            elevation: 20,
-            child: SafeArea(
-              left: false,
-              child: SizedBox(
-                width: panelWidth,
-                height: double.infinity,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      builder: (sheetContext) {
+        final height = MediaQuery.sizeOf(sheetContext).height;
+        return Container(
+          height: height * 0.90,
+          decoration: const BoxDecoration(
+            color: Color(0xFF0E0F11),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 8, 8),
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 10, 8, 8),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'Komentar utas episode',
-                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Tutup',
-                            onPressed: () => Navigator.of(dialogContext).pop(),
-                            icon: const Icon(Icons.close_rounded, color: Colors.white),
-                          ),
-                        ],
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF55565B),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    const Divider(height: 1, color: Color(0xFF292A2D)),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
-                        child: EpisodeThreadsSection(
-                          showTitle: widget.showTitle!,
-                          malId: widget.malId,
-                          episodeNumber: episodeNumber,
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Komentar episode',
+                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
                         ),
-                      ),
+                        IconButton(
+                          tooltip: 'Tutup',
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                          icon: const Icon(Icons.close_rounded, color: Colors.white),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ),
+              const Divider(height: 1, color: Color(0xFF292A2D)),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+                  child: EpisodeThreadsSection(
+                    showTitle: widget.showTitle!,
+                    malId: widget.malId,
+                    episodeNumber: episodeNumber,
+                  ),
+                ),
+              ),
+            ],
           ),
         );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final slide = Tween<Offset>(
-          begin: const Offset(0.16, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
-        return SlideTransition(position: slide, child: child);
       },
     );
   }
@@ -3535,8 +3534,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
 
     Widget roundAction(IconData icon, VoidCallback? onPressed) => SizedBox(
-      width: 44,
-      height: 44,
+      width: 40,
+      height: 40,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
@@ -3546,7 +3545,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           shape: const CircleBorder(),
           padding: EdgeInsets.zero,
         ),
-        child: Icon(icon, size: 21),
+        child: Icon(icon, size: 19),
       ),
     );
 
@@ -3565,22 +3564,22 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: AppText.title.copyWith(
                   color: Colors.white,
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  height: 1.18,
+                  height: 1.2,
                 ),
               ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             AutoTranslatedText(
               text: title.isEmpty ? ('${context.l10n.episodes} ' + (number ?? '')) : title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: AppText.body.copyWith(
                 color: const Color(0xFF91A396),
-                fontSize: 14,
+                fontSize: 13,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Text(
@@ -3684,7 +3683,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 13),
             Row(
               children: [
                 roundAction(
@@ -3693,15 +3692,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       ? null
                       : () => widget.onSaveToFolder!(episode),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: SizedBox(
-                    height: 44,
+                    height: 40,
                     child: FilledButton.icon(
                       onPressed: widget.onDownloadEpisode == null
                           ? null
                           : () => widget.onDownloadEpisode!(episode),
-                      icon: const Icon(Icons.download_rounded, size: 19),
+                      icon: const Icon(Icons.download_rounded, size: 17),
                       label: Text(context.l10n.download),
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF100D0B),
@@ -3709,14 +3708,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         side: const BorderSide(color: Color(0xFF302923)),
                         shape: const StadiumBorder(),
                         textStyle: AppText.body.copyWith(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 roundAction(Icons.warning_amber_rounded, null),
               ],
             ),
@@ -3729,7 +3728,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   context.l10n.episodes,
                   style: AppText.title.copyWith(
                     color: Colors.white,
-                    fontSize: 19,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -3738,12 +3737,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   episodes.length.toString() + ' Eps',
                   style: AppText.body.copyWith(
                     color: const Color(0xFF91A396),
-                    fontSize: 13,
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               height: 112,
