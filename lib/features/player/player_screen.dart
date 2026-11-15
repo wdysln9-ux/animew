@@ -2475,11 +2475,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) => Dialog(
-        backgroundColor: const Color(0xFF17151C),
+        backgroundColor: AppColors.surface,
         insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.07)),
+          side: const BorderSide(color: AppColors.hairline),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500, maxHeight: 280),
