@@ -168,7 +168,6 @@ class _SeekRowState extends State<_SeekRow> {
                     ),
                   ),
                 ],
-                const Spacer(),
                 if (widget.trailing != null)
                   Expanded(
                     child: Align(
