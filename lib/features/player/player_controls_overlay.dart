@@ -777,7 +777,7 @@ class _ControlsOverlay extends StatelessWidget {
                         );
                       },
                     ),
-                    SizedBox(height: compactEpisodePortrait ? 0 : 2),
+                    SizedBox(height: compactEpisodePortrait ? 0 : 3),
                   ],
                 ),
               ),
