@@ -215,7 +215,7 @@ class _SeekRowState extends State<_SeekRow> {
                                 : 0.0;
                             return SliderTheme(
                               data: SliderTheme.of(context).copyWith(
-                                activeTrackColor: AppColors.accent,
+                                activeTrackColor: const Color(0xFFE53935),
                                 inactiveTrackColor: Colors.white24,
                                 trackShape: _BufferedSliderTrackShape(
                                   buffered: bufferedFrac,
