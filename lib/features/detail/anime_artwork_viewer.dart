@@ -373,6 +373,27 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                 ),
               ),
             ),
+            if (_loadingAniZip)
+              Positioned(
+                bottom: 14,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.58),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      child: Text(
+                        'Memuat artwork AniZip…',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             Positioned(
               top: 14,
               left: 0,
