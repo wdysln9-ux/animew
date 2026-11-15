@@ -376,6 +376,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   String _lastSubtitleCaption = '';
   final GlobalKey _playerStackKey = GlobalKey();
   final GlobalKey _subtitleGestureKey = GlobalKey();
+  // Use the rendered caption bounds, not the full-screen gesture detector,
+  // when deciding whether a pointer belongs to subtitle editing.
+  final GlobalKey _subtitleTextKey = GlobalKey();
   late double _subtitleX =
       sl<PlaybackPrefs>().subtitleLayoutFor(_stretchPreferenceKey)['x']!;
   late double _subtitleY =
@@ -1916,7 +1919,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   // ── Two-finger horizontal stretch ───────────────────────────────────────
   bool _isInsideSubtitle(Offset globalPosition) {
-    final object = _subtitleGestureKey.currentContext?.findRenderObject();
+    final object = _subtitleTextKey.currentContext?.findRenderObject();
     if (object is! RenderBox || !object.hasSize) return false;
     return (object.localToGlobal(Offset.zero) & object.size)
         .contains(globalPosition);
@@ -4874,6 +4877,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           return LayoutBuilder(
                             builder: (context, constraints) {
                               final subtitle = Transform.scale(
+                                key: _subtitleTextKey,
                                 scale: _subtitleSize,
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(
