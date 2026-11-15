@@ -170,7 +170,8 @@ class _SeekRowState extends State<_SeekRow> {
                             '${_fmt(shownPos)} / ${_showRemaining ? '-${_fmt(widget.duration - shownPos)}' : _fmt(widget.duration)}',
                             style: AppText.caption.copyWith(
                               color: Colors.white,
-                              fontSize: 13,
+                              fontFamily: 'Urbanist',
+                              fontSize: 12,
                               fontWeight: FontWeight.w500,
                               height: 1.1,
                               fontFeatures: const [FontFeature.tabularFigures()],
