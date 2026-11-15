@@ -7,10 +7,43 @@ import 'package:flutter/services.dart';
 import '../../core/di/injector.dart';
 import '../../core/metadata/episode_metadata_service.dart';
 import '../../core/models/episode.dart';
+import '../../core/theme/app_colors.dart';
 
 const _episodeGalleryChannel = MethodChannel('animew/image_gallery');
 
-/// Expandable episode-still gallery used on the anime detail page.
+typedef _EpisodeStill = ({int episode, String url});
+
+final Map<String, Future<List<_EpisodeStill>>> _allEpisodeStillCache = {};
+
+Future<List<_EpisodeStill>> _loadAllEpisodeStills({
+  required List<Episode> episodes,
+  required int? malId,
+  required int? tmdbId,
+}) {
+  final key = '${malId ?? 0}:${tmdbId ?? 0}:${episodes.length}:${episodes.map((e) => e.number?.round() ?? 0).join(',')}';
+  return _allEpisodeStillCache.putIfAbsent(key, () async {
+    final groups = await Future.wait([
+      for (final episode in episodes)
+        () async {
+          final number = episode.number?.round();
+          if (number == null || number <= 0) return <_EpisodeStill>[];
+          final urls = await sl<EpisodeMetadataService>().episodeScreenshots(
+            malId: malId,
+            tmdbId: tmdbId,
+            season: episode.season,
+            episodeNumber: number,
+          );
+          return [
+            for (final url in urls) (episode: number, url: url),
+          ];
+        }(),
+    ]);
+    return groups.expand((items) => items).toList(growable: false);
+  });
+}
+
+/// Anime detail page: trailer-style expandable header with horizontal episode
+/// chips and a sideways still-image rail.
 class EpisodeGallerySection extends StatefulWidget {
   const EpisodeGallerySection({
     super.key,
@@ -31,7 +64,17 @@ class EpisodeGallerySection extends StatefulWidget {
 
 class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
   bool _expanded = false;
-  int _selectedIndex = 0;
+  int _selectedEpisode = 1; // -1 = Semua; default = Episode 1.
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.episodes.any((e) => e.number?.round() == 1)) {
+      _selectedEpisode = widget.episodes.isEmpty
+          ? 1
+          : (widget.episodes.first.number?.round() ?? 1);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,111 +83,88 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
             (widget.tmdbId == null || !widget.tmdbIsTv))) {
       return const SizedBox.shrink();
     }
-    final safeIndex = _selectedIndex.clamp(0, widget.episodes.length - 1) as int;
-    final episode = widget.episodes[safeIndex];
-    final episodeNumber = episode.number?.round();
+    final episodeNumbers = widget.episodes
+        .map((e) => e.number?.round())
+        .whereType<int>()
+        .where((n) => n > 0)
+        .toSet()
+        .toList()
+      ..sort();
+    final selectedEpisode = episodeNumbers.contains(_selectedEpisode)
+        ? _selectedEpisode
+        : (episodeNumbers.isEmpty ? 1 : episodeNumbers.first);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xFF100D0B),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF302923)),
-        ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeInOutCubic,
+        alignment: Alignment.topCenter,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            InkWell(
-              borderRadius: BorderRadius.circular(14),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => setState(() => _expanded = !_expanded),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                child: Row(
-                  children: [
-                    const Icon(Icons.photo_library_outlined,
-                        color: Color(0xFFF47521), size: 20),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        'Gallery',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+              child: Row(
+                children: [
+                  Text('Gallery', style: AppText.headline.copyWith(fontSize: 16)),
+                  const SizedBox(width: 7),
+                  Text(
+                    '${episodeNumbers.length}',
+                    style: AppText.caption.copyWith(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
                     ),
-                    Icon(
-                      _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: Colors.white70,
-                    ),
-                  ],
-                ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_down_rounded
+                        : Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                    size: 21,
+                  ),
+                ],
               ),
             ),
             if (_expanded) ...[
-              const Divider(height: 1, color: Color(0xFF302923)),
-              const DefaultTabController(
-                length: 1,
-                child: _EpisodeGalleryTabLabel(),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 34,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
                   children: [
-                    DropdownButtonFormField<int>(
-                      value: safeIndex,
-                      isExpanded: true,
-                      dropdownColor: const Color(0xFF201A16),
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        labelText: 'Pilih episode',
-                        labelStyle: const TextStyle(color: Colors.white60),
-                        filled: true,
-                        fillColor: const Color(0xFF191410),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF302923)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF302923)),
-                        ),
-                      ),
-                      items: [
-                        for (var i = 0; i < widget.episodes.length; i++)
-                          DropdownMenuItem(
-                            value: i,
-                            child: Text(
-                              'Episode ${_episodeLabel(widget.episodes[i], i)}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) setState(() => _selectedIndex = value);
-                      },
+                    _EpisodeGalleryChip(
+                      label: 'Semua',
+                      selected: _selectedEpisode == -1,
+                      onTap: () => setState(() => _selectedEpisode = -1),
                     ),
-                    const SizedBox(height: 12),
-                    if (episodeNumber == null)
-                      const _GalleryMessage('Nomor episode belum tersedia.')
-                    else
-                      _EpisodeStillGrid(
-                        key: ValueKey(
-                          '${widget.malId}:${widget.tmdbId}:${episode.season}:$episodeNumber',
-                        ),
-                        malId: widget.malId,
-                        tmdbId: widget.tmdbId,
-                        season: episode.season,
-                        episodeNumber: episodeNumber,
+                    for (final number in episodeNumbers)
+                      _EpisodeGalleryChip(
+                        label: 'Episode $number',
+                        selected: selectedEpisode == number && _selectedEpisode != -1,
+                        onTap: () => setState(() => _selectedEpisode = number),
                       ),
                   ],
                 ),
               ),
+              const SizedBox(height: 10),
+              if (_selectedEpisode == -1)
+                _AllEpisodeStillRail(
+                  episodes: widget.episodes,
+                  malId: widget.malId,
+                  tmdbId: widget.tmdbId,
+                )
+              else
+                _EpisodeStillRail(
+                  key: ValueKey('anime-gallery:$selectedEpisode'),
+                  malId: widget.malId,
+                  tmdbId: widget.tmdbId,
+                  episode: widget.episodes.firstWhere(
+                    (e) => e.number?.round() == selectedEpisode,
+                  ),
+                ),
             ],
           ],
         ),
@@ -153,25 +173,44 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
   }
 }
 
-class _EpisodeGalleryTabLabel extends StatelessWidget {
-  const _EpisodeGalleryTabLabel();
+class _EpisodeGalleryChip extends StatelessWidget {
+  const _EpisodeGalleryChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return const TabBar(
-      isScrollable: true,
-      tabAlignment: TabAlignment.start,
-      labelColor: Color(0xFFF47521),
-      unselectedLabelColor: Colors.white60,
-      indicatorColor: Color(0xFFF47521),
-      dividerColor: Colors.transparent,
-      tabs: [Tab(text: 'Episode')],
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(right: 7),
+    child: Material(
+      color: selected ? AppColors.accent : AppColors.surface2,
+      shape: const StadiumBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+          child: Text(
+            label,
+            style: AppText.caption.copyWith(
+              color: selected ? Colors.white : AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
-/// Compact gallery used inside the currently selected episode detail page.
-class EpisodeScreenshotGallery extends StatelessWidget {
+/// Episode detail page: keeps the original compact expandable section and
+/// automatically loads only the episode currently being viewed.
+class EpisodeScreenshotGallery extends StatefulWidget {
   const EpisodeScreenshotGallery({
     super.key,
     this.malId,
@@ -186,143 +225,256 @@ class EpisodeScreenshotGallery extends StatelessWidget {
   final int episodeNumber;
 
   @override
+  State<EpisodeScreenshotGallery> createState() =>
+      _EpisodeScreenshotGalleryState();
+}
+
+class _EpisodeScreenshotGalleryState extends State<EpisodeScreenshotGallery> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (episodeNumber <= 0 ||
-        ((malId == null || malId! <= 0) && (tmdbId == null || season == null))) {
+    if (widget.episodeNumber <= 0 ||
+        ((widget.malId == null || widget.malId! <= 0) &&
+            (widget.tmdbId == null || widget.season == null))) {
       return const SizedBox.shrink();
     }
     return Padding(
       padding: const EdgeInsets.only(top: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Gallery Episode',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.hairline),
+        ),
+        child: Column(
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.photo_library_outlined, color: AppColors.accent, size: 19),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Text(
+                        'Gallery Episode',
+                        style: AppText.body.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: AppColors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          _EpisodeStillGrid(
-            key: ValueKey('${malId}:$tmdbId:$season:$episodeNumber'),
-            malId: malId,
-            tmdbId: tmdbId,
-            season: season,
-            episodeNumber: episodeNumber,
-          ),
-        ],
+            if (_expanded) ...[
+              Divider(height: 1, color: AppColors.hairline),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: _EpisodeStillRail(
+                  key: ValueKey('episode-detail:${widget.malId}:${widget.tmdbId}:${widget.season}:${widget.episodeNumber}'),
+                  malId: widget.malId,
+                  tmdbId: widget.tmdbId,
+                  season: widget.season,
+                  episodeNumber: widget.episodeNumber,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _EpisodeStillGrid extends StatelessWidget {
-  const _EpisodeStillGrid({
+class _AllEpisodeStillRail extends StatelessWidget {
+  const _AllEpisodeStillRail({
+    required this.episodes,
+    this.malId,
+    this.tmdbId,
+  });
+
+  final List<Episode> episodes;
+  final int? malId;
+  final int? tmdbId;
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<List<_EpisodeStill>>(
+    future: _loadAllEpisodeStills(
+      episodes: episodes,
+      malId: malId,
+      tmdbId: tmdbId,
+    ),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return const _GalleryLoading();
+      }
+      final stills = snapshot.data ?? const <_EpisodeStill>[];
+      if (stills.isEmpty) return const _GalleryMessage('Screenshot belum tersedia.');
+      return _StillRail(stills: stills);
+    },
+  );
+}
+
+class _EpisodeStillRail extends StatelessWidget {
+  const _EpisodeStillRail({
     super.key,
     this.malId,
     this.tmdbId,
     this.season,
-    required this.episodeNumber,
+    this.episode,
+    this.episodeNumber,
   });
 
   final int? malId;
   final int? tmdbId;
   final int? season;
-  final int episodeNumber;
+  final Episode? episode;
+  final int? episodeNumber;
 
   @override
   Widget build(BuildContext context) {
+    final number = episodeNumber ?? episode?.number?.round() ?? 0;
     return FutureBuilder<List<String>>(
       future: sl<EpisodeMetadataService>().episodeScreenshots(
         malId: malId,
         tmdbId: tmdbId,
-        season: season,
-        episodeNumber: episodeNumber,
+        season: season ?? episode?.season,
+        episodeNumber: number,
       ),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 22),
-            child: Center(
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Color(0xFFF47521),
-                ),
-              ),
-            ),
-          );
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const _GalleryLoading();
         }
         final urls = snapshot.data ?? const <String>[];
         if (urls.isEmpty) {
-          return const _GalleryMessage(
-            'Screenshot untuk episode ini belum tersedia.',
-          );
+          return const _GalleryMessage('Screenshot untuk episode ini belum tersedia.');
         }
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: urls.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 16 / 9,
-          ),
-          itemBuilder: (context, index) {
-            final url = urls[index];
-            return Material(
-              color: const Color(0xFF201A16),
-              borderRadius: BorderRadius.circular(9),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () => _openStill(context, urls, index),
-                child: Image.network(
-                  url,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFFF47521),
-                        ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (_, __, ___) => const Center(
-                    child: Icon(Icons.broken_image_outlined,
-                        color: Colors.white38),
-                  ),
-                ),
-              ),
-            );
-          },
+        return _StillRail(
+          stills: [for (final url in urls) (episode: number, url: url)],
         );
       },
     );
   }
-
-  void _openStill(BuildContext context, List<String> urls, int initialIndex) {
-    showDialog<void>(
-      context: context,
-      barrierColor: Colors.black,
-      barrierDismissible: false,
-      builder: (dialogContext) => _EpisodeScreenshotViewer(
-        urls: urls,
-        initialIndex: initialIndex,
-      ),
-    );
-  }
 }
 
+class _GalleryLoading extends StatelessWidget {
+  const _GalleryLoading();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: 22),
+    child: Center(
+      child: SizedBox(
+        width: 22,
+        height: 22,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+    ),
+  );
+}
+
+class _StillRail extends StatelessWidget {
+  const _StillRail({required this.stills});
+  final List<_EpisodeStill> stills;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 132,
+    child: ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: stills.length,
+      separatorBuilder: (_, _) => const SizedBox(width: 9),
+      itemBuilder: (context, index) {
+        final still = stills[index];
+        return GestureDetector(
+          onTap: () => showDialog<void>(
+            context: context,
+            barrierColor: Colors.black.withValues(alpha: 0.50),
+            barrierDismissible: false,
+            builder: (_) => _EpisodeScreenshotViewer(
+              urls: [for (final item in stills) item.url],
+              initialIndex: index,
+            ),
+          ),
+          child: SizedBox(
+            width: 187,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    still.url,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => ColoredBox(
+                      color: AppColors.surface2,
+                      child: Icon(Icons.broken_image_outlined, color: AppColors.textTertiary),
+                    ),
+                    loadingBuilder: (_, child, progress) => progress == null
+                        ? child
+                        : ColoredBox(
+                            color: AppColors.surface2,
+                            child: const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                          ),
+                  ),
+                  Positioned(
+                    left: 7,
+                    bottom: 7,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.62),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                        child: Text(
+                          'Episode ${still.episode}',
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
+class _GalleryMessage extends StatelessWidget {
+  const _GalleryMessage(this.message);
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 18),
+    child: Center(
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: AppText.caption.copyWith(color: AppColors.textSecondary),
+      ),
+    ),
+  );
+}
 
 class _EpisodeScreenshotViewer extends StatefulWidget {
   const _EpisodeScreenshotViewer({
@@ -396,7 +548,7 @@ class _EpisodeScreenshotViewerState extends State<_EpisodeScreenshotViewer> {
   @override
   Widget build(BuildContext context) {
     return Dialog.fullscreen(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.transparent,
       child: SafeArea(
         child: Stack(
           fit: StackFit.expand,
