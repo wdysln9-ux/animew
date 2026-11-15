@@ -87,9 +87,12 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
         .toSet()
         .toList()
       ..sort();
-    final selectedEpisode = episodeNumbers.contains(_selectedEpisode)
-        ? _selectedEpisode
-        : (episodeNumbers.isEmpty ? 1 : episodeNumbers.first);
+    // Keep the default filter unambiguously on "Semua". A missing or
+    // stale episode selection also falls back to the all-episodes rail.
+    final selectedEpisode = _selectedEpisode == -1 ||
+            !episodeNumbers.contains(_selectedEpisode)
+        ? null
+        : _selectedEpisode;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -149,14 +152,14 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
                     for (final number in episodeNumbers)
                       _EpisodeGalleryChip(
                         label: 'Episode $number',
-                        selected: selectedEpisode == number && _selectedEpisode != -1,
+                        selected: selectedEpisode == number,
                         onTap: () => setState(() => _selectedEpisode = number),
                       ),
                   ],
                 ),
               ),
               const SizedBox(height: 10),
-              if (_selectedEpisode == -1)
+              if (selectedEpisode == null)
                 _AllEpisodeStillRail(
                   episodes: widget.episodes,
                   malId: widget.malId,
