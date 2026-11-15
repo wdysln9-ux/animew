@@ -303,7 +303,7 @@ class _ControlsOverlay extends StatelessWidget {
     if (out.isEmpty) return out;
     return [
       for (var i = 0; i < out.length; i++) ...[
-        if (i > 0) const SizedBox(width: 21),
+        if (i > 0) const SizedBox(width: 1),
         out[i],
       ],
     ];
@@ -623,7 +623,7 @@ class _ControlsOverlay extends StatelessWidget {
                       sleepActive &&
                       !_placedAnywhere('sleep'))
                     Padding(
-                      padding: const EdgeInsets.only(left: 21),
+                      padding: const EdgeInsets.only(left: 1),
                       child: _BarButton(
                         icon: Icons.bedtime_rounded,
                         tooltip: context.l10n.sleepTimerOn,
@@ -636,7 +636,7 @@ class _ControlsOverlay extends StatelessWidget {
                   // looking down at the bar you're about to hide.
                   if (!compactEpisodePortrait)
                     Padding(
-                      padding: const EdgeInsets.only(left: 21),
+                      padding: const EdgeInsets.only(left: 1),
                       child: _BarButton(
                         icon: Icons.lock_open_rounded,
                         tooltip: context.l10n.lockControls,
@@ -645,7 +645,7 @@ class _ControlsOverlay extends StatelessWidget {
                     ),
                   if (!compactEpisodePortrait)
                     Padding(
-                      padding: const EdgeInsets.only(left: 21),
+                      padding: const EdgeInsets.only(left: 1),
                       child: _BarButton(
                         icon: Icons.more_vert_rounded,
                         tooltip: context.l10n.settingsTooltip,
@@ -654,7 +654,7 @@ class _ControlsOverlay extends StatelessWidget {
                     ),
                   if (!compactEpisodePortrait && onChat != null)
                     Padding(
-                      padding: const EdgeInsets.only(left: 21),
+                      padding: const EdgeInsets.only(left: 1),
                       child: _BarButton(
                         icon: Icons.chat_bubble_outline_rounded,
                         tooltip: context.l10n.chat,
@@ -777,7 +777,7 @@ class _ControlsOverlay extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(
                   compactEpisodePortrait ? 4 : 16,
                   0,
-                  compactEpisodePortrait ? 4 : 16,
+                  0,
                   15,
                 ),
                 child: Column(
