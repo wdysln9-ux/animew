@@ -2307,6 +2307,7 @@ class _DetailViewState extends State<_DetailView> {
             posterUrl: heroPosterUrl,
             bannerUrl: detail.banner ?? item.banner,
             anilistId: detail.anilistId,
+            malId: detail.malId ?? item.malId,
             title: detail.title,
             headers: coverHeaders,
           ),
