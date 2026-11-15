@@ -288,7 +288,7 @@ class _EpisodeScreenshotGalleryState extends State<EpisodeScreenshotGallery> {
               Divider(height: 1, color: AppColors.hairline),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                child: _EpisodeStillRail(
+                child: _EpisodeDetailGalleryContent(
                   key: ValueKey('episode-detail:${widget.malId}:${widget.tmdbId}:${widget.season}:${widget.episodeNumber}'),
                   malId: widget.malId,
                   tmdbId: widget.tmdbId,
@@ -302,6 +302,245 @@ class _EpisodeScreenshotGalleryState extends State<EpisodeScreenshotGallery> {
       ),
     );
   }
+}
+
+class _EpisodeDetailGalleryContent extends StatefulWidget {
+  const _EpisodeDetailGalleryContent({
+    super.key,
+    this.malId,
+    this.tmdbId,
+    this.season,
+    required this.episodeNumber,
+  });
+
+  final int? malId;
+  final int? tmdbId;
+  final int? season;
+  final int episodeNumber;
+
+  @override
+  State<_EpisodeDetailGalleryContent> createState() =>
+      _EpisodeDetailGalleryContentState();
+}
+
+class _EpisodeDetailGalleryContentState
+    extends State<_EpisodeDetailGalleryContent> {
+  late final Future<List<String>> _future =
+      sl<EpisodeMetadataService>().episodeScreenshots(
+    malId: widget.malId,
+    tmdbId: widget.tmdbId,
+    season: widget.season,
+    episodeNumber: widget.episodeNumber,
+  );
+
+  Future<void> _download(List<String> urls) async {
+    if (urls.isEmpty) return;
+    var saved = 0;
+    for (var i = 0; i < urls.length; i++) {
+      try {
+        final response = await Dio().get<List<int>>(
+          urls[i],
+          options: Options(
+            responseType: ResponseType.bytes,
+            connectTimeout: const Duration(seconds: 20),
+            receiveTimeout: const Duration(seconds: 60),
+          ),
+        );
+        final bytes = response.data;
+        if (bytes == null || bytes.isEmpty) continue;
+        final uri = await _episodeGalleryChannel.invokeMethod<String>(
+          'saveImage',
+          {
+            'bytes': Uint8List.fromList(bytes),
+            'fileName': 'AnimeW_Episode_${widget.episodeNumber}_Screenshot_${DateTime.now().millisecondsSinceEpoch}_${i + 1}',
+            'mimeType': response.headers.value('content-type') ?? 'image/jpeg',
+          },
+        );
+        if (uri != null && uri.isNotEmpty) saved++;
+      } catch (_) {
+        // Continue with the remaining images if one URL fails.
+      }
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(saved == urls.length
+            ? '$saved foto berhasil disimpan ke Galeri'
+            : '$saved dari ${urls.length} foto berhasil disimpan'),
+      ),
+    );
+  }
+
+  Future<void> _chooseImages(List<String> urls) async {
+    final selected = await showModalBottomSheet<List<int>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      barrierColor: Colors.black54,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _ScreenshotSelectionSheet(urls: urls),
+    );
+    if (selected == null || selected.isEmpty || !mounted) return;
+    await _download([for (final index in selected) urls[index]]);
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<List<String>>(
+    future: _future,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return const _GalleryLoading();
+      }
+      final urls = snapshot.data ?? const <String>[];
+      if (urls.isEmpty) {
+        return const _GalleryMessage('Screenshot untuk episode ini belum tersedia.');
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${urls.length} foto tersedia',
+                  style: AppText.caption.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => _download(urls),
+                icon: const Icon(Icons.download_rounded, size: 17),
+                label: const Text('Unduh semua'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.accent,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+              const SizedBox(width: 4),
+              TextButton(
+                onPressed: () => _chooseImages(urls),
+                child: Text(
+                  'Pilih',
+                  style: TextStyle(
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          _StillRail(
+            stills: [for (final url in urls) (episode: widget.episodeNumber, url: url)],
+          ),
+        ],
+      );
+    },
+  );
+}
+
+class _ScreenshotSelectionSheet extends StatefulWidget {
+  const _ScreenshotSelectionSheet({required this.urls});
+  final List<String> urls;
+
+  @override
+  State<_ScreenshotSelectionSheet> createState() =>
+      _ScreenshotSelectionSheetState();
+}
+
+class _ScreenshotSelectionSheetState extends State<_ScreenshotSelectionSheet> {
+  final Set<int> _selected = {};
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.72,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text('Pilih foto', style: AppText.headline),
+                ),
+                Text(
+                  '${_selected.length} / ${widget.urls.length}',
+                  style: AppText.caption.copyWith(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 9,
+                mainAxisSpacing: 9,
+                childAspectRatio: 1.55,
+              ),
+              itemCount: widget.urls.length,
+              itemBuilder: (context, index) {
+                final selected = _selected.contains(index);
+                return GestureDetector(
+                  onTap: () => setState(() {
+                    if (selected) {
+                      _selected.remove(index);
+                    } else {
+                      _selected.add(index);
+                    }
+                  }),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(9),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.network(widget.urls[index], fit: BoxFit.cover),
+                        if (selected)
+                          ColoredBox(color: AppColors.accent.withValues(alpha: 0.28)),
+                        Positioned(
+                          top: 7,
+                          right: 7,
+                          child: Icon(
+                            selected
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            color: selected ? AppColors.accent : Colors.white,
+                            size: 23,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _selected.isEmpty
+                    ? null
+                    : () => Navigator.pop(context, _selected.toList()..sort()),
+                icon: const Icon(Icons.download_rounded),
+                label: Text('Unduh ${_selected.length} foto'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _AllEpisodeStillRail extends StatelessWidget {
