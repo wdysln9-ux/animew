@@ -264,8 +264,7 @@ Future<List<({String label, String url})>> _loadLiveChartArtwork(String title) {
         final host = Uri.tryParse(value)?.host.toLowerCase() ?? '';
         if (host.isEmpty ||
             host.contains('google') ||
-            host.contains('facebook') ||
-            host.contains('livechart.me') && !value.contains('/uploads/')) {
+            host.contains('facebook')) {
           continue;
         }
         if (seen.add(value)) {
@@ -370,11 +369,13 @@ Future<List<({String label, String url})>> _loadAniZipArtwork({
 Future<List<({String label, String url})>> _loadTmdbPosterArtwork(
   int? tmdbId,
   bool isTv,
+  int? malId,
 ) async {
   if (tmdbId == null || tmdbId <= 0) return const [];
   final url = await sl<EpisodeMetadataService>().tmdbPosterUrl(
     tmdbId,
     isTv: isTv,
+    malId: malId,
   );
   if (url == null || url.isEmpty) return const [];
   return [(label: 'Poster · TMDB', url: url)];
@@ -463,7 +464,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
       ),
       _loadMyAnimeListArtwork(widget.malId),
       _loadLiveChartArtwork(widget.title),
-      _loadTmdbPosterArtwork(widget.tmdbId, widget.tmdbIsTv),
+      _loadTmdbPosterArtwork(widget.tmdbId, widget.tmdbIsTv, widget.malId),
     ]);
     if (!mounted) return;
     final existing = widget.images.map((image) => image.url).toSet();
