@@ -71,17 +71,7 @@ class EpisodeGallerySection extends StatefulWidget {
 
 class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
   bool _expanded = false;
-  int _selectedEpisode = 1; // -1 = Semua; default = Episode 1.
-
-  @override
-  void initState() {
-    super.initState();
-    if (!widget.episodes.any((e) => e.number?.round() == 1)) {
-      _selectedEpisode = widget.episodes.isEmpty
-          ? 1
-          : (widget.episodes.first.number?.round() ?? 1);
-    }
-  }
+  int _selectedEpisode = -1; // Default = Semua episode.
 
   @override
   Widget build(BuildContext context) {
