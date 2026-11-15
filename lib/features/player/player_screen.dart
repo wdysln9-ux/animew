@@ -1902,7 +1902,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _isInsideSubtitle(Offset globalPosition) {
     final object = _subtitleGestureKey.currentContext?.findRenderObject();
     if (object is! RenderBox || !object.hasSize) return false;
-    return object.localToGlobal(Offset.zero) & object.size
+    return (object.localToGlobal(Offset.zero) & object.size)
         .contains(globalPosition);
   }
 
