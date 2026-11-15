@@ -21,7 +21,7 @@ Future<List<_EpisodeStill>> _loadAllEpisodeStills({
   required int? malId,
   required int? tmdbId,
 }) {
-  final key = '${malId ?? 0}:${tmdbId ?? 0}:${episodes.length}:${episodes.map((e) => e.number?.round() ?? 0).join(',')}';
+  final key = '${malId ?? 0}:${tmdbId ?? 0}:${episodes.length}:${episodes.map((e) => '${e.season ?? 0}-${e.number?.round() ?? 0}').join(',')}';
   return _allEpisodeStillCache.putIfAbsent(key, () async {
     final groups = await Future.wait([
       for (final episode in episodes)
