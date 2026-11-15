@@ -311,7 +311,7 @@ class _ControlsOverlay extends StatelessWidget {
     if (out.isEmpty) return out;
     return [
       for (var i = 0; i < out.length; i++) ...[
-        if (i > 0) const SizedBox(width: 1),
+        if (i > 0) const SizedBox(width: 0),
         out[i],
       ],
     ];
