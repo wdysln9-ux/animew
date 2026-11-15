@@ -1910,8 +1910,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onPointerDown(PointerDownEvent e) {
-    // Keep the player's video-stretch gesture out of the subtitle's touch area.
-    if (_isInsideSubtitle(e.position)) return;
+    // Once a subtitle gesture starts, reserve every additional pointer for it.
+    // This prevents the player's stretch/seek/volume gestures from competing.
+    if (_subtitleGestureActive || _isInsideSubtitle(e.position)) return;
     _pointers[e.pointer] = e.position;
     if (_pointers.length == 2 && !_locked) _startPinch();
   }
@@ -4830,42 +4831,60 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           if (caption.isEmpty) return const SizedBox.shrink();
                           final prefs = sl<PlaybackPrefs>();
                           return LayoutBuilder(
-                            builder: (context, constraints) => Align(
-                              alignment: Alignment(
-                                _subtitleX * 2 - 1,
-                                _subtitleY * 2 - 1,
-                              ),
-                              child: GestureDetector(
-                                key: _subtitleGestureKey,
-                                // Hit-test only the rendered caption bounds, not a padded box.
-                                behavior: HitTestBehavior.opaque,
-                                onScaleStart: _onSubtitleScaleStart,
-                                onScaleUpdate: _onSubtitleScaleUpdate,
-                                onScaleEnd: _onSubtitleScaleEnd,
-                                child: Transform.scale(
-                                    scale: _subtitleSize,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        maxWidth: constraints.maxWidth * 0.9,
-                                      ),
-                                      child: Opacity(
-                                        opacity: prefs.subtitleOverallOpacity,
-                                        child: Text(
-                                        caption,
-                                        textAlign: switch (prefs.subtitleJustification) {
-                                          'left' => TextAlign.left,
-                                          'right' => TextAlign.right,
-                                          _ => TextAlign.center,
-                                        },
-                                        style: buildSubtitleTextStyle(
-                                          prefs, fontSize: 32.0 * prefs.subtitleScale,
-                                        ),
-                                        ),
+                            builder: (context, constraints) {
+                              final subtitle = Transform.scale(
+                                scale: _subtitleSize,
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: constraints.maxWidth * 0.9,
+                                  ),
+                                  child: Opacity(
+                                    opacity: prefs.subtitleOverallOpacity,
+                                    child: Text(
+                                      caption,
+                                      textAlign: switch (prefs.subtitleJustification) {
+                                        'left' => TextAlign.left,
+                                        'right' => TextAlign.right,
+                                        _ => TextAlign.center,
+                                      },
+                                      style: buildSubtitleTextStyle(
+                                        prefs,
+                                        fontSize: 32.0 * prefs.subtitleScale,
                                       ),
                                     ),
                                   ),
-                              ),
-                            ),
+                                ),
+                              );
+                              return GestureDetector(
+                                key: _subtitleGestureKey,
+                                // The detector spans the screen, but deferToChild
+                                // means it is initially touchable only on the text.
+                                // After the first subtitle touch, the transparent
+                                // full-screen child expands the hit area for pinch.
+                                behavior: HitTestBehavior.deferToChild,
+                                onScaleStart: _onSubtitleScaleStart,
+                                onScaleUpdate: _onSubtitleScaleUpdate,
+                                onScaleEnd: _onSubtitleScaleEnd,
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    if (_subtitleGestureActive)
+                                      const Positioned.fill(
+                                        child: ColoredBox(
+                                          color: Colors.transparent,
+                                        ),
+                                      ),
+                                    Align(
+                                      alignment: Alignment(
+                                        _subtitleX * 2 - 1,
+                                        _subtitleY * 2 - 1,
+                                      ),
+                                      child: subtitle,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           );
                         },
                       ),
