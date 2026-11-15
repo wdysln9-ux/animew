@@ -61,28 +61,9 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
       builder: (context, snap) {
         final track = snap.data ?? c.player.state.track;
         final subId = track.subtitle.id;
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface2,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(
-                  height: h * 0.44,
-                  child: _subColumn(c, subId),
-                ),
-              ],
-            ),
-          ),
+        return SizedBox(
+          height: h * 0.44,
+          child: _subColumn(c, subId),
         );
       },
     );
@@ -95,7 +76,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _SheetSectionHeader(context.l10n.subtitles),
+        _SheetSectionHeader(context.l10n.subtitles, compactDialog: true),
         Flexible(
           child: ListView(
             shrinkWrap: true,
@@ -2030,18 +2011,19 @@ class _QuickSettingRow extends StatelessWidget {
     child: InkWell(
       onTap: onTap,
       child: Container(
-        constraints: const BoxConstraints(minHeight: 44),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        constraints: const BoxConstraints(minHeight: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 7),
         child: Row(
           children: [
-            Icon(icon, size: 24, color: AppColors.textPrimary),
-            const SizedBox(width: 16),
+            Icon(icon, size: 20, color: AppColors.textPrimary),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
                 style: AppText.body.copyWith(
                   color: enabled ? AppColors.textPrimary : AppColors.textSecondary,
-                  fontSize: 16,
+                  fontSize: 13.5,
+                  height: 1.45,
                   fontWeight: FontWeight.w400,
                 ),
                 maxLines: 1,
@@ -2056,7 +2038,7 @@ class _QuickSettingRow extends StatelessWidget {
                   textAlign: TextAlign.end,
                   style: AppText.body.copyWith(
                     color: AppColors.textSecondary,
-                    fontSize: 14,
+                    fontSize: 13,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -2075,45 +2057,75 @@ class _QuickSettingRow extends StatelessWidget {
 }
 
 class _SheetColumn extends StatelessWidget {
-  const _SheetColumn({required this.header, required this.children});
+  const _SheetColumn({
+    required this.header,
+    required this.children,
+    this.compactDialog = false,
+  });
   final String header;
   final List<Widget> children;
+  final bool compactDialog;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Center(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.surface2,
-                borderRadius: BorderRadius.circular(2),
+    final handle = Center(
+      child: Container(
+        width: 38,
+        height: 4,
+        decoration: BoxDecoration(
+          color: compactDialog
+              ? Colors.white.withValues(alpha: 0.18)
+              : AppColors.surface2,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+    return Padding(
+      padding: compactDialog
+          ? const EdgeInsets.fromLTRB(18, 12, 18, 16)
+          : EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (compactDialog) ...[
+            handle,
+            const SizedBox(height: 10),
+          ] else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: handle,
+            ),
+          Padding(
+            padding: compactDialog
+                ? EdgeInsets.zero
+                : const EdgeInsets.fromLTRB(20, 4, 20, 8),
+            child: Text(
+              header,
+              style: compactDialog
+                  ? const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    )
+                  : AppText.headline,
+            ),
+          ),
+          SizedBox(height: compactDialog ? 9 : 0),
+          Flexible(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.48,
               ),
-              child: const SizedBox(width: 36, height: 4),
+              child: ListView(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                children: children,
+              ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-          child: Text(header, style: AppText.headline),
-        ),
-        // Cap the list height so a long sheet (e.g. the ~25-language translate
-        // list) scrolls instead of overflowing and clipping at whatever fits.
-        // Short sheets are shorter than the cap, so shrinkWrap still sizes them
-        // to their content and they look/behave exactly as before.
-        Flexible(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.48,
-            ),
-            child: ListView(shrinkWrap: true, children: children),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -2171,7 +2183,7 @@ class _SheetRow extends StatelessWidget {
     // Netflix-style: the selected row is tinted + accent-bold with a trailing
     // check; others are plain.
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
       child: Material(
         color: toggleValue == null && active
             ? AppColors.accentSoft
@@ -2181,7 +2193,7 @@ class _SheetRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               children: [
                 Expanded(
@@ -2198,6 +2210,8 @@ class _SheetRow extends StatelessWidget {
                           fontWeight: toggleValue == null && active
                               ? FontWeight.w700
                               : FontWeight.w500,
+                          fontSize: 13.5,
+                          height: 1.45,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -2265,20 +2279,29 @@ class _SheetRow extends StatelessWidget {
 }
 
 class _SheetSectionHeader extends StatelessWidget {
-  const _SheetSectionHeader(this.label);
+  const _SheetSectionHeader(this.label, {this.compactDialog = false});
   final String label;
+  final bool compactDialog;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 2),
+      padding: compactDialog
+          ? EdgeInsets.zero
+          : const EdgeInsets.fromLTRB(20, 10, 20, 2),
       child: Text(
-        label.toUpperCase(),
-        style: AppText.caption.copyWith(
-          color: AppColors.textTertiary,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-        ),
+        compactDialog ? label : label.toUpperCase(),
+        style: compactDialog
+            ? const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              )
+            : AppText.caption.copyWith(
+                color: AppColors.textTertiary,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
       ),
     );
   }
