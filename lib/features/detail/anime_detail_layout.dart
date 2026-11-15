@@ -1512,15 +1512,26 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                 if (selectedTab == 'Rekomendasi' && widget.recommendationsLoading) {
                   cards.add(SizedBox(width: 54, child: Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 1.8)))));
                 }
-                return ListView.separated(
-                  controller: selectedTab == 'Rekomendasi' ? _recommendationsController : null,
-                  scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
-                  padding: const EdgeInsets.only(right: 16),
-                  itemCount: cards.length,
-                  // Match the 12 px spacing used by ContentRow on Home.
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (_, index) => cards[index],
+                // The rail itself has 16dp left padding. Extend the scroll
+                // viewport through that padding so cards are clipped only at
+                // the actual screen edge, while keeping the first card aligned.
+                return LayoutBuilder(
+                  builder: (context, constraints) => Transform.translate(
+                    offset: const Offset(-16, 0),
+                    child: SizedBox(
+                      width: constraints.maxWidth + 16,
+                      child: ListView.separated(
+                        controller: selectedTab == 'Rekomendasi' ? _recommendationsController : null,
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.hardEdge,
+                        padding: const EdgeInsets.only(left: 16, right: 16),
+                        itemCount: cards.length,
+                        // Match the 12 px spacing used by ContentRow on Home.
+                        separatorBuilder: (_, _) => const SizedBox(width: 12),
+                        itemBuilder: (_, index) => cards[index],
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
