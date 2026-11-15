@@ -171,7 +171,7 @@ class _SeekRowState extends State<_SeekRow> {
                             style: AppText.caption.copyWith(
                               color: Colors.white,
                               fontFamily: 'Urbanist',
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w500,
                               height: 1.1,
                               fontFeatures: const [FontFeature.tabularFigures()],
