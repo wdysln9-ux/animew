@@ -148,6 +148,8 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
                 height: 34,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  clipBehavior: Clip.none,
                   children: [
                     _EpisodeGalleryChip(
                       label: 'Semua',
@@ -405,6 +407,8 @@ class _StillRail extends StatelessWidget {
     height: 132,
     child: ListView.separated(
       scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      clipBehavior: Clip.none,
       itemCount: stills.length,
       separatorBuilder: (_, _) => const SizedBox(width: 9),
       itemBuilder: (context, index) {
