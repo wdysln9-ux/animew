@@ -132,10 +132,9 @@ class _SeekRowState extends State<_SeekRow> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Elapsed / total sits above the bar so the bar itself can run the
-            // full width — easier to scrub, and it reads as one clean line.
-            // Tapping still flips the total for a remaining countdown. Anything
-            // passed as [trailing] shares this line at the far end.
+            // Clean player-style information row: elapsed time on the left,
+            // user-arranged left shortcuts beside it, and right shortcuts pinned
+            // to the opposite edge. The seek line gets its own full-width row.
             Row(
               children: [
                 GestureDetector(
@@ -145,39 +144,21 @@ class _SeekRowState extends State<_SeekRow> {
                     widget.onInteract();
                   },
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                // Same translucent chip as the button groups, so the whole
-                // bottom block reads as one set of parts.
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 5),
                     child: Text(
                       '${_fmt(shownPos)} / ${_showRemaining ? '-${_fmt(widget.duration - shownPos)}' : _fmt(widget.duration)}',
                       style: AppText.caption.copyWith(
                         color: Colors.white,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                         height: 1.1,
-                        letterSpacing: 0.3,
-                        // Fixed-width digits: without these the label twitches
-                        // every time a 1 ticks past, since 1 is narrower than
-                        // the rest in a proportional face.
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ),
                 ),
-                  ),
-                ),
                 if (widget.leading != null) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Flexible(
                     fit: FlexFit.loose,
                     child: SingleChildScrollView(
@@ -186,19 +167,16 @@ class _SeekRowState extends State<_SeekRow> {
                     ),
                   ),
                 ],
-                if (widget.trailing != null) ...[
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        reverse: true,
-                        child: widget.trailing!,
-                      ),
+                const Spacer(),
+                if (widget.trailing != null)
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      reverse: true,
+                      child: widget.trailing!,
                     ),
                   ),
-                ],
               ],
             ),
             SizedBox(
@@ -249,13 +227,13 @@ class _SeekRowState extends State<_SeekRow> {
                                 ),
                                 thumbColor: Colors.white,
                                 overlayColor: AppColors.accentSoft,
-                                trackHeight: 6,
+                                trackHeight: 3,
                                 // Thumb grows while scrubbing (YouTube-style).
                                 thumbShape: RoundSliderThumbShape(
-                                  enabledThumbRadius: _dragMs != null ? 11 : 7,
+                                  enabledThumbRadius: _dragMs != null ? 10 : 0.5,
                                 ),
                                 overlayShape: const RoundSliderOverlayShape(
-                                  overlayRadius: 18,
+                                  overlayRadius: 14,
                                 ),
                               ),
                               child: Slider(
@@ -271,7 +249,7 @@ class _SeekRowState extends State<_SeekRow> {
                                 // the line the chips above and below sit on.
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 7,
-                                  vertical: 6,
+                                  vertical: 2,
                                 ),
                                 onChangeStart: totalMs <= 0
                                     ? null
