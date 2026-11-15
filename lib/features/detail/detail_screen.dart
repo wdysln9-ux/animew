@@ -2310,7 +2310,7 @@ class _DetailViewState extends State<_DetailView> {
             anilistId: detail.anilistId,
             malId: detail.malId ?? item.malId,
             tmdbId: detail.tmdbId ?? item.tmdbId,
-            tmdbIsTv: detail.tmdbIsTv,
+            tmdbIsTv: detail.tmdbIsTv || detail.type == ProviderType.anime,
             title: detail.title,
             headers: coverHeaders,
           ),
