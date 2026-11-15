@@ -1,8 +1,14 @@
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/di/injector.dart';
 import '../../core/metadata/episode_metadata_service.dart';
 import '../../core/models/episode.dart';
+
+const _episodeGalleryChannel = MethodChannel('animew/image_gallery');
 
 /// Expandable episode-still gallery used on the anime detail page.
 class EpisodeGallerySection extends StatefulWidget {
@@ -307,25 +313,114 @@ class _EpisodeStillGrid extends StatelessWidget {
   void _openStill(BuildContext context, List<String> urls, int initialIndex) {
     showDialog<void>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.94),
-      builder: (dialogContext) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(8),
+      barrierColor: Colors.black,
+      barrierDismissible: false,
+      builder: (dialogContext) => _EpisodeScreenshotViewer(
+        urls: urls,
+        initialIndex: initialIndex,
+      ),
+    );
+  }
+}
+
+
+class _EpisodeScreenshotViewer extends StatefulWidget {
+  const _EpisodeScreenshotViewer({
+    required this.urls,
+    required this.initialIndex,
+  });
+
+  final List<String> urls;
+  final int initialIndex;
+
+  @override
+  State<_EpisodeScreenshotViewer> createState() =>
+      _EpisodeScreenshotViewerState();
+}
+
+class _EpisodeScreenshotViewerState extends State<_EpisodeScreenshotViewer> {
+  late final PageController _pages =
+      PageController(initialPage: widget.initialIndex);
+  late int _index = widget.initialIndex;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  Future<void> _downloadCurrent() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final url = widget.urls[_index];
+      final response = await Dio().get<List<int>>(
+        url,
+        options: Options(
+          responseType: ResponseType.bytes,
+          connectTimeout: const Duration(seconds: 20),
+          receiveTimeout: const Duration(seconds: 60),
+        ),
+      );
+      final bytes = response.data;
+      if (bytes == null || bytes.isEmpty) {
+        throw StateError('Gambar kosong');
+      }
+      final stamp = DateTime.now().millisecondsSinceEpoch;
+      final uri = await _episodeGalleryChannel.invokeMethod<String>(
+        'saveImage',
+        {
+          'bytes': Uint8List.fromList(bytes),
+          'fileName': 'AnimeW_Episode_Screenshot_$stamp',
+          'mimeType': response.headers.value('content-type') ?? 'image/jpeg',
+        },
+      );
+      if (!mounted) return;
+      if (uri == null || uri.isEmpty) {
+        throw StateError('Gagal menyimpan gambar');
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Screenshot berhasil disimpan ke Galeri')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengunduh screenshot: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog.fullscreen(
+      backgroundColor: Colors.black,
+      child: SafeArea(
         child: Stack(
+          fit: StackFit.expand,
           children: [
             PageView.builder(
-              controller: PageController(initialPage: initialIndex),
-              itemCount: urls.length,
-              itemBuilder: (_, index) => Center(
+              controller: _pages,
+              itemCount: widget.urls.length,
+              onPageChanged: (index) => setState(() => _index = index),
+              itemBuilder: (context, index) => Center(
                 child: InteractiveViewer(
                   minScale: 1,
                   maxScale: 4,
                   child: Image.network(
-                    urls[index],
+                    widget.urls[index],
                     fit: BoxFit.contain,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      );
+                    },
                     errorBuilder: (_, __, ___) => const Icon(
                       Icons.broken_image_outlined,
-                      color: Colors.white54,
+                      color: Colors.white70,
                       size: 42,
                     ),
                   ),
@@ -333,15 +428,91 @@ class _EpisodeStillGrid extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 4,
-              right: 4,
-              child: IconButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                icon: const Icon(Icons.close_rounded, color: Colors.white),
+              top: 8,
+              left: 8,
+              child: _ViewerCircleButton(
+                icon: Icons.close_rounded,
+                tooltip: 'Tutup',
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            Positioned(
+              top: 18,
+              left: 68,
+              right: 68,
+              child: Center(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.52),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 13,
+                      vertical: 7,
+                    ),
+                    child: Text(
+                      '${_index + 1} / ${widget.urls.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: _ViewerCircleButton(
+                icon: _saving ? null : Icons.download_rounded,
+                tooltip: 'Unduh screenshot',
+                onPressed: _saving ? null : _downloadCurrent,
+                child: _saving
+                    ? const SizedBox(
+                        width: 21,
+                        height: 21,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : null,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ViewerCircleButton extends StatelessWidget {
+  const _ViewerCircleButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.child,
+  });
+
+  final IconData? icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.48),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: child ?? Icon(icon, color: Colors.white),
       ),
     );
   }
