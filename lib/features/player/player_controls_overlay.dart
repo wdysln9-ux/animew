@@ -681,7 +681,7 @@ class _ControlsOverlay extends StatelessWidget {
                   label: context.l10n.previousEpisode,
                   onTap: onPrev,
                 ),
-                const SizedBox(width: 21),
+                const SizedBox(width: 8),
               ],
               // Keep the spinner visible until buffering really ends. If the
               // user requests Pause while buffering, defer the pause command
@@ -738,7 +738,7 @@ class _ControlsOverlay extends StatelessWidget {
                 },
               ),
               if (multiEpisode && !compactEpisodePortrait) ...[
-                const SizedBox(width: 21),
+                const SizedBox(width: 8),
                 _TransportButton(
                   icon: Icons.skip_next_rounded,
                   label: context.l10n.nextEpisode2,
