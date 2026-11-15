@@ -777,7 +777,7 @@ class _ControlsOverlay extends StatelessWidget {
                   compactEpisodePortrait ? 4 : 16,
                   0,
                   compactEpisodePortrait ? 4 : 16,
-                  26,
+                  24,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
