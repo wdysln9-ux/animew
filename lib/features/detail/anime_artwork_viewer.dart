@@ -197,7 +197,7 @@ Future<List<({String label, String url})>> _loadLiveChartArtwork(String title) {
           'a[href^="/anime/"], a[href*="livechart.me/anime/"]',
         );
         final href = link?.attributes['href'];
-        if (href == null || !RegExp(r'/anime/\\d+').hasMatch(href)) continue;
+        if (href == null || !RegExp(r'/anime/\d+').hasMatch(href)) continue;
         final candidate = (
           card.attributes['data-title'] ??
           card.querySelector('h3.main-title, .main-title, .anime-item__body__title a')?.text ??
