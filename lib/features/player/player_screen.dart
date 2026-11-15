@@ -365,8 +365,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _stretchBaseSpan = 0;
   double _stretchBaseX = 1.0;
   double? _stretchSnapRatio;
-  bool _subtitleAdjustMode = false;
+  bool _subtitleGestureActive = false;
   final GlobalKey _playerStackKey = GlobalKey();
+  final GlobalKey _subtitleGestureKey = GlobalKey();
   late double _subtitleX =
       sl<PlaybackPrefs>().subtitleLayoutFor(_stretchPreferenceKey)['x']!;
   late double _subtitleY =
@@ -1898,22 +1899,27 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   // ── Two-finger horizontal stretch ───────────────────────────────────────
+  bool _isInsideSubtitle(Offset globalPosition) {
+    final object = _subtitleGestureKey.currentContext?.findRenderObject();
+    if (object is! RenderBox || !object.hasSize) return false;
+    return object.localToGlobal(Offset.zero) & object.size
+        .contains(globalPosition);
+  }
+
   void _onPointerDown(PointerDownEvent e) {
-    // Subtitle adjustment is handled only by the GestureDetector attached to
-    // the rendered caption. Do not let the full-player stretch listener move it.
-    if (_subtitleAdjustMode) return;
+    // Keep the player's video-stretch gesture out of the subtitle's touch area.
+    if (_isInsideSubtitle(e.position)) return;
     _pointers[e.pointer] = e.position;
     if (_pointers.length == 2 && !_locked) _startPinch();
   }
 
   void _onPointerMove(PointerMoveEvent e) {
-    if (_subtitleAdjustMode || !_pointers.containsKey(e.pointer)) return;
+    if (!_pointers.containsKey(e.pointer)) return;
     _pointers[e.pointer] = e.position;
     if (_pinching && _pointers.length >= 2) _updatePinch();
   }
 
   void _onPointerUp(PointerEvent e) {
-    if (_subtitleAdjustMode) return;
     _pointers.remove(e.pointer);
     if (_pointers.length < 2 && _pinching) _endPinch();
   }
@@ -1924,6 +1930,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _subtitleScaleStartSize = 1.0;
 
   void _onSubtitleScaleStart(ScaleStartDetails details) {
+    setState(() => _subtitleGestureActive = true);
     _subtitleScaleStartFocal = details.focalPoint;
     _subtitleScaleStartX = _subtitleX;
     _subtitleScaleStartY = _subtitleY;
@@ -1958,28 +1965,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
     });
   }
 
-  void _onSubtitleScaleEnd(ScaleEndDetails details) => _saveSubtitleLayout();
+  void _onSubtitleScaleEnd(ScaleEndDetails details) {
+    setState(() => _subtitleGestureActive = false);
+    _saveSubtitleLayout();
+  }
 
   void _saveSubtitleLayout() {
     unawaited(sl<PlaybackPrefs>().setSubtitleLayoutFor(
       _stretchPreferenceKey, x: _subtitleX, y: _subtitleY, scale: _subtitleSize,
     ));
-  }
-
-  void _toggleSubtitleAdjustment() {
-    if (sl<PlaybackPrefs>().styledSubtitles) return;
-    setState(() {
-      _subtitleAdjustMode = !_subtitleAdjustMode;
-      _pointers.clear();
-      _pinching = false;
-      _stretchSnapRatio = null;
-      _hudVisible = false;
-      if (_subtitleAdjustMode) _controlsVisible = false;
-    });
-    if (!_subtitleAdjustMode) {
-      _saveSubtitleLayout();
-      _bumpControls();
-    }
   }
 
   void _startPinch() {
@@ -2106,17 +2100,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
               _openAudioSubsSheet();
             },
           ),
-          if (!sl<PlaybackPrefs>().styledSubtitles &&
-              _c.activeSubtitleTrack.id != 'no')
-            _QuickSettingRow(
-              icon: Icons.open_with_rounded,
-              label: 'Atur posisi & ukuran subtitle',
-              value: 'Geser / cubit',
-              onTap: () {
-                Navigator.pop(context);
-                _toggleSubtitleAdjustment();
-              },
-            ),
           _QuickSettingRow(
             icon: Icons.photo_camera_outlined,
             label: 'Screenshot',
@@ -4161,6 +4144,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                 _subtitleY * 2 - 1,
                               ),
                               child: GestureDetector(
+                                key: _subtitleGestureKey,
                                 behavior: HitTestBehavior.translucent,
                                 onScaleStart: _onSubtitleScaleStart,
                                 onScaleUpdate: _onSubtitleScaleUpdate,
@@ -4201,7 +4185,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         },
                       ),
                     ),
-                  if (_subtitleAdjustMode)
+                  if (_subtitleGestureActive)
                     Positioned.fill(
                       child: IgnorePointer(
                         child: CustomPaint(
@@ -4213,23 +4197,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         ),
                       ),
                     ),
-                  if (_subtitleAdjustMode)
-                    Positioned(
-                      top: 18,
-                      right: 18,
-                      child: SafeArea(
-                        child: FilledButton.icon(
-                          onPressed: _toggleSubtitleAdjustment,
-                          icon: const Icon(Icons.check, size: 18),
-                          label: const Text('Selesai'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.accent,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-
                   // Aspect-ratio guides appear only while adjusting the stretch.
                   if (_pinching)
                     Positioned.fill(
