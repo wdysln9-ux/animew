@@ -192,6 +192,20 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                   },
                 ),
                 _SheetRow(
+                  label: 'Kunci Posisi Subtitle',
+                  icon: Icons.lock_outline_rounded,
+                  toggleValue: sl<PlaybackPrefs>().subtitlePositionLocked,
+                  active: false,
+                  onTap: () async {
+                    final prefs = sl<PlaybackPrefs>();
+                    await prefs.setSubtitlePositionLocked(
+                      !prefs.subtitlePositionLocked,
+                    );
+                    if (mounted) setState(() {});
+                    widget.onInteract();
+                  },
+                ),
+                _SheetRow(
                   label: context.l10n.subtitleStyle,
                   icon: Icons.text_fields_rounded,
                   active: false,
