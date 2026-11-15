@@ -330,7 +330,7 @@ class _AnimatedPlayPause extends StatelessWidget {
                   playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
                   key: ValueKey<bool>(playing),
                   color: Colors.white,
-                  size: 38,
+                  size: 70,
                 ),
               ),
             ),
@@ -428,7 +428,7 @@ class _TransportButton extends StatelessWidget {
                 child: Icon(
                   icon,
                   color: Colors.white.withValues(alpha: enabled ? 0.9 : 0.28),
-                  size: 27,
+                  size: 70,
                 ),
               ),
             ),
