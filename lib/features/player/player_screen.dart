@@ -6,7 +6,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:media_kit/media_kit.dart' show Media, Player, PlayerConfiguration, Track;
+import 'package:media_kit/media_kit.dart' show Media, Player, PlayerConfiguration, Track, SubtitleTrack;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
