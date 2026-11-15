@@ -223,7 +223,7 @@ class _BarButton extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           child: Padding(
-            padding: const EdgeInsets.all(9),
+            padding: const EdgeInsets.all(15),
             child: Icon(icon, color: Colors.white, size: 23),
           ),
         ),
