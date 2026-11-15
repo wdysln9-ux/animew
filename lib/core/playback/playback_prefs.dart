@@ -959,6 +959,11 @@ class PlaybackPrefs {
   /// Read at player creation. Default off: libass on Android uses the app's
   /// bundled (Latin) fonts, so non-Latin subs (CJK/Devanagari/Arabic) can show
   /// missing-glyph boxes — the Flutter overlay falls back to the system font.
+  bool get subtitlePositionLocked =>
+      _box.get('subtitlePositionLocked', defaultValue: false) as bool;
+  Future<void> setSubtitlePositionLocked(bool value) =>
+      _box.put('subtitlePositionLocked', value);
+
   bool get styledSubtitles =>
       _box.get('styledSubtitles', defaultValue: false) as bool;
   Future<void> setStyledSubtitles(bool value) =>
