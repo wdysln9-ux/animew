@@ -414,19 +414,21 @@ class _ControlsOverlay extends StatelessWidget {
   /// Anything unrecognised is skipped rather than crashing, which is what
   /// makes a layout saved by a newer build safe to load.
   List<Widget> _barButtons(BuildContext context, List<String> ids) {
-    final buttons = <Widget>[];
+    final specs = <(IconData, String, VoidCallback)>[];
     for (final id in ids) {
       final spec = _specFor(context, id);
-      if (spec == null) continue;
-      buttons.add(
-        _BarButton(
-          icon: spec.$1,
-          tooltip: spec.$2,
-          onTap: spec.$3,
-        ),
-      );
+      if (spec != null) specs.add(spec);
     }
-    return buttons;
+    return [
+      for (var i = 0; i < specs.length; i++)
+        _BarButton(
+          icon: specs[i].$1,
+          tooltip: specs[i].$2,
+          onTap: specs[i].$3,
+          // The last right-side button is flush with the screen edge.
+          rightPadding: i == specs.length - 1 ? 0 : 10,
+        ),
+    ];
   }
 
   @override
@@ -750,6 +752,7 @@ class _ControlsOverlay extends StatelessWidget {
                               icon: Icons.fast_forward_rounded,
                               tooltip: 'Skip $megaSkipSeconds seconds',
                               onTap: onMegaSkip,
+                              rightPadding: right.isEmpty ? 0 : 10,
                             ),
                           ...right,
                         ];
