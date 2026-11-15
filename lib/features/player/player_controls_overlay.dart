@@ -776,7 +776,7 @@ class _ControlsOverlay extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(
                   compactEpisodePortrait ? 4 : 16,
                   0,
-                  0,
+                  compactEpisodePortrait ? 4 : 16,
                   26,
                 ),
                 child: Column(
