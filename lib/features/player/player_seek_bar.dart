@@ -175,10 +175,16 @@ class _SeekRowState extends State<_SeekRow> {
                   ),
                 ),
                 if (widget.trailing != null) ...[
-                  const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: widget.trailing!,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        reverse: true,
+                        child: widget.trailing!,
+                      ),
+                    ),
                   ),
                 ],
               ],
