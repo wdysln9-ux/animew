@@ -200,6 +200,32 @@ class EpisodeMetadataService {
   final Map<String, Future<List<String>>> _screenshotInflight = {};
   final Map<String, List<String>> _screenshotCache = {};
 
+  final Map<String, Future<String?>> _tmdbPosterCache = {};
+
+  /// Resolve the official TMDB portrait poster for an anime/TV title or movie.
+  Future<String?> tmdbPosterUrl(int tmdbId, {required bool isTv}) {
+    if (tmdbId <= 0) return Future.value(null);
+    final key = '${isTv ? 'tv' : 'movie'}:$tmdbId';
+    return _tmdbPosterCache.putIfAbsent(key, () async {
+      try {
+        final response = await _dio
+            .get<dynamic>(
+              '$_tmdbBase/${isTv ? 'tv' : 'movie'}/$tmdbId',
+              options: Options(validateStatus: (status) => status != null && status < 500),
+            )
+            .timeout(const Duration(seconds: 8));
+        final path = response.data is Map
+            ? response.data['poster_path']?.toString().trim()
+            : null;
+        if (path == null || path.isEmpty || path == 'null') return null;
+        return 'https://image.tmdb.org/t/p/w500$path';
+      } catch (_) {
+        _tmdbPosterCache.remove(key);
+        return null;
+      }
+    });
+  }
+
   /// Fetch real still frames for one episode. Anime resolves the TMDB
   /// season/episode pair from AniZip's MAL mapping; TV titles can pass the
   /// TMDB coordinates directly. Empty means TMDB has no stills for this
