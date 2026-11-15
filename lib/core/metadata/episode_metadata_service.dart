@@ -290,7 +290,7 @@ class EpisodeMetadataService {
     } catch (_) {/* cache is optional */}
   }
 
-  /// AniZip: `{ episodes: { "1": { title{en}, overview|summary, image, rating,
+  /// AniZip: `{ episodes: { "1": { title{en}, summary|overview, image, rating,
   /// runtime|length, airDate }, ... } }`. Long shows often omit `overview`
   /// after the early episodes and only ship `summary` (Shippuden: 1–32 have
   /// overview; 33–500 are summary-only) — read both so later range chips
@@ -304,7 +304,7 @@ class EpisodeMetadataService {
         if (n == null || v is! Map) return;
         final meta = _meta(
           title: _aniZipTitle(v['title']),
-          overview: v['overview'] ?? v['summary'],
+          overview: v['summary'] ?? v['overview'],
           image: v['image'],
           rating: v['rating'],
           runtime: v['runtime'] ?? v['length'],
