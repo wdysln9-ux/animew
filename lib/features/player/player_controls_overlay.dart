@@ -790,113 +790,44 @@ class _ControlsOverlay extends StatelessWidget {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (d > Duration.zero) onDurationChanged(d);
                         });
+                        final left = _barButtons(context, barConfig.left);
+                        final right = _barButtons(context, barConfig.right);
+                        final showEpisodePicker = !portraitMode &&
+                            controller.episodes.length > 1 &&
+                            onEpisodes != null;
+                        final quickActions = <Widget>[
+                          if (megaSkipEnabled)
+                            _BarButton(
+                              icon: Icons.fast_forward_rounded,
+                              tooltip: 'Skip $megaSkipSeconds seconds',
+                              onTap: onMegaSkip,
+                            ),
+                          ...left,
+                          ...right,
+                          if (showEpisodePicker)
+                            _BarButton(
+                              icon: Icons.video_library_outlined,
+                              tooltip: 'Episode lainnya',
+                              onTap: () {
+                                onEpisodes!();
+                                onInteract();
+                              },
+                            ),
+                        ];
                         return _SeekRow(
                           controller: c,
                           duration: d > Duration.zero ? d : duration,
                           onInteract: onInteract,
-                          // MegaSkip — manual jump-forward, riding the timestamp's
-                          // line rather than a row of its own above it.
-                          trailing: megaSkipEnabled
-                              ? _MegaSkipPill(
-                                  seconds: megaSkipSeconds,
-                                  onTap: onMegaSkip,
-                                )
-                              : null,
+                          trailing: quickActions.isEmpty
+                              ? null
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: quickActions,
+                                ),
                         );
                       },
                     ),
                     SizedBox(height: compactEpisodePortrait ? 0 : 2),
-                    // Control bar under the progress bar: the pickers ride in one
-                    // translucent group on the left, episode list + fit mode in
-                    // another on the right. Two groups rather than seven floating
-                    // chips — the split reads at a glance, and every button is the
-                    // same width so nothing shifts as the video changes.
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        // Rendered from the user's saved arrangement rather than
-                        // a fixed row. Untouched prefs give the defaults, which
-                        // are the exact layout that shipped before the Settings
-                        // screen existed — so nobody's bar moves unless they
-                        // move it.
-                        final left = _barButtons(
-                          context,
-                          barConfig.left,
-                        );
-                        final right = _barButtons(
-                          context,
-                          barConfig.right,
-                        );
-                        final showEpisodePicker = !portraitMode &&
-                            controller.episodes.length > 1 &&
-                            onEpisodes != null;
-                        // Buttons are a uniform 48 (12 padding + 24 icon + 12)
-                        // and each group adds 8 of its own, so the width the bar
-                        // wants is arithmetic rather than something to measure.
-                        const buttonWidth = 48.0;
-                        const groupPadding = 8.0;
-                        double groupWidth(int n) =>
-                            n == 0 ? 0 : n * buttonWidth + groupPadding;
-                        final wanted =
-                            groupWidth(left.length) + groupWidth(right.length) +
-                            (showEpisodePicker ? 200.0 : 0.0);
-
-                        if (wanted <= constraints.maxWidth) {
-                          return Row(
-                            children: [
-                              if (left.isNotEmpty) _BarGroup(children: left),
-                              const Spacer(),
-                              if (showEpisodePicker) ...[
-                                const SizedBox(width: 10),
-                                _EpisodePickerButton(
-                                  thumbnail: (controller.state.currentIndex + 1 < controller.episodes.length)
-                                      ? controller.episodes[controller.state.currentIndex + 1].thumbnail
-                                      : null,
-                                  onTap: () {
-                                    onEpisodes!();
-                                    onInteract();
-                                  },
-                                ),
-                              ],
-                              if (right.isNotEmpty) ...[
-                                const SizedBox(width: 8),
-                                _BarGroup(children: right),
-                              ],
-                            ],
-                          );
-                        }
-                        // Narrower than the bar wants — portrait, or a bar the
-                        // user has loaded up in Settings. The Spacer pins the
-                        // groups to opposite edges and can't give any width back,
-                        // so the right-hand group would run off-screen and take
-                        // its buttons out of reach. Scroll the pair instead:
-                        // everything stays tappable, and nothing about the
-                        // landscape layout above changes.
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              if (left.isNotEmpty) _BarGroup(children: left),
-                              if (showEpisodePicker) ...[
-                                const SizedBox(width: 10),
-                                _EpisodePickerButton(
-                                  thumbnail: (controller.state.currentIndex + 1 < controller.episodes.length)
-                                      ? controller.episodes[controller.state.currentIndex + 1].thumbnail
-                                      : null,
-                                  onTap: () {
-                                    onEpisodes!();
-                                    onInteract();
-                                  },
-                                ),
-                              ],
-                              if (right.isNotEmpty) ...[
-                                SizedBox(width: left.isNotEmpty ? 8 : 0),
-                                _BarGroup(children: right),
-                              ],
-                            ],
-                          ),
-                        );
-                      },
-                    ),
                   ],
                 ),
               ),
