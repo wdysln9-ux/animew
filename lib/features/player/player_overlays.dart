@@ -108,7 +108,7 @@ class _AdjustHud extends StatelessWidget {
 // accumulated value changes (each rapid tap), and fades as the burst ends.
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _SeekIndicator extends StatefulWidget {
+class _SeekIndicator extends StatelessWidget {
   const _SeekIndicator({
     super.key,
     required this.side,
@@ -119,91 +119,43 @@ class _SeekIndicator extends StatefulWidget {
   final int accumSeconds; // running total this burst (shown in the pill)
 
   @override
-  State<_SeekIndicator> createState() => _SeekIndicatorState();
-}
-
-class _SeekIndicatorState extends State<_SeekIndicator>
-    with SingleTickerProviderStateMixin {
-  // Re-keyed per tap by the parent, so a fresh state replays the slide/fade-in.
-  late final AnimationController _in = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 320),
-  )..forward();
-
-  @override
-  void dispose() {
-    _in.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final left = widget.side < 0;
-    final curve = CurvedAnimation(parent: _in, curve: Curves.easeOutCubic);
+    final left = side < 0;
     return Positioned.fill(
       child: IgnorePointer(
         child: Align(
           alignment: left ? const Alignment(-0.55, 0) : const Alignment(0.55, 0),
-          child: FadeTransition(
-            opacity: curve,
-            child: SlideTransition(
-              // Settle in from the tapped edge.
-              position: Tween<Offset>(
-                begin: Offset(left ? -0.06 : 0.06, 0),
-                end: Offset.zero,
-              ).animate(curve),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Accent icon disc — surface2 chip + a soft coral glow, the
-                  // app's in-player signature (matches the 2× / volume chips).
-                  Container(
-                    width: 66,
-                    height: 66,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      // Semi-transparent so the video breathes through.
-                      color: AppColors.surface2.withValues(alpha: 0.78),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.accentSoft,
-                          blurRadius: 16,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      left
-                          ? Icons.fast_rewind_rounded
-                          : Icons.fast_forward_rounded,
-                      color: AppColors.accent,
-                      size: 30,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Running-total pill (−/+ Ns) — same chip as the 2× hold pill.
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: AppColors.surface2.withValues(alpha: 0.78),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 7,
-                      ),
-                      child: Text(
-                        '${left ? '−' : '+'}${widget.accumSeconds}s',
-                        style: AppText.caption.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Bare seek icon: no circular background, border or glow.
+              Icon(
+                left ? Icons.fast_rewind_rounded : Icons.fast_forward_rounded,
+                color: AppColors.accent,
+                size: 30,
               ),
-            ),
+              const SizedBox(height: 10),
+              // Running-total pill remains so the seek amount is readable.
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.surface2.withValues(alpha: 0.78),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 7,
+                  ),
+                  child: Text(
+                    '${left ? '−' : '+'}${accumSeconds}s',
+                    style: AppText.caption.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
