@@ -34,6 +34,7 @@ import '../../core/ui/app_toast.dart';
 import 'open_related.dart';
 import '../trailer/trailer_screen.dart';
 import 'anime_artwork_viewer.dart';
+import 'episode_screenshot_gallery.dart';
 import 'anime_title_sheet.dart';
 import 'nakama_watching_page.dart';
 import '../../core/ui/episode_unavailable_dialog.dart';
@@ -2616,6 +2617,15 @@ class _DetailViewState extends State<_DetailView> {
                 context,
               ).push(PersonPage.route(ref, sourceId: widget.item.sourceId)),
               ),
+            ),
+          ),
+        if (!isReading)
+          SliverToBoxAdapter(
+            child: EpisodeGallerySection(
+              episodes: eps,
+              malId: detail.malId ?? widget.item.malId,
+              tmdbId: detail.tmdbId ?? widget.item.tmdbId,
+              tmdbIsTv: detail.tmdbIsTv,
             ),
           ),
         if (!isReading)
