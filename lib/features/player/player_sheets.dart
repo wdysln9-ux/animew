@@ -61,9 +61,29 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
       builder: (context, snap) {
         final track = snap.data ?? c.player.state.track;
         final subId = track.subtitle.id;
-        return SizedBox(
-          height: h * 0.44,
-          child: _subColumn(c, subId),
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: h * 0.44,
+                child: _subColumn(c, subId),
+              ),
+            ],
+          ),
         );
       },
     );
