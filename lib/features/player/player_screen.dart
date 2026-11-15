@@ -361,6 +361,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   // Raw pointer tracking keeps the existing one-finger gestures independent.
   double _stretchX = 1.0;
   bool _pinching = false;
+  // A stretch gesture can begin after the first finger has already won the
+  // horizontal-drag arena. Remember it through pointer-up so that recognizer
+  // cannot commit its stale seek target when the pinch ends.
+  bool _pinchConsumedSeek = false;
   final Map<int, Offset> _pointers = {};
   double _stretchBaseSpan = 0;
   double _stretchBaseX = 1.0;
@@ -1862,6 +1866,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
   // Horizontal swipe across the surface scrubs the position; a time bubble shows
   // the target while dragging, and the seek commits on release.
   void _onHDragStart(DragStartDetails d) {
+    if (_pinching || _pointers.length >= 2) {
+      _pinchConsumedSeek = true;
+      return;
+    }
+    // A previous pinch may not have produced a horizontal-drag end callback.
+    _pinchConsumedSeek = false;
     if (!_swipeSeekEnabled) return;
     // Keep the outer 40 logical pixels on both sides free for system
     // back-navigation gestures; horizontal scrubbing only starts in the center.
@@ -1891,6 +1901,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onHDragEnd(DragEndDetails d) {
+    if (_pinchConsumedSeek || _pinching) {
+      _pinchConsumedSeek = false;
+      _hSeeking = false;
+      _hSeekBlocked = false;
+      return;
+    }
     if (_hSeekBlocked) {
       _hSeekBlocked = false;
       return;
@@ -1984,6 +2000,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final p = _pointers.values.toList();
     _stretchBaseSpan = (p[0].dx - p[1].dx).abs();
     _stretchBaseX = _stretchX;
+    _pinchConsumedSeek = true;
     setState(() {
       _pinching = true;
       _stretchSnapRatio = null;
