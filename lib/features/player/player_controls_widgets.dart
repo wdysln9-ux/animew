@@ -206,11 +206,12 @@ class _BarGroup extends StatelessWidget {
 /// A single icon button inside a [_BarGroup] — uniform square footprint so the
 /// row never reflows, transparent itself since the group carries the backdrop.
 class _BarButton extends StatelessWidget {
-  const _BarButton({required this.icon, required this.onTap, this.tooltip});
+  const _BarButton({required this.icon, required this.onTap, this.tooltip, this.color});
 
   final IconData icon;
   final VoidCallback onTap;
   final String? tooltip;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -224,7 +225,7 @@ class _BarButton extends StatelessWidget {
           customBorder: const CircleBorder(),
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: Icon(icon, color: Colors.white, size: 24),
+            child: Icon(icon, color: color ?? Colors.white, size: 24),
           ),
         ),
       ),
