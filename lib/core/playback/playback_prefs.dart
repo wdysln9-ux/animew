@@ -1146,7 +1146,7 @@ class PlaybackPrefs {
     if (value is! Map) return const {'x': 0.5, 'y': 0.88, 'scale': 1.0};
     return {
       'x': (value['x'] as num?)?.toDouble().clamp(0.04, 0.96).toDouble() ?? 0.5,
-      'y': (value['y'] as num?)?.toDouble().clamp(0.08, 0.94).toDouble() ?? 0.88,
+      'y': (value['y'] as num?)?.toDouble().clamp(0.0, 1.0).toDouble() ?? 0.88,
       'scale': (value['scale'] as num?)?.toDouble().clamp(0.5, 2.5).toDouble() ?? 1.0,
     };
   }
@@ -1156,7 +1156,7 @@ class PlaybackPrefs {
   ) async {
     await _box.put('subtitleLayout', {
       'x': x.clamp(0.04, 0.96).toDouble(),
-      'y': y.clamp(0.08, 0.94).toDouble(),
+      'y': y.clamp(0.0, 1.0).toDouble(),
       'scale': scale.clamp(0.5, 2.5).toDouble(),
     });
   }
