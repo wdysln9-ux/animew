@@ -20,6 +20,7 @@ import '../../core/cache/app_image_cache.dart';
 import '../../core/di/injector.dart';
 import '../../core/anilist/anilist_service.dart';
 import '../detail/anime_community_tab.dart';
+import '../detail/episode_screenshot_gallery.dart';
 import '../../core/repository/source_repository.dart';
 import '../../core/zmode/playback_resolver.dart';
 import '../../core/tracker/tracker_hub.dart';
@@ -3910,6 +3911,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ),
               ),
             ],
+            if (number != null && number.isNotEmpty)
+              EpisodeScreenshotGallery(
+                malId: widget.malId,
+                tmdbId: widget.tmdbId,
+                season: episode.season,
+                episodeNumber: episode.number?.round() ??
+                    int.tryParse(number) ??
+                    0,
+              ),
             if (number != null && number.isNotEmpty)
               EpisodeThreadsSection(
                 showTitle: widget.showTitle ?? '',
