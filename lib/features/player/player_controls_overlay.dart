@@ -683,9 +683,10 @@ class _ControlsOverlay extends StatelessWidget {
                 ),
                 const SizedBox(width: 54),
               ],
-              // Read playing state first: buffering can remain true after a
-              // pause request. In that case the spinner must disappear and the
-              // normal Play button must be shown immediately.
+              // Keep the spinner visible until buffering really ends. If the
+              // user requests Pause while buffering, defer the pause command
+              // until the buffer reports false instead of changing the button
+              // state halfway through the loading cycle.
               StreamBuilder<bool>(
                 stream: c.player.stream.playing,
                 builder: (context, pSnap) {
@@ -694,7 +695,7 @@ class _ControlsOverlay extends StatelessWidget {
                     stream: c.player.stream.buffering,
                     builder: (context, bSnap) {
                       final buffering =
-                          (bSnap.data ?? c.player.state.buffering) && playing;
+                          bSnap.data ?? c.player.state.buffering;
                       if (buffering) {
                         return SizedBox(
                           width: 58,
@@ -704,9 +705,20 @@ class _ControlsOverlay extends StatelessWidget {
                             shape: const CircleBorder(),
                             child: InkWell(
                               customBorder: const CircleBorder(),
-                              onTap: () {
-                                c.togglePlay();
+                              onTap: () async {
                                 onInteract();
+                                if (c.player.state.buffering) {
+                                  try {
+                                    await c.player.stream.buffering
+                                        .firstWhere((value) => !value)
+                                        .timeout(const Duration(seconds: 45));
+                                  } catch (_) {
+                                    return;
+                                  }
+                                }
+                                if (c.player.state.playing) {
+                                  c.player.pause();
+                                }
                               },
                               child: Center(
                                 child: SizedBox(
