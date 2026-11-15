@@ -28,6 +28,7 @@ class _SeekRowState extends State<_SeekRow> {
   // While the user is dragging the thumb, hold the value locally so the live
   // position stream doesn't yank it back (which made it feel un-draggable).
   double? _dragMs;
+  double? _dragStartMs;
 
   // The live thumb only creeps forward, but the raw position stream fires ~once
   // per decoded frame — so the whole Slider (with its custom buffered track)
@@ -257,7 +258,10 @@ class _SeekRowState extends State<_SeekRow> {
                                     ? null
                                     : (v) {
                                         _ensurePreview();
-                                        setState(() => _dragMs = v);
+                                        setState(() {
+                                          _dragStartMs = streamMs;
+                                          _dragMs = v;
+                                        });
                                         _requestPreview(v);
                                         widget.onInteract();
                                       },
@@ -271,10 +275,21 @@ class _SeekRowState extends State<_SeekRow> {
                                 onChangeEnd: totalMs <= 0
                                     ? null
                                     : (v) {
-                                        widget.controller.seekTo(
-                                          Duration(milliseconds: v.round()),
-                                        );
-                                        setState(() => _dragMs = null);
+                                        final startMs = _dragStartMs ?? streamMs;
+                                        final deltaSeconds =
+                                            ((v - startMs) / 1000).round();
+                                        // If the displayed offset is +0:00 or -0:00,
+                                        // treat the drag as a no-op and keep playback
+                                        // at its original position.
+                                        if (deltaSeconds != 0) {
+                                          widget.controller.seekTo(
+                                            Duration(milliseconds: v.round()),
+                                          );
+                                        }
+                                        setState(() {
+                                          _dragMs = null;
+                                          _dragStartMs = null;
+                                        });
                                       },
                               ),
                             );
