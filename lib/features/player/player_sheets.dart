@@ -149,6 +149,15 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                 ),
               if (!widget.castMode) ...[
                 _SheetRow(
+                  label: 'Terjemahkan subtitle',
+                  icon: Icons.translate_rounded,
+                  active: false,
+                  onTap: () {
+                    widget.onInteract();
+                    widget.onTranslate();
+                  },
+                ),
+                _SheetRow(
                   label: context.l10n.styledSubtitlesLibass,
                   subtitle: context.l10n.styledSubtitlesLibassSubtitle,
                   toggleValue: c.styledSubtitlesOn,
