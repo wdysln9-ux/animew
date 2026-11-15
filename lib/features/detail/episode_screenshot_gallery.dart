@@ -34,7 +34,7 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
             (widget.tmdbId == null || !widget.tmdbIsTv))) {
       return const SizedBox.shrink();
     }
-    final safeIndex = _selectedIndex.clamp(0, widget.episodes.length - 1);
+    final safeIndex = _selectedIndex.clamp(0, widget.episodes.length - 1) as int;
     final episode = widget.episodes[safeIndex];
     final episodeNumber = episode.number?.round();
 
