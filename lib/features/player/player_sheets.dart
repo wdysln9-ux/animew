@@ -83,20 +83,6 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                 if (!widget.castMode) ...[
                   const Divider(color: AppColors.hairline, height: 18),
                   _DelayAdjuster(
-                    label: context.l10n.subtitleDelay,
-                    initial: c.subtitleDelay,
-                    onChanged: (d) => c.setSubtitleDelay(d),
-                    // Aniyomi-style two-tap auto-sync (subtitle only). Captures
-                    // live on the controller so they survive closing the sheet.
-                    sync: (
-                      capture: c.captureSubSync,
-                      clear: c.clearSubSync,
-                      currentMs: () => c.subtitleDelay.inMilliseconds,
-                      voiceOn: () => c.subSyncVoiceMs != null,
-                      textOn: () => c.subSyncTextMs != null,
-                    ),
-                  ),
-                  _DelayAdjuster(
                     label: context.l10n.audioDelay,
                     initial: c.audioDelay,
                     onChanged: (d) => c.setAudioDelay(d),
@@ -214,25 +200,6 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                     openSubtitleStyleSheet(context, c, widget.onInteract);
                   },
                 ),
-                _SheetRow(
-                  label: context.l10n.searchSubtitlesOnline,
-                  icon: Icons.search_rounded,
-                  active: false,
-                  onTap: widget.onSearchOnline,
-                ),
-                _SheetRow(
-                  label: context.l10n.loadFromFile,
-                  icon: Icons.upload_file,
-                  active: false,
-                  onTap: widget.onLoadFile,
-                ),
-                if (c.softSubs.isNotEmpty || c.canTranslateSub)
-                  _SheetRow(
-                    label: context.l10n.translateSubtitles,
-                    icon: Icons.translate_rounded,
-                    active: false,
-                    onTap: widget.onTranslate,
-                  ),
               ],
             ],
           ),
