@@ -115,7 +115,8 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
               if (!widget.castMode)
                 for (final t in _orderedSubtitleTracks(embedded))
                   _SheetRow(
-                    label: _isTranslatedTrack(t)
+                    compactDialog: true,
+                  label: _isTranslatedTrack(t)
                         ? 'Indonesia (translated)'
                         : (_isEnglishSubtitle(t.language, t.title)
                             ? 'Inggris'
@@ -135,6 +136,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                   ),
               for (final s in _orderedSoftSubs(soft))
                 _SheetRow(
+                  compactDialog: true,
                   label: _isEnglishSubtitle(s.lang, s.label)
                       ? 'Inggris'
                       : (s.label ?? s.lang),
@@ -150,6 +152,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                 ),
               if (!widget.castMode) ...[
                 _SheetRow(
+                  compactDialog: true,
                   label: 'Terjemahkan subtitle',
                   icon: Icons.translate_rounded,
                   active: false,
@@ -159,6 +162,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                   },
                 ),
                 _SheetRow(
+                  compactDialog: true,
                   label: context.l10n.styledSubtitlesLibass,
                   subtitle: context.l10n.styledSubtitlesLibassSubtitle,
                   toggleValue: c.styledSubtitlesOn,
@@ -170,6 +174,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                   },
                 ),
                 _SheetRow(
+                  compactDialog: true,
                   label: 'Kunci Posisi Subtitle',
                   icon: Icons.lock_outline_rounded,
                   toggleValue: sl<PlaybackPrefs>().subtitlePositionLocked,
@@ -184,6 +189,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                   },
                 ),
                 _SheetRow(
+                  compactDialog: true,
                   label: context.l10n.subtitleStyle,
                   icon: Icons.text_fields_rounded,
                   active: false,
@@ -2172,6 +2178,7 @@ class _SheetRow extends StatelessWidget {
     this.toggleValue,
     this.loading = false,
     this.onRemove,
+    this.compactDialog = false,
   });
 
   final String label;
@@ -2192,6 +2199,7 @@ class _SheetRow extends StatelessWidget {
 
   /// Show a trailing spinner (e.g. while a font downloads).
   final bool loading;
+  final bool compactDialog;
 
   /// When non-null the row gets a trailing remove button — used by the fonts
   /// the user added themselves, which are the only rows that can be deleted.
@@ -2203,7 +2211,10 @@ class _SheetRow extends StatelessWidget {
     // Netflix-style: the selected row is tinted + accent-bold with a trailing
     // check; others are plain.
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+      padding: EdgeInsets.symmetric(
+        horizontal: compactDialog ? 0 : 12,
+        vertical: compactDialog ? 2 : 3,
+      ),
       child: Material(
         color: toggleValue == null && active
             ? AppColors.accentSoft
@@ -2213,7 +2224,10 @@ class _SheetRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: compactDialog ? 8 : 12,
+              vertical: compactDialog ? 8 : 13,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -2230,8 +2244,8 @@ class _SheetRow extends StatelessWidget {
                           fontWeight: toggleValue == null && active
                               ? FontWeight.w700
                               : FontWeight.w500,
-                          fontSize: 13.5,
-                          height: 1.45,
+                          fontSize: compactDialog ? 13.5 : null,
+                          height: compactDialog ? 1.45 : null,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
