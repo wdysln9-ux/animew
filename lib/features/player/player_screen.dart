@@ -352,7 +352,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   // window and became a seek, so the controls never toggled at all. Spotting
   // the double tap here instead keeps the arena free — see [_tapZone] for how
   // hide and show are split so a seek never flashes the bars.
-  static const Duration _tapBurstWindow = Duration(milliseconds: 280);
+  static const Duration _tapBurstWindow = Duration(milliseconds: 380);
   DateTime? _lastZoneTapAt;
   int _lastZoneTapSide = 0; // -1 = left, 0 = centre, +1 = right
   int _zoneTapCount = 0; // taps so far in the current burst
@@ -1706,21 +1706,23 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _toggleControls();
       return;
     }
-    // Second (or later) tap on the same side: a seek. Rapid taps keep stacking
-    // (−10s, −20s…) YouTube-style via _accumSeek.
+    // A second tap in the same side zone is always a seek. Delay the
+    // single-tap control toggle so it cannot interfere with repeated
+    // double-taps or make a seek gesture look like playback was toggled.
     if (_zoneTapCount >= 2) {
       _cancelPendingShow();
       _seekZone(dir);
       return;
     }
-    if (_controlsVisible) {
-      _toggleControls();
-    } else {
-      _showTimer?.cancel();
-      _showTimer = Timer(_tapBurstWindow, () {
-        if (mounted) _bumpControls();
-      });
-    }
+    _cancelPendingShow();
+    _showTimer = Timer(_tapBurstWindow, () {
+      if (!mounted) return;
+      if (_controlsVisible) {
+        _toggleControls();
+      } else {
+        _bumpControls();
+      }
+    });
   }
 
   void _cancelPendingShow() {
