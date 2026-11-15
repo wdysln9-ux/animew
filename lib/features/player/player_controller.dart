@@ -2811,7 +2811,7 @@ class PlayerCubit extends Cubit<PlayerState> {
           _activeTorrentId != null) {
         return;
       }
-      _failoverFromStall();
+      _failoverFromStall(allowNotBuffering: true);
     });
     emit(state.copyWith(active: () => s, error: () => null));
     // When auto-resume is off, ignore the saved resume mark and start from the
@@ -3392,12 +3392,15 @@ class PlayerCubit extends Cubit<PlayerState> {
     _stallTimer = null;
   }
 
-  Future<void> _failoverFromStall() async {
+  Future<void> _failoverFromStall({bool allowNotBuffering = false}) async {
     _stallWatchdogArmed = false;
-    // Bail if playback recovered (position moved past the stall anchor) or
-    // we're no longer buffering — it was just a slow network dip, not a death.
-    if (!player.state.buffering) return;
-    if (_lastPos > _stallAnchorPos + const Duration(seconds: 1)) return;
+    // The never-started watchdog also uses this path: a source that never
+    // produced its first frame may be stuck without mpv ever setting buffering.
+    // For an already-started source, keep the conservative buffering/position
+    // checks so a brief network dip does not cause an unnecessary source swap.
+    if (!allowNotBuffering && !player.state.buffering) return;
+    if (_startedThisSource &&
+        _lastPos > _stallAnchorPos + const Duration(seconds: 1)) return;
     if (_recovering) return;
     _recovering = true;
     final dead = state.active;
