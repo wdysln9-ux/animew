@@ -201,6 +201,7 @@ class EpisodeMetadataService {
   final Map<String, List<String>> _screenshotCache = {};
 
   final Map<String, Future<String?>> _tmdbPosterCache = {};
+  final Map<int, Future<Object?>> _aniZipPayloadInflight = {};
 
   /// Resolve the official TMDB portrait poster for an anime/TV title or movie.
   Future<String?> tmdbPosterUrl(
@@ -317,22 +318,26 @@ class EpisodeMetadataService {
     });
   }
 
-  Future<Object?> _fetchAniZipPayload(int malId) async {
-    try {
-      final response = await _dio
-          .get<dynamic>(
-            'https://api.ani.zip/mappings?mal_id=$malId',
-            options: Options(validateStatus: (s) => s != null && s < 500),
-          )
-          .timeout(const Duration(seconds: 7));
-      final payload = response.data;
-      if (payload is Map && payload['episodes'] is Map) {
-        await _writeDisk('a:$malId', payload);
+  Future<Object?> _fetchAniZipPayload(int malId) {
+    return _aniZipPayloadInflight.putIfAbsent(malId, () async {
+      try {
+        final response = await _dio
+            .get<dynamic>(
+              'https://api.ani.zip/mappings?mal_id=$malId',
+              options: Options(validateStatus: (s) => s != null && s < 500),
+            )
+            .timeout(const Duration(seconds: 7));
+        final payload = response.data;
+        if (payload is Map && payload['episodes'] is Map) {
+          await _writeDisk('a:$malId', payload);
+        }
+        return payload;
+      } catch (_) {
+        return null;
+      } finally {
+        _aniZipPayloadInflight.remove(malId);
       }
-      return payload;
-    } catch (_) {
-      return null;
-    }
+    });
   }
 
   Future<Map<int, EpisodeMeta>> tvEpisodeMeta(int tmdbId, int season) {
