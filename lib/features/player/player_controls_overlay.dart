@@ -544,7 +544,7 @@ class _ControlsOverlay extends StatelessWidget {
               // the back arrow on 44 — the exact line the bottom capsules start
               // at. Writing 44 here would land it at 56 and overshoot inward.
               padding: EdgeInsets.symmetric(
-                horizontal: compactEpisodePortrait ? 10 : 9,
+                horizontal: 7,
                 vertical: compactEpisodePortrait ? 0 : 0,
               ),
               child: Row(
