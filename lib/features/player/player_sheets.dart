@@ -666,85 +666,90 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
       text: current.replaceFirst('#', '').substring(0, 6),
     );
     var selected = parseSubtitleHex(current);
+    var hsv = HSVColor.fromColor(selected);
     String toHex(Color color) {
       String two(int v) => v.toRadixString(16).padLeft(2, '0').toUpperCase();
       return '#${two((color.r * 255).round())}${two((color.g * 255).round())}${two((color.b * 255).round())}FF';
     }
-    const palette = <Color>[
-      Color(0xFFFFFFFF), Color(0xFFFFD54F), Color(0xFFFFEB3B),
-      Color(0xFF80DEEA), Color(0xFF29B6F6), Color(0xFF81C784),
-      Color(0xFF4CAF50), Color(0xFFFF8A65), Color(0xFFEF5350),
-      Color(0xFFCE93D8), Color(0xFFB0BEC5), Color(0xFF000000),
-    ];
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, refresh) => AlertDialog(
           backgroundColor: card,
           title: Text(label, style: const TextStyle(color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final swatch in palette)
-                    InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () {
-                        refresh(() {
-                          selected = swatch;
-                          input.text = toHex(swatch).substring(1, 7);
-                        });
-                      },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: swatch,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: selected.toARGB32() == swatch.toARGB32()
-                                ? orange : Colors.white30,
-                            width: selected.toARGB32() == swatch.toARGB32() ? 3 : 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              TextField(
-                controller: input,
-                maxLength: 6,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Kode warna',
-                  prefixText: '#',
-                  counterText: '',
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 42,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: selected,
+                    borderRadius: BorderRadius.circular(9),
+                    border: Border.all(color: Colors.white30),
+                  ),
                 ),
-                onChanged: (value) {
-                  final v = value.toUpperCase();
-                  if (RegExp(r'^[0-9A-F]{6}$').hasMatch(v)) {
-                    refresh(() {
-                      selected = Color(int.parse('FF$v', radix: 16));
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              Container(
-                height: 34,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: selected,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white24),
+                const SizedBox(height: 18),
+                const Text('Warna', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                Slider(
+                  value: hsv.hue.clamp(0.0, 360.0),
+                  min: 0,
+                  max: 360,
+                  activeColor: selected,
+                  onChanged: (hue) => refresh(() {
+                    hsv = hsv.withHue(hue);
+                    selected = hsv.toColor();
+                    input.text = toHex(selected).substring(1, 7);
+                  }),
                 ),
-              ),
-            ],
+                const Text('Saturasi', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                Slider(
+                  value: hsv.saturation,
+                  min: 0,
+                  max: 1,
+                  activeColor: orange,
+                  onChanged: (value) => refresh(() {
+                    hsv = hsv.withSaturation(value);
+                    selected = hsv.toColor();
+                    input.text = toHex(selected).substring(1, 7);
+                  }),
+                ),
+                const Text('Kecerahan', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                Slider(
+                  value: hsv.value,
+                  min: 0,
+                  max: 1,
+                  activeColor: orange,
+                  onChanged: (value) => refresh(() {
+                    hsv = hsv.withValue(value);
+                    selected = hsv.toColor();
+                    input.text = toHex(selected).substring(1, 7);
+                  }),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: input,
+                  maxLength: 6,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Kode warna',
+                    prefixText: '#',
+                    counterText: '',
+                  ),
+                  onChanged: (value) {
+                    final v = value.toUpperCase();
+                    if (RegExp(r'^[0-9A-F]{6}$').hasMatch(v)) {
+                      refresh(() {
+                        selected = Color(int.parse('FF$v', radix: 16));
+                        hsv = HSVColor.fromColor(selected);
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
@@ -823,15 +828,15 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
               style: const TextStyle(color: muted, fontSize: 12)),
           ]),
         ]))),
-        _step('Ukuran Font',(24.5*p.subtitleScale).toStringAsFixed(1)+' px',p.subtitleScale,0.05,0.5,2.5,p.setSubtitleScale),
+        _step('Ukuran Font',(24.5*p.subtitleScale).toStringAsFixed(1)+' px',p.subtitleScale,0.25/24.5,0.5,2.5,p.setSubtitleScale),
         _step('Ketebalan Font',p.subtitleFontWeight.toString(),p.subtitleFontWeight.toDouble(),100,100,900,(v)=>p.setSubtitleFontWeight(v.round())),
         _colorRow('Warna Font',p.subtitleColorHex,p.setSubtitleColorHex),
-        _step('Ketebalan Garis Tepi',p.subtitleOutlineWidth.toStringAsFixed(1)+' px',p.subtitleOutlineWidth,0.5,0,8,p.setSubtitleOutlineWidth),
+        _step('Ketebalan Garis Tepi',p.subtitleOutlineWidth.toStringAsFixed(1)+' px',p.subtitleOutlineWidth,0.25,0,8,p.setSubtitleOutlineWidth),
         _colorRow('Warna Garis Tepi',p.subtitleOutlineColorHex,p.setSubtitleOutlineColorHex),
         _step('Sudut Bayangan',p.subtitleShadowAngle.round().toString()+'°',p.subtitleShadowAngle,15,0,360,p.setSubtitleShadowAngle),
         _step('Ketebalan Bayangan',p.subtitleShadowWidth.toStringAsFixed(1)+' px',p.subtitleShadowWidth,0.25,0,8,p.setSubtitleShadowWidth),
-        _step('Jarak Bayangan',p.subtitleShadowDistance.toStringAsFixed(1)+' px',p.subtitleShadowDistance,0.5,0,20,p.setSubtitleShadowDistance),
-        _step('Ukuran Sebaran Bayangan',p.subtitleShadowBlur.toStringAsFixed(1)+' px',p.subtitleShadowBlur,0.5,0,20,p.setSubtitleShadowBlur),
+        _step('Jarak Bayangan',p.subtitleShadowDistance.toStringAsFixed(1)+' px',p.subtitleShadowDistance,0.25,0,20,p.setSubtitleShadowDistance),
+        _step('Ukuran Sebaran Bayangan',p.subtitleShadowBlur.toStringAsFixed(1)+' px',p.subtitleShadowBlur,0.25,0,20,p.setSubtitleShadowBlur),
         _colorRow('Warna Bayangan',p.subtitleShadowColorHex,p.setSubtitleShadowColorHex),
         _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
