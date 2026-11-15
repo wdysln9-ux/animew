@@ -366,6 +366,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _stretchBaseX = 1.0;
   double? _stretchSnapRatio;
   bool _subtitleGestureActive = false;
+  // Retain the last visible caption only for the duration of an active drag/pinch.
+  // This prevents a timed subtitle fade from disposing the GestureDetector mid-gesture.
+  String _lastSubtitleCaption = '';
   final GlobalKey _playerStackKey = GlobalKey();
   final GlobalKey _subtitleGestureKey = GlobalKey();
   late double _subtitleX =
@@ -4811,7 +4814,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         initialData: _c.player.state.subtitle,
                         builder: (context, snapshot) {
                           final lines = snapshot.data ?? const <String>[];
-                          final caption = lines.where((line) => line.trim().isNotEmpty).join('\n');
+                          final liveCaption = lines
+                              .where((line) => line.trim().isNotEmpty)
+                              .join('\n');
+                          if (liveCaption.isNotEmpty) {
+                            _lastSubtitleCaption = liveCaption;
+                          }
+                          // If the subtitle timer clears its text while the user is
+                          // still dragging, keep the same text hit target mounted.
+                          // Once the gesture ends, an empty live caption disappears
+                          // normally and cannot be grabbed until a caption appears.
+                          final caption = liveCaption.isNotEmpty
+                              ? liveCaption
+                              : (_subtitleGestureActive ? _lastSubtitleCaption : '');
                           if (caption.isEmpty) return const SizedBox.shrink();
                           final prefs = sl<PlaybackPrefs>();
                           return LayoutBuilder(
