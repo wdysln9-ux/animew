@@ -426,7 +426,7 @@ class _ControlsOverlay extends StatelessWidget {
           tooltip: specs[i].$2,
           onTap: specs[i].$3,
           // The last right-side button is flush with the screen edge.
-          rightPadding: i == specs.length - 1 ? 0 : 10,
+          rightPadding: i == specs.length - 1 ? 0 : 7.5,
         ),
     ];
   }
@@ -753,7 +753,7 @@ class _ControlsOverlay extends StatelessWidget {
                               icon: Icons.fast_forward_rounded,
                               tooltip: 'Skip $megaSkipSeconds seconds',
                               onTap: onMegaSkip,
-                              rightPadding: right.isEmpty ? 0 : 10,
+                              rightPadding: right.isEmpty ? 0 : 7.5,
                             ),
                           ...right,
                         ];
