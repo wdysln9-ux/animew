@@ -1926,9 +1926,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onPointerDown(PointerDownEvent e) {
-    // Once a subtitle gesture starts, reserve every additional pointer for it.
-    // This prevents the player's stretch/seek/volume gestures from competing.
+    // Subtitle editing owns touches that begin on the rendered caption.
     if (_subtitleGestureActive || _isInsideSubtitle(e.position)) return;
+    // Two-finger stretch is available only in Fit mode. Leave pointer tracking
+    // untouched in Fill/Stretch so the saved Fit value is preserved.
+    if (_fitIndex != 0) return;
     _pointers[e.pointer] = e.position;
 
     // The moment a second finger lands, cancel any in-progress one-finger
@@ -4160,7 +4162,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       builder: (context, _, _) => Transform.scale(
                         // Stretch horizontally around the centre; the fullscreen
                         // Stack itself extends into the display-cutout area.
-                        scaleX: _stretchX,
+                        scaleX: _fitIndex == 0 ? _stretchX : 1.0,
                         scaleY: 1,
                         child: Video(
                           key: _miniPlayerVideoKey,
