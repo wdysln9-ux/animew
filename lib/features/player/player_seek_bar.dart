@@ -169,12 +169,14 @@ class _SeekRowState extends State<_SeekRow> {
                 ],
                 const Spacer(),
                 if (widget.trailing != null)
-                  Flexible(
-                    fit: FlexFit.loose,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      reverse: true,
-                      child: widget.trailing!,
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        reverse: true,
+                        child: widget.trailing!,
+                      ),
                     ),
                   ),
               ],
