@@ -46,7 +46,7 @@ Future<List<_EpisodeStill>> _loadAllEpisodeStills({
       result.addAll(groups.expand((items) => items));
     }
     return result;
-  });;
+  });
 }
 
 /// Anime detail page: trailer-style expandable header with horizontal episode
