@@ -230,7 +230,7 @@ class _SeekRowState extends State<_SeekRow> {
                                 trackHeight: 3,
                                 // Thumb grows while scrubbing (YouTube-style).
                                 thumbShape: RoundSliderThumbShape(
-                                  enabledThumbRadius: _dragMs != null ? 10 : 0.5,
+                                  enabledThumbRadius: _dragMs != null ? 10 : 9,
                                 ),
                                 overlayShape: const RoundSliderOverlayShape(
                                   overlayRadius: 14,
@@ -248,7 +248,7 @@ class _SeekRowState extends State<_SeekRow> {
                                 // so anything less and half the dot hangs past
                                 // the line the chips above and below sit on.
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
+                                  horizontal: 12,
                                   vertical: 2,
                                 ),
                                 onChangeStart: totalMs <= 0
