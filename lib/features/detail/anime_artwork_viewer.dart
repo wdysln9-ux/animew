@@ -281,6 +281,19 @@ Future<List<({String label, String url})>> _loadLiveChartArtwork(String title) {
   });
 }
 
+// Keep the fully combined artwork list across viewer close/reopen cycles.
+// Source-level caches avoid duplicate requests; this cache also avoids showing
+// the loading state again after all artwork sources have already resolved.
+final Map<String, Future<List<({String label, String url})>>> _additionalArtworkCache = {};
+
+String _additionalArtworkCacheKey({
+  int? anilistId,
+  int? malId,
+  int? tmdbId,
+  required String title,
+  required bool tmdbIsTv,
+}) => 'a:${anilistId ?? 0}:m:${malId ?? 0}:t:${tmdbId ?? 0}:tv:$tmdbIsTv:${title.trim().toLowerCase()}';
+
 final Map<String, Future<List<({String label, String url})>>> _aniZipArtworkCache = {};
 
 Future<List<({String label, String url})>> _loadAniZipArtwork({
@@ -456,28 +469,53 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
     if ((widget.anilistId == null || widget.anilistId! <= 0) &&
         (widget.malId == null || widget.malId! <= 0) &&
         (widget.tmdbId == null || widget.tmdbId! <= 0)) return;
-    setState(() => _loadingAdditionalArtwork = true);
-    // Combine AniZip's typed artwork, MAL's additional pictures, and
-    // LiveChart's public anime visuals page. Each source fails independently.
-    final results = await Future.wait([
-      _loadAniZipArtwork(
-        anilistId: widget.anilistId,
-        malId: widget.malId,
-      ),
-      _loadMyAnimeListArtwork(widget.malId),
-      _loadLiveChartArtwork(widget.title),
-      _loadTmdbPosterArtwork(widget.tmdbId, widget.tmdbIsTv, widget.malId),
-    ]);
-    if (!mounted) return;
-    final existing = widget.images.map((image) => image.url).toSet();
-    final additions = results
-        .expand((images) => images)
-        .where((image) => existing.add(image.url))
-        .toList();
-    setState(() {
-      widget.images.addAll(additions);
-      _loadingAdditionalArtwork = false;
+    final cacheKey = _additionalArtworkCacheKey(
+      anilistId: widget.anilistId,
+      malId: widget.malId,
+      tmdbId: widget.tmdbId,
+      title: widget.title,
+      tmdbIsTv: widget.tmdbIsTv,
+    );
+    // If this anime's artwork has already been resolved in an earlier viewer
+    // session, reuse it immediately without flashing the loading indicator.
+    final alreadyRequested = _additionalArtworkCache.containsKey(cacheKey);
+    if (!alreadyRequested) {
+      setState(() => _loadingAdditionalArtwork = true);
+    }
+    final artworkFuture = _additionalArtworkCache.putIfAbsent(cacheKey, () async {
+      // Combine AniZip's typed artwork, MAL's additional pictures, and
+      // LiveChart's public anime visuals page. Each source fails independently.
+      final results = await Future.wait([
+        _loadAniZipArtwork(
+          anilistId: widget.anilistId,
+          malId: widget.malId,
+        ),
+        _loadMyAnimeListArtwork(widget.malId),
+        _loadLiveChartArtwork(widget.title),
+        _loadTmdbPosterArtwork(widget.tmdbId, widget.tmdbIsTv, widget.malId),
+      ]);
+      final combined = <({String label, String url})>[];
+      final seen = <String>{};
+      for (final image in results.expand((images) => images)) {
+        if (seen.add(image.url)) combined.add(image);
+      }
+      return combined;
     });
+    try {
+      final additions = await artworkFuture;
+      if (!mounted) return;
+      final existing = widget.images.map((image) => image.url).toSet();
+      setState(() {
+        widget.images.addAll(
+          additions.where((image) => existing.add(image.url)),
+        );
+        _loadingAdditionalArtwork = false;
+      });
+    } catch (_) {
+      _additionalArtworkCache.remove(cacheKey);
+      if (!mounted) return;
+      setState(() => _loadingAdditionalArtwork = false);
+    }
   }
 
   @override
@@ -669,7 +707,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       child: Text(
-                        'Memuat artwork AniZip, MyAnimeList & LiveChart…',
+                        'Memuat AniZip',
                         style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ),
