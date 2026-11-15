@@ -224,7 +224,7 @@ class _BarButton extends StatelessWidget {
           customBorder: const CircleBorder(),
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: Icon(icon, color: Colors.white, size: 21),
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
         ),
       ),
@@ -313,8 +313,8 @@ class _AnimatedPlayPause extends StatelessWidget {
           customBorder: const CircleBorder(),
           splashColor: Colors.white.withValues(alpha: 0.18),
           child: SizedBox(
-            width: 52,
-            height: 52,
+            width: 51,
+            height: 51,
             child: Center(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
@@ -421,8 +421,8 @@ class _TransportButton extends StatelessWidget {
             onTap: onTap,
             customBorder: const CircleBorder(),
             child: SizedBox(
-              width: 40,
-              height: 40,
+              width: 51,
+              height: 51,
               child: Center(
                 child: Icon(
                   icon,
