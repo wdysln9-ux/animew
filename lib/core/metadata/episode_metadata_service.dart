@@ -217,17 +217,21 @@ class EpisodeMetadataService {
     final key = '${isTv ? 'tv' : 'movie'}:$resolvedId';
     return _tmdbPosterCache.putIfAbsent(key, () async {
       try {
-        final response = await _dio
-            .get<dynamic>(
-              '$_tmdbBase/${isTv ? 'tv' : 'movie'}/$resolvedId',
-              options: Options(validateStatus: (status) => status != null && status < 500),
-            )
-            .timeout(const Duration(seconds: 8));
-        final path = response.data is Map
-            ? response.data['poster_path']?.toString().trim()
-            : null;
-        if (path == null || path.isEmpty || path == 'null') return null;
-        return 'https://image.tmdb.org/t/p/w500$path';
+        Future<String?> fetchPoster(bool tv) async {
+          final response = await _dio
+              .get<dynamic>(
+                '$_tmdbBase/${tv ? 'tv' : 'movie'}/$resolvedId',
+                options: Options(validateStatus: (status) => status != null && status < 500),
+              )
+              .timeout(const Duration(seconds: 8));
+          final path = response.data is Map
+              ? response.data['poster_path']?.toString().trim()
+              : null;
+          if (path == null || path.isEmpty || path == 'null') return null;
+          return 'https://image.tmdb.org/t/p/w500$path';
+        }
+
+        return await fetchPoster(isTv) ?? await fetchPoster(!isTv);
       } catch (_) {
         _tmdbPosterCache.remove(key);
         return null;
