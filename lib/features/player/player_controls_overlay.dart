@@ -642,7 +642,7 @@ class _ControlsOverlay extends StatelessWidget {
                   if (!compactEpisodePortrait)
                     IconButton(
                     icon: const Icon(
-                      Icons.settings_rounded,
+                      Icons.more_vert_rounded,
                       color: Colors.white,
                     ),
                     tooltip: context.l10n.settingsTooltip,
@@ -774,9 +774,9 @@ class _ControlsOverlay extends StatelessWidget {
                 // both button groups share it, so every edge lines up. Kept wide
                 // so the controls sit clear of the screen edges.
                 padding: EdgeInsets.fromLTRB(
-                  compactEpisodePortrait ? 4 : 44,
+                  compactEpisodePortrait ? 4 : 24,
                   0,
-                  compactEpisodePortrait ? 4 : 44,
+                  compactEpisodePortrait ? 4 : 24,
                   compactEpisodePortrait ? 2 : 14,
                 ),
                 child: Column(
