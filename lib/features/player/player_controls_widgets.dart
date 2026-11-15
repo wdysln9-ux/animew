@@ -223,8 +223,8 @@ class _BarButton extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Icon(icon, color: Colors.white, size: 24),
+            padding: const EdgeInsets.all(9),
+            child: Icon(icon, color: Colors.white, size: 23),
           ),
         ),
       ),
@@ -306,23 +306,33 @@ class _AnimatedPlayPause extends StatelessWidget {
       // Larger disc than the episode arrows so the row keeps its hierarchy —
       // the icon inside is bigger too, so matching discs would have crowded
       // this one while leaving the arrows swimming in theirs.
-      child: _TransportDisc(
-        size: 58,
-        onTap: onTap,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          transitionBuilder: (child, anim) => FadeTransition(
-            opacity: anim,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.72, end: 1).animate(anim),
-              child: child,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          splashColor: Colors.white.withValues(alpha: 0.18),
+          child: SizedBox(
+            width: 58,
+            height: 58,
+            child: Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: 0.82, end: 1).animate(anim),
+                    child: child,
+                  ),
+                ),
+                child: Icon(
+                  playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  key: ValueKey<bool>(playing),
+                  color: Colors.white,
+                  size: 44,
+                ),
+              ),
             ),
-          ),
-          child: Icon(
-            playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-            key: ValueKey<bool>(playing),
-            color: Colors.white,
-            size: 34,
           ),
         ),
       ),
@@ -405,14 +415,22 @@ class _TransportButton extends StatelessWidget {
       label: label,
       child: IgnorePointer(
         ignoring: !enabled,
-        child: _TransportDisc(
-          size: 46,
-          dimmed: !enabled,
-          onTap: onTap,
-          child: Icon(
-            icon,
-            color: Colors.white.withValues(alpha: enabled ? 1 : 0.28),
-            size: 26,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: SizedBox(
+              width: 46,
+              height: 46,
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: Colors.white.withValues(alpha: enabled ? 0.9 : 0.28),
+                  size: 32,
+                ),
+              ),
+            ),
           ),
         ),
       ),
