@@ -2102,6 +2102,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         maxHeight: 340,
         child: _SheetColumn(
           header: 'Setelan',
+          compactDialog: true,
           children: [
           _QuickSettingRow(
             icon: Icons.tune_rounded,
