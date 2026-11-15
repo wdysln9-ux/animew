@@ -203,14 +203,23 @@ class EpisodeMetadataService {
   final Map<String, Future<String?>> _tmdbPosterCache = {};
 
   /// Resolve the official TMDB portrait poster for an anime/TV title or movie.
-  Future<String?> tmdbPosterUrl(int tmdbId, {required bool isTv}) {
-    if (tmdbId <= 0) return Future.value(null);
-    final key = '${isTv ? 'tv' : 'movie'}:$tmdbId';
+  Future<String?> tmdbPosterUrl(
+    int? tmdbId, {
+    required bool isTv,
+    int? malId,
+  }) async {
+    var resolvedId = tmdbId;
+    if ((resolvedId == null || resolvedId <= 0) && malId != null && malId > 0) {
+      final payload = await _readDisk('a:$malId') ?? await _fetchAniZipPayload(malId);
+      resolvedId = parseAniZipTmdbId(payload);
+    }
+    if (resolvedId == null || resolvedId <= 0) return null;
+    final key = '${isTv ? 'tv' : 'movie'}:$resolvedId';
     return _tmdbPosterCache.putIfAbsent(key, () async {
       try {
         final response = await _dio
             .get<dynamic>(
-              '$_tmdbBase/${isTv ? 'tv' : 'movie'}/$tmdbId',
+              '$_tmdbBase/${isTv ? 'tv' : 'movie'}/$resolvedId',
               options: Options(validateStatus: (status) => status != null && status < 500),
             )
             .timeout(const Duration(seconds: 8));
