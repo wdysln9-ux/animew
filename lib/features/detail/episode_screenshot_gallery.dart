@@ -23,24 +23,30 @@ Future<List<_EpisodeStill>> _loadAllEpisodeStills({
 }) {
   final key = '${malId ?? 0}:${tmdbId ?? 0}:${episodes.length}:${episodes.map((e) => '${e.season ?? 0}-${e.number?.round() ?? 0}').join(',')}';
   return _allEpisodeStillCache.putIfAbsent(key, () async {
-    final groups = await Future.wait([
-      for (final episode in episodes)
-        () async {
-          final number = episode.number?.round();
-          if (number == null || number <= 0) return <_EpisodeStill>[];
-          final urls = await sl<EpisodeMetadataService>().episodeScreenshots(
-            malId: malId,
-            tmdbId: tmdbId,
-            season: episode.season,
-            episodeNumber: number,
-          );
-          return [
-            for (final url in urls) (episode: number, url: url),
-          ];
-        }(),
-    ]);
-    return groups.expand((items) => items).toList(growable: false);
-  });
+    final result = <_EpisodeStill>[];
+    // Keep the request fan-out bounded for long-running series.
+    for (var start = 0; start < episodes.length; start += 8) {
+      final batch = episodes.skip(start).take(8);
+      final groups = await Future.wait([
+        for (final episode in batch)
+          () async {
+            final number = episode.number?.round();
+            if (number == null || number <= 0) return <_EpisodeStill>[];
+            final urls = await sl<EpisodeMetadataService>().episodeScreenshots(
+              malId: malId,
+              tmdbId: tmdbId,
+              season: episode.season,
+              episodeNumber: number,
+            );
+            return [
+              for (final url in urls) (episode: number, url: url),
+            ];
+          }(),
+      ]);
+      result.addAll(groups.expand((items) => items));
+    }
+    return result;
+  });;
 }
 
 /// Anime detail page: trailer-style expandable header with horizontal episode
