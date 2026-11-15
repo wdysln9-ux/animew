@@ -149,8 +149,8 @@ class _RoundIconButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Icon(icon, color: Colors.white, size: 24),
+            padding: const EdgeInsets.all(10),
+            child: Icon(icon, color: Colors.white, size: 25),
           ),
         ),
       ),
@@ -199,15 +199,7 @@ class _BarGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black.withValues(alpha: 0.3),
-      borderRadius: BorderRadius.circular(26),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Row(mainAxisSize: MainAxisSize.min, children: children),
-      ),
-    );
+    return Row(mainAxisSize: MainAxisSize.min, children: children);
   }
 }
 
