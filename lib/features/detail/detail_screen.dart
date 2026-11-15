@@ -2627,7 +2627,7 @@ class _DetailViewState extends State<_DetailView> {
               episodes: eps,
               malId: detail.malId ?? widget.item.malId,
               tmdbId: detail.tmdbId ?? widget.item.tmdbId,
-              tmdbIsTv: detail.tmdbIsTv,
+              tmdbIsTv: detail.tmdbIsTv || detail.type == ProviderType.anime,
             ),
           ),
         if (!isReading)
