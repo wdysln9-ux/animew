@@ -3976,7 +3976,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
     // each Tooltip: the top bar's stock IconButtons build their own from the
     // `tooltip:` property, so per-widget styling would leave those on Material's
     // default grey while ours were dark. Theming the whole subtree catches both.
-    final scaffold = TooltipTheme(
+    final scaffold = Theme(
+      // Disable Material ink feedback only inside the player route. This
+      // removes splash/ripple and pressed highlight from every Material button
+      // in the player (including sheets and stock IconButtons) without
+      // changing buttons elsewhere in the app.
+      data: Theme.of(context).copyWith(
+        splashFactory: NoSplash.splashFactory,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        focusColor: Colors.transparent,
+      ),
+      child: TooltipTheme(
       data: TooltipThemeData(
         decoration: BoxDecoration(
           // Same family as the control chips, just opaque enough to stay
@@ -4999,6 +5011,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             );
           },
         ),
+      ),
       ),
     );
     // On TV: wrap with a PopScope so the first Back press hides the bar
