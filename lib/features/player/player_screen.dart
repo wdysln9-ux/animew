@@ -5058,10 +5058,6 @@ class _SubtitleCenterGuidesPainter extends CustomPainter {
       canvas.drawLine(Offset(0, size.height / 2),
           Offset(size.width, size.height / 2), paint);
     }
-    if (vertical || horizontal) {
-      paint.strokeWidth = 2;
-      canvas.drawCircle(Offset(size.width / 2, size.height / 2), 5, paint);
-    }
   }
 
   @override
