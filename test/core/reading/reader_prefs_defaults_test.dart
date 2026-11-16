@@ -27,6 +27,7 @@ void main() {
       expect(p.cropBorders, isFalse);
       expect(p.webtoonPageGap, 0);
       expect(p.colorFilter, 'none');
+      expect(p.showPageCounter, isTrue);
     });
 
     test('shared comfort defaults', () async {
