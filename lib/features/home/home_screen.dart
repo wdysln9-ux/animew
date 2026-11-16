@@ -180,6 +180,7 @@ class _HomeViewState extends State<_HomeView>
     sl<AniListService>().addListener(_onAniListNotificationChanged);
     _sourceCatalogueSelection = HomeCataloguePrefs.sourceSelection;
     HomeCustomCatalogPrefs.revision.addListener(_reloadCustomCatalogues);
+    ZModePrefs.revision.addListener(_reloadCustomCatalogues);
     _reloadCustomCatalogues();
     _sourceCatalogueSelection.addListener(_onSourceCatalogueSelectionChanged);
     _sourceCatalogueModeSubscription = sl<ContentModeCubit>().stream.listen((
@@ -250,6 +251,7 @@ class _HomeViewState extends State<_HomeView>
       _onSourceCatalogueSelectionChanged,
     );
     HomeCustomCatalogPrefs.revision.removeListener(_reloadCustomCatalogues);
+    ZModePrefs.revision.removeListener(_reloadCustomCatalogues);
     _slashCtrl.dispose();
     ThemeController.revision.removeListener(_onThemeRevision);
     _heroTint.dispose();
