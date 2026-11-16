@@ -15,7 +15,7 @@ Widget imageFadeIn(
   if (wasSynchronouslyLoaded) return child;
   return AnimatedOpacity(
     opacity: frame == null ? 0 : 1,
-    duration: const Duration(milliseconds: 250),
+    duration: const Duration(milliseconds: 90),
     curve: Curves.easeOut,
     child: child,
   );
