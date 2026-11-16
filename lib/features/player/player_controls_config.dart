@@ -28,6 +28,7 @@ class PlayerControl {
 /// other controls, but remains on the top bar by default.
 const List<PlayerControl> kPlayerControls = [
   PlayerControl('speed', 'Speed', Icons.speed_rounded),
+  PlayerControl('boost', 'Boost Audio', Icons.volume_up_rounded),
   PlayerControl('tracks', 'Audio & subs', Icons.subtitles_rounded),
   PlayerControl('quality', 'Quality', Icons.high_quality_rounded),
   PlayerControl('sources', 'Sources', Icons.layers_rounded),
@@ -101,7 +102,7 @@ class PlayerControlsConfig {
     'sources',
     'more',
   ];
-  static const List<String> defaultRight = ['episodes', 'rotate', 'fit'];
+  static const List<String> defaultRight = ['episodes', 'rotate', 'fit', 'boost'];
 
   static const PlayerControlsConfig defaults = PlayerControlsConfig(
     top: defaultTop,
