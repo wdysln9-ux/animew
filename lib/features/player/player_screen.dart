@@ -2094,14 +2094,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final normalizedTitle = title.toLowerCase();
     final language = (track.language ?? '').trim().toLowerCase();
     if (id == 'no') return 'Mati';
-    if (normalizedTitle.contains('translated') || id.contains('translated_')) {
+    if (normalizedTitle.contains('translated') || id.contains('translated')) {
       return 'Indonesia (translated)';
     }
-    if (language == 'en' || language == 'eng' || language.startsWith('en-') ||
+    if (language == 'en' || language == 'eng' || language == 'english' || language.startsWith('en-') ||
         normalizedTitle.contains('english') || normalizedTitle == 'eng') {
       return 'Inggris';
     }
-    if (language == 'id' || language == 'ind' || language.startsWith('id-') ||
+    if (language == 'id' || language == 'ind' || language == 'indonesian' || language.startsWith('id-') ||
         normalizedTitle == 'indonesian' || normalizedTitle == 'bahasa indonesia') {
       return 'Indonesia';
     }
@@ -2135,8 +2135,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     var autoSkipOpEd = prefs.autoSkipOp && prefs.autoSkipEd;
     var autoplayNext = prefs.autoplayNext;
     var cinematicLighting = _cinematicLighting;
-    var boostEnabled = prefs.volumeBoostEnabled;
-    var boostPercent = prefs.volumeBoost;
+    final boostEnabled = prefs.volumeBoostEnabled;
+    final boostPercent = prefs.volumeBoost;
     showDialog<void>(
       context: context,
       barrierDismissible: true,
