@@ -27,6 +27,7 @@ import '../../core/tracker/tracker_hub.dart';
 import '../../core/playback/external_player.dart';
 import '../../core/logging/app_logger.dart';
 import 'phone_playback_launch.dart';
+import 'player_engine_fallback.dart';
 import '../../core/playback/playback_prefs.dart';
 import 'subtitle_style.dart';
 import 'subtitle_font_service.dart';
@@ -162,6 +163,12 @@ class PlayerScreen extends StatefulWidget {
     this.resumePosition = Duration.zero,
     this.history,
     this.showTitle,
+    this.showDescription,
+    this.downloadShowId,
+    this.isMovie,
+    this.engineFallback,
+    this.onEngineChange,
+    this.engineRecovery = false,
     this.cover,
     this.coverHeaders,
     this.showUrl,
@@ -186,6 +193,11 @@ class PlayerScreen extends StatefulWidget {
   /// of the adaptive default. One-shot: the cubit clears it after the first
   /// episode so nothing later is affected.
   final VideoSource? initialSource;
+  final PlayerEngineFallback? engineFallback;
+  final void Function(PlaybackEngine, PhonePlaybackFailure, Future<void>)? onEngineChange;
+  final bool engineRecovery;
+  final bool? isMovie;
+  final String? downloadShowId;
 
   /// Start in a portrait episode page with the live player above its metadata.
   /// The same PlayerCubit and VideoController remain mounted when going fullscreen.
@@ -252,6 +264,7 @@ class PlayerScreen extends StatefulWidget {
   // Optional show-context threaded into history (Continue Watching feed).
   final WatchHistory? history;
   final String? showTitle;
+  final String? showDescription;
   final String? cover;
   final Map<String, String>? coverHeaders;
   final String? showUrl;
@@ -285,7 +298,101 @@ class PlayerScreen extends StatefulWidget {
   final String? joinRoomCode;
 
   @override
-  State<PlayerScreen> createState() => _PlayerScreenState();
+  // The host keeps the route stable while switching between the Flutter/mpv
+  // player and the Android native player after a playback failure.
+  // ignore: no_logic_in_create_state
+  State<PlayerScreen> createState() {
+    final preferred = stremioPlayerPackage(
+      sourceId,
+      initialSource,
+      playerOverride ?? sl<PlaybackPrefs>().externalPlayerPackage,
+    );
+    if (engineFallback == null &&
+        Platform.isAndroid &&
+        !sl<AppMode>().isTv &&
+        sl<PlaybackPrefs>().autoPlayerFallback &&
+        (preferred.isEmpty || preferred == PlaybackPrefs.androidPlayerId)) {
+      return _PlayerEngineHostState();
+    }
+    return _PlayerScreenState();
+  }
+}
+
+class _PlayerEngineHostState extends State<PlayerScreen> {
+  final _fallback = PlayerEngineFallback();
+  PhonePlaybackFailure? _failure;
+  PlaybackEngine? _engine;
+  int _generation = 0;
+  bool _changing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_changing) return const SizedBox.shrink();
+    final failure = _failure;
+    return PlayerScreen(
+      key: ValueKey(_generation),
+      sourceId: widget.sourceId,
+      resume: widget.resume,
+      resolveSources: widget.resolveSources,
+      resolveDownloadedSources: widget.resolveDownloadedSources,
+      localOnly: widget.localOnly,
+      pollSources: widget.pollSources,
+      episodes: failure?.episodes ?? widget.episodes,
+      startIndex: failure?.index ?? widget.startIndex,
+      episodesResolver: failure == null ? widget.episodesResolver : null,
+      resumeEpisodeId: failure == null ? widget.resumeEpisodeId : null,
+      resumeEpisodeNumber: failure == null ? widget.resumeEpisodeNumber : null,
+      resumePosition: failure?.position ?? widget.resumePosition,
+      history: widget.history,
+      showTitle: widget.showTitle,
+      showDescription: widget.showDescription,
+      downloadShowId: widget.downloadShowId,
+      isMovie: widget.isMovie,
+      cover: widget.cover,
+      coverHeaders: widget.coverHeaders,
+      showUrl: widget.showUrl,
+      category: failure?.category ?? widget.category,
+      malId: widget.malId,
+      scrobbleTitle: widget.scrobbleTitle,
+      tmdbId: widget.tmdbId,
+      tmdbIsTv: widget.tmdbIsTv,
+      imdbId: widget.imdbId,
+      peek: widget.peek,
+      availableCategories: widget.availableCategories,
+      joinRoomCode: widget.joinRoomCode,
+      playerOverride: _engine == null
+          ? widget.playerOverride
+          : _engine == PlaybackEngine.mpv
+              ? ''
+              : PlaybackPrefs.androidPlayerId,
+      initialSource: failure == null
+          ? widget.initialSource
+          : _fallback.blockedUrls(
+              failure.episodes[failure.index].url,
+              failure.category,
+            ).contains(failure.source.url)
+              ? null
+              : failure.source,
+      engineFallback: _fallback,
+      engineRecovery: failure != null,
+      onEngineChange: (engine, request, teardown) async {
+        if (!mounted || _changing) return;
+        setState(() => _changing = true);
+        await teardown;
+        if (!mounted) return;
+        setState(() {
+          _engine = engine;
+          _failure = request;
+          _generation++;
+          _changing = false;
+        });
+      },
+      episodeDetailMode: widget.episodeDetailMode,
+      onDownloadEpisode: widget.onDownloadEpisode,
+      onSaveToFolder: widget.onSaveToFolder,
+      backgroundRoute: widget.backgroundRoute,
+    );
+  }
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
