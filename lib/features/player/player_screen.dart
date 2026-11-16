@@ -2097,12 +2097,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (normalizedTitle.contains('translated') || id.contains('translated')) {
       return 'Indonesia (translated)';
     }
-    if (language == 'en' || language == 'eng' || language == 'english' || language.startsWith('en-') ||
-        normalizedTitle.contains('english') || normalizedTitle == 'eng') {
+    if (language == 'en' || language == 'eng' || language == 'english' ||
+        language.startsWith('en-') || normalizedTitle.contains('english') ||
+        normalizedTitle == 'eng') {
       return 'Inggris';
     }
-    if (language == 'id' || language == 'ind' || language == 'indonesian' || language.startsWith('id-') ||
-        normalizedTitle == 'indonesian' || normalizedTitle == 'bahasa indonesia') {
+    if (language == 'id' || language == 'ind' || language == 'indonesian' ||
+        language.startsWith('id-') || normalizedTitle == 'indonesian' ||
+        normalizedTitle == 'bahasa indonesia') {
       return 'Indonesia';
     }
     for (final sub in _c.softSubs) {
@@ -2110,7 +2112,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         final label = (sub.label ?? '').trim();
         final lang = sub.lang.trim().toLowerCase();
         if (label.toLowerCase().contains('translated')) return 'Indonesia (translated)';
-        if (lang == 'en' || lang.startsWith('en-') ||
+        if (lang == 'en' || lang == 'english' || lang.startsWith('en-') ||
             label.toLowerCase().contains('english')) return 'Inggris';
         return label.isNotEmpty ? label : sub.lang;
       }
@@ -2130,7 +2132,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
             ? '${_c.player.state.height}p'
             : 'Otomatis');
     final subtitleTrack = _c.activeSubtitleTrack;
-    final hasSubtitles = _c.mediaSubtitleTracks.isNotEmpty || _c.softSubs.isNotEmpty;
+    final hasSubtitles =
+        _c.mediaSubtitleTracks.isNotEmpty || _c.softSubs.isNotEmpty;
     final subtitleValue = _quickSubtitleLabel(subtitleTrack);
     var autoSkipOpEd = prefs.autoSkipOp && prefs.autoSkipEd;
     var autoplayNext = prefs.autoplayNext;
@@ -2237,7 +2240,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 },
               ),
               _QuickSettingRow(
-                icon: Icons.summarize_rounded,
+                icon: Icons.subject_rounded,
                 label: 'Ringkasan Episode',
                 onTap: () {
                   Navigator.pop(dialogContext);
