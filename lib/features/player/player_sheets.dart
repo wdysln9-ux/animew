@@ -594,7 +594,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
 
   Future<void> _reset() => _apply(() async {
     await p.setSubtitleFont('');
-    await p.setSubtitleScale(0.78125);
+    await p.setSubtitleScale(1.0);
     await p.setSubtitleFontWeight(400);
     await p.setSubtitleItalic(false);
     await p.setSubtitleJustification('center');
@@ -603,9 +603,9 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
     await p.setSubtitleOutlineType('soft');
     await p.setSubtitleOutlineColorHex('#000000FF');
     await p.setSubtitleShadowAngle(45);
-    await p.setSubtitleShadowWidth(2.5);
+    await p.setSubtitleShadowWidth(0.0);
     await p.setSubtitleShadowDistance(2.5);
-    await p.setSubtitleShadowBlur(0);
+    await p.setSubtitleShadowBlur(2.5);
     await p.setSubtitleShadowColorHex('#000000FF');
     await p.setSubtitleBgOpacity(0);
     await p.setSubtitleTextOpacity(1);
