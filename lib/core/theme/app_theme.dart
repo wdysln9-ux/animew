@@ -34,5 +34,32 @@ ThemeData buildAppTheme() {
       thickness: 0.5,
       space: 0.5,
     ),
+    // Keep every Material switch consistent across the app. The OFF state
+    // uses a subdued tint of the selected theme colour instead of white.
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return AppColors.textTertiary.withValues(alpha: 0.45);
+        }
+        if (states.contains(WidgetState.selected)) return AppColors.bg;
+        return AppColors.accent.withValues(alpha: 0.58);
+      }),
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return AppColors.surface2.withValues(alpha: 0.55);
+        }
+        if (states.contains(WidgetState.selected)) return AppColors.accent;
+        return AppColors.surface2;
+      }),
+      trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return AppColors.textTertiary.withValues(alpha: 0.22);
+        }
+        if (states.contains(WidgetState.selected)) {
+          return AppColors.accent.withValues(alpha: 0.90);
+        }
+        return AppColors.accent.withValues(alpha: 0.34);
+      }),
+    ),
   );
 }
