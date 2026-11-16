@@ -1055,7 +1055,8 @@ class _MyListViewState extends State<_MyListView> with WidgetsBindingObserver {
         final entry = entries[i];
         return RevealItem(
           index: i,
-          child: PosterCard(
+          cacheKey: '${entry.item.sourceId}:${entry.item.id}',
+child: PosterCard(
             title: entry.item.title,
             logoItem: entry.item,
             imageUrl: entry.item.cover,
@@ -1634,7 +1635,8 @@ class _MyListViewState extends State<_MyListView> with WidgetsBindingObserver {
             final entry = shown[i];
             return RevealItem(
               index: i,
-              child: PosterCard(
+              cacheKey: '${entry.item.sourceId}:${entry.item.id}',
+child: PosterCard(
                 title: entry.item.title,
                 logoItem: entry.item,
                 imageUrl: entry.item.cover,
