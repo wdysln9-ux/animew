@@ -431,6 +431,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (items.isEmpty) return const SizedBox(height: 8);
     return Column(children: [
       SizedBox(height: 178, child: PageView.builder(controller: _heroController,
+        physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
         onPageChanged: (i) => setState(() => _heroIndex = i % items.length),
         itemBuilder: (_, page) {
           final i = page % items.length;
@@ -499,6 +500,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         itemCount: list.length,
         separatorBuilder: (_, _) => const SizedBox(width: 9),
         itemBuilder: (_, i) {
