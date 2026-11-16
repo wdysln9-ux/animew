@@ -51,6 +51,33 @@ enum HeroTransition {
   posterStack,
 }
 
+/// Lets a quick, deliberate fling skip multiple carousel cards instead
+/// of snapping to only the immediately adjacent page.
+class FastFlingPageScrollPhysics extends PageScrollPhysics {
+  const FastFlingPageScrollPhysics({super.parent});
+
+  @override
+  double getTargetPixels(
+    ScrollMetrics position,
+    Tolerance tolerance,
+    double velocity,
+  ) {
+    final viewport = position.viewportDimension;
+    if (viewport <= 0 || velocity.abs() < tolerance.velocity) {
+      return super.getTargetPixels(position, tolerance, velocity);
+    }
+    final currentPage = (position.pixels / viewport).round();
+    final pages = ((velocity.abs() - tolerance.velocity) / 1600)
+        .floor()
+        .clamp(1, 4);
+    final targetPage = currentPage + (velocity.isNegative ? -pages : pages);
+    return (targetPage * viewport)
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+  }
+}
+
+
 /// Auto-rotating, infinitely-looping hero carousel (up to 6 trending items).
 ///
 /// - Swipeable via [PageView]; auto-advances every 5 s.
@@ -309,7 +336,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     if (widget.style == HeroTransition.posterStack) {
       return PageView.builder(
         controller: _pc,
-        physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: const FastFlingPageScrollPhysics(parent: BouncingScrollPhysics()),
         padEnds: true,
         clipBehavior: Clip.none,
         onPageChanged: (i) {
@@ -340,12 +367,13 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
         behavior: HitTestBehavior.opaque,
         onHorizontalDragEnd: (d) {
           final v = d.primaryVelocity ?? 0;
+          final pages = (v.abs() / 1600).ceil().clamp(1, 4);
           if (v < -80) {
-            setState(() => _index++);
+            setState(() => _index += pages);
             _syncActiveTint();
             _startTimer();
           } else if (v > 80) {
-            setState(() => _index--);
+            setState(() => _index -= pages);
             _syncActiveTint();
             _startTimer();
           }
