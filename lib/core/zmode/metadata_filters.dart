@@ -26,6 +26,7 @@ class MetaFilters {
     this.format,
     this.status,
     this.countryOfOrigin,
+    this.countries = const [],
     this.sort = MetaSort.popularity,
     this.sortAscending = false,
     this.minScore,
@@ -58,6 +59,8 @@ class MetaFilters {
   final MetaStatus? status;
   /// AniList country-of-origin filter (JP, CN, KR, TW).
   final MetaCountry? countryOfOrigin;
+  /// Multiple AniList countries; queries are unioned across selected values.
+  final List<MetaCountry> countries;
   final MetaSort sort;
   final bool sortAscending;
 
@@ -88,6 +91,7 @@ class MetaFilters {
       format == null &&
       status == null &&
       countryOfOrigin == null &&
+      countries.isEmpty &&
       minScore == null &&
       !adult &&
       sort == MetaSort.popularity &&
@@ -118,6 +122,7 @@ class MetaFilters {
       format != null ||
       status != null ||
       countryOfOrigin != null ||
+      countries.isNotEmpty ||
       minScore != null ||
       sort != MetaSort.popularity;
 
@@ -138,6 +143,7 @@ class MetaFilters {
     MetaFormat? format,
     MetaStatus? status,
     MetaCountry? countryOfOrigin,
+    List<MetaCountry>? countries,
     MetaSort? sort,
     bool? sortAscending,
     int? minScore,
@@ -165,6 +171,7 @@ class MetaFilters {
     format: clearFormat ? null : (format ?? this.format),
     status: clearStatus ? null : (status ?? this.status),
     countryOfOrigin: clearCountryOfOrigin ? null : (countryOfOrigin ?? this.countryOfOrigin),
+    countries: clearCountryOfOrigin ? const [] : (countries ?? this.countries),
     sort: sort ?? this.sort,
     sortAscending: sortAscending ?? this.sortAscending,
     minScore: clearScore ? null : (minScore ?? this.minScore),
@@ -191,6 +198,7 @@ class MetaFilters {
     if (format != null) 'f': format!.name,
     if (status != null) 'st': status!.name,
     if (countryOfOrigin != null) 'co': countryOfOrigin!.name,
+    if (countries.isNotEmpty) 'cos': countries.map((v) => v.name).toList(),
     if (minScore != null) 'ms': minScore,
     if (adult) 'a': true,
     'so': sort.name,
@@ -220,6 +228,7 @@ class MetaFilters {
         format: pick(MetaFormat.values, m['f'] as String?),
         status: pick(MetaStatus.values, m['st'] as String?),
         countryOfOrigin: pick(MetaCountry.values, m['co'] as String?),
+        countries: [for (final v in (m['cos'] as List? ?? [])) ...MetaCountry.values.where((e) => e.name == v)],
         minScore: m['ms'] as int?,
         adult: m['a'] == true,
         sort: pick(MetaSort.values, m['so'] as String?) ?? MetaSort.popularity,
