@@ -1807,16 +1807,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
         _dragValue = 0.5;
       }
     } else {
-      // CloudStream-style: the 0–200% slider maps 0–100% to the REAL system
-      // volume and 100–200% to mpv's software boost. Seed from whichever is
-      // active so the drag continues from the current level (1.0 = 200%).
-      final boost =
-          sl<PlaybackPrefs>().volumeBoost; // 100..200 (100 = no boost)
-      final double combined = boost > 100
-          ? boost /
-                100.0 // boosted → 1..2
-          : (await FlutterVolumeController.getVolume()) ?? 0.5; // system → 0..1
-      _dragValue = (combined / 2).clamp(0.0, 1.0);
+      // The right-side volume gesture controls Android system volume only.
+      // Audio boost is adjusted separately from the player's Audio Boost panel.
+      _dragValue = (await FlutterVolumeController.getVolume()) ?? 0.5;
     }
   }
 
@@ -1830,22 +1823,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
           .setApplicationScreenBrightness(_dragValue)
           .catchError((_) {});
     } else {
-      // 0–200% slider: 0–100% drives the REAL system volume; >100% pins the
-      // system at max and adds mpv's software gain (CloudStream's model).
-      final combined = (_dragValue * 2).clamp(0.0, 2.0); // 0..2
-      FlutterVolumeController.setVolume(combined.clamp(0.0, 1.0));
-      final boost = combined <= 1.0 ? 100 : (combined * 100).round();
-      final boostEnabled = boost > 100;
-      final prefs = sl<PlaybackPrefs>();
-      if (boost != prefs.volumeBoost || boostEnabled != prefs.volumeBoostEnabled) {
-        _c.setVolumeBoost(boost, enabled: boostEnabled);
-      }
+      FlutterVolumeController.setVolume(_dragValue.clamp(0.0, 1.0));
     }
     // Haptic tick when the value crosses a landmark (min / system-max / boost).
-    final pct = ((_dragIsBrightness ? 1 : 2) * _dragValue * 100).round();
+    final pct = (_dragValue * 100).round();
     if (_lastHudPct >= 0) {
       for (final b
-          in (_dragIsBrightness ? const [0, 100] : const [0, 100, 200])) {
+          in const [0, 50, 100]) {
         if ((_lastHudPct - b) * (pct - b) <= 0 && _lastHudPct != pct) {
           HapticFeedback.selectionClick();
           break;
