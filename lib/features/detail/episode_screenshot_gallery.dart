@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../../core/di/injector.dart';
 import '../../core/metadata/episode_metadata_service.dart';
 import '../../core/models/episode.dart';
+import '../../core/playback/playback_prefs.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 
@@ -70,7 +72,7 @@ class EpisodeGallerySection extends StatefulWidget {
 }
 
 class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
-  bool _expanded = false;
+  bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('animeGallery');
   int _selectedEpisode = -1; // Default = Semua episode.
 
   @override
@@ -105,7 +107,11 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
           children: [
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _expanded = !_expanded),
+              onTap: () {
+                final expanded = !_expanded;
+                setState(() => _expanded = expanded);
+                unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('animeGallery', expanded));
+              },
               child: Row(
                 children: [
                   Text('Gallery', style: AppText.headline.copyWith(fontSize: 16)),
@@ -245,7 +251,7 @@ class EpisodeScreenshotGallery extends StatefulWidget {
 }
 
 class _EpisodeScreenshotGalleryState extends State<EpisodeScreenshotGallery> {
-  bool _expanded = false;
+  bool _expanded = sl<PlaybackPrefs>().detailSectionExpanded('episodeGallery');
 
   @override
   Widget build(BuildContext context) {
@@ -265,7 +271,11 @@ class _EpisodeScreenshotGalleryState extends State<EpisodeScreenshotGallery> {
           children: [
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _expanded = !_expanded),
+              onTap: () {
+                final expanded = !_expanded;
+                setState(() => _expanded = expanded);
+                unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('episodeGallery', expanded));
+              },
               child: Padding(
                 padding: const EdgeInsets.only(right: 16),
                 child: Row(
