@@ -1963,7 +1963,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _subtitleScaleStartSize = 1.0;
 
   void _onSubtitleScaleStart(ScaleStartDetails details) {
-    if (sl<PlaybackPrefs>().subtitlePositionLocked) return;
+    if (_c.activeSubtitleFileExtension != '.srt' ||
+        sl<PlaybackPrefs>().subtitlePositionLocked) return;
     setState(() => _subtitleGestureActive = true);
     _subtitleScaleStartFocal = details.focalPoint;
     _subtitleScaleStartX = _subtitleX;
@@ -1972,7 +1973,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onSubtitleScaleUpdate(ScaleUpdateDetails details) {
-    if (sl<PlaybackPrefs>().subtitlePositionLocked) return;
+    if (_c.activeSubtitleFileExtension != '.srt' ||
+        sl<PlaybackPrefs>().subtitlePositionLocked) return;
     final object = _playerStackKey.currentContext?.findRenderObject();
     if (object is! RenderBox || !object.hasSize) return;
     final local = object.globalToLocal(details.focalPoint);
@@ -4661,11 +4663,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               : (_subtitleGestureActive ? _lastSubtitleCaption : '');
                           if (caption.isEmpty) return const SizedBox.shrink();
                           final prefs = sl<PlaybackPrefs>();
+                           final canEditSubtitle =
+                               _c.activeSubtitleFileExtension == '.srt';
                           return LayoutBuilder(
                             builder: (context, constraints) {
                               final subtitle = Transform.scale(
                                 key: _subtitleTextKey,
-                                scale: _subtitleSize,
+                                scale: canEditSubtitle ? _subtitleSize : 1.0,
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(
                                     maxWidth: constraints.maxWidth * 0.9,
@@ -4687,35 +4691,37 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   ),
                                 ),
                               );
-                              return GestureDetector(
-                                key: _subtitleGestureKey,
-                                // The detector spans the screen, but deferToChild
-                                // means it is initially touchable only on the text.
-                                // After the first subtitle touch, the transparent
-                                // full-screen child expands the hit area for pinch.
-                                behavior: HitTestBehavior.deferToChild,
-                                onScaleStart: _onSubtitleScaleStart,
-                                onScaleUpdate: _onSubtitleScaleUpdate,
-                                onScaleEnd: _onSubtitleScaleEnd,
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    if (_subtitleGestureActive)
-                                      const Positioned.fill(
-                                        child: ColoredBox(
-                                          color: Colors.transparent,
-                                        ),
-                                      ),
-                                    Align(
-                                      alignment: Alignment(
-                                        _subtitleX * 2 - 1,
-                                        _subtitleY * 2 - 1,
-                                      ),
-                                      child: subtitle,
-                                    ),
-                                  ],
-                                ),
-                              );
+                               final alignedSubtitle = Align(
+                                 alignment: canEditSubtitle
+                                     ? Alignment(
+                                         _subtitleX * 2 - 1,
+                                         _subtitleY * 2 - 1,
+                                       )
+                                     : const Alignment(0, 0.76),
+                                 child: subtitle,
+                               );
+                               if (!canEditSubtitle) return alignedSubtitle;
+                               return GestureDetector(
+                                 key: _subtitleGestureKey,
+                                 // Only confirmed SRT captions support freeform
+                                 // drag and pinch. ASS/SSA retain authored layout.
+                                 behavior: HitTestBehavior.deferToChild,
+                                 onScaleStart: _onSubtitleScaleStart,
+                                 onScaleUpdate: _onSubtitleScaleUpdate,
+                                 onScaleEnd: _onSubtitleScaleEnd,
+                                 child: Stack(
+                                   fit: StackFit.expand,
+                                   children: [
+                                     if (_subtitleGestureActive)
+                                       const Positioned.fill(
+                                         child: ColoredBox(
+                                           color: Colors.transparent,
+                                         ),
+                                       ),
+                                     alignedSubtitle,
+                                   ],
+                                 ),
+                               );
                             },
                           );
                         },
