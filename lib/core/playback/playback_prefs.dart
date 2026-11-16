@@ -1077,7 +1077,7 @@ class PlaybackPrefs {
 
   /// Subtitle shadow offset distance in pixels (0–20).
   double get subtitleShadowDistance =>
-      (_box.get('subtitleShadowDistance', defaultValue: 2.0) as num)
+      (_box.get('subtitleShadowDistance', defaultValue: 2.5) as num)
           .toDouble()
           .clamp(0.0, 20.0);
   Future<void> setSubtitleShadowDistance(double value) =>
@@ -1085,7 +1085,7 @@ class PlaybackPrefs {
 
   /// Subtitle shadow blur radius in pixels (0–20).
   double get subtitleShadowBlur =>
-      (_box.get('subtitleShadowBlur', defaultValue: 2.0) as num)
+      (_box.get('subtitleShadowBlur', defaultValue: 2.5) as num)
           .toDouble()
           .clamp(0.0, 20.0);
   Future<void> setSubtitleShadowBlur(double value) =>
@@ -1107,7 +1107,7 @@ class PlaybackPrefs {
 
   /// Subtitle outline thickness (0–8). 0 = no outline.
   double get subtitleOutlineWidth =>
-      (_box.get('subtitleOutlineWidth', defaultValue: 2.0) as num)
+      (_box.get('subtitleOutlineWidth', defaultValue: 2.5) as num)
           .toDouble()
           .clamp(0.0, 8.0);
   Future<void> setSubtitleOutlineWidth(double value) =>
@@ -1165,6 +1165,13 @@ class PlaybackPrefs {
       'scale': scale.clamp(0.5, 2.5).toDouble(),
     });
   }
+
+  /// Restore the shared freeform subtitle position and pinch scale.
+  Future<void> resetSubtitleLayout() => _box.put('subtitleLayout', {
+    'x': 0.5,
+    'y': 0.88,
+    'scale': 1.0,
+  });
 
   /// Vertical subtitle position (0 = top, 100 = bottom), maps to mpv `sub-pos`.
   /// Default 95 keeps subtitles near the bottom edge.
