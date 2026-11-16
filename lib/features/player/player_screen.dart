@@ -3273,12 +3273,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final prefs = sl<PlaybackPrefs>();
     var current = prefs.volumeBoost;
     var enabled = prefs.volumeBoostEnabled;
-    _sheet<void>(
+    _showCompactSelector(
       StatefulBuilder(
         builder: (sheetContext, refresh) => _SheetColumn(
           header: 'Boost Audio',
+          compactDialog: true,
           children: [
             _SheetRow(
+              compactDialog: true,
               label: 'Mati',
               active: !enabled,
               onTap: () {
@@ -3289,29 +3291,52 @@ class _PlayerScreenState extends State<PlayerScreen> {
               },
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 4, 18, 10),
+              padding: const EdgeInsets.fromLTRB(8, 2, 8, 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
                     children: [
-                      const Expanded(child: Text('Tingkat boost')),
-                      Text('${current}%'),
+                      const Expanded(
+                        child: Text('Tingkat boost', style: TextStyle(
+                          fontFamily: 'Urbanist',
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        )),
+                      ),
+                      Text('$current%', style: const TextStyle(
+                        fontFamily: 'Urbanist',
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      )),
                     ],
                   ),
-                  Slider(
-                    value: current.toDouble(),
-                    min: 100,
-                    max: 200,
-                    divisions: 20,
-                    label: '${current}%',
-                    onChanged: (value) {
-                      current = value.round();
-                      enabled = current > 100;
-                      unawaited(_c.setVolumeBoost(current, enabled: enabled));
-                      refresh(() {});
-                      _bumpControls();
-                    },
+                  SliderTheme(
+                    data: SliderTheme.of(sheetContext).copyWith(
+                      activeTrackColor: Theme.of(sheetContext).colorScheme.primary,
+                      thumbColor: Theme.of(sheetContext).colorScheme.primary,
+                      overlayColor: Theme.of(sheetContext).colorScheme.primary.withValues(alpha: 0.14),
+                      inactiveTrackColor: AppColors.surface2,
+                      trackHeight: 3,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                    ),
+                    child: Slider(
+                      value: current.toDouble(),
+                      min: 100,
+                      max: 200,
+                      divisions: 20,
+                      label: '$current%',
+                      onChanged: (value) {
+                        current = value.round();
+                        enabled = current > 100;
+                        unawaited(_c.setVolumeBoost(current, enabled: enabled));
+                        refresh(() {});
+                        _bumpControls();
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -3392,7 +3417,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       context: context,
       barrierDismissible: true,
       builder: (_) => _CompactPlayerDialog(
-        maxHeight: 520,
+        maxHeight: 430,
         child: SafeArea(
           top: false,
           child: _AudioSubsSheet(
