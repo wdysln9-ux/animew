@@ -95,7 +95,7 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
         : _selectedEpisode;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
       child: AnimatedSize(
         duration: const Duration(milliseconds: 240),
         curve: Curves.easeInOutCubic,
@@ -125,12 +125,15 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
                     ),
                   ),
                   const Spacer(),
-                  Icon(
-                    _expanded
-                        ? Icons.keyboard_arrow_down_rounded
-                        : Icons.chevron_right_rounded,
-                    color: AppColors.textSecondary,
-                    size: 21,
+                  AnimatedRotation(
+                    turns: _expanded ? 0.25 : 0,
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeInOutCubic,
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textSecondary,
+                      size: 21,
+                    ),
                   ),
                 ],
               ),
@@ -249,52 +252,48 @@ class _EpisodeScreenshotGalleryState extends State<EpisodeScreenshotGallery> {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: const EdgeInsets.only(top: 18),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.hairline),
-        ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeInOutCubic,
+        alignment: Alignment.topCenter,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            InkWell(
-              borderRadius: BorderRadius.circular(12),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => setState(() => _expanded = !_expanded),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+                padding: const EdgeInsets.only(right: 16),
                 child: Row(
                   children: [
-                    Icon(Icons.photo_library_outlined, color: AppColors.accent, size: 19),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        'Gallery Episode',
-                        style: AppText.body.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                    Text(
+                      'Gallery Episode',
+                      style: AppText.headline.copyWith(fontSize: 16),
                     ),
-                    Icon(
-                      _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: AppColors.textSecondary,
+                    const Spacer(),
+                    AnimatedRotation(
+                      turns: _expanded ? 0.25 : 0,
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeInOutCubic,
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textSecondary,
+                        size: 21,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
             if (_expanded) ...[
-              Divider(height: 1, color: AppColors.hairline),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                child: _EpisodeDetailGalleryContent(
-                  key: ValueKey('episode-detail:${widget.malId}:${widget.tmdbId}:${widget.season}:${widget.episodeNumber}'),
-                  malId: widget.malId,
-                  tmdbId: widget.tmdbId,
-                  season: widget.season,
-                  episodeNumber: widget.episodeNumber,
-                ),
+              const SizedBox(height: 9),
+              _EpisodeDetailGalleryContent(
+                key: ValueKey('episode-detail:${widget.malId}:${widget.tmdbId}:${widget.season}:${widget.episodeNumber}'),
+                malId: widget.malId,
+                tmdbId: widget.tmdbId,
+                season: widget.season,
+                episodeNumber: widget.episodeNumber,
               ),
             ],
           ],
@@ -411,16 +410,6 @@ class _EpisodeDetailGalleryContentState
                   ),
                 ),
               ),
-              TextButton.icon(
-                onPressed: () => _download(urls),
-                icon: const Icon(Icons.download_rounded, size: 17),
-                label: const Text('Unduh semua'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.accent,
-                  visualDensity: VisualDensity.compact,
-                ),
-              ),
-              const SizedBox(width: 4),
               TextButton(
                 onPressed: () => _chooseImages(urls),
                 child: Text(
@@ -439,6 +428,7 @@ class _EpisodeDetailGalleryContentState
           const SizedBox(height: 6),
           _StillRail(
             stills: [for (final url in urls) (episode: widget.episodeNumber, url: url)],
+            edgeBleed: 12,
           ),
         ],
       );
@@ -631,96 +621,88 @@ class _GalleryLoading extends StatelessWidget {
 }
 
 class _StillRail extends StatelessWidget {
-  const _StillRail({required this.stills});
+  const _StillRail({required this.stills, this.edgeBleed = 16});
   final List<_EpisodeStill> stills;
+  final double edgeBleed;
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 132,
-    child: ListView.separated(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      clipBehavior: Clip.none,
-      itemCount: stills.length,
-      separatorBuilder: (_, _) => const SizedBox(width: 9),
-      itemBuilder: (context, index) {
-        final still = stills[index];
-        return GestureDetector(
-          onTap: () => showDialog<void>(
-            context: context,
-            barrierColor: Colors.black.withValues(alpha: 0.50),
-            barrierDismissible: false,
-            builder: (_) => _EpisodeScreenshotViewer(
-              urls: [for (final item in stills) item.url],
-              initialIndex: index,
-            ),
-          ),
-          child: SizedBox(
-            width: 187,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(
-                    still.url,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => ColoredBox(
-                      color: AppColors.surface2,
-                      child: Icon(Icons.broken_image_outlined, color: AppColors.textTertiary),
-                    ),
-                    loadingBuilder: (_, child, progress) => progress == null
-                        ? child
-                        : ColoredBox(
+    height: 106,
+    child: LayoutBuilder(
+      builder: (context, constraints) => Transform.translate(
+        offset: Offset(-edgeBleed, 0),
+        child: SizedBox(
+          width: constraints.maxWidth + edgeBleed,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.only(left: edgeBleed + 4, right: 16),
+            clipBehavior: Clip.none,
+            itemCount: stills.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 9),
+            itemBuilder: (context, index) {
+              final still = stills[index];
+              return GestureDetector(
+                onTap: () => showDialog<void>(
+                  context: context,
+                  barrierColor: Colors.black.withValues(alpha: 0.50),
+                  barrierDismissible: false,
+                  builder: (_) => _EpisodeScreenshotViewer(
+                    urls: [for (final item in stills) item.url],
+                    initialIndex: index,
+                  ),
+                ),
+                child: SizedBox(
+                  width: 187,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.network(
+                          still.url,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => ColoredBox(
                             color: AppColors.surface2,
-                            child: const Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                            child: Icon(Icons.broken_image_outlined, color: AppColors.textTertiary),
+                          ),
+                          loadingBuilder: (_, child, progress) => progress == null
+                              ? child
+                              : ColoredBox(
+                                  color: AppColors.surface2,
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        Positioned(
+                          left: 7,
+                          bottom: 7,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.62),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                              child: Text(
+                                'Episode ${still.episode}',
+                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
                               ),
                             ),
                           ),
-                  ),
-                  Positioned(
-                    left: 7,
-                    bottom: 7,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.62),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                        child: Text(
-                          'Episode ${still.episode}',
-                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
-        );
-      },
-    ),
-  );
-}
-
-class _GalleryMessage extends StatelessWidget {
-  const _GalleryMessage(this.message);
-  final String message;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 18),
-    child: Center(
-      child: Text(
-        message,
-        textAlign: TextAlign.center,
-        style: AppText.caption.copyWith(color: AppColors.textSecondary),
+        ),
       ),
     ),
   );
