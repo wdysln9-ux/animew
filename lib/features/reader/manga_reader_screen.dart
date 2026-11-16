@@ -37,6 +37,7 @@ import '../../core/ui/app_toast.dart';
 import '../../core/repository/source_actions.dart' as source_actions;
 import '../../core/reading/reader_overrides.dart';
 import '../../core/reading/reader_prefs.dart';
+import '../../core/reading/reader_page_image.dart';
 import '../../core/reading/tap_zones.dart';
 import '../../core/reading/reader_settings.dart';
 import '../../core/reading/tiles/tile_decoder.dart';
@@ -2838,41 +2839,28 @@ class _MangaReaderScreenState extends State<MangaReaderScreen>
           final image = Center(
             child: _cropIfEnabled(
               _withPageTranslation(
-                _drawnLocally(page)
-                    ? Image(
-                        image: _pageProvider(page, width),
-                        fit: fit,
-                        // Same gap as the strip had: nothing at all while
-                        // the page decodes.
-                        frameBuilder: (context, child, frame, wasSync) {
-                          if (frame != null) _loaded.add(index);
-                          if (wasSync || frame != null) return child;
-                          return Center(
-                            child: _shimmerSlot(context, label: '${index + 1}'),
-                          );
-                        },
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.broken_image_outlined,
-                          color: Colors.white24,
-                        ),
-                      )
-                    : CachedNetworkImage(
-                        imageUrl: page.url,
-                        httpHeaders: page.headers,
-                        memCacheWidth: width,
-                        maxWidthDiskCache: width,
-                        fit: fit,
-                        // Static, not an animated spinner — see ColoredBox usage in
-                        // poster_card.dart/continue_card.dart for the same convention.
-                        placeholder: (_, _) => SizedBox.expand(
+                ReaderPageImage(
+                  pageUrl: page.url,
+                  image: _pageProvider(page, width),
+                  fit: fit,
+                  onLoaded: () => _loaded.add(index),
+                  placeholderBuilder: (context, progress) => _drawnLocally(page)
+                      ? Center(
+                          child: _shimmerSlot(
+                            context,
+                            label: '${index + 1}',
+                            progress: progress,
+                          ),
+                        )
+                      : SizedBox.expand(
                           child: ColoredBox(color: AppColors.surface2),
                         ),
-                        errorWidget: (_, _, _) => const Icon(
-                          Icons.broken_image_outlined,
-                          color: Colors.white38,
-                          size: 48,
-                        ),
-                      ),
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.broken_image_outlined,
+                    color: Colors.white38,
+                    size: 48,
+                  ),
+                ),
                 page: page,
                 index: index,
                 fit: fit,
@@ -3032,85 +3020,23 @@ class _MangaReaderScreenState extends State<MangaReaderScreen>
   /// possible for this page, and as [TiledPageImage]'s fallback.
   Widget _plainPageImage(BuildContext context, PageImage page, int index) {
     final width = _webtoonDecodeWidth(context);
-    return _drawnLocally(page)
-        ? Image(
-            image: _pageProvider(page, width),
-            width: double.infinity,
-            fit: _verticalBoxFit(_effectiveFit(sl<ReaderPrefs>())),
-            // A downloaded/CBZ page needs no fetch — it is there.
-            // A local page decodes fast but not instantly, and it used
-            // to cut straight from placeholder to art. Same short fade
-            // the network path gets, so both read the same way.
-            // Until the first frame decodes this shows the SAME
-            // placeholder the network path shows.
-            //
-            // It used to fade in from opacity 0, which on this path
-            // means the page is simply invisible while it loads — no
-            // spinner, no page number, nothing. And this is not a rare
-            // path: a source that rewrites its image bytes serves every
-            // page through the native bridge (see [nativePageProvider]),
-            // which is most long manhwa. That is the "it just shows
-            // black" report — the progress ring was only ever on the
-            // branch those pages never take.
-            frameBuilder: (context, child, frame, wasSync) {
-              if (frame != null) _loaded.add(index);
-              if (wasSync) return child;
-              if (frame == null) return _pagePlaceholder(context, index);
-              return AnimatedOpacity(
-                opacity: 1,
-                duration: _kPageFade,
-                curve: Curves.easeOut,
-                child: child,
-              );
-            },
-            errorBuilder: (_, _, _) => const SizedBox(
-              height: 200,
-              child: Icon(Icons.broken_image_outlined, color: Colors.white24),
-            ),
-          )
-        : CachedNetworkImage(
-            imageUrl: page.url,
-            httpHeaders: page.headers,
-            width: double.infinity,
-            memCacheWidth: width,
-            maxWidthDiskCache: width,
-            fit: _verticalBoxFit(_effectiveFit(sl<ReaderPrefs>())),
-            // The package default is 500ms, which is a long time to
-            // watch a page arrive while you are still scrolling. Short
-            // enough to feel immediate, long enough not to be a cut.
-            fadeInDuration: _kPageFade,
-            fadeOutDuration: _kPageFade,
-            // The placeholder is already on screen holding the page's
-            // space — fading it IN as well just delays it.
-            placeholderFadeInDuration: Duration.zero,
-            // The page is on screen for real from here. Scrolling PAST a
-            // placeholder is not reading it, and that distinction is what
-            // keeps a fast scroll from marking the chapter read.
-            imageBuilder: (context, imageProvider) {
-              _loaded.add(index);
-              return Image(
-                image: imageProvider,
-                width: double.infinity,
-                fit: _verticalBoxFit(_effectiveFit(sl<ReaderPrefs>())),
-              );
-            },
-            // A page that has not arrived reserves its real height
-            // (see [_reservedHeight]) so the list does not jump, and
-            // shows how far along the download actually is. A shimmer
-            // says "something is happening"; a percentage says whether
-            // it is nearly there or barely started, which on a slow
-            // source is the difference between waiting and giving up.
-            progressIndicatorBuilder: (_, _, progress) =>
-                _pagePlaceholder(context, index, progress.progress),
-            errorWidget: (_, _, _) => const SizedBox(
-              height: 200,
-              child: Icon(
-                Icons.broken_image_outlined,
-                color: Colors.white38,
-                size: 48,
-              ),
-            ),
-          );
+    return ReaderPageImage(
+      pageUrl: page.url,
+      image: _pageProvider(page, width),
+      width: double.infinity,
+      fit: _verticalBoxFit(_effectiveFit(sl<ReaderPrefs>())),
+      onLoaded: () => _loaded.add(index),
+      placeholderBuilder: (context, progress) =>
+          _pagePlaceholder(context, index, progress),
+      errorBuilder: (_, _, _) => const SizedBox(
+        height: 200,
+        child: Icon(
+          Icons.broken_image_outlined,
+          color: Colors.white38,
+          size: 48,
+        ),
+      ),
+    );
   }
 
   /// The strip, before there are any pages to put in it.
