@@ -96,7 +96,7 @@ class AniListCatalogue implements AnimeCatalogue {
       // stay out for the reason above; this one is a number, not a payload.
       'averageScore popularity format episodes duration status genres seasonYear '
       // Tiny integer used for the latest-episode poster label on airing anime.
-      'nextAiringEpisode{episode}';
+      'nextAiringEpisode{episode airingAt}';
 
   static String _seasonForMonth(int month) => switch (month) {
     1 || 2 || 3 => 'WINTER',
@@ -554,7 +554,23 @@ class AniListCatalogue implements AnimeCatalogue {
       final selectedPage = await pageFor('$q|$args', args);
       final full =
           'query$decl{ Page(page:$selectedPage,perPage:\$n){ media($args){ $_listFields } } }';
-      items = _items(await _gql(full, vars), kind);
+      final response = await _gql(full, vars);
+      items = _items(response, kind);
+      if (f?.sort == MetaSort.episodeNew && kind == ZKind.anime) {
+        final pageData = response?['Page'];
+        final rawMedia = pageData is Map ? pageData['media'] : null;
+        if (rawMedia is List) {
+          final airingDates = <String, int>{};
+          for (final raw in rawMedia) {
+            if (raw is! Map) continue;
+            final id = raw['id'];
+            final airingAt = (raw['nextAiringEpisode'] as Map?)?['airingAt'];
+            if (id is int && airingAt is int) airingDates[id.toString()] = airingAt;
+          }
+          items.sort((left, right) =>
+            (airingDates[right.id] ?? 0).compareTo(airingDates[left.id] ?? 0));
+        }
+      }
     }
     if (applyRecommendationEligibility) {
       items = items.where(_isEligibleRecommendation).toList();
@@ -618,6 +634,7 @@ class AniListCatalogue implements AnimeCatalogue {
     (MetaSort.trending, true) => 'TRENDING',
     (MetaSort.newest, false) => 'START_DATE_DESC',
     (MetaSort.newest, true) => 'START_DATE',
+    (MetaSort.episodeNew, _) => 'UPDATED_AT_DESC',
     (MetaSort.title, _) => 'TITLE_ROMAJI',
     (MetaSort.recommendation, _) => 'ID',
   };
