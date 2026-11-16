@@ -1835,7 +1835,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
       final combined = (_dragValue * 2).clamp(0.0, 2.0); // 0..2
       FlutterVolumeController.setVolume(combined.clamp(0.0, 1.0));
       final boost = combined <= 1.0 ? 100 : (combined * 100).round();
-      if (boost != sl<PlaybackPrefs>().volumeBoost) _c.setVolumeBoost(boost);
+      final boostEnabled = boost > 100;
+      final prefs = sl<PlaybackPrefs>();
+      if (boost != prefs.volumeBoost || boostEnabled != prefs.volumeBoostEnabled) {
+        _c.setVolumeBoost(boost, enabled: boostEnabled);
+      }
     }
     // Haptic tick when the value crosses a landmark (min / system-max / boost).
     final pct = ((_dragIsBrightness ? 1 : 2) * _dragValue * 100).round();
@@ -2084,83 +2088,172 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// and audio carrying on under a settings list reads as a bug. It resumes
   /// on return only if it was actually playing when you left.
   /// YouTube-style quick settings shown from the player gear button.
+  String _quickSubtitleLabel(SubtitleTrack track) {
+    final id = track.id.trim().toLowerCase();
+    final title = (track.title ?? '').trim();
+    final normalizedTitle = title.toLowerCase();
+    final language = (track.language ?? '').trim().toLowerCase();
+    if (id == 'no') return 'Mati';
+    if (normalizedTitle.contains('translated') || id.contains('translated_')) {
+      return 'Indonesia (translated)';
+    }
+    if (language == 'en' || language == 'eng' || language.startsWith('en-') ||
+        normalizedTitle.contains('english') || normalizedTitle == 'eng') {
+      return 'Inggris';
+    }
+    if (language == 'id' || language == 'ind' || language.startsWith('id-') ||
+        normalizedTitle == 'indonesian' || normalizedTitle == 'bahasa indonesia') {
+      return 'Indonesia';
+    }
+    for (final sub in _c.softSubs) {
+      if (sub.url.trim() == track.id.trim()) {
+        final label = (sub.label ?? '').trim();
+        final lang = sub.lang.trim().toLowerCase();
+        if (label.toLowerCase().contains('translated')) return 'Indonesia (translated)';
+        if (lang == 'en' || lang.startsWith('en-') ||
+            label.toLowerCase().contains('english')) return 'Inggris';
+        return label.isNotEmpty ? label : sub.lang;
+      }
+    }
+    if (title.isNotEmpty) return title;
+    if (language.isNotEmpty) return language.toUpperCase();
+    return 'Subtitle';
+  }
+
   void _openSettings() {
     _bumpControls();
+    final prefs = sl<PlaybackPrefs>();
     final active = _c.state.active;
     final qualityValue = _c.state.activeQuality?.quality ??
         (active == null ? null : _sourceResolution(active)) ??
-        (( _c.player.state.height ?? 0) > 0
+        ((_c.player.state.height ?? 0) > 0
             ? '${_c.player.state.height}p'
             : 'Otomatis');
     final subtitleTrack = _c.activeSubtitleTrack;
-    final hasSoftSubs = (_c.state.active?.subtitles.isNotEmpty ?? false) || _c.softSubs.isNotEmpty;
-    final subtitleValue = subtitleTrack.id == 'no'
-        ? 'Nonaktif'
-        : (subtitleTrack.title?.trim().isNotEmpty == true
-            ? subtitleTrack.title!
-            : null);
+    final hasSubtitles = _c.mediaSubtitleTracks.isNotEmpty || _c.softSubs.isNotEmpty;
+    final subtitleValue = _quickSubtitleLabel(subtitleTrack);
+    var autoSkipOpEd = prefs.autoSkipOp && prefs.autoSkipEd;
+    var autoplayNext = prefs.autoplayNext;
+    var cinematicLighting = _cinematicLighting;
+    var boostEnabled = prefs.volumeBoostEnabled;
+    var boostPercent = prefs.volumeBoost;
     showDialog<void>(
       context: context,
       barrierDismissible: true,
-      builder: (_) => _CompactPlayerDialog(
-        maxHeight: 340,
-        child: _SheetColumn(
-          header: 'Setelan',
-          compactDialog: true,
-          children: [
-          _QuickSettingRow(
-            icon: Icons.tune_rounded,
-            label: 'Kualitas video',
-            value: qualityValue,
-            onTap: () {
-              Navigator.pop(context);
-              _openQualitySheet();
-            },
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, refresh) => _CompactPlayerDialog(
+          maxHeight: 353,
+          child: _SheetColumn(
+            header: null,
+            compactDialog: true,
+            children: [
+              _QuickSettingRow(
+                icon: Icons.tune_rounded,
+                label: 'Kualitas',
+                value: qualityValue,
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  _openQualitySheet();
+                },
+              ),
+              _QuickSettingRow(
+                icon: Icons.speed_rounded,
+                label: 'Kecepatan',
+                value: '${_c.player.state.rate.toStringAsFixed(_c.player.state.rate % 1 == 0 ? 0 : 2)}x',
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  _openSpeedSheet();
+                },
+              ),
+              _QuickSettingRow(
+                icon: Icons.subtitles_outlined,
+                label: 'Subtitle',
+                value: hasSubtitles ? subtitleValue : 'Tidak tersedia',
+                enabled: hasSubtitles,
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  if (hasSubtitles) {
+                    _openAudioSubsSheet();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Subtitle tidak tersedia untuk sumber ini')),
+                    );
+                  }
+                },
+              ),
+              _QuickSettingRow(
+                icon: Icons.volume_up_rounded,
+                label: 'Boost Audio',
+                value: boostEnabled ? '${boostPercent}%' : 'Mati',
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  _openAudioBoostSheet();
+                },
+              ),
+              _QuickSettingRow(
+                icon: Icons.skip_next_rounded,
+                label: 'Lewati Otomatis OP/ED',
+                showChevron: false,
+                switchValue: autoSkipOpEd,
+                onSwitchChanged: (value) {
+                  refresh(() => autoSkipOpEd = value);
+                  unawaited(prefs.setAutoSkipOp(value));
+                  unawaited(prefs.setAutoSkipEd(value));
+                },
+                onTap: () {
+                  final value = !autoSkipOpEd;
+                  refresh(() => autoSkipOpEd = value);
+                  unawaited(prefs.setAutoSkipOp(value));
+                  unawaited(prefs.setAutoSkipEd(value));
+                },
+              ),
+              _QuickSettingRow(
+                icon: Icons.skip_next_rounded,
+                label: 'Episode Berikutnya Otomatis',
+                showChevron: false,
+                switchValue: autoplayNext,
+                onSwitchChanged: (value) {
+                  refresh(() => autoplayNext = value);
+                  unawaited(prefs.setAutoplayNext(value));
+                },
+                onTap: () {
+                  final value = !autoplayNext;
+                  refresh(() => autoplayNext = value);
+                  unawaited(prefs.setAutoplayNext(value));
+                },
+              ),
+              _QuickSettingRow(
+                icon: Icons.blur_on_rounded,
+                label: 'Mode Pencahayaan Sinematik',
+                showChevron: false,
+                switchValue: cinematicLighting,
+                onSwitchChanged: (value) {
+                  refresh(() => cinematicLighting = value);
+                  _setCinematicLighting(value);
+                },
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  _openCinematicLightingSheet();
+                },
+              ),
+              _QuickSettingRow(
+                icon: Icons.summarize_rounded,
+                label: 'Ringkasan Episode',
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  _showEpisodeSummary();
+                },
+              ),
+              _QuickSettingRow(
+                icon: Icons.settings_outlined,
+                label: 'Selengkapnya',
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  _openPlaybackSettings();
+                },
+              ),
+            ],
           ),
-          _QuickSettingRow(
-            icon: Icons.speed_rounded,
-            label: 'Kecepatan pemutaran',
-            value: '${_c.player.state.rate}x',
-            onTap: () {
-              Navigator.pop(context);
-              _openSpeedSheet();
-            },
-          ),
-          _QuickSettingRow(
-            icon: Icons.subtitles_outlined,
-            label: 'Subtitle',
-            value: hasSoftSubs ? (subtitleTrack.id == 'no' ? null : subtitleValue) : null,
-            showChevron: false,
-            enabled: hasSoftSubs,
-            onTap: () {
-              Navigator.pop(context);
-              if (!hasSoftSubs) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Subtitle hanya tersedia untuk sumber softsubs')),
-                );
-                return;
-              }
-              _openAudioSubsSheet();
-            },
-          ),
-          _QuickSettingRow(
-            icon: Icons.photo_camera_outlined,
-            label: 'Screenshot',
-            showChevron: false,
-            onTap: () {
-              Navigator.pop(context);
-              _captureScreenshot();
-            },
-          ),
-          _QuickSettingRow(
-            icon: Icons.settings_outlined,
-            label: 'Selengkapnya',
-            onTap: () {
-              Navigator.pop(context);
-              _openPlaybackSettings();
-            },
-          ),
-          ],
         ),
       ),
     );
@@ -2212,6 +2305,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _toggleCinematicLighting() => _openCinematicLightingSheet();
 
+  void _setCinematicLighting(bool value) {
+    if (mounted) setState(() => _cinematicLighting = value);
+    unawaited(sl<PlaybackPrefs>().setCinematicLightingEnabled(value));
+    _bumpControls();
+  }
+
   void _openCinematicLightingSheet() {
     showModalBottomSheet<void>(
       context: context,
@@ -2255,12 +2354,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           Switch(
                             value: _cinematicLighting,
                             onChanged: (value) {
-                              setState(() => _cinematicLighting = value);
-                              unawaited(
-                                sl<PlaybackPrefs>().setCinematicLightingEnabled(value),
-                              );
+                              _setCinematicLighting(value);
                               refreshSheet(() {});
-                              _bumpControls();
                             },
                           ),
                         ],
@@ -3093,7 +3188,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
         builder: (sheetContext, refresh) => _SheetColumn(
           header: context.l10n.playbackSpeed,
           children: [
-            // Custom speed slider appears first, above the quick presets.
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 4, 18, 2),
               child: Column(
@@ -3101,10 +3195,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Kecepatan khusus',
-                          style: TextStyle(
+                          style: const TextStyle(
+                            fontFamily: 'Urbanist',
                             color: AppColors.textSecondary,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -3114,8 +3209,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       Text(
                         '${current.toStringAsFixed(current % 1 == 0 ? 0 : 2)}x',
                         style: const TextStyle(
+                          fontFamily: 'Urbanist',
                           color: AppColors.textPrimary,
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -3149,41 +3245,50 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final rate in rates)
-                    ChoiceChip(
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      labelPadding: const EdgeInsets.symmetric(horizontal: 7),
-                      label: Text(
-                        rate == 1.0 ? context.l10n.normalSpeed : '${rate}x',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
-                      selected: (current - rate).abs() < 0.01,
-                      selectedColor: Theme.of(sheetContext).colorScheme.primary.withValues(alpha: 0.22),
-                      backgroundColor: AppColors.surface2,
-                      side: BorderSide(
-                        color: (current - rate).abs() < 0.01
-                            ? Theme.of(sheetContext).colorScheme.primary
-                            : AppColors.hairline,
-                      ),
-                      onSelected: (_) {
-                        current = rate;
-                        _c.setRateRemembered(rate);
-                        refresh(() {});
-                      },
-                    ),
-                ],
+            for (final rate in rates)
+              _SheetRow(
+                label: rate == 1.0 ? context.l10n.normalSpeed : '${rate}x',
+                active: (current - rate).abs() < 0.01,
+                onTap: () {
+                  current = rate;
+                  _c.setRateRemembered(rate);
+                  refresh(() {});
+                },
               ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _openAudioBoostSheet() {
+    final prefs = sl<PlaybackPrefs>();
+    final current = prefs.volumeBoost;
+    final enabled = prefs.volumeBoostEnabled;
+    _sheet<void>(
+      _SheetColumn(
+        header: 'Boost Audio',
+        children: [
+          _SheetRow(
+            label: 'Mati',
+            active: !enabled,
+            onTap: () {
+              Navigator.pop(context);
+              unawaited(_c.setVolumeBoost(current, enabled: false));
+              _bumpControls();
+            },
+          ),
+          for (final percent in [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200])
+            _SheetRow(
+              label: '${percent}%',
+              active: enabled && current == percent,
+              onTap: () {
+                Navigator.pop(context);
+                unawaited(_c.setVolumeBoost(percent, enabled: true));
+                _bumpControls();
+              },
+            ),
+        ],
       ),
     );
   }
