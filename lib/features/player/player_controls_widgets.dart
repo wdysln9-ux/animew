@@ -125,13 +125,11 @@ class _SkipButtonState extends State<_SkipButton>
 
 class _EpisodeVoteOverlay extends StatelessWidget {
   const _EpisodeVoteOverlay({
-    required this.vote,
     required this.likes,
     required this.dislikes,
     required this.onVote,
   });
 
-  final int? vote;
   final int likes;
   final int dislikes;
   final ValueChanged<int> onVote;
