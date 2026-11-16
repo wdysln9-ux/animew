@@ -1,3 +1,4 @@
+import '../anilist/anilist_service.dart';
 import '../di/injector.dart';
 import '../mode/content_mode.dart';
 import '../models/watch_status.dart';
