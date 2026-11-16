@@ -1643,6 +1643,7 @@ class PlayerCubit extends Cubit<PlayerState> {
   String? get activeSubtitleFileExtension {
     final candidates = <String>[
       activeSubtitleTrack.id,
+      activeSubtitleTrack.title ?? '',
       _wantedSubId ?? '',
     ];
     for (final candidate in candidates) {
