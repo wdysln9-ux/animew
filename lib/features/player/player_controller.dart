@@ -722,7 +722,7 @@ class PlayerCubit extends Cubit<PlayerState> {
           epUrl = catEps[state.currentIndex].url;
         }
       }
-      final resolved = await _resolveNoted(epUrl);
+      var resolved = await _resolveNoted(epUrl);
       if (gen != _gen) return;
       final blocked = engineFallback?.blockedUrls(
       currentEpisode.url,
