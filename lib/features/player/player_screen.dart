@@ -2499,12 +2499,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
     ).firstMatch(rawDescription);
     final sourceLabel = sourceMatch?.group(2)?.trim();
     final description = rawDescription
-        .replaceAll(
+        .replaceAllMapped(
           RegExp(
             r'(^|\\n)\\s*Sumber\\s*:\\s*[^\\r\\n]+',
             caseSensitive: false,
           ),
-          '',
+          (match) => match.group(1) ?? '',
         )
         .replaceAll(RegExp(r'\\n{3,}'), '\\n\\n')
         .trim();
