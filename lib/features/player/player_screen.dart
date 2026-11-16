@@ -2298,118 +2298,112 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _openCinematicLightingSheet() {
-    showModalBottomSheet<void>(
+    showDialog<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (sheetContext) => _SheetSurface(
+      barrierDismissible: true,
+      builder: (dialogContext) => _CompactPlayerDialog(
+        maxHeight: 430,
         child: StatefulBuilder(
           builder: (context, refreshSheet) => SafeArea(
             top: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                8, 0, 8, MediaQuery.of(context).viewInsets.bottom + 10,
-              ),
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Center(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: AppColors.surface2,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                          child: const SizedBox(width: 36, height: 4),
+                    Center(
+                      child: Container(
+                        width: 38,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 12, 12),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Pencahayaan sinematik',
-                              style: AppText.headline,
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Pencahayaan sinematik',
+                            style: TextStyle(
+                              fontFamily: 'Urbanist',
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                          Switch(
-                            value: _cinematicLighting,
-                            onChanged: (value) {
-                              _setCinematicLighting(value);
-                              refreshSheet(() {});
-                            },
-                          ),
-                        ],
-                      ),
+                        ),
+                        Switch.adaptive(
+                          value: _cinematicLighting,
+                          onChanged: (value) {
+                            _setCinematicLighting(value);
+                            refreshSheet(() {});
+                          },
+                          activeThumbColor: Colors.white,
+                          activeTrackColor: AppColors.accent,
+                          inactiveThumbColor: AppColors.textTertiary,
+                          inactiveTrackColor: AppColors.surface2,
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        children: [
-                          _CinematicSlider(
-                            label: 'Kecerahan',
-                            value: _cinematicBrightness,
-                            min: -1,
-                            max: 1,
-                            displayValue: _cinematicBrightness.toStringAsFixed(1),
-                            onChanged: (value) {
-                              setState(() => _cinematicBrightness = value);
-                              unawaited(sl<PlaybackPrefs>().setCinematicBrightness(value));
-                              refreshSheet(() {});
-                            },
-                          ),
-                          _CinematicSlider(
-                            label: 'Blur',
-                            value: _cinematicBlur,
-                            min: 0,
-                            max: 70,
-                            displayValue: _cinematicBlur.toStringAsFixed(0),
-                            onChanged: (value) {
-                              setState(() => _cinematicBlur = value);
-                              unawaited(sl<PlaybackPrefs>().setCinematicBlur(value));
-                              refreshSheet(() {});
-                            },
-                          ),
-                          _CinematicSlider(
-                            label: 'Zoom',
-                            value: _cinematicZoom,
-                            min: 1,
-                            max: 1.8,
-                            displayValue: '${_cinematicZoom.toStringAsFixed(2)}x',
-                            onChanged: (value) {
-                              setState(() => _cinematicZoom = value);
-                              unawaited(sl<PlaybackPrefs>().setCinematicZoom(value));
-                              refreshSheet(() {});
-                            },
-                          ),
-                          _CinematicSlider(
-                            label: 'Vignette',
-                            value: _cinematicVignette,
-                            min: 0,
-                            max: 1,
-                            displayValue: _cinematicVignette.toStringAsFixed(1),
-                            onChanged: (value) {
-                              setState(() => _cinematicVignette = value);
-                              unawaited(sl<PlaybackPrefs>().setCinematicVignette(value));
-                              refreshSheet(() {});
-                            },
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 8),
+                    _CinematicSlider(
+                      label: 'Kecerahan',
+                      value: _cinematicBrightness,
+                      min: -1,
+                      max: 1,
+                      displayValue: _cinematicBrightness.toStringAsFixed(1),
+                      onChanged: (value) {
+                        setState(() => _cinematicBrightness = value);
+                        unawaited(sl<PlaybackPrefs>().setCinematicBrightness(value));
+                        refreshSheet(() {});
+                      },
+                    ),
+                    _CinematicSlider(
+                      label: 'Blur',
+                      value: _cinematicBlur,
+                      min: 0,
+                      max: 70,
+                      displayValue: _cinematicBlur.toStringAsFixed(0),
+                      onChanged: (value) {
+                        setState(() => _cinematicBlur = value);
+                        unawaited(sl<PlaybackPrefs>().setCinematicBlur(value));
+                        refreshSheet(() {});
+                      },
+                    ),
+                    _CinematicSlider(
+                      label: 'Zoom',
+                      value: _cinematicZoom,
+                      min: 1,
+                      max: 1.8,
+                      displayValue: '${_cinematicZoom.toStringAsFixed(2)}x',
+                      onChanged: (value) {
+                        setState(() => _cinematicZoom = value);
+                        unawaited(sl<PlaybackPrefs>().setCinematicZoom(value));
+                        refreshSheet(() {});
+                      },
+                    ),
+                    _CinematicSlider(
+                      label: 'Vignette',
+                      value: _cinematicVignette,
+                      min: 0,
+                      max: 1,
+                      displayValue: _cinematicVignette.toStringAsFixed(1),
+                      onChanged: (value) {
+                        setState(() => _cinematicVignette = value);
+                        unawaited(sl<PlaybackPrefs>().setCinematicVignette(value));
+                        refreshSheet(() {});
+                      },
                     ),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 12, top: 4),
-                        child: TextButton(
-                          onPressed: () => Navigator.pop(sheetContext),
-                          child: const Text('Selesai'),
-                        ),
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text('Selesai'),
                       ),
                     ),
                   ],
