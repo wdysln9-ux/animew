@@ -14,6 +14,7 @@ import '../../core/tracker/tracker_hub.dart';
 import '../../core/models/media_item.dart';
 import '../../core/models/provider_info.dart';
 import '../../core/zmode/zmode_ids.dart';
+import '../../core/zmode/zmode_prefs.dart';
 import '../detail/detail_screen.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
@@ -22,8 +23,8 @@ import 'schedule_cubit.dart';
 import 'schedule_screen_tv.dart';
 import '../../l10n/l10n.dart';
 
-/// The Schedule tab: a weekly anime airing calendar. Self-contained
-/// (creates its own ScheduleCubit) so it can sit
+/// The Schedule tab: a monthly/weekly anime airing calendar + upcoming
+/// movies/TV. Self-contained (creates its own ScheduleCubit) so it can sit
 /// directly in the shell page list.
 class ScheduleScreen extends StatelessWidget {
   const ScheduleScreen({super.key});
@@ -163,12 +164,29 @@ class ScheduleBody extends StatefulWidget {
   State<ScheduleBody> createState() => _ScheduleBodyState();
 }
 
-class _ScheduleBodyState extends State<ScheduleBody> {
+class _ScheduleBodyState extends State<ScheduleBody>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs;
   Timer? _tick; // refreshes the live countdowns
+
+  int get _tab => _tabs.index;
 
   @override
   void initState() {
     super.initState();
+    // Open on the tab for the kind you were browsing: Schedule is reached from
+    // the Home card now, and arriving on Anime after tapping it from a
+    // Movies/TV Home meant a tab switch every single time.
+    _tabs =
+        TabController(
+          length: 2,
+          vsync: this,
+          initialIndex: ZModePrefs.streamKind == StreamKind.movie ? 1 : 0,
+        )..addListener(() {
+          if (mounted) {
+            setState(() {}); // header (filter / busy state) follows the tab
+          }
+        });
     // Re-render every 30s so countdowns/“LIVE” stay current. Cancelled in
     // dispose, so no timer leaks in tests.
     _tick = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -178,6 +196,7 @@ class _ScheduleBodyState extends State<ScheduleBody> {
 
   @override
   void dispose() {
+    _tabs.dispose();
     _tick?.cancel();
     super.dispose();
   }
@@ -197,25 +216,28 @@ class _ScheduleBodyState extends State<ScheduleBody> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _header(context, state, cubit),
+                _tabRow(context, state, cubit),
                 Expanded(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onHorizontalDragEnd: (details) {
-                      final velocity = details.primaryVelocity ?? 0;
-                      if (velocity.abs() < 180) return;
-                      final next = velocity < 0
-                          ? selected.add(const Duration(days: 1))
-                          : selected.subtract(const Duration(days: 1));
-                      cubit.selectDay(next);
-                    },
-                    child: _page(
-                      context,
-                      state,
-                      cubit,
-                      today,
-                      selected,
-                      forMovies: false,
-                    ),
+                  child: TabBarView(
+                    controller: _tabs,
+                    children: [
+                      _page(
+                        context,
+                        state,
+                        cubit,
+                        today,
+                        selected,
+                        forMovies: false,
+                      ),
+                      _page(
+                        context,
+                        state,
+                        cubit,
+                        today,
+                        selected,
+                        forMovies: true,
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -226,21 +248,41 @@ class _ScheduleBodyState extends State<ScheduleBody> {
     );
   }
 
-  // ── header: title + My List toggle ──
-  // Refresh lives in the pull-to-refresh gesture; no header button needed.
+  // Pushed from the lists hub and from Search on phone (no back affordance
+  // before — the header was title-only); a no-op arrow on the TV rail tab
+  // would be dead, so it only shows when there is something to pop.
   Widget _header(
     BuildContext context,
     ScheduleState state,
     ScheduleCubit cubit,
   ) {
+    final canPop = Navigator.of(context).canPop();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 12, 6),
+      padding: EdgeInsets.fromLTRB(canPop ? 4 : 16, 10, 12, 6),
       child: Row(
         children: [
+          if (canPop)
+            IconButton(
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.arrow_back_rounded),
+              color: AppColors.textPrimary,
+            ),
           Expanded(
             child: Text(context.l10n.schedule, style: AppText.largeTitle),
           ),
-          _scheduleFilterMenu(context, state, cubit),
+          // Anime-list filter only applies to the anime tab; slide it in/out.
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            transitionBuilder: (c, a) => SizeTransition(
+              axis: Axis.horizontal,
+              sizeFactor: a,
+              child: FadeTransition(opacity: a, child: c),
+            ),
+            child: _tab == 0
+                ? _scheduleFilterMenu(context, state, cubit)
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
@@ -403,6 +445,50 @@ class _ScheduleBodyState extends State<ScheduleBody> {
     _ => name,
   };
 
+  // ── Anime/Movies TabBar (animated sliding underline) ──
+  Widget _tabRow(
+    BuildContext context,
+    ScheduleState state,
+    ScheduleCubit cubit,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: TabBar(
+              controller: _tabs,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              padding: EdgeInsets.zero,
+              labelPadding: const EdgeInsetsDirectional.only(end: 24),
+              // .label → the bar matches the word width exactly (no padding
+              // gap). Thin height.
+              indicatorSize: TabBarIndicatorSize.label,
+              indicator: UnderlineTabIndicator(
+                borderSide: BorderSide(width: 3, color: AppColors.accent),
+                borderRadius: BorderRadius.all(Radius.circular(3)),
+                insets: EdgeInsets.only(bottom: 2),
+              ),
+              dividerColor: Colors.transparent,
+              labelColor: AppColors.textPrimary,
+              unselectedLabelColor: AppColors.textTertiary,
+              labelStyle: AppText.headline.copyWith(fontSize: 14),
+              unselectedLabelStyle: AppText.headline.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+              tabs: [
+                Tab(text: context.l10n.anime),
+                Tab(text: context.l10n.moviesTV),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── one tab page: day selector + day content ──
   Widget _page(
     BuildContext context,
@@ -469,7 +555,7 @@ class _ScheduleBodyState extends State<ScheduleBody> {
             (state.trackerFilterName != null &&
                 state.loadingTrackerName == state.trackerFilterName);
 
-  /// The scrollable day content. Returns a scroll view rather than a Column
+  /// The scrollable half of a tab. Returns a scroll view rather than a Column
   /// so RefreshIndicator still has something to pull, and — for Movies —
   /// so the day's rows are built as they are reached instead of all at once.
   Widget _dayContent(
@@ -614,10 +700,7 @@ class _ScheduleBodyState extends State<ScheduleBody> {
           final d = days[i];
           final on = d == selected;
           final n = counts[d]?.count ?? 0;
-          final yesterday = today.subtract(const Duration(days: 1));
-          final label = d == yesterday
-              ? '${l10n.relativeYesterday} · ${DateFormat('MMM d', locale).format(d)}'
-              : d == today
+          final label = d == today
               ? l10n.todayWithDate(DateFormat('MMM d', locale).format(d))
               : DateFormat('EEE, MMM d', locale).format(d);
           return GestureDetector(
