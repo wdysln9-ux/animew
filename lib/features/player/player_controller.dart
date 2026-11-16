@@ -1729,19 +1729,32 @@ class PlayerCubit extends Cubit<PlayerState> {
     // Not loaded yet — retry on the next tracks update.
   }
 
+  String? _subtitleTitlePref(String? language, String? title) {
+    final lang = language?.trim().toLowerCase() ?? '';
+    final name = title?.trim().toLowerCase() ?? '';
+    return (lang.isEmpty && name.isEmpty) ? null : '$lang|$name';
+  }
+
   void setSubtitle(SubtitleTrack t) {
     player.setSubtitleTrack(t);
     _wantedSubId = t.id;
-    // Remember globally by language when we can resolve one; a track we can't
-    // classify is a one-off pick that must not set a bad global default.
     final lang = languageOfSource(t.language ?? t.title ?? '');
-    if (lang != null) sl<PlaybackPrefs>().setSubtitlePreference(lang.iso1);
+    if (lang != null) unawaited(sl<PlaybackPrefs>().setSubtitlePreference(lang.iso1));
+    final url = showUrl;
+    final pref = _subtitleTitlePref(lang?.iso1, t.title ?? t.language);
+    if (url != null && url.isNotEmpty && pref != null) {
+      unawaited(sl<TitlePrefsStore>().setSubtitleTrack(sourceId, url, pref));
+    }
   }
 
   void subtitlesOff() {
     player.setSubtitleTrack(SubtitleTrack.no());
     _wantedSubId = 'no';
-    sl<PlaybackPrefs>().setSubtitlePreference('off');
+    unawaited(sl<PlaybackPrefs>().setSubtitlePreference('off'));
+    final url = showUrl;
+    if (url != null && url.isNotEmpty) {
+      unawaited(sl<TitlePrefsStore>().setSubtitleTrack(sourceId, url, 'off'));
+    }
   }
 
   /// Whether styled (libass) subtitle rendering is on — read fresh from prefs
@@ -1779,7 +1792,12 @@ class PlayerCubit extends Cubit<PlayerState> {
     await _setRemoteSub(s.url, title: s.label ?? s.lang, language: s.lang);
     if (isClosed || gen != _gen) return;
     final lang = languageOfSource(s.lang) ?? languageOfSource(s.label ?? '');
-    if (lang != null) sl<PlaybackPrefs>().setSubtitlePreference(lang.iso1);
+    if (lang != null) unawaited(sl<PlaybackPrefs>().setSubtitlePreference(lang.iso1));
+    final url = showUrl;
+    final pref = _subtitleTitlePref(lang?.iso1 ?? s.lang, s.label ?? s.lang);
+    if (url != null && url.isNotEmpty && pref != null) {
+      unawaited(sl<TitlePrefsStore>().setSubtitleTrack(sourceId, url, pref));
+    }
   }
 
   /// Load an external subtitle file from disk (picked via file_picker).
@@ -2026,44 +2044,58 @@ class PlayerCubit extends Cubit<PlayerState> {
   /// until a match is found (or there's nothing to restore).
   void _tryApplySubPref() {
     if (_subApplied) return;
-    final prefRaw = sl<PlaybackPrefs>().subtitlePreference;
+    final url = showUrl;
+    final titlePref = (url == null || url.isEmpty)
+        ? null
+        : sl<TitlePrefsStore>().subtitleTrack(sourceId, url);
+    // A title-specific choice wins; the global language remains the fallback
+    // for titles the user has not customised yet.
+    final prefRaw = titlePref ?? sl<PlaybackPrefs>().subtitlePreference;
 
-    // 'off' → subtitles off on every video.
     if (prefRaw == 'off') {
       player.setSubtitleTrack(SubtitleTrack.no());
       _wantedSubId = 'no';
       _subApplied = true;
       return;
     }
-    // '' (Auto) → don't force anything.
     if (prefRaw.isEmpty) {
       _wantedSubId = null;
       _subApplied = true;
       return;
     }
-    // A language code → source subtitle first, then embedded, then download.
-    final prefLang = languageByPref(prefRaw);
-    if (prefLang == null) {
+    final separator = prefRaw.indexOf('|');
+    final prefLanguageRaw = separator < 0 ? prefRaw : prefRaw.substring(0, separator);
+    final prefTitle = separator < 0 ? '' : prefRaw.substring(separator + 1).trim().toLowerCase();
+    final prefLang = prefLanguageRaw.isEmpty ? null : languageByPref(prefLanguageRaw);
+    if (prefLang == null && prefTitle.isEmpty) {
       _subApplied = true;
       return;
     }
-    final soft = pickPreferredSub(softSubs, prefLang);
+
+    Subtitle? soft;
+    if (prefTitle.isNotEmpty) {
+      for (final candidate in softSubs) {
+        if ((candidate.label ?? '').trim().toLowerCase() == prefTitle ||
+            candidate.lang.trim().toLowerCase() == prefTitle) {
+          soft = candidate;
+          break;
+        }
+      }
+    }
+    soft ??= prefLang == null ? null : pickPreferredSub(softSubs, prefLang);
     if (soft != null) {
-      unawaited(
-        _setRemoteSub(
-          soft.url,
-          title: soft.label ?? soft.lang,
-          language: soft.lang,
-        ),
-      );
+      unawaited(_setRemoteSub(soft.url, title: soft.label ?? soft.lang, language: soft.lang));
       _subApplied = true;
       return;
     }
+
     for (final t in mediaSubtitleTracks) {
       final tLang = t.language ?? '';
       final tTitle = t.title ?? '';
-      if (matchesSourceLang(tLang, prefLang) ||
-          matchesSourceLang(tTitle, prefLang)) {
+      final titleMatches = prefTitle.isNotEmpty && tTitle.trim().toLowerCase() == prefTitle;
+      final languageMatches = prefLang != null &&
+          (matchesSourceLang(tLang, prefLang) || matchesSourceLang(tTitle, prefLang));
+      if (titleMatches || languageMatches) {
         player.setSubtitleTrack(t);
         _wantedSubId = t.id;
         _subApplied = true;
@@ -2071,14 +2103,12 @@ class PlayerCubit extends Cubit<PlayerState> {
       }
     }
     // No source/embedded match — embedded tracks may still be loading; leave
-    // _subApplied false so the tracks-stream retry re-checks. Fire the keyless
-    // auto-download at most once per episode.
+    // _subApplied false so the tracks-stream retry re-checks. Auto-download is
+    // only meaningful for a language preference, never a title-only key.
     final titleForSub = showTitle ?? scrobbleTitle;
-    if (!_autoSubDlTried &&
+    if (prefLang != null && !_autoSubDlTried &&
         sl<PlaybackPrefs>().autoDownloadSubtitles &&
-        (imdbId?.isNotEmpty == true ||
-            tmdbId != null ||
-            (titleForSub?.isNotEmpty == true))) {
+        (imdbId?.isNotEmpty == true || tmdbId != null || (titleForSub?.isNotEmpty == true))) {
       _autoSubDlTried = true;
       _fetchAndApplySubtitle(prefLang, title: titleForSub);
     }
