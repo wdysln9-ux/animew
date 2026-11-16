@@ -113,6 +113,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       MetaSort.popularity: 'Popularitas',
       MetaSort.score: 'Rating',
       MetaSort.newest: 'Terbaru',
+      if (widget.kind == ZKind.anime) MetaSort.episodeNew: 'Episode baru',
       MetaSort.trending: 'Trending',
       MetaSort.title: 'Judul',
       if (widget.kind == ZKind.anime) MetaSort.recommendation: 'Rekomendasi',
