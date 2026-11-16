@@ -2055,6 +2055,8 @@ class _QuickSettingRow extends StatelessWidget {
     this.value,
     this.showChevron = true,
     this.enabled = true,
+    this.switchValue,
+    this.onSwitchChanged,
   });
 
   final IconData icon;
@@ -2062,6 +2064,8 @@ class _QuickSettingRow extends StatelessWidget {
   final String? value;
   final bool showChevron;
   final bool enabled;
+  final bool? switchValue;
+  final ValueChanged<bool>? onSwitchChanged;
   final VoidCallback onTap;
 
   @override
@@ -2070,43 +2074,51 @@ class _QuickSettingRow extends StatelessWidget {
     child: InkWell(
       onTap: onTap,
       child: Container(
-        constraints: const BoxConstraints(minHeight: 40),
-        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 7),
+        constraints: const BoxConstraints(minHeight: 39),
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: AppColors.textPrimary),
-            const SizedBox(width: 12),
+            Icon(icon, size: 19, color: AppColors.textPrimary),
+            const SizedBox(width: 11),
             Expanded(
               child: Text(
                 label,
                 style: AppText.body.copyWith(
+                  fontFamily: 'Urbanist',
                   color: enabled ? AppColors.textPrimary : AppColors.textSecondary,
-                  fontSize: 13.5,
-                  height: 1.45,
+                  fontSize: 13,
+                  height: 1.35,
                   fontWeight: FontWeight.w400,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Spacer(),
-            if (value != null)
-              Flexible(
-                child: Text(
-                  value!,
-                  textAlign: TextAlign.end,
-                  style: AppText.body.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            if (value != null) ...[
+              const SizedBox(width: 8),
+              Text(
+                value!,
+                textAlign: TextAlign.end,
+                style: AppText.body.copyWith(
+                  fontFamily: 'Urbanist',
+                  color: AppColors.textSecondary,
+                  fontSize: 11.5,
+                  height: 1.2,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            if (showChevron) ...[
+            ],
+            if (switchValue != null)
+              Switch.adaptive(
+                value: switchValue!,
+                onChanged: onSwitchChanged,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              )
+            else if (showChevron) ...[
               const SizedBox(width: 5),
-              Icon(Icons.chevron_right_rounded,
-                  size: 20, color: AppColors.textSecondary),
+              const Icon(Icons.chevron_right_rounded,
+                  size: 19, color: AppColors.textPrimary),
             ],
           ],
         ),
@@ -2121,7 +2133,7 @@ class _SheetColumn extends StatelessWidget {
     required this.children,
     this.compactDialog = false,
   });
-  final String header;
+  final String? header;
   final List<Widget> children;
   final bool compactDialog;
 
@@ -2155,22 +2167,25 @@ class _SheetColumn extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: handle,
             ),
-          Padding(
-            padding: compactDialog
-                ? EdgeInsets.zero
-                : const EdgeInsets.fromLTRB(20, 4, 20, 8),
-            child: Text(
-              header,
-              style: compactDialog
-                  ? const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    )
-                  : AppText.headline,
+          if (header != null && header!.isNotEmpty) ...[
+            Padding(
+              padding: compactDialog
+                  ? EdgeInsets.zero
+                  : const EdgeInsets.fromLTRB(20, 4, 20, 8),
+              child: Text(
+                header!,
+                style: compactDialog
+                    ? const TextStyle(
+                        fontFamily: 'Urbanist',
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      )
+                    : AppText.headline.copyWith(fontFamily: 'Urbanist'),
+              ),
             ),
-          ),
-          SizedBox(height: compactDialog ? 9 : 0),
+            SizedBox(height: compactDialog ? 9 : 0),
+          ],
           Flexible(
             child: ConstrainedBox(
               constraints: BoxConstraints(
@@ -2274,6 +2289,7 @@ class _SheetRow extends StatelessWidget {
                       Text(
                         label,
                         style: AppText.body.copyWith(
+                          fontFamily: 'Urbanist',
                           color: toggleValue == null && active
                               ? AppColors.accent
                               : AppColors.textPrimary,
@@ -2363,11 +2379,12 @@ class _SheetSectionHeader extends StatelessWidget {
         compactDialog ? label : label.toUpperCase(),
         style: compactDialog
             ? const TextStyle(
+                fontFamily: 'Urbanist',
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
               )
-            : AppText.caption.copyWith(
+            : AppText.caption.copyWith(fontFamily: 'Urbanist',
                 color: AppColors.textTertiary,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5,
