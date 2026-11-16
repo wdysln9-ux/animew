@@ -12,6 +12,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/tracker/tracker_hub.dart';
 import '../../core/ui/home_rows_prefs.dart';
+import '../../core/ui/home_custom_catalog_prefs.dart';
 import '../../core/ui/settings_widgets.dart';
 import '../../core/zmode/home_layouts.dart';
 import '../../core/zmode/metadata_provider_prefs.dart';
@@ -171,6 +172,8 @@ class _HomeRowsScreenState extends State<HomeRowsScreen> {
       if (streamingRailForLayout(_layoutKey)) streamingServicesRowId,
       if (_withTrackerRows) ...trackerRowIdsFor(_kind),
       ...sectionIds,
+      if (_kind != null)
+        ...HomeCustomCatalogPrefs.forKind(_kind!).map((c) => 'custom:${c.id}'),
     ]);
     _ready = true;
   }
@@ -475,6 +478,13 @@ class _HomeRowsScreenState extends State<HomeRowsScreen> {
     if (id == newEpisodesRowId) return l10n.homeRowNewEpisodes;
     if (id == streamingServicesRowId) return l10n.streamingServices;
     if (id.startsWith('section:')) return id.substring('section:'.length);
+    if (id.startsWith('custom:')) {
+      final customId = id.substring('custom:'.length);
+      for (final catalogue in HomeCustomCatalogPrefs.all()) {
+        if (catalogue.id == customId) return catalogue.name;
+      }
+      return 'Katalog kustom';
+    }
     final status = WatchStatus.values.asNameMap()[id.substring(
       'tracker:'.length,
     )];
