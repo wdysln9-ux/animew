@@ -563,7 +563,7 @@ class _HomeRowsScreenState extends State<HomeRowsScreen> {
             value: !e.hidden,
             activeThumbColor: Colors.white,
             activeTrackColor: AppColors.accent,
-            inactiveThumbColor: AppColors.textTertiary,
+            inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
             inactiveTrackColor: AppColors.surface2,
             onChanged: (v) => _toggle(e, v),
           ),
