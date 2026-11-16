@@ -55,6 +55,11 @@ import '../provider/provider_repo_registry.dart';
 import '../repository/catalogue_repository.dart';
 import '../repository/provider_settings_repository.dart';
 import '../repository/source_domain_overrides.dart';
+import '../stremio/stremio_manager.dart';
+import '../stremio/stremio_backup.dart';
+import '../stremio/stremio_remote.dart';
+import '../stremio/stremio_sync.dart';
+import '../stremio/stremio_provider.dart';
 import '../repository/source_repository.dart';
 import '../state/active_source_cubit.dart';
 import '../locale/locale_controller.dart';
@@ -1073,6 +1078,43 @@ Future<void> initDependencies() async {
   sl.registerSingleton<ContentModeCubit>(
     await ContentModeCubit.create(sl<ActiveSourceCubit>()),
   );
+
+  // Ported Stremio runtime: addon configuration remains in secure storage.
+  final stremioManager = StremioManager();
+  await stremioManager.init();
+  await stremioManager.ensureDefaultMetadata();
+  sl.registerSingleton<StremioManager>(stremioManager);
+  final stremioRemote = StremioRemote(
+    endpoint: endpoint,
+    accessToken: cloudAccessToken,
+    currentUserId: currentUserId,
+  );
+  sl.registerSingleton<StremioRemote>(
+    stremioRemote,
+    dispose: (remote) => remote.dispose(),
+  );
+  sl.registerSingleton<StremioBackup>(
+    StremioBackup(
+      manager: stremioManager,
+      remote: stremioRemote,
+      currentUserId: currentUserId,
+    ),
+  );
+  final stremioSync = StremioSync(
+    manager: stremioManager,
+    remote: stremioRemote,
+  );
+  sl.registerSingleton<StremioSync>(
+    stremioSync,
+    dispose: (sync) => sync.dispose(),
+  );
+  stremioSync.start(
+    currentUserId(),
+    sl<AuthCubit>().stream
+        .where((state) => state.status != AuthStatus.unknown)
+        .map((state) => state.isLoggedIn ? state.user?.id : null),
+  );
+  sl.registerSingleton<StremioProvider>(StremioProvider(stremioManager));
 
   sl.registerSingleton<SourceRepository>(
     SourceRepository(
