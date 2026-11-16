@@ -1637,6 +1637,25 @@ class PlayerCubit extends Cubit<PlayerState> {
   /// Currently-selected subtitle track (id == 'no' when subs are off).
   SubtitleTrack get activeSubtitleTrack => player.state.track.subtitle;
 
+  /// File extension for the active subtitle when its source is identifiable.
+  /// Unknown embedded codecs intentionally return null: touch layout editing
+  /// is enabled only for confirmed SRT tracks, never ASS/SSA.
+  String? get activeSubtitleFileExtension {
+    final candidates = <String>[
+      activeSubtitleTrack.id,
+      _wantedSubId ?? '',
+    ];
+    for (final candidate in candidates) {
+      final value = candidate.trim();
+      if (value.isEmpty) continue;
+      final path = Uri.tryParse(value)?.path.toLowerCase() ?? value.toLowerCase();
+      for (final extension in const ['.ass', '.ssa', '.srt', '.vtt', '.sub']) {
+        if (path.endsWith(extension)) return extension;
+      }
+    }
+    return null;
+  }
+
   /// How a remembered audio track is written down: `language|title`.
   ///
   /// It used to be the language alone, which cannot tell two tracks apart
