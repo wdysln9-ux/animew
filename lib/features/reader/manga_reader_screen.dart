@@ -3576,12 +3576,11 @@ class _MangaReaderScreenState extends State<MangaReaderScreen>
                         subtitle: pages == null || pages.isEmpty
                             ? 'Chapter ${chapterNumberLabel(_chapters, _index)}'
                                   ' / ${chapterCountLabel(_chapters)}'
-                            // Read off the slot, not the strip: once reading
-                            // has run on into the next chapter the strip holds
-                            // both, and "pg 30/22" is not a thing.
-                            : 'ch ${chapterNumberLabel(_chapters, _slotAt(pageIndex)?.chapterIdx ?? _index)}'
-                                  ' · pg ${(_slotAt(pageIndex)?.pageInChapter ?? pageIndex) + 1}'
-                                  '/${_slotAt(pageIndex)?.chapterPages ?? pages.length}',
+                            : sl<ReaderPrefs>().showPageCounter
+                                ? 'ch ${chapterNumberLabel(_chapters, _slotAt(pageIndex)?.chapterIdx ?? _index)}'
+                                      ' · pg ${(_slotAt(pageIndex)?.pageInChapter ?? pageIndex) + 1}'
+                                      '/${_slotAt(pageIndex)?.chapterPages ?? pages.length}'
+                                : 'ch ${chapterNumberLabel(_chapters, _slotAt(pageIndex)?.chapterIdx ?? _index)}',
                         onTap: _openChapterSheet,
                       ),
                     ),
