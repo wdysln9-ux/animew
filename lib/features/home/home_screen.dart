@@ -282,6 +282,7 @@ class _HomeViewState extends State<_HomeView>
     final cubit = context.read<HomeCubit>();
     if (ZModePrefs.enabled) {
       await cubit.refreshHome();
+      _reloadCustomCatalogues();
       return;
     }
 
