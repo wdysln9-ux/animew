@@ -39,6 +39,10 @@ import '../../core/playback/subtitle_download_service.dart';
 import '../../core/playback/subtitle_translate_service.dart';
 import '../../core/repository/catalogue_repository.dart';
 import '../../core/repository/source_repository.dart';
+import '../../core/privacy/incognito_mode.dart';
+import '../../core/stremio/stremio_manager.dart';
+import '../../core/stremio/stremio_ref.dart';
+import '../../core/stremio/stremio_subtitles.dart';
 import '../../core/zmode/playback_resolver.dart';
 import '../../core/zmode/source_matcher.dart';
 import '../../core/zmode/zmode_ids.dart';
@@ -99,6 +103,8 @@ class PlayerState extends Equatable {
     this.currentIndex = 0,
     this.tracks = const Tracks(),
     this.torrentPhase,
+    this.loadingAddonSubtitles = false,
+    this.addonSubtitlesChecked = false,
   });
 
   /// True while sources for the current episode are being resolved.
@@ -130,6 +136,8 @@ class PlayerState extends Equatable {
   /// show as a buffering overlay ("Finding peers…", "Buffering 12%"). Null for
   /// every non-torrent source, so normal playback is unaffected.
   final String? torrentPhase;
+  final bool loadingAddonSubtitles;
+  final bool addonSubtitlesChecked;
 
   PlayerState copyWith({
     bool? loadingSources,
@@ -141,6 +149,8 @@ class PlayerState extends Equatable {
     int? currentIndex,
     Tracks? tracks,
     String? Function()? torrentPhase,
+    bool? loadingAddonSubtitles,
+    bool? addonSubtitlesChecked,
   }) => PlayerState(
     loadingSources: loadingSources ?? this.loadingSources,
     error: error != null ? error() : this.error,
@@ -151,6 +161,8 @@ class PlayerState extends Equatable {
     currentIndex: currentIndex ?? this.currentIndex,
     tracks: tracks ?? this.tracks,
     torrentPhase: torrentPhase != null ? torrentPhase() : this.torrentPhase,
+    loadingAddonSubtitles: loadingAddonSubtitles ?? this.loadingAddonSubtitles,
+    addonSubtitlesChecked: addonSubtitlesChecked ?? this.addonSubtitlesChecked,
   );
 
   @override
@@ -164,6 +176,8 @@ class PlayerState extends Equatable {
     currentIndex,
     tracks,
     torrentPhase,
+    loadingAddonSubtitles,
+    addonSubtitlesChecked,
   ];
 }
 
@@ -470,6 +484,8 @@ class PlayerCubit extends Cubit<PlayerState> {
   Duration _lastPos = Duration.zero;
   Duration _lastDur = Duration.zero;
   bool _playing = true;
+  int _resumePauseEpoch = 0;
+  VideoSource? _stremioSubtitleSource;
   // The resume position we still need to reach. Set when a resume mark is
   // applied on open and cleared once playback actually reaches it. While set, a
   // re-open (e.g. the default-quality switch that fires right after resume, when
@@ -1775,6 +1791,47 @@ class PlayerCubit extends Cubit<PlayerState> {
     );
   }
 
+  Future<void> loadAddonSubtitles({bool retry = false}) async {
+    if (sourceId != stremioSourceId ||
+        localOnly ||
+        isClosed ||
+        !sl.isRegistered<StremioManager>() ||
+        state.loadingAddonSubtitles ||
+        (state.addonSubtitlesChecked && !retry)) {
+      return;
+    }
+    final active = state.active;
+    final source = _stremioSubtitleSource;
+    if (active == null || source == null) return;
+    final generation = _gen;
+    final episodeUrl = currentEpisode.url;
+    if (!StremioRef.isRef(episodeUrl)) return;
+    emit(state.copyWith(loadingAddonSubtitles: true));
+    final enriched = await stremioSourceWithSubtitles(
+      sl<StremioManager>(),
+      StremioRef.parse(episodeUrl),
+      source,
+    );
+    if (isClosed ||
+        generation != _gen ||
+        currentEpisode.url != episodeUrl ||
+        !identical(state.active, active)) {
+      return;
+    }
+    final updated = active.withSubtitles(enriched.subtitles);
+    emit(
+      state.copyWith(
+        active: () => updated,
+        sources: [
+          for (final item in state.sources)
+            identical(item, active) ? updated : item,
+        ],
+        loadingAddonSubtitles: false,
+        addonSubtitlesChecked: true,
+      ),
+    );
+  }
+
   /// External "soft" subtitles advertised by the active source.
   /// Providers occasionally repeat the same URL in their subtitle metadata;
   /// keep the first entry so the picker does not show duplicate languages.
@@ -2553,8 +2610,19 @@ class PlayerCubit extends Cubit<PlayerState> {
     if (url != null && url.isNotEmpty && label != null && label.isNotEmpty) {
       await sl<TitlePrefsStore>().setSourceLabel(sourceId, url, label);
     }
+    if (sourceId == stremioSourceId) {
+      _stremioSubtitleSource = s;
+      if (!IncognitoMode.on && sl.isRegistered<TitlePrefsStore>()) {
+        final store = sl<TitlePrefsStore>();
+        unawaited(store.rememberStremioLink(currentEpisode.url, s).catchError((_) {}));
+        if (url != null && url.isNotEmpty) {
+          unawaited(store.rememberStremioBingeGroup(url, s.bingeGroup).catchError((_) {}));
+        }
+      }
+    }
     await switchSource(s);
     _buildQualityMenu(_gen);
+    if (sourceId == stremioSourceId) unawaited(loadAddonSubtitles());
   }
 
   // Language tokens used to re-match a remembered source across re-resolves
@@ -2589,6 +2657,13 @@ class PlayerCubit extends Cubit<PlayerState> {
   VideoSource? _preferredSource(List<VideoSource> sources) {
     final url = showUrl;
     if (url == null) return null;
+    if (sourceId == stremioSourceId) {
+      return sl<TitlePrefsStore>().preferredStremioLink(
+        currentEpisode.url,
+        sources,
+        showUrl: url,
+      );
+    }
     final saved = sl<TitlePrefsStore>().sourceLabel(sourceId, url);
     if (saved == null) return null;
     for (final s in sources) {
