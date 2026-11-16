@@ -170,14 +170,9 @@ class _FeaturedHeroState extends State<FeaturedHero> {
   }
 
   Future<void> _loadPalette() async {
-    final cover = _art(widget.item);
-    if (cover == null || cover.isEmpty) return;
-    final c = await extractDominantColor(cover, widget.item.coverHeaders);
-    // A slow decode can resolve after the carousel has moved on — only
-    // apply the colour if this cover is still the one on screen.
-    if (!mounted || _art(widget.item) != cover) return;
-    if (c == null) return;
-    setState(() => _artColor = c);
+    final color = parseAniListCoverColor(widget.item.coverColor);
+    if (!mounted || color == null) return;
+    setState(() => _artColor = color);
   }
 
   @override
