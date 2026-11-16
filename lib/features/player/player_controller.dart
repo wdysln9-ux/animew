@@ -3888,7 +3888,7 @@ class PlayerCubit extends Cubit<PlayerState> {
   /// Set the in-app volume (0–200%) via mpv's own 'volume' property — this is
   /// independent of the Android system volume — and persist it as the default.
   Future<void> setVolumeBoost(int percent, {bool enabled = true}) async {
-    final v = percent.clamp(100, 200);
+    final v = percent.clamp(100, 200).toInt();
     final prefs = sl<PlaybackPrefs>();
     await prefs.setVolumeBoost(v);
     await prefs.setVolumeBoostEnabled(enabled);
