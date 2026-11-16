@@ -566,26 +566,24 @@ class AniListCatalogue implements AnimeCatalogue {
         if (ids.isNotEmpty) {
           try {
             final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+            // Query each title independently with perPage:1. A single
+            // shared 50-schedule page can be monopolised by a few long-running
+            // shows, leaving other titles with no timestamp and a false rank.
+            final scheduleFields = [
+              for (var i = 0; i < ids.length; i++)
+                's$i: airingSchedules(mediaId:${ids[i]},'
+                'airingAt_lesser:$now,sort:TIME_DESC,perPage:1){ airingAt }',
+            ].join(' ');
             final airingData = await _gql(
-              'query{ Page(page:1,perPage:50){ airingSchedules('
-              'mediaId_in:[${ids.join(',')}],airingAt_lesser:$now,'
-              'sort:TIME_DESC){ airingAt media{id} } } }',
+              'query{ Page(page:1){ $scheduleFields } }',
               const {},
             );
-            final schedules = (airingData?['Page'] as Map?)?['airingSchedules'];
             final latestAired = <String, int>{};
-            if (schedules is List) {
-              for (final schedule in schedules) {
-                if (schedule is! Map) continue;
-                final id = (schedule['media'] as Map?)?['id'];
-                final airingAt = schedule['airingAt'];
-                if (id is int && airingAt is int) {
-                  final key = id.toString();
-                  if (airingAt > (latestAired[key] ?? 0)) {
-                    latestAired[key] = airingAt;
-                  }
-                }
-              }
+            for (var i = 0; i < ids.length; i++) {
+              final schedules = (airingData?['Page'] as Map?)?['s$i'];
+              if (schedules is! List || schedules.isEmpty) continue;
+              final airingAt = (schedules.first as Map?)?['airingAt'];
+              if (airingAt is int) latestAired[ids[i].toString()] = airingAt;
             }
             items.sort((left, right) {
               final newestFirst = (latestAired[right.id] ?? 0)
