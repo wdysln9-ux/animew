@@ -556,19 +556,42 @@ class AniListCatalogue implements AnimeCatalogue {
           'query$decl{ Page(page:$selectedPage,perPage:\$n){ media($args){ $_listFields } } }';
       final response = await _gql(full, vars);
       items = _items(response, kind);
-      if (f?.sort == MetaSort.episodeNew && kind == ZKind.anime) {
-        final pageData = response?['Page'];
-        final rawMedia = pageData is Map ? pageData['media'] : null;
-        if (rawMedia is List) {
-          final airingDates = <String, int>{};
-          for (final raw in rawMedia) {
-            if (raw is! Map) continue;
-            final id = raw['id'];
-            final airingAt = (raw['nextAiringEpisode'] as Map?)?['airingAt'];
-            if (id is int && airingAt is int) airingDates[id.toString()] = airingAt;
+      if (f?.sort == MetaSort.episodeNew && kind == ZKind.anime && items.isNotEmpty) {
+        // AniList's Media sort has no "latest episode aired" field. Fetch the
+        // latest actual airing schedule for this result page, then rank each
+        // title by its most recent episode timestamp (not its next announced
+        // episode or the time its metadata record was edited).
+        final ids = items.map((item) => int.tryParse(item.id))
+            .whereType<int>().toSet().toList();
+        if (ids.isNotEmpty) {
+          try {
+            final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+            final airingData = await _gql(
+              'query{ Page(page:1,perPage:50){ airingSchedules('
+              'mediaId_in:[${ids.join(',')}],airingAt_lesser:$now,'
+              'sort:TIME_DESC){ airingAt media{id} } } }',
+              const {},
+            );
+            final schedules = (airingData?['Page'] as Map?)?['airingSchedules'];
+            final latestAired = <String, int>{};
+            if (schedules is List) {
+              for (final schedule in schedules) {
+                if (schedule is! Map) continue;
+                final id = (schedule['media'] as Map?)?['id'];
+                final airingAt = schedule['airingAt'];
+                if (id is int && airingAt is int) {
+                  final key = id.toString();
+                  if (airingAt > (latestAired[key] ?? 0)) {
+                    latestAired[key] = airingAt;
+                  }
+                }
+              }
+            }
+            items.sort((left, right) =>
+              (latestAired[right.id] ?? 0).compareTo(latestAired[left.id] ?? 0));
+          } catch (_) {
+            // Keep AniList's updated-record order if airing history is unavailable.
           }
-          items.sort((left, right) =>
-            (airingDates[left.id] ?? 0).compareTo(airingDates[right.id] ?? 0));
         }
       }
     }
