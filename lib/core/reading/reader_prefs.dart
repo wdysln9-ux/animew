@@ -76,6 +76,13 @@ class ReaderPrefs {
   bool get fullscreen => _box.get('fullscreen', defaultValue: true) as bool;
   Future<void> setFullscreen(bool value) => _box.put('fullscreen', value);
 
+  /// Whether the manga reader shows the current page number in its title pill.
+  /// Defaults to true so existing installs keep the current layout.
+  bool get showPageCounter =>
+      _box.get('showPageCounter', defaultValue: true) as bool;
+  Future<void> setShowPageCounter(bool value) =>
+      _box.put('showPageCounter', value);
+
   /// Turn manga pages with the hardware volume keys.
   ///
   /// OFF by default, and deliberately so: this SWALLOWS the volume keys while
