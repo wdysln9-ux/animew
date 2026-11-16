@@ -231,8 +231,8 @@ class _BarButton extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           child: Padding(
-            padding: EdgeInsets.fromLTRB(7.5, 10, rightPadding, 10),
-            child: Icon(icon, color: color ?? Colors.white, size: 24),
+            padding: EdgeInsets.fromLTRB(7.3, 10, rightPadding - 0.2, 10),
+            child: Icon(icon, color: color ?? Colors.white, size: 23),
           ),
         ),
       ),
@@ -321,13 +321,13 @@ class _AnimatedPlayPause extends StatelessWidget {
           customBorder: const CircleBorder(),
           splashColor: Colors.white.withValues(alpha: 0.18),
           child: SizedBox(
-            width: 70,
-            height: 70,
+            width: 75,
+            height: 75,
             child: Center(
               child: Icon(
                 playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
                 color: Colors.white,
-                size: 50,
+                size: 55,
               ),
             ),
           ),
