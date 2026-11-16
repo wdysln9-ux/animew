@@ -2125,7 +2125,7 @@ class _SearchViewState extends State<_SearchView>
                         dubBadge: item.dubBadge,
                         statusBadge: item.isUpcoming ? 'Segera' : item.status == MediaStatus.ongoing ? 'Tayang' : item.status == MediaStatus.completed ? 'Selesai' : null,
                         viewsBadge: item.popularity,
-                        metaLine: [if (item.format?.isNotEmpty == true) item.format!, if (item.totalEpisodes != null && item.totalEpisodes! > 0) '${item.totalEpisodes} Eps'].join(' · '),
+                        metaLine: [if (item.format?.isNotEmpty == true) item.format!, if (item.year != null) item.year.toString(), if (item.totalEpisodes != null && item.totalEpisodes! > 0) '${item.totalEpisodes} Eps'].join(' · '),
                         cellWidth: itemW,
                         onTap: () => _openDetail(item),
                         onLongPress: () => _showInfo(item),
