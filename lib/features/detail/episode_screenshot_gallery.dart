@@ -607,6 +607,24 @@ class _EpisodeStillRail extends StatelessWidget {
   }
 }
 
+class _GalleryMessage extends StatelessWidget {
+  const _GalleryMessage(this.message);
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 22),
+    child: Center(
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: AppText.caption.copyWith(color: AppColors.textSecondary),
+      ),
+    ),
+  );
+}
+
 class _GalleryLoading extends StatelessWidget {
   const _GalleryLoading();
 
