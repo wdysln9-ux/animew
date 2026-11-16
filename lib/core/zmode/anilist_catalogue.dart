@@ -446,6 +446,7 @@ class AniListCatalogue implements AnimeCatalogue {
                 f.format != null ||
                 f.status != null ||
                 f.countryOfOrigin != null ||
+                f.countries.isNotEmpty ||
                 f.minScore != null ||
                 f.adult));
     final applyRecommendationEligibility =
@@ -456,6 +457,11 @@ class AniListCatalogue implements AnimeCatalogue {
     final statuses = f == null ? const <MetaStatus>[] : f.statuses;
     final legacyFormat = f != null && formats.isEmpty ? _alFormat(f.format) : null;
     final legacyStatus = f != null && statuses.isEmpty ? _alStatus(f.status) : null;
+    final countries = f == null
+        ? const <MetaCountry>[]
+        : (f.countries.isNotEmpty
+            ? f.countries
+            : [if (f.countryOfOrigin != null) f.countryOfOrigin!]);
     final args = <String>[
       if (q.trim().isNotEmpty) 'search:\$q',
       'type:${_type(kind)}',
@@ -493,8 +499,8 @@ class AniListCatalogue implements AnimeCatalogue {
           'status_in:[${statuses.map(_alStatus).whereType<String>().join(',')}]'
         else if (legacyStatus != null)
           'status:$legacyStatus',
-        if (f.countryOfOrigin != null)
-          'countryOfOrigin:${f.countryOfOrigin!.aniListCode}',
+        if (countries.length == 1)
+          'countryOfOrigin:${countries.single.aniListCode}',
         if (f.minEpisodes > 0) 'episodes_greater:${f.minEpisodes - 1}',
         if (f.maxEpisodes < 200) 'episodes_lesser:${f.maxEpisodes + 1}',
         if (f.minScore != null) 'averageScore_greater:${f.minScore! - 1}',
@@ -531,7 +537,39 @@ class AniListCatalogue implements AnimeCatalogue {
     }
 
     late List<MediaItem> items;
-    if (seasons.length > 1 && kind == ZKind.anime) {
+    if (countries.length > 1 && kind == ZKind.anime) {
+      // AniList exposes a single countryOfOrigin argument. Query each
+      // selected country (and selected seasons) as aliases, then merge by id.
+      final seasonVariants = seasons.length > 1
+          ? seasons.cast<MetaSeason?>().toList()
+          : <MetaSeason?>[null];
+      final variants = <({MetaCountry country, MetaSeason? season})>[
+        for (final country in countries)
+          for (final season in seasonVariants)
+            (country: country, season: season),
+      ];
+      final variantArgs = [
+        for (final variant in variants)
+          '$args,countryOfOrigin:${variant.country.aniListCode}'
+              '${variant.season == null ? '' : ',season:${variant.season!.name.toUpperCase()}'}',
+      ];
+      final pageNumbers = <int>[];
+      for (var i = 0; i < variants.length; i++) {
+        pageNumbers.add(await pageFor('$q|${variantArgs[i]}', variantArgs[i]));
+      }
+      final queries = [
+        for (var i = 0; i < variants.length; i++)
+          'c$i: Page(page:${pageNumbers[i]},perPage:\$n){ media(${variantArgs[i]}){ $_listFields } }',
+      ].join(' ');
+      final data = await _gql('query$decl{ $queries }', vars);
+      final unique = <String, MediaItem>{};
+      for (var i = 0; i < variants.length; i++) {
+        for (final item in _itemsFromPage(data?['c$i'], kind)) {
+          unique[item.id] = item;
+        }
+      }
+      items = unique.values.toList();
+    } else if (seasons.length > 1 && kind == ZKind.anime) {
       final pageNumbers = <int>[];
       for (final season in seasons) {
         final seasonArgs = '$args,season:${season.name.toUpperCase()}';
