@@ -73,7 +73,7 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
 
   int _filterCount(MetaFilters f) => f.genres.length + f.tags.length + f.years.length +
       f.seasons.length + f.formats.length + f.statuses.length +
-      (f.countryOfOrigin == null ? 0 : 1) + (f.minScore == null ? 0 : 1) +
+      (f.countries.length + (f.countryOfOrigin == null ? 0 : 1)) + (f.minScore == null ? 0 : 1) +
       (f.minEpisodes == 0 && f.maxEpisodes == 200 ? 0 : 1) +
       (f.minYear == 1980 && f.maxYear == DateTime.now().year ? 0 : 1);
 
