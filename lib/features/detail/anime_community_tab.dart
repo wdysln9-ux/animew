@@ -36,16 +36,6 @@ class _AnimeCommunityTabState extends State<AnimeCommunityTab> {
   }
 
   @override
-  void didUpdateWidget(covariant EpisodeThreadsSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.showTitle != widget.showTitle ||
-        oldWidget.malId != widget.malId ||
-        oldWidget.episodeNumber != widget.episodeNumber) {
-      future = _load();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) => FutureBuilder<List<Map<String, dynamic>>>(
     future: future,
     builder: (context, s) {
@@ -296,6 +286,16 @@ class _EpisodeThreadsSectionState extends State<EpisodeThreadsSection> {
   late Future<List<Map<String, dynamic>>> future;
   @override
   void initState() { super.initState(); future = _load(); }
+
+  @override
+  void didUpdateWidget(covariant EpisodeThreadsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.showTitle != widget.showTitle ||
+        oldWidget.malId != widget.malId ||
+        oldWidget.episodeNumber != widget.episodeNumber) {
+      future = _load();
+    }
+  }
 
   Future<List<Map<String, dynamic>>> _load() async {
     final api = sl<AniListService>().api;
