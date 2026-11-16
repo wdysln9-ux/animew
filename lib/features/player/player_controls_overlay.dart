@@ -925,33 +925,27 @@ class _BufferAwarePlayPauseState extends State<_BufferAwarePlayPause> {
           builder: (context, bSnap) {
             final buffering =
                 bSnap.data ?? widget.controller.player.state.buffering;
-            if (buffering && playing) {
-              return SizedBox(
-                width: 51,
-                height: 51,
-                child: Material(
-                  color: Colors.transparent,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: _onTap,
-                    child: Center(
-                      child: SizedBox(
-                        width: 29,
-                        height: 29,
-                        child: CircularProgressIndicator(
-                          color: AppColors.accent,
-                          strokeWidth: 3,
-                        ),
+            return SizedBox(
+              width: 82,
+              height: 82,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (buffering)
+                    const SizedBox(
+                      width: 78,
+                      height: 78,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 1.5,
                       ),
                     ),
+                  _AnimatedPlayPause(
+                    playing: playing,
+                    onTap: _onTap,
                   ),
-                ),
-              );
-            }
-            return _AnimatedPlayPause(
-              playing: playing,
-              onTap: _onTap,
+                ],
+              ),
             );
           },
         );
