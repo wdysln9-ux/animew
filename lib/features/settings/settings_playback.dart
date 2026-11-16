@@ -710,6 +710,16 @@ class _PlaybackSettingsScreenState extends State<PlaybackSettingsScreen> {
                           : (_prefs.externalPlayerLabel.isNotEmpty ? _prefs.externalPlayerLabel : context.l10n.externalApp),
                   onTap: _pickPlayer,
                 ),
+                _toggleRow(
+                  icon: Icons.swap_horiz_rounded,
+                  title: 'Coba pemutar lain otomatis',
+                  subtitle: 'Kalau satu pemutar gagal membuka video, AnimeW akan mencoba pemutar lain dan melanjutkan dari posisi terakhir.',
+                  value: _prefs.autoPlayerFallback,
+                  onChanged: (value) async {
+                    await _prefs.setAutoPlayerFallback(value);
+                    if (mounted) setState(() {});
+                  },
+                ),
                 SettingsTile(
                   icon: Icons.tune_rounded,
                   title: context.l10n.playerControls,
@@ -1043,6 +1053,24 @@ class _PlaybackSettingsScreenState extends State<PlaybackSettingsScreen> {
               ),
             ],
           ),
+          if (Platform.isAndroid && !sl<AppMode>().isTv)
+            SettingsCard(
+              margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              children: [
+                SettingsTile(
+                  icon: Icons.storage_rounded,
+                  title: 'Cache pemutar Android',
+                  subtitle: 'Atur cache memori dan penyimpanan untuk streaming.',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const NativePlayerCacheScreen(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+
 
           // ── Subtitles ───────────────────────────────────────────────────
           SettingsSectionLabel(context.l10n.subtitles),
