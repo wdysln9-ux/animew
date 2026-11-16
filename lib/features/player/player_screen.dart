@@ -1280,7 +1280,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
         resumePosition: widget.resumePosition.inMilliseconds,
         peek: widget.peek,
         showUrl: widget.showUrl,
+        downloadShowId: widget.downloadShowId,
+        allowDownloads: !widget.localOnly,
         showTitle: widget.showTitle,
+        showDescription: widget.showDescription,
         cover: widget.cover,
         coverHeaders: widget.coverHeaders,
         category: widget.category ?? 'sub',
@@ -1292,8 +1295,25 @@ class _PlayerScreenState extends State<PlayerScreen> {
         tmdbId: widget.tmdbId,
         tmdbIsTv: widget.tmdbIsTv,
         imdbId: widget.imdbId,
+        isMovie: widget.isMovie ?? false,
+        engineFallback: _canTryOtherPlayer ? _engineFallback : null,
+        forceInitialResume: widget.engineRecovery,
+        onEngineFallback: (failure) => _nativeEngineFailure = failure,
       );
+      final failure = _nativeEngineFailure;
+      if (mounted && failure != null) {
+        await _replacePlayerEngine(
+          engine: PlaybackEngine.mpv,
+          episodes: failure.episodes,
+          index: failure.index,
+          source: failure.source,
+          position: failure.position,
+          category: failure.category,
+        );
+        return;
+      }
       if (!opened) {
+        if (await _recoverUnavailableNative()) return;
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(context.l10n.androidPlayerUnavailable)),
@@ -1306,6 +1326,81 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (!mounted) return;
       Navigator.of(context).maybePop();
     }
+  }
+
+  Future<bool> _recoverUnavailableNative() async {
+    final source = widget.initialSource;
+    final index = widget.startIndex;
+    if (!mounted ||
+        !widget.engineRecovery ||
+        !_canTryOtherPlayer ||
+        source == null ||
+        source.isDrm ||
+        isTorrentUrl(source.url) ||
+        index < 0 ||
+        index >= widget.episodes.length) {
+      return false;
+    }
+    _engineFallback.next(
+      enabled: true,
+      failedEngine: PlaybackEngine.nativePlayer,
+      episodeUrl: widget.episodes[index].url,
+      category: widget.category ?? 'sub',
+      source: source,
+    );
+    await _replacePlayerEngine(
+      engine: PlaybackEngine.mpv,
+      episodes: widget.episodes,
+      index: index,
+      source: source,
+      position: widget.resumePosition,
+      category: widget.category ?? 'sub',
+    );
+    return true;
+  }
+
+  Future<bool> _onMpvSourceFailure(
+    VideoSource source,
+    Duration position,
+  ) async {
+    if (!mounted || _switchingEngine || !_canTryOtherPlayer) return false;
+    final target = _engineFallback.next(
+      enabled: true,
+      failedEngine: PlaybackEngine.mpv,
+      episodeUrl: _c.currentEpisode.url,
+      category: _c.activeCategory,
+      source: source,
+    );
+    if (target == null) return false;
+    await _replacePlayerEngine(
+      engine: target,
+      episodes: _c.episodes,
+      index: _c.state.currentIndex,
+      source: source,
+      position: position,
+      category: _c.activeCategory,
+    );
+    return true;
+  }
+
+  Future<void> _replacePlayerEngine({
+    required PlaybackEngine engine,
+    required List<Episode> episodes,
+    required int index,
+    required VideoSource source,
+    required Duration position,
+    required String category,
+  }) async {
+    if (!mounted || _switchingEngine) return;
+    _switchingEngine = true;
+    _engineTeardown = Completer<void>();
+    widget.onEngineChange?.call(engine, (
+      episodes: episodes,
+      index: index,
+      source: source,
+      position: position,
+      category: category,
+    ), _engineTeardown!.future);
   }
 
   Future<void> _launchExternalThenPop() async {
