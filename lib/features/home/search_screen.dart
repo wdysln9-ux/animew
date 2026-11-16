@@ -2111,7 +2111,8 @@ class _SearchViewState extends State<_SearchView>
                   child: RepaintBoundary(
                     child: RevealItem(
                       index: i,
-                      child: PosterCard(
+                      cacheKey: '${item.sourceId}:${item.id}',
+child: PosterCard(
                         title: item.title,
                         logoItem: item,
                         imageUrl: item.cover,
@@ -2178,7 +2179,8 @@ class _SearchViewState extends State<_SearchView>
             final item = preview[i];
             return RevealItem(
               index: i,
-              child: PosterCard(
+              cacheKey: '${item.sourceId}:${item.id}',
+child: PosterCard(
                 title: item.title,
                 logoItem: item,
                 imageUrl: item.cover,
@@ -2583,7 +2585,8 @@ class _SearchViewState extends State<_SearchView>
                 // animation the rest of the app uses.
                 return RevealItem(
                   index: i,
-                  child: PosterCard(
+                  cacheKey: '${item.sourceId}:${item.id}',
+child: PosterCard(
                     title: item.title,
                     logoItem: item,
                     imageUrl: item.cover,
