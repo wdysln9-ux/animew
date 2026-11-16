@@ -125,14 +125,17 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
                     ),
                   ),
                   const Spacer(),
-                  AnimatedRotation(
-                    turns: _expanded ? 0.25 : 0,
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeInOutCubic,
-                    child: Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppColors.textSecondary,
-                      size: 21,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: AnimatedRotation(
+                      turns: _expanded ? 0.25 : 0,
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeInOutCubic,
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textSecondary,
+                        size: 21,
+                      ),
                     ),
                   ),
                 ],
