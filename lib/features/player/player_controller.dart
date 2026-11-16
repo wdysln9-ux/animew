@@ -2899,6 +2899,20 @@ class PlayerCubit extends Cubit<PlayerState> {
     bool softwareDecodeRetry = false,
   }) async {
     final originalSource = s;
+    if (sourceId == stremioSourceId &&
+        !IncognitoMode.on &&
+        sl.isRegistered<TitlePrefsStore>()) {
+      final store = sl<TitlePrefsStore>();
+      unawaited(
+        store.rememberStremioLink(currentEpisode.url, originalSource).catchError((_) {}),
+      );
+      final show = showUrl;
+      if (show != null && show.isNotEmpty) {
+        unawaited(
+          store.rememberStremioBingeGroup(show, originalSource.bingeGroup).catchError((_) {}),
+        );
+      }
+    }
     final g = gen ?? ++_gen;
     final invalidatesSoftwareRetry = shouldInvalidateSoftwareDecoderRetry(
       retryInProgress: _softwareDecodeRetryInProgress,
