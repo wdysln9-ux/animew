@@ -1170,7 +1170,6 @@ class _MyListViewState extends State<_MyListView> with WidgetsBindingObserver {
                 context,
                 modeEntries,
                 shrinkWrap: true,
-                characterSizing: true,
                 onTap: (item) => _openItem(context, item),
                 onMore: (entry) => showListStatusSheet(context, item: entry.item),
               ),
