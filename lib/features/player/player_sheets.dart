@@ -569,7 +569,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
     await p.setSubtitleOutlineWidth(2.5);
     await p.setSubtitleOutlineType('soft');
     await p.setSubtitleOutlineColorHex('#000000FF');
-    await p.setSubtitleShadowAngle(90);
+    await p.setSubtitleShadowAngle(45);
     await p.setSubtitleShadowWidth(1);
     await p.setSubtitleShadowDistance(2.5);
     await p.setSubtitleShadowBlur(2.5);
