@@ -1390,6 +1390,7 @@ class _SearchViewState extends State<_SearchView>
           MetaSort.score => 'Rating',
           MetaSort.trending => 'Trending',
           MetaSort.newest => 'Terbaru',
+          MetaSort.episodeNew => 'Episode baru',
           MetaSort.title => 'Judul',
           MetaSort.recommendation => 'Rekomendasi',
         }}${f.sortAscending ? ' ↑' : ''}',
