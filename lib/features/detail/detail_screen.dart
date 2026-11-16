@@ -106,6 +106,9 @@ import '../../core/logging/app_logger.dart';
 import '../../core/repository/catalogue_repository.dart';
 import '../../core/repository/source_actions.dart' as source_actions;
 import '../../core/repository/source_repository.dart';
+import '../../core/stremio/stremio_manager.dart';
+import '../../core/stremio/stremio_ref.dart';
+import 'stremio_episode_links_sheet.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/tv/tv_back_button.dart';
@@ -454,6 +457,7 @@ class _DetailView extends StatefulWidget {
 }
 
 class _DetailViewState extends State<_DetailView> {
+  bool _stremioSheetOpen = false;
   static const double _expandedHeight = 388;
 
   // The episode url we've already kicked a background source-prefetch for, so we
@@ -1140,6 +1144,57 @@ class _DetailViewState extends State<_DetailView> {
     }
   }
 
+  /// Resolve an addon-grouped Stremio link before opening the player.
+  Future<VideoSource?> _pickStremioSource(
+    List<Episode> episodes,
+    int index,
+    MediaDetail detail,
+  ) async {
+    if (_stremioSheetOpen ||
+        index < 0 ||
+        index >= episodes.length ||
+        !StremioRef.isRef(episodes[index].url)) {
+      return null;
+    }
+    final ref = StremioRef.parse(episodes[index].url);
+    final manager = sl<StremioManager>();
+    final revision = manager.byId(ref.installationId)?.revision;
+    if (!manager.canOpen(ref)) {
+      showAppToast(context, 'Addon ini sudah tidak terpasang');
+      return null;
+    }
+    _stremioSheetOpen = true;
+    try {
+      final title = episodes[index].title.isEmpty
+          ? detail.title
+          : '${detail.title} · ${episodes[index].title}';
+      final picked = await showStremioEpisodeLinksSheet(
+        context,
+        manager: manager,
+        ref: ref,
+        title: title,
+        bannerUrl: detail.banner ?? detail.cover,
+        bannerHeaders: detail.coverHeaders,
+      );
+      if (!mounted || picked == null) return null;
+      if (!manager.canOpen(ref, revision: revision)) {
+        showAppToast(context, 'Addon berubah. Pilih sumber lagi');
+        return null;
+      }
+      if (index >= episodes.length ||
+          StremioRef.parse(episodes[index].url) != ref) {
+        showAppToast(context, 'Episode berubah. Pilih sumber lagi');
+        return null;
+      }
+      return picked;
+    } catch (_) {
+      if (mounted) showAppToast(context, 'Gagal membuka sumber Stremio');
+      return null;
+    } finally {
+      _stremioSheetOpen = false;
+    }
+  }
+
   Future<void> _openPlayer(
     List<Episode> episodes,
     int index,
@@ -1268,6 +1323,12 @@ class _DetailViewState extends State<_DetailView> {
       }
       _openReader(episodes, index, detail, peek: peek);
       return;
+    }
+
+    if (widget.item.sourceId == stremioSourceId && initialSource == null) {
+      final picked = await _pickStremioSource(episodes, index, detail);
+      if (picked == null || !mounted) return;
+      initialSource = picked;
     }
 
     // Auto-add this title to My List (as Watching) on play, if the user opted
