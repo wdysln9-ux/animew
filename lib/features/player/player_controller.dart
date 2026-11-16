@@ -53,6 +53,8 @@ import 'subtitle_font_service.dart';
 import 'subtitle_style.dart' show libassOutline;
 import 'player_lifecycle.dart';
 import 'playback_failover.dart';
+import 'mpv_player_pool.dart';
+import 'player_engine_fallback.dart';
 
 /// The mpv video output (renderer) to create the player with, from the user's
 /// Video renderer setting.
@@ -281,6 +283,9 @@ class PlayerCubit extends Cubit<PlayerState> {
     this.initialResume = Duration.zero,
     this.initialSource,
     this.onDrmSource,
+    this.onSourceFailure,
+    this.engineFallback,
+    this.forceInitialResume = false,
   }) : _resolveSources = resolveSources,
        _resolveDownloadedSources = resolveDownloadedSources,
        _pollSources = pollSources,
@@ -353,6 +358,11 @@ class PlayerCubit extends Cubit<PlayerState> {
   /// (e.g. watch-together), where a DRM source just fails as before.
   final void Function(VideoSource drm)? onDrmSource;
 
+  /// Called when a source cannot start and the host can switch playback engines.
+  final Future<bool> Function(VideoSource source, Duration position)? onSourceFailure;
+  final PlayerEngineFallback? engineFallback;
+  bool forceInitialResume;
+
   /// The category (sub/dub) the session launched in. The LIVE category (which
   /// the user can flip mid-session) is [_activeCategory] — `category` is just
   /// the launch value.
@@ -396,18 +406,8 @@ class PlayerCubit extends Cubit<PlayerState> {
   /// episode URL's `/sub/` ↔ `/dub/` segment to this. Persisted per-title.
   String _activeCategory;
 
-  final Player player = Player(
-    configuration: PlayerConfiguration(
-      // Render subtitles via mpv/libass (real ASS styling — fonts, positions,
-      // karaoke, signs) when the user opts in. media_kit then draws subs into
-      // the video texture and hides its Flutter overlay. The Android font is
-      // libass's fallback (system fonts aren't visible to libass on Android);
-      // _setupSubtitleFonts / applySubtitleStyle refine sub-fonts-dir/sub-font
-      // after open. Off → default Player() behaviour (Flutter text overlay).
-      libass: sl<PlaybackPrefs>().styledSubtitles,
-      libassAndroidFont: 'assets/fonts/NotoSans-Regular.ttf',
-      libassAndroidFontName: 'Noto Sans',
-    ),
+  late final Player player = sl<MpvPlayerPool>().acquire(
+    libass: sl<PlaybackPrefs>().styledSubtitles,
   );
   final PlayerLifecycleGate _lifecycle = PlayerLifecycleGate();
   Future<void>? _nativeTeardown;
@@ -724,7 +724,14 @@ class PlayerCubit extends Cubit<PlayerState> {
       }
       final resolved = await _resolveNoted(epUrl);
       if (gen != _gen) return;
-      emit(state.copyWith(sources: resolved, loadingSources: false));
+      final blocked = engineFallback?.blockedUrls(
+      currentEpisode.url,
+      _activeCategory,
+    );
+    if (blocked != null && blocked.isNotEmpty) {
+      resolved = resolved.where((source) => !blocked.contains(source.url)).toList();
+    }
+    emit(state.copyWith(sources: resolved, loadingSources: false));
       _buildQualityMenu(gen);
       // prefer: the cut we just switched TO. Without it this takes the
       // default (sub), so asking for dub on a source that returns BOTH cuts in
@@ -2993,11 +3000,14 @@ class PlayerCubit extends Cubit<PlayerState> {
     // regenerated the episode's opaque data id between sessions): resume from
     // the position the Continue Watching entry itself recorded. First open only
     // — consume it so a later source/quality switch keeps the live position.
-    if (autoResume &&
+    if (forceInitialResume && initialResume > Duration.zero) {
+      resumeAt = initialResume;
+    } else if (autoResume &&
         resumeAt <= Duration.zero &&
         initialResume > Duration.zero) {
       resumeAt = initialResume;
     }
+    forceInitialResume = false;
     initialResume = Duration.zero;
     // A fresh resume-open (no explicit seekTo) arms the pending-resume target so
     // a re-open that fires before we've reached it can't pull us back.
@@ -3312,6 +3322,15 @@ class PlayerCubit extends Cubit<PlayerState> {
       await _open(act!, seekTo: _lastPos, playUrlOverride: act.proxyUrl);
       return;
     }
+    final engineGeneration = _gen;
+    if (onSourceFailure != null && await _tryOtherEngine()) return;
+    if (isClosed || engineGeneration != _gen) {
+      _recovering = false;
+      return;
+    }
+    _tried.addAll(
+      engineFallback?.blockedUrls(currentEpisode.url, _activeCategory) ?? {},
+    );
     _recovering = true;
     // close() bumps _gen precisely so continuations like this one bail instead
     // of firing into a disposed player. This was the one that never checked:
@@ -3555,6 +3574,32 @@ class PlayerCubit extends Cubit<PlayerState> {
     _stallTimer = null;
   }
 
+  Future<bool> _tryOtherEngine() async {
+    final callback = onSourceFailure;
+    final active = state.active;
+    if (callback == null ||
+        active == null ||
+        active.isDrm ||
+        _activeTorrentId != null) {
+      return false;
+    }
+    try {
+      final generation = _gen;
+      final position = _pendingResume > _lastPos ? _pendingResume : _lastPos;
+      final handled = await callback(active, position);
+      if (handled && !isClosed && generation == _gen) {
+        _gen++;
+        _startTimer?.cancel();
+        _neverStartedTimer?.cancel();
+        await _stopQuietly();
+      }
+      return handled;
+    } catch (error) {
+      debugPrint('[player] alternate player unavailable: $error');
+      return false;
+    }
+  }
+
   Future<void> _failoverFromStall({bool allowNotBuffering = false}) async {
     _stallWatchdogArmed = false;
     // The never-started watchdog also uses this path: a source that never
@@ -3565,6 +3610,15 @@ class PlayerCubit extends Cubit<PlayerState> {
     if (_startedThisSource &&
         _lastPos > _stallAnchorPos + const Duration(seconds: 1)) return;
     if (_recovering) return;
+    final engineGeneration = _gen;
+    if (onSourceFailure != null && await _tryOtherEngine()) return;
+    if (isClosed || engineGeneration != _gen) {
+      _recovering = false;
+      return;
+    }
+    _tried.addAll(
+      engineFallback?.blockedUrls(currentEpisode.url, _activeCategory) ?? {},
+    );
     _recovering = true;
     final dead = state.active;
     if (dead != null) _tried.add(dead.url);
@@ -4285,6 +4339,11 @@ class PlayerCubit extends Cubit<PlayerState> {
             AppLogger.instance.log('[player-lifecycle] native dispose start');
             try {
               await player.dispose();
+              if (sl.isRegistered<MpvPlayerPool>()) {
+                sl<MpvPlayerPool>().warmUp(
+                  libass: sl<PlaybackPrefs>().styledSubtitles,
+                );
+              }
               AppLogger.instance.log('[player-lifecycle] native dispose done');
             } catch (error) {
               AppLogger.instance.log(
