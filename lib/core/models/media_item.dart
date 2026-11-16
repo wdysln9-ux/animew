@@ -17,8 +17,8 @@ class MediaItem extends Equatable {
   /// doesn't provide one; UI falls back to [title].
   final String? englishTitle;
   final String? cover;
-  /// AniList's per-title coverImage.color, used as the poster loading surface.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  /// AniList's per-title coverImage.color, persisted so saved-list posters
+  /// keep the same loading surface after an app restart.
   final String? coverColor;
   final Map<String, String>? coverHeaders;
 
