@@ -404,8 +404,24 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// the initState hand-off, the header-gated proxy path, and the launch call.
   /// Reading prefs directly in each is how an override gets honoured by two of
   /// them and silently dropped by the third.
-  String get _chosenPlayer =>
-      widget.playerOverride ?? sl<PlaybackPrefs>().externalPlayerPackage;
+  String get _chosenPlayer => stremioPlayerPackage(
+    widget.sourceId,
+    widget.initialSource,
+    widget.playerOverride ?? sl<PlaybackPrefs>().externalPlayerPackage,
+  );
+
+  late final PlayerEngineFallback _engineFallback =
+      widget.engineFallback ?? PlayerEngineFallback();
+  bool _switchingEngine = false;
+  Completer<void>? _engineTeardown;
+  PhonePlaybackFailure? _nativeEngineFailure;
+
+  bool get _canTryOtherPlayer =>
+      widget.onEngineChange != null &&
+      Platform.isAndroid &&
+      !sl<AppMode>().isTv &&
+      sl<PlaybackPrefs>().autoPlayerFallback &&
+      (_chosenPlayer.isEmpty || _chosenPlayer == PlaybackPrefs.androidPlayerId);
 
   late final PlayerCubit _c;
   final WatchTogetherController _room = sl<WatchTogetherController>();
