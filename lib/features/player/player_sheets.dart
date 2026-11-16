@@ -2184,6 +2184,7 @@ class _SheetRow extends StatelessWidget {
     required this.label,
     required this.active,
     required this.onTap,
+    this.onLongPress,
     this.icon,
     this.subtitle,
     this.subtitleWidget,
@@ -2196,6 +2197,7 @@ class _SheetRow extends StatelessWidget {
   final String label;
   final bool active;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   /// Optional trailing icon (e.g. upload for "Load from file…").
   final IconData? icon;
@@ -2235,6 +2237,7 @@ class _SheetRow extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
+          onLongPress: onLongPress,
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: compactDialog ? 8 : 12,
