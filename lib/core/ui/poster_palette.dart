@@ -43,6 +43,18 @@ Future<Color?> extractDominantColor(String url, Map<String, String>? headers) =>
       cacheKey: url,
     );
 
+/// Parses AniList's `coverImage.color` value (#RRGGBB) into an opaque
+/// Flutter colour. Null means the metadata provider did not supply a usable
+/// colour, so callers can keep the normal theme surface.
+Color? parseAniListCoverColor(String? raw) {
+  final value = raw?.trim();
+  if (value == null || value.isEmpty) return null;
+  final hex = value.startsWith('#') ? value.substring(1) : value;
+  final normalized = hex.length == 6 ? 'FF$hex' : hex;
+  final parsed = int.tryParse(normalized, radix: 16);
+  return parsed == null ? null : Color(parsed);
+}
+
 /// Maps a poster's dominant colour to the background tint: keep the hue, drop
 /// lightness to a fixed dark level and halve saturation (capped), so text and
 /// chrome designed for near-black keep their contrast.
