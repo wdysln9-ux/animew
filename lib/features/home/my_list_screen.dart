@@ -29,6 +29,7 @@ import '../../core/tracker/tracker_hub.dart';
 import '../../core/ui/buttons.dart';
 import '../../core/ui/list_status_sheet.dart';
 import '../../core/ui/poster_card.dart';
+import '../../core/ui/tracker_badge.dart';
 import '../../core/models/provider_info.dart';
 import '../../core/ui/states.dart';
 import '../../core/ui/tracker_entry_sheet.dart';
@@ -1605,22 +1606,34 @@ class _MyListViewState extends State<_MyListView> with WidgetsBindingObserver {
             final entry = shown[i];
             return RevealItem(
               index: i,
-              child: PosterCard(
-                title: entry.item.title,
-                logoItem: entry.item,
-                imageUrl: entry.item.cover,
-                wideImageUrl: entry.item.banner,
-                genres: entry.item.genres,
-                isAdult: entry.item.isAdult,
-                progressBadge: entry.progress == null
-                    ? null
-                    : '${entry.item.type == ProviderType.manga || entry.item.type == ProviderType.novel ? 'Ch' : 'EP'} ${entry.progress}',
-                headers: entry.item.coverHeaders,
-                cellWidth: cellW,
-                onTap: () => onTap(entry.item),
-                // Long-press opens the per-card edit sheet (own list →
-                // status/remove; tracker → the tracker editor).
-                onLongPress: onMore == null ? null : () => onMore(entry),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: PosterCard(
+                      title: entry.item.title,
+                      logoItem: entry.item,
+                      imageUrl: entry.item.cover,
+                      wideImageUrl: entry.item.banner,
+                      genres: entry.item.genres,
+                      isAdult: entry.item.isAdult,
+                      progressBadge: entry.progress == null
+                          ? null
+                          : '${entry.item.type == ProviderType.manga || entry.item.type == ProviderType.novel ? 'Ch' : 'EP'} ${entry.progress}',
+                      headers: entry.item.coverHeaders,
+                      cellWidth: cellW,
+                      onTap: () => onTap(entry.item),
+                      // Long-press opens the per-card edit sheet (own list →
+                      // status/remove; tracker → the tracker editor).
+                      onLongPress: onMore == null ? null : () => onMore(entry),
+                    ),
+                  ),
+                  if (entry.isPrivate)
+                    const Positioned(
+                      top: 8,
+                      right: 8,
+                      child: PrivateTrackerBadge(),
+                    ),
+                ],
               ),
             );
           },
