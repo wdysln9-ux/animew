@@ -173,6 +173,27 @@ class TitlePrefsStore {
     await _box.put(k, m);
   }
 
+  /// AnimeW's existing stable subtitle key (language|title or 'off').
+  /// Kept alongside Zangetsu's normalized Stremio subtitleChoice.
+  String? subtitleTrack(String sourceId, String showUrl) {
+    final m = _box.get(_key(sourceId, showUrl));
+    final v = m == null ? null : Map<String, dynamic>.from(m)['subtitleTrack'];
+    return (v is String && v.isNotEmpty) ? v : null;
+  }
+
+  Future<void> setSubtitleTrack(
+    String sourceId,
+    String showUrl,
+    String pref,
+  ) async {
+    final k = _key(sourceId, showUrl);
+    final m = _box.get(k) == null
+        ? <String, dynamic>{}
+        : Map<String, dynamic>.from(_box.get(k)!);
+    m['subtitleTrack'] = pref;
+    await _box.put(k, m);
+  }
+
   /// Remembered quality choice for this title (e.g. '1080p', '4K', 'highest',
   /// 'auto'). Applied on reopen, taking precedence over the global default.
   String? quality(String sourceId, String showUrl) {
