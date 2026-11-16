@@ -371,8 +371,8 @@ class _SearchViewState extends State<_SearchView>
     }
   }
 
-  /// Focus the field when the Search tab is (re)selected so the keyboard is
-  /// ready. Defers a frame so it runs after the IndexedStack reveals the tab.
+  /// Reset transient filters when Search is reselected. Deliberately does not
+  /// request focus: opening Search must not pop up the keyboard automatically.
   void _onFocusSignal() {
     if (!mounted) return;
     // The Search tab stays alive in the navigation IndexedStack. Reset its
@@ -403,9 +403,6 @@ class _SearchViewState extends State<_SearchView>
         });
       }
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focusNode.requestFocus();
-    });
   }
 
   @override
