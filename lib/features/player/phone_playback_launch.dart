@@ -13,6 +13,8 @@ import '../../core/download/download_record.dart';
 import '../downloads/episode_download_source_sheet.dart'
     show matchDownloadEpisode, resolveEpisodeDownloadShowId;
 import '../../core/repository/catalogue_repository.dart';
+import '../../core/discord/discord_rpc.dart';
+import '../../core/discord/discord_presence.dart';
 import '../../core/share/share_link.dart';
 import '../../core/models/provider_info.dart';
 import '../../core/models/episode.dart';
@@ -27,7 +29,6 @@ import '../../core/playback/tv_track_helpers.dart';
 import '../../core/playback/watch_history.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/tracker/tracker_hub.dart';
-import '../../core/tracker/simkl_playback_session.dart';
 import 'subtitle_font_service.dart';
 import 'player_controls_config.dart';
 import 'player_engine_fallback.dart';
@@ -289,8 +290,6 @@ Future<void> phoneScrobbleOnLaunch({
   bool tmdbIsTv = false,
   String? imdbId,
   bool peek = false,
-  bool auto = true,
-  bool simklLive = false,
 }) async {
   if (peek) return;
   final number = episode.number;
@@ -311,8 +310,6 @@ Future<void> phoneScrobbleOnLaunch({
       episode: number.toInt(),
       season: episode.season,
       seasonEpisode: seasonEpisodeOf(episodes, episode),
-      auto: auto,
-      simklLive: simklLive,
     ),
   );
 }
@@ -456,8 +453,6 @@ class PhoneNativePlayer {
   static int _resumeOverride = 0;
   static bool _seedUsed = false;
   static bool _scrobbled = false;
-  static SimklPlaybackSession? _simklPlayback;
-  static int _simklIndex = -1;
   static bool _isMovie = false;
   static PlayerEngineFallback? _engineFallback;
   static void Function(PhonePlaybackFailure)? _onEngineFallback;
@@ -780,8 +775,7 @@ class PhoneNativePlayer {
             tmdbId: _tmdbId,
             tmdbIsTv: _tmdbIsTv,
             imdbId: _imdbId,
-            simklLive: true,
-          ),
+                ),
         );
         return null;
       case 'watchDownloadOptions':
@@ -1130,6 +1124,10 @@ class PhoneNativePlayer {
           );
           return true;
         }
+      case 'discordPresence':
+        final args = _callArgs(call);
+        _pushDiscordPresence(args);
+        return null;
       case 'saveProgress':
         final args = _callArgs(call);
         await _saveProgress(args, flush: true);
@@ -1138,13 +1136,11 @@ class PhoneNativePlayer {
       case 'playerClosed':
         final closingArgs = _callArgs(call);
         if (closingArgs?['sessionId'] == _sessionId) {
-          _syncSimkl({
-            ...?closingArgs,
-            'index': closingArgs?['episodeIndex'],
-            'actualPlaying': false,
-            'completed': true,
-          });
-          _simklPlayback?.stop();
+        }
+        if (!_peek &&
+            _closed?.isCompleted == false &&
+            sl.isRegistered<DiscordRpc>()) {
+          sl<DiscordRpc>().clear(delay: DiscordRpc.playerExitClearDelay);
         }
         final args = _callArgs(call);
         await _saveProgress(args, flush: true);
@@ -1168,41 +1164,6 @@ class PhoneNativePlayer {
         return null;
     }
     return null;
-  }
-
-  static void _syncSimkl(Map<String, dynamic>? args) {
-    if (_peek ||
-        _closed?.isCompleted != false ||
-        args?['sessionId'] != _sessionId ||
-        !sl.isRegistered<TrackerHub>()) {
-      return;
-    }
-    final index = (args?['index'] as num?)?.toInt() ?? -1;
-    if (index < 0 || index >= _episodes.length) return;
-    if (index != _simklIndex) {
-      _simklPlayback?.stop();
-      _simklPlayback = null;
-      _simklIndex = index;
-    }
-    final ep = _episodes[index];
-    final n = ep.number;
-    _simklPlayback ??= sl<TrackerHub>().simklPlayback(
-      malId: _malId,
-      tmdbId: _tmdbId,
-      tmdbIsTv: _tmdbIsTv,
-      imdbId: _imdbId,
-      episode: n != null && n.isFinite && n > 0 && n == n.truncateToDouble()
-          ? n.toInt()
-          : null,
-      season: ep.season,
-      seasonEpisode: seasonEpisodeOf(_episodes, ep),
-    );
-    _simklPlayback?.update(
-      positionMs: (args?['positionMs'] as num?)?.toInt() ?? 0,
-      durationMs: (args?['durationMs'] as num?)?.toInt() ?? 0,
-      playing: args?['actualPlaying'] == true,
-      completed: args?['completed'] == true,
-    );
   }
 
   static Map<String, dynamic>? _callArgs(MethodCall call) {
