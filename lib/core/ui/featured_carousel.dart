@@ -303,10 +303,12 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
       widget.onArtColor?.call(null);
       return;
     }
-    final color = await (widget.paletteLoader ?? extractDominantColor)(
-      art,
-      item.coverHeaders,
-    );
+    // Use AniList's official coverImage.color rather than decoding the
+    // poster manually. paletteLoader is retained only as a deterministic test
+    // seam for late-result ordering tests.
+    final color = widget.paletteLoader == null
+        ? parseAniListCoverColor(item.coverColor)
+        : await widget.paletteLoader!(art, item.coverHeaders);
     if (!mounted || _pages.isEmpty || !identical(_pages[_realIndex], item)) {
       return;
     }
