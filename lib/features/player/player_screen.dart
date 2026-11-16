@@ -4541,11 +4541,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
                             enabled: show,
                             child: Center(
                               child: SizedBox(
-                                width: 36,
-                                height: 36,
+                                width: 78,
+                                height: 78,
                                 child: CircularProgressIndicator(
-                                  color: AppColors.accent,
-                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                  strokeWidth: 1.5,
                                 ),
                               ),
                             ),
