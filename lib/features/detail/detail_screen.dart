@@ -2133,12 +2133,11 @@ class _DetailViewState extends State<_DetailView> {
 
     if (ThemeController.adaptiveColour && hasCover && _tintUrl != coverUrl) {
       _tintUrl = coverUrl;
-      unawaited(
-        extractDominantColor(coverUrl, coverHeaders).then((c) {
-          if (!mounted || _tintUrl != coverUrl) return;
-          _tint.value = c == null ? null : tintFromDominant(c);
-        }),
-      );
+      // Adaptive Color follows AniList's own coverImage.color metadata instead
+      // of sampling the downloaded artwork. The same tint feeds the hero wash
+      // and the Play / Save / overflow actions through [_tint].
+      final coverColor = parseAniListCoverColor(item.coverColor);
+      _tint.value = coverColor == null ? null : tintFromDominant(coverColor);
     }
 
     // Season data. PRESERVED.
