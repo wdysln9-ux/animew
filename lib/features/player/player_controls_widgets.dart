@@ -148,7 +148,7 @@ class _EpisodeVoteOverlay extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15, color: Colors.white),
+        Icon(icon, size: 14, color: Colors.white),
         const SizedBox(width: 4),
         Text(
           _compact(count),
@@ -165,9 +165,9 @@ class _EpisodeVoteOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    width: 92,
-    height: 32,
-    padding: const EdgeInsets.symmetric(horizontal: 5),
+    width: 84,
+    height: 28,
+    padding: const EdgeInsets.symmetric(horizontal: 4),
     decoration: BoxDecoration(
       color: Colors.black.withValues(alpha: 0.5),
       borderRadius: BorderRadius.circular(9),
