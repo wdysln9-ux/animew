@@ -197,6 +197,71 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  Future<void> _loadMoreBecauseRecommendations() async {
+    final anilistId = _becauseAniListId;
+    if (_becauseMoreLoading || !_becauseHasNextPage || anilistId == null) return;
+
+    setState(() => _becauseMoreLoading = true);
+    try {
+      final result = await sl<AniListService>().api.mediaRecommendations(
+        anilistId,
+        page: _becauseNextPage,
+      );
+      final additions = <MediaItem>[];
+      final newRatings = <int, int>{};
+      final newIds = <int>{..._becauseSeenIds};
+
+      for (final r in result.recommendations) {
+        final id = r.anilistId;
+        if (r.isReading || r.isAdult || r.year == null || id == null || !newIds.add(id)) {
+          continue;
+        }
+        newRatings[id] = r.recommendationRating ?? 0;
+        additions.add(MediaItem(
+          id: 'anilist:$id',
+          title: r.title,
+          englishTitle: r.romaji,
+          cover: r.cover,
+          coverColor: r.coverColor,
+          banner: r.banner,
+          url: ZmodeIds.showUrl(ZCanonical(ZKind.anime, 'al:$id')),
+          type: ProviderType.anime,
+          sourceId: ZmodeIds.sourceId,
+          malId: r.malId,
+          anilistId: id,
+          genres: r.genres,
+          score: r.score,
+          popularity: r.popularity,
+          format: r.format,
+          status: switch (r.status?.toUpperCase()) {
+            'RELEASING' => MediaStatus.ongoing,
+            'FINISHED' => MediaStatus.completed,
+            'HIATUS' => MediaStatus.hiatus,
+            'CANCELLED' => MediaStatus.cancelled,
+            _ => MediaStatus.unknown,
+          },
+          totalEpisodes: r.episodes,
+          year: r.year?.toString(),
+        ));
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _becauseCarousel = [..._becauseCarousel, ...additions];
+        _becauseRatings = {..._becauseRatings, ...newRatings};
+        _becauseSeenIds
+          ..clear()
+          ..addAll(newIds);
+        _becauseNextPage++;
+        _becauseHasNextPage = result.hasNextPage;
+      });
+    } catch (_) {
+      // Keep already loaded recommendations if another page fails.
+    } finally {
+      if (mounted) setState(() => _becauseMoreLoading = false);
+    }
+  }
+
   Future<void> _loadViewerGenreStats() async {
     final service = sl<AniListService>();
     if (!service.isConnected) {
