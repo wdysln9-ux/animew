@@ -68,7 +68,7 @@ class FastFlingPageScrollPhysics extends PageScrollPhysics {
       return (position.pixels / viewport).roundToDouble() * viewport;
     }
     final currentPage = (position.pixels / viewport).round();
-    final pages = (velocity.abs() / 700).ceil().clamp(1, 8);
+    final pages = (velocity.abs() / 400).ceil().clamp(1, 12);
     final targetPage = currentPage + (velocity.isNegative ? -pages : pages);
     return (targetPage * viewport)
         .clamp(position.minScrollExtent, position.maxScrollExtent)
@@ -393,7 +393,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     // Parallax slide.
     return PageView.builder(
       controller: _pc,
-      physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
+      physics: const FastFlingPageScrollPhysics(parent: BouncingScrollPhysics()),
       onPageChanged: (i) {
         setState(() => _index = i);
         _syncActiveTint();
