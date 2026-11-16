@@ -17,6 +17,7 @@ import 'package:screen_brightness/screen_brightness.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../core/cache/app_image_cache.dart';
+import '../../core/stremio/stremio_stream_mapping.dart';
 import '../../core/di/injector.dart';
 import '../../core/anilist/anilist_service.dart';
 import '../detail/anime_community_tab.dart';
