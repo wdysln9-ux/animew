@@ -11,6 +11,7 @@ import '../../core/di/injector.dart';
 import '../../core/mode/content_mode.dart';
 import '../../core/mode/content_mode_cubit.dart';
 import '../../core/models/media_item.dart';
+import '../../core/models/media_detail.dart' show MediaStatus;
 import '../../core/anilist/anilist_service.dart';
 import '../../core/playback/category_store.dart';
 import '../../l10n/ui_strings.dart';
