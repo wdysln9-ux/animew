@@ -11,6 +11,7 @@ class _ControlsOverlay extends StatelessWidget {
     required this.onInteract,
     required this.onBack,
     required this.onSpeed,
+    required this.onBoostAudio,
     required this.onAudioSubs,
     required this.onQuality,
     required this.onSources,
@@ -56,6 +57,7 @@ class _ControlsOverlay extends StatelessWidget {
   final VoidCallback onInteract;
   final VoidCallback onBack;
   final VoidCallback onSpeed;
+  final VoidCallback onBoostAudio;
   final VoidCallback onAudioSubs;
   final VoidCallback onQuality;
   final VoidCallback onSources;
@@ -329,6 +331,8 @@ class _ControlsOverlay extends StatelessWidget {
         return (Icons.lock_rounded, context.l10n.lockControls, onLock);
       case 'speed':
         return (Icons.speed_rounded, 'Playback speed', onSpeed);
+      case 'boost':
+        return (Icons.volume_up_rounded, 'Boost Audio', onBoostAudio);
       case 'tracks':
         return (Icons.subtitles_rounded, 'Audio & subtitles', onAudioSubs);
       case 'quality':
