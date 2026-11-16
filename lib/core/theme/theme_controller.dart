@@ -134,6 +134,18 @@ class ThemeController {
   /// The low lightness keeps text contrast high while giving each theme its
   /// own coloured atmosphere. For an orange accent such as #F97216 this
   /// produces a warm brown-black background and slightly lighter surfaces.
+  static ({Color bg, Color surface, Color surface2}) _paletteFromCustomBackground(
+    Color color,
+  ) {
+    final hsl = HSLColor.fromColor(color);
+    final lightness = (0.045 + hsl.lightness * 0.15).clamp(0.045, 0.165);
+    return (
+      bg: HSLColor.fromAHSL(1, hsl.hue, 0.30, lightness).toColor(),
+      surface: HSLColor.fromAHSL(1, hsl.hue, 0.22, (lightness + 0.035).clamp(0.07, 0.20)).toColor(),
+      surface2: HSLColor.fromAHSL(1, hsl.hue, 0.20, (lightness + 0.075).clamp(0.10, 0.24)).toColor(),
+    );
+  }
+
   static ({Color bg, Color surface, Color surface2}) _paletteFromAccent(
     Color color,
   ) {
@@ -177,7 +189,7 @@ class ThemeController {
       AppColors.surface = amoledSurface;
       AppColors.surface2 = amoledSurface2;
     } else if (customBackgroundEnabled && customBackground != null) {
-      final palette = _paletteFromAccent(customBackground);
+      final palette = _paletteFromCustomBackground(customBackground);
       AppColors.bg = palette.bg;
       AppColors.surface = palette.surface;
       AppColors.surface2 = palette.surface2;
@@ -232,7 +244,10 @@ class ThemeController {
   /// strongest override; clearing this restores the accent-derived palette.
   static bool get customBackgroundEnabled {
     if (!Hive.isBoxOpen(boxName)) return false;
-    return _box.get(_customBackgroundEnabledKey, defaultValue: false) as bool;
+    return _box.get(
+      _customBackgroundEnabledKey,
+      defaultValue: customBackgroundColor != null,
+    ) as bool;
   }
 
   static Future<void> setCustomBackgroundEnabled(bool enabled) async {
