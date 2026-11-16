@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -22,6 +24,7 @@ import 'search_screen.dart';
 import 'genres_screen.dart';
 import '../studio/studio_page.dart';
 import '../../core/ui/poster_card.dart';
+import '../../core/ui/featured_carousel.dart';
 
 Color _coverPlaceholderColor(String? raw) {
   final value = raw?.trim().replaceFirst('#', '');
@@ -58,11 +61,25 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _viewerGenreStatsLoaded = false;
   Map<String, int> _studioFavourites = const {};
   final PageController _heroController = PageController(viewportFraction: .90, initialPage: 10000);
+  Timer? _heroTimer;
+
+  void _syncHeroTimer() {
+    _heroTimer?.cancel();
+    _heroTimer = null;
+    if (_selected != 'Untukmu' || _heroes.length < 2) return;
+    _heroTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted || _selected != 'Untukmu' || _heroes.length < 2 || !_heroController.hasClients) return;
+      _heroController.nextPage(
+        duration: const Duration(milliseconds: 720),
+        curve: Curves.easeInOutCubic,
+      );
+    });
+  }
 
   @override
   void initState() { super.initState(); _load(); }
   @override
-  void dispose() { _heroController.dispose(); super.dispose(); }
+  void dispose() { _heroTimer?.cancel(); _heroController.dispose(); super.dispose(); }
 
   Future<void> _load({bool refresh = false}) async {
     try {
@@ -189,6 +206,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ..clear()
             ..addAll(seen);
         });
+        _syncHeroTimer();
       }
     } catch (_) {
       // Keep this row empty if AniList cannot provide title-specific recommendations.
@@ -486,6 +504,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         for (var i = 0; i < names.length; i++)
           Padding(padding: const EdgeInsets.only(right: 8), child: _pill(names[i], () {
             setState(() { _selected = names[i]; _rankedItems = const []; });
+            _syncHeroTimer();
             if (i == 0) { ++_rankedGeneration; setState(() => _rankedLoading = false); } else { _loadRankedItems(i); }
           }, selected: _selected == names[i], compact: true)),
       ]));
@@ -496,8 +515,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (items.isEmpty) return const SizedBox(height: 8);
     return Column(children: [
       SizedBox(height: 178, child: PageView.builder(controller: _heroController,
-        physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
-        onPageChanged: (i) => setState(() => _heroIndex = i % items.length),
+        physics: const FastFlingPageScrollPhysics(parent: BouncingScrollPhysics()),
+        onPageChanged: (i) {
+          setState(() => _heroIndex = i % items.length);
+          _syncHeroTimer();
+        },
         itemBuilder: (_, page) {
           final i = page % items.length;
           final m = items[i];
