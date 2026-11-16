@@ -386,6 +386,16 @@ class _ReaderSettingsScreenState extends State<ReaderSettingsScreen> {
                 current: prefs.colorFilter,
                 onPicked: prefs.setColorFilter,
               ),
+              _toggleRow(
+                icon: Icons.numbers_rounded,
+                title: 'Tampilkan nomor halaman',
+                subtitle: 'Sembunyikan nomor halaman saat membaca manga',
+                value: prefs.showPageCounter,
+                onChanged: (v) async {
+                  await prefs.setShowPageCounter(v);
+                  if (mounted) setState(() {});
+                },
+              ),
               _pickerRow(
                 icon: Icons.screen_rotation_outlined,
                 title: context.l10n.orientationLock,
