@@ -3504,16 +3504,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
-  Widget _qualitySizeEstimate(HlsVariant variant) {
-    final seconds = _c.player.state.duration.inSeconds;
-    final bytes = variant.bandwidth > 0 && seconds > 0
-        ? (variant.bandwidth * seconds / 8).round()
-        : 0;
-    final label = bytes > 0
-        ? '~ ${RemoteFileSize.format(bytes)} · perkiraan'
-        : 'Ukuran tidak diketahui';
-    return Text(label, style: AppText.caption.copyWith(color: AppColors.textSecondary));
-  }
   String? _sourceResolution(VideoSource source) {
     final quality = source.quality?.trim() ?? '';
     final match = RegExp(
@@ -3549,7 +3539,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
         for (final v in _c.state.qualities)
           _SheetRow(
             label: v.quality,
-            subtitleWidget: _qualitySizeEstimate(v),
             active: _c.state.activeQuality?.url == v.url,
             onTap: () {
               Navigator.pop(context);
@@ -3577,10 +3566,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
           _SheetRow(
             label: _sourceResolution(source)!,
             subtitle: _sourceGroupName(source),
-            subtitleWidget: _RemoteFileSizeLabel(
-              url: source.url,
-              headers: source.headers,
-            ),
             active: source.url == _c.state.active?.url,
             onTap: () async {
               Navigator.pop(context);
@@ -3627,7 +3612,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           .firstMatch(s.label ?? '')
                           ?.group(0) ??
                       s.container.name),
-              subtitleWidget: _RemoteFileSizeLabel(url: s.url, headers: s.headers),
               active: s == _c.state.active,
               onTap: () async {
                 Navigator.pop(context);
@@ -3677,10 +3661,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     options.map(_sourceResolution).whereType<String>().toSet().join(' • '),
                     if (options.any((s) => s.subtitles.isNotEmpty)) 'Softsubs',
                   ].where((s) => s.isNotEmpty).join(' • '),
-                  subtitleWidget: _RemoteFileSizeLabel(
-                    url: active.url,
-                    headers: active.headers,
-                  ),
                   active: options.any((s) => s.url == _c.state.active?.url),
                   onLongPress: () async {
                     await Clipboard.setData(ClipboardData(text: active.url));
