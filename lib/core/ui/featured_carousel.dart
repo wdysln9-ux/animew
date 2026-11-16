@@ -63,7 +63,8 @@ class FastFlingPageScrollPhysics extends PageScrollPhysics {
     double velocity,
   ) {
     final viewport = position.viewportDimension;
-    if (viewport <= 0 || velocity.abs() < tolerance.velocity) {
+    if (viewport <= 0) return position.pixels;
+    if (velocity.abs() < tolerance.velocity) {
       return (position.pixels / viewport).roundToDouble() * viewport;
     }
     final currentPage = (position.pixels / viewport).round();
@@ -365,7 +366,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
         behavior: HitTestBehavior.opaque,
         onHorizontalDragEnd: (d) {
           final v = d.primaryVelocity ?? 0;
-          final pages = (v.abs() / 1600).ceil().clamp(1, 4);
+          final pages = (v.abs() / 700).ceil().clamp(1, 8);
           if (v < -80) {
             setState(() => _index += pages);
             _syncActiveTint();
