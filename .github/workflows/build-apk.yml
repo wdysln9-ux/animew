@@ -93,6 +93,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Run focused regression tests
+        run: flutter test test/core/playback/title_prefs_test.dart test/core/reading/reader_prefs_defaults_test.dart
+
       - name: Configure persistent Android signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
