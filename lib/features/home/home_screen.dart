@@ -71,6 +71,7 @@ import '../../core/ui/featured_carousel.dart';
 import '../../core/ui/featured_hero.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../core/ui/poster_palette.dart';
+import '../../core/ui/home_custom_catalog_prefs.dart';
 import '../../core/metadata/title_logo_service.dart';
 import 'metadata_switch_sheet.dart';
 import 'home_banner_header.dart';
@@ -93,6 +94,7 @@ import '../shell/dock_icons.dart';
 import '../shell/mode_bar.dart' show ModeChoice, modeChoices;
 import '../../core/zmode/source_matcher.dart';
 import '../../core/zmode/metadata_repository.dart';
+import '../../core/zmode/zmode_module.dart' show browseKindFor;
 import '../../core/zmode/playback_resolver.dart';
 import '../../core/zmode/zmode_ids.dart';
 import 'streaming_services_row.dart';
@@ -142,6 +144,8 @@ class _HomeViewState extends State<_HomeView>
   String? _sourceCatalogueSourceId = HomeCataloguePrefs.sourceId;
   List<HomeSection> _sourceCatalogueSections = const [];
   bool _sourceCatalogueSelected = HomeCataloguePrefs.sourceSelected;
+  List<HomeSection> _customCatalogueSections = const [];
+  int _customCatalogueLoadGeneration = 0;
 
   /// Hero metadata cache: key = "sourceId:id". Futures are stored so they're
   /// never re-fetched on carousel rotation; pre-warmed when hero items load.
@@ -175,12 +179,17 @@ class _HomeViewState extends State<_HomeView>
     _notificationCountFuture = sl<AniListService>().api.unreadNotificationCount();
     sl<AniListService>().addListener(_onAniListNotificationChanged);
     _sourceCatalogueSelection = HomeCataloguePrefs.sourceSelection;
+    HomeCustomCatalogPrefs.revision.addListener(_reloadCustomCatalogues);
+    _reloadCustomCatalogues();
     _sourceCatalogueSelection.addListener(_onSourceCatalogueSelectionChanged);
     _sourceCatalogueModeSubscription = sl<ContentModeCubit>().stream.listen((
       _,
     ) {
-      if (mounted && _sourceCatalogueSelected) {
-        setState(() => _sourceCatalogueSections = const []);
+      if (mounted) {
+        if (_sourceCatalogueSelected) {
+          setState(() => _sourceCatalogueSections = const []);
+        }
+        _reloadCustomCatalogues();
       }
     });
     ThemeController.revision.addListener(_onThemeRevision);
@@ -240,6 +249,7 @@ class _HomeViewState extends State<_HomeView>
     _sourceCatalogueSelection.removeListener(
       _onSourceCatalogueSelectionChanged,
     );
+    HomeCustomCatalogPrefs.revision.removeListener(_reloadCustomCatalogues);
     _slashCtrl.dispose();
     ThemeController.revision.removeListener(_onThemeRevision);
     _heroTint.dispose();
@@ -285,6 +295,41 @@ class _HomeViewState extends State<_HomeView>
       // A cache-clear failure must not prevent a normal reload attempt.
     }
     await cubit.load(reset: true);
+  }
+
+  void _reloadCustomCatalogues() {
+    if (!mounted || !ZModePrefs.enabled ||
+        !sl.isRegistered<MetadataRepository>()) {
+      if (mounted && _customCatalogueSections.isNotEmpty) {
+        setState(() => _customCatalogueSections = const []);
+      }
+      return;
+    }
+    final generation = ++_customCatalogueLoadGeneration;
+    final kind = browseKindFor(
+      sl<ContentModeCubit>().state,
+      ZModePrefs.streamKind,
+    );
+    final catalogues = HomeCustomCatalogPrefs.forKind(kind);
+    unawaited(() async {
+      final sections = <HomeSection>[];
+      for (final catalogue in catalogues) {
+        try {
+          final items = await sl<MetadataRepository>().searchFiltered(
+            '',
+            filters: catalogue.filters,
+            page: 1,
+          );
+          if (items.isNotEmpty) {
+            sections.add(HomeSection(title: catalogue.name, items: items));
+          }
+        } catch (_) {}
+        if (!mounted || generation != _customCatalogueLoadGeneration) return;
+      }
+      if (mounted && generation == _customCatalogueLoadGeneration) {
+        setState(() => _customCatalogueSections = sections);
+      }
+    }());
   }
 
   void _onSourceCatalogueSelectionChanged() {
@@ -2297,6 +2342,13 @@ class _HomeViewState extends State<_HomeView>
                         if (_sourceCatalogueSelected)
                           _sourceCatalogueHomeSliver(),
                       ],
+
+                      if (!_sourceCatalogueSelected)
+                        ..._customCatalogueSections.map(
+                          (section) => SliverToBoxAdapter(
+                            child: _sectionRow(section),
+                          ),
+                        ),
 
                       // ── Skeletons while the first load runs / empty states ───
                       // The provider rows themselves are part of state.rows
