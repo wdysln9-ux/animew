@@ -4697,7 +4697,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   // Keep the subtitle gesture layer above the player's full-screen
                   // touch/seek overlay so it can receive drag and pinch gestures.
                   // The GestureDetector itself wraps only the rendered text bounds.
-                  if (!sl<PlaybackPrefs>().styledSubtitles)
+                  if (!sl<PlaybackPrefs>().styledSubtitles ||
+                      _c.activeSubtitleFileExtension == '.srt')
                     Positioned.fill(
                       child: StreamBuilder<List<String>>(
                         stream: _c.player.stream.subtitle,
