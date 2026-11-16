@@ -2089,15 +2089,26 @@ class _DetailViewState extends State<_DetailView> {
     final episodeNum = eps.isNotEmpty
         ? (eps[resumeIdx].number?.toInt() ?? resumeIdx + 1)
         : 1;
+    final localCompleted =
+        !isReading && sl<ListStatusStore>().statusOf(widget.item) == WatchStatus.completed;
+    final lastEpisodeNumber = eps
+        .map((episode) => episode.number?.toInt() ?? 0)
+        .fold<int>(0, (highest, number) => number > highest ? number : highest);
+    final trackerCompleted = !isReading &&
+        _trackerProgress != null &&
+        lastEpisodeNumber > 0 &&
+        _trackerProgress! >= lastEpisodeNumber;
     final buttonLabel = isReading
         ? (readResume!.hasResume
               ? context.l10n.continueLabel
               : context.l10n.read)
-        : (resume.hasResume
-              ? context.l10n.continueEpisode(episodeNum)
-              : (detail.type == ProviderType.anime
-                    ? 'Tonton Ep $episodeNum'
-                    : context.l10n.play));
+        : (!resume.hasResume && (localCompleted || trackerCompleted)
+              ? 'Ulang Ep 1'
+              : (resume.hasResume
+                    ? context.l10n.continueEpisode(episodeNum)
+                    : (detail.type == ProviderType.anime
+                          ? 'Tonton Ep $episodeNum'
+                          : context.l10n.play)));
     final resumeMark = !isReading && eps.isNotEmpty
         ? store.get(item.sourceId, item.url, eps[resumeIdx].id)
         : null;
