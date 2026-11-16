@@ -1379,6 +1379,8 @@ class _SearchViewState extends State<_SearchView>
           MetaStatus.cancelled => 'Dibatalkan',
         }, f.copyWith(statuses: [...f.statuses]..remove(status))),
       if (f.status != null) (f.status!.name, f.copyWith(clearStatus: true)),
+      if (f.countryOfOrigin != null)
+        (f.countryOfOrigin!.label, f.copyWith(clearCountryOfOrigin: true)),
       if (f.minEpisodes > 0 || f.maxEpisodes < 200)
         ('Episode: ${f.minEpisodes}–${f.maxEpisodes}',
           f.copyWith(minEpisodes: 0, maxEpisodes: 200)),
