@@ -1092,7 +1092,7 @@ class PlaybackPrefs {
 
   /// Subtitle shadow blur radius in pixels (0–20).
   double get subtitleShadowBlur =>
-      (_box.get('subtitleShadowBlur', defaultValue: 0.0) as num)
+      (_box.get('subtitleShadowBlur', defaultValue: 2.5) as num)
           .toDouble()
           .clamp(0.0, 20.0);
   Future<void> setSubtitleShadowBlur(double value) =>
