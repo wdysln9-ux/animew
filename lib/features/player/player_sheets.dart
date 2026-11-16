@@ -103,6 +103,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
             padding: EdgeInsets.zero,
             children: [
               _SheetRow(
+                compactDialog: true,
                 label: 'No',
                 active: subId == 'no',
                 onTap: () {
@@ -220,7 +221,12 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
   }
 
   List<SubtitleTrack> _orderedSubtitleTracks(List<SubtitleTrack> tracks) {
-    final result = [...tracks];
+    final seen = <String>{};
+    final result = tracks.where((track) {
+      final id = track.id.trim().toLowerCase();
+      if (id.isEmpty || !seen.add(id)) return false;
+      return true;
+    }).toList();
     result.sort((a, b) {
       int rank(SubtitleTrack t) => _isEnglishSubtitle(t.language, t.title)
           ? 0
@@ -231,7 +237,12 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
   }
 
   List<Subtitle> _orderedSoftSubs(List<Subtitle> subs) {
-    final result = [...subs];
+    final seen = <String>{};
+    final result = subs.where((sub) {
+      final uri = sub.url.trim().toLowerCase();
+      if (uri.isEmpty || !seen.add(uri)) return false;
+      return true;
+    }).toList();
     result.sort((a, b) =>
         (_isEnglishSubtitle(a.lang, a.label) ? 0 : 1)
             .compareTo(_isEnglishSubtitle(b.lang, b.label) ? 0 : 1));
