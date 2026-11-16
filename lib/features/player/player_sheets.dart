@@ -79,7 +79,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
               ),
               const SizedBox(height: 10),
               SizedBox(
-                height: (h * 0.76).clamp(320.0, 560.0),
+                height: (h * 0.46).clamp(280.0, 350.0),
                 child: _subColumn(c, subId),
               ),
             ],
@@ -968,9 +968,9 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setSubtitleOutlineWidth(2.5);
     await _prefs.setSubtitleShadowAngle(45.0);
     await _prefs.setSubtitleShadowDistance(2.5);
-    await _prefs.setSubtitleShadowBlur(0.0);
-    await _prefs.setSubtitleShadowWidth(2.5);
-    await _prefs.setSubtitleScale(0.78125);
+    await _prefs.setSubtitleShadowBlur(2.5);
+    await _prefs.setSubtitleShadowWidth(0.0);
+    await _prefs.setSubtitleScale(1.0);
   });
 
   Future<void> _resetSelectedColor() => _apply(() async {
@@ -1005,14 +1005,14 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setSubtitleItalic(false);
     await _prefs.setSubtitleJustification('center');
     await _prefs.setSubtitleShadowAngle(45.0);
-    await _prefs.setSubtitleShadowWidth(2.5);
+    await _prefs.setSubtitleShadowWidth(0.0);
     await _prefs.setSubtitleShadowDistance(2.5);
-    await _prefs.setSubtitleShadowBlur(0.0);
+    await _prefs.setSubtitleShadowBlur(2.5);
     await _prefs.setSubtitleShadowColorHex('#000000FF');
     await _prefs.setSubtitleOverallOpacity(1.0);
     await _prefs.setSubtitleBgOpacity(0.0);
     await _prefs.setSubtitlePosition(95);
-    await _prefs.setSubtitleScale(0.78125);
+    await _prefs.setSubtitleScale(1.0);
     await _prefs.setStyledSubtitles(false);
   });
 
