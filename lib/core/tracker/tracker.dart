@@ -33,6 +33,7 @@ class TrackerListItem {
     this.score,
     this.tmdbIsTv = false,
     this.updatedAt,
+    this.isPrivate = false,
     this.customLists = const [],
     this.totalEpisodes,
     this.nextAiringEpisode,
@@ -56,6 +57,8 @@ class TrackerListItem {
   /// DateTime here. Null when the service didn't say, which sinks the entry to
   /// the bottom of that sort rather than pretending it's ancient.
   final DateTime? updatedAt;
+  /// Whether the entry is private on trackers that support privacy (AniList).
+  final bool isPrivate;
   final int? progress; // episodes watched (optional, for display)
   final double? score; // user score 0–10 (optional, for display)
 
@@ -90,6 +93,7 @@ class TrackerEntry {
     this.nextAiringEpisode,
     this.nextAiringAt,
     this.url,
+    this.isPrivate = false,
   });
 
   /// Which tracker this came from, e.g. "AniList".
@@ -108,6 +112,7 @@ class TrackerEntry {
   /// link to) — the menu greys those actions out rather than opening a
   /// half-built url.
   final String? url;
+  final bool isPrivate;
 
   final WatchStatus? status;
 
@@ -290,6 +295,7 @@ abstract interface class Tracker implements Listenable {
     WatchStatus? status,
     double? score,
     int? progress,
+    bool? isPrivate,
     MediaKind kind = MediaKind.anime,
   });
 
