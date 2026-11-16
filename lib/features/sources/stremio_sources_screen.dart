@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/di/injector.dart';
+import '../../core/stremio/stremio_ref.dart';
+import '../home/search_screen.dart';
 import '../../core/app_mode.dart';
 import '../../core/stremio/stremio_manager.dart';
 import '../../core/stremio/stremio_sync.dart';
@@ -172,6 +174,20 @@ class _StremioSourcesScreenState extends State<StremioSourcesScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.bg,
         title: Text('Stremio Addons', style: AppText.barTitle),
+        actions: [
+          IconButton(
+            tooltip: 'Cari Stremio',
+            icon: const Icon(Icons.search_rounded),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const SearchScreen(
+                  forceSources: true,
+                  fixedSourceId: stremioSourceId,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: ListenableBuilder(
         listenable: _manager,
