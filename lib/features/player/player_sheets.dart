@@ -92,8 +92,12 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
   Widget _subColumn(PlayerCubit c, String subId) {
     final embedded = c.mediaSubtitleTracks;
     final embeddedIds = embedded.map((t) => t.id.trim().toLowerCase()).toSet();
+    final embeddedHasEnglish = embedded.any(
+      (t) => _isEnglishSubtitle(t.language, t.title),
+    );
     final soft = c.softSubs
         .where((s) => !embeddedIds.contains(s.url.trim().toLowerCase()))
+        .where((s) => !embeddedHasEnglish || !_isEnglishSubtitle(s.lang, s.label))
         .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,8 +171,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                 ),
                 _SheetRow(
                   compactDialog: true,
-                  label: context.l10n.styledSubtitlesLibass,
-                  subtitle: context.l10n.styledSubtitlesLibassSubtitle,
+                  label: 'Pertahankan gaya ASS/SSA',
                   toggleValue: c.styledSubtitlesOn,
                   active: false,
                   onTap: () {
@@ -176,6 +179,13 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                     if (mounted) setState(() {});
                     widget.onInteract();
                   },
+                ),
+                _SheetRow(
+                  compactDialog: true,
+                  label: 'Import subtitle',
+                  icon: Icons.upload_file_rounded,
+                  active: false,
+                  onTap: widget.onLoadFile,
                 ),
                 _SheetRow(
                   compactDialog: true,
@@ -229,9 +239,9 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
       final id = track.id.trim().toLowerCase();
       final title = (track.title ?? '').trim().toLowerCase();
       final language = (track.language ?? '').trim().toLowerCase();
-      final identity = title.isNotEmpty || language.isNotEmpty
-          ? '$language|$title'
-          : id;
+      final identity = _isEnglishSubtitle(track.language, track.title)
+          ? 'english'
+          : (title.isNotEmpty || language.isNotEmpty ? '$language|$title' : id);
       if (id.isEmpty || !seen.add(identity)) return false;
       return true;
     }).toList();
