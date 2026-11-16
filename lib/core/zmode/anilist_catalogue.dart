@@ -568,7 +568,7 @@ class AniListCatalogue implements AnimeCatalogue {
             if (id is int && airingAt is int) airingDates[id.toString()] = airingAt;
           }
           items.sort((left, right) =>
-            (airingDates[right.id] ?? 0).compareTo(airingDates[left.id] ?? 0));
+            (airingDates[left.id] ?? 0).compareTo(airingDates[right.id] ?? 0));
         }
       }
     }
