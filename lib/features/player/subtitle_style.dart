@@ -55,6 +55,7 @@ List<Shadow> buildSubtitleShadows(
       Shadow(color: outline, blurRadius: 8 + width * 2),
     ],
     _ => <Shadow>[
+      ..._stroke(outline.withValues(alpha: 0.8), width),
       Shadow(color: outline.withValues(alpha: 0.8), blurRadius: 4 + width),
     ],
   };
