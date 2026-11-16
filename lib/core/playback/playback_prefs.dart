@@ -513,9 +513,16 @@ class PlaybackPrefs {
   /// the Android system volume. 100 = original loudness; >100 boosts (with
   /// volume-max raised to 200, CloudStream-style).
   int get volumeBoost =>
-      (_box.get('volumeBoost', defaultValue: 100) as num).toInt().clamp(0, 200);
+      (_box.get('volumeBoost', defaultValue: 100) as num).toInt().clamp(100, 200);
   Future<void> setVolumeBoost(int value) =>
-      _box.put('volumeBoost', value.clamp(0, 200));
+      _box.put('volumeBoost', value.clamp(100, 200));
+
+  /// Boost is opt-in. When disabled, mpv stays at unity gain while retaining
+  /// the last selected percentage for the next time it is enabled.
+  bool get volumeBoostEnabled =>
+      _box.get('volumeBoostEnabled', defaultValue: false) as bool;
+  Future<void> setVolumeBoostEnabled(bool value) =>
+      _box.put('volumeBoostEnabled', value);
 
   /// Whether to apply dynamic audio normalization (mpv 'dynaudnorm' filter) so
   /// quiet/loud passages are levelled out.
