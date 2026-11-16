@@ -70,7 +70,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       f.seasons.length + f.formats.length + f.statuses.length +
       (f.minEpisodes > 0 || f.maxEpisodes < 200 ? 1 : 0) +
       (f.minTagRank > 0 ? 1 : 0) +
-      (f.countryOfOrigin != null ? 1 : 0) +
+      ((f.countries.isNotEmpty || f.countryOfOrigin != null) ? 1 : 0) +
       (f.sort != MetaSort.popularity ? 1 : 0);
 
   @override
@@ -175,14 +175,29 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     const SizedBox(height: 22),
                     _heading('Negara', theme),
                     _chips([
-                      ...MetaCountry.values.map((v) => _ChipData(
-                        v.label,
-                        f.countryOfOrigin == v,
-                        () => setState(() => f = f.copyWith(
-                          countryOfOrigin: f.countryOfOrigin == v ? null : v,
-                          clearCountryOfOrigin: f.countryOfOrigin == v,
-                        )),
-                      )),
+                      ...MetaCountry.values.map((v) {
+                        final selected = f.countries.contains(v) ||
+                            (f.countries.isEmpty && f.countryOfOrigin == v);
+                        return _ChipData(
+                          v.label,
+                          selected,
+                          () => setState(() {
+                            final countries = [...f.countries];
+                            if (f.countryOfOrigin != null && countries.isEmpty) {
+                              countries.add(f.countryOfOrigin!);
+                            }
+                            if (countries.contains(v)) {
+                              countries.remove(v);
+                            } else {
+                              countries.add(v);
+                            }
+                            f = f.copyWith(
+                              countries: countries,
+                              clearCountryOfOrigin: true,
+                            );
+                          }),
+                        );
+                      }),
                     ], cs),
                   ],
                   const SizedBox(height: 22),
