@@ -175,12 +175,13 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     const SizedBox(height: 22),
                     _heading('Negara', theme),
                     _chips([
-                      _ChipData('Semua', f.countryOfOrigin == null,
-                        () => setState(() => f = f.copyWith(clearCountryOfOrigin: true))),
                       ...MetaCountry.values.map((v) => _ChipData(
                         v.label,
                         f.countryOfOrigin == v,
-                        () => setState(() => f = f.copyWith(countryOfOrigin: v)),
+                        () => setState(() => f = f.copyWith(
+                          countryOfOrigin: f.countryOfOrigin == v ? null : v,
+                          clearCountryOfOrigin: f.countryOfOrigin == v,
+                        )),
                       )),
                     ], cs),
                   ],
