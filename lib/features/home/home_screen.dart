@@ -2424,7 +2424,7 @@ class _HomeViewState extends State<_HomeView>
                       // shell's extendBody reserves it no space of its own).
                       SliverToBoxAdapter(
                         child: SizedBox(
-                          height: MediaQuery.paddingOf(context).bottom + 7,
+                          height: MediaQuery.paddingOf(context).bottom + 10,
                         ),
                       ),
                       ],
