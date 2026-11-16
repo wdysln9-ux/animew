@@ -1739,6 +1739,7 @@ class PlayerCubit extends Cubit<PlayerState> {
   void setSubtitle(SubtitleTrack t) {
     player.setSubtitleTrack(t);
     _wantedSubId = t.id;
+    unawaited(applySubtitleStyle());
     final lang = languageOfSource(t.language ?? t.title ?? '');
     if (lang != null) unawaited(sl<PlaybackPrefs>().setSubtitlePreference(lang.iso1));
     final url = showUrl;
@@ -3817,12 +3818,14 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     // ASS/SSA subtitles carry their OWN embedded styling. With libass ON
     // (styled subtitles) keep it faithful — 'no' preserves signs/karaoke/
-    // positions, which is the whole point; the style sheet then governs only
-    // plain srt/vtt. With libass OFF this value is inert (a Flutter overlay
-    // renders text), but 'force' stays the sensible default there.
+    // positions. Plain SRT has no authored positioning, so keep it editable
+    // with the Flutter overlay even while the libass preference is enabled.
+    final srtUsesFlutterOverlay =
+        prefs.styledSubtitles && activeSubtitleFileExtension == '.srt';
+    await set('sub-visibility', srtUsesFlutterOverlay ? 'no' : 'yes');
     await set(
       'sub-ass-override',
-      sl<PlaybackPrefs>().styledSubtitles ? 'no' : 'force',
+      prefs.styledSubtitles ? 'no' : 'force',
     );
     await set('sub-scale', prefs.subtitleScale.toString());
     if (prefs.subtitleFont.isNotEmpty) {
