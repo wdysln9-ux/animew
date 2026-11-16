@@ -1200,7 +1200,7 @@ class _HomeViewState extends State<_HomeView>
 
   /// Builds one provider-defined browse row (poster cards). The section is
   /// already guaranteed non-empty by [SourceRepository.home].
-  Widget _sectionRow(HomeSection section, {bool sourceCatalogue = false}) {
+  Widget _sectionRow(HomeSection section, {bool sourceCatalogue = false, bool customCatalogue = false}) {
     final items = section.items;
     final rawTitle = section.title.trim();
     final isAiringSection =
@@ -1223,6 +1223,8 @@ class _HomeViewState extends State<_HomeView>
             Navigator.of(context).push(
               MaterialPageRoute<void>(builder: (_) => const ScheduleScreen()),
             );
+          } else if (customCatalogue) {
+            _openSeeAll(section);
           } else if (!sourceCatalogue && ZModePrefs.enabled) {
             _openCatalogueSearch(section.title);
           } else {
@@ -2346,7 +2348,7 @@ class _HomeViewState extends State<_HomeView>
                       if (!_sourceCatalogueSelected)
                         ..._customCatalogueSections.map(
                           (section) => SliverToBoxAdapter(
-                            child: _sectionRow(section),
+                            child: _sectionRow(section, customCatalogue: true),
                           ),
                         ),
 
