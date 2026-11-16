@@ -899,9 +899,10 @@ class PlayerCubit extends Cubit<PlayerState> {
         // ffmpeg build lacks the `volume` libavfilter, so `af=lavfi=[volume=…]`
         // fails to init and KILLS all audio (the "no sound" bug). ────────────
         await p.setProperty('volume-max', '200');
+        final volumePrefs = sl<PlaybackPrefs>();
         await p.setProperty(
           'volume',
-          sl<PlaybackPrefs>().volumeBoost.toString(),
+          (volumePrefs.volumeBoostEnabled ? volumePrefs.volumeBoost : 100).toString(),
         );
         await p.setProperty('af', _audioFilterChain());
         // Keep voices natural (not chipmunk) when playing above 1× speed.
@@ -3886,14 +3887,18 @@ class PlayerCubit extends Cubit<PlayerState> {
 
   /// Set the in-app volume (0–200%) via mpv's own 'volume' property — this is
   /// independent of the Android system volume — and persist it as the default.
-  Future<void> setVolumeBoost(int percent) async {
-    final v = percent.clamp(0, 200);
-    await sl<PlaybackPrefs>().setVolumeBoost(v);
-    // Real software gain via mpv's native volume property (0–200, softvol).
+  Future<void> setVolumeBoost(int percent, {bool enabled = true}) async {
+    final v = percent.clamp(100, 200);
+    final prefs = sl<PlaybackPrefs>();
+    await prefs.setVolumeBoost(v);
+    await prefs.setVolumeBoostEnabled(enabled);
+    // Off means unity gain (100%), not silence; the saved percentage is kept
+    // so turning the boost back on restores the previous selection.
+    final applied = enabled ? v : 100;
     final p = player.platform;
     if (p is NativePlayer) {
       try {
-        await p.setProperty('volume', v.toString());
+        await p.setProperty('volume', applied.toString());
       } catch (_) {}
     }
   }
