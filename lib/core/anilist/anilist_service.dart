@@ -67,9 +67,11 @@ List<TrackerListItem> parseAniListCollection(Object? data, MediaKind kind) {
       // so the same show read differently in your library than on Home.
       final title = aniListTitle(t, titleLanguagePref) ?? 'Unknown';
       final altTitle = aniListAltTitle(t, title);
-      final cover = (media['coverImage'] is Map)
-          ? (media['coverImage'] as Map)['large'] as String?
-          : null;
+      final coverImage = media['coverImage'] is Map
+          ? media['coverImage'] as Map
+          : const {};
+      final cover = coverImage['large'] as String?;
+      final coverColor = coverImage['color'] as String?;
 
       final rawScore = (e['score'] as num?)?.toDouble();
       final score = (rawScore == null || rawScore == 0) ? null : rawScore;
@@ -115,6 +117,7 @@ List<TrackerListItem> parseAniListCollection(Object? data, MediaKind kind) {
           // matched to a source that indexes by the other one.
           englishTitle: altTitle,
           cover: cover,
+          coverColor: coverColor,
           url: '',
           type: aniListProviderType(kind, media['format'] as String?),
           sourceId: '',
