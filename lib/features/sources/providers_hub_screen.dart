@@ -219,6 +219,7 @@ class _HubPhoneView extends StatelessWidget {
               desc: 'Stremio addons and catalogues',
               info: '$stremioCount addons',
               active: activeIsStremio,
+              updateCount: 0,
               onTap: () => open(const StremioSourcesScreen()),
             ),
           if (showStremio) const SizedBox(height: 12),
