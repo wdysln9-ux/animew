@@ -978,7 +978,7 @@ class PlaybackPrefs {
 
   /// Subtitle size multiplier: 0.8 (small) / 1.0 / 1.3 (large).
   double get subtitleScale =>
-      (_box.get('subtitleScale', defaultValue: 1.0) as num).toDouble();
+      (_box.get('subtitleScale', defaultValue: 0.78125) as num).toDouble();
   Future<void> setSubtitleScale(double value) =>
       _box.put('subtitleScale', value);
 
@@ -1100,7 +1100,7 @@ class PlaybackPrefs {
 
   /// Thickness of the drop shadow around subtitle glyphs (0–8).
   double get subtitleShadowWidth =>
-      (_box.get('subtitleShadowWidth', defaultValue: 0.0) as num)
+      (_box.get('subtitleShadowWidth', defaultValue: 2.5) as num)
           .toDouble()
           .clamp(0.0, 8.0);
   Future<void> setSubtitleShadowWidth(double value) =>
