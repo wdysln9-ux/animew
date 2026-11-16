@@ -55,26 +55,6 @@ enum HeroTransition {
 /// of snapping to only the immediately adjacent page.
 class FastFlingPageScrollPhysics extends PageScrollPhysics {
   const FastFlingPageScrollPhysics({super.parent});
-
-  @override
-  double getTargetPixels(
-    ScrollMetrics position,
-    Tolerance tolerance,
-    double velocity,
-  ) {
-    final viewport = position.viewportDimension;
-    if (viewport <= 0 || velocity.abs() < tolerance.velocity) {
-      return super.getTargetPixels(position, tolerance, velocity);
-    }
-    final currentPage = (position.pixels / viewport).round();
-    final pages = ((velocity.abs() - tolerance.velocity) / 1600)
-        .floor()
-        .clamp(1, 4);
-    final targetPage = currentPage + (velocity.isNegative ? -pages : pages);
-    return (targetPage * viewport)
-        .clamp(position.minScrollExtent, position.maxScrollExtent)
-        .toDouble();
-  }
 }
 
 
