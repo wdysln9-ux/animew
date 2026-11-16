@@ -234,6 +234,7 @@ class _MyListScreenTvState extends State<MyListScreenTv> {
               score: entry.score,
               tmdbIsTv: entry.tmdbIsTv,
               customLists: entry.customLists,
+              isPrivate: entry.isPrivate,
               onFind: () => _openTrackerItem(context, entry.item),
               onChanged: () => context.read<TrackerListCubit>().refresh(),
             );
