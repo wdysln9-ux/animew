@@ -114,9 +114,9 @@ class _SkipButtonState extends State<_SkipButton>
                   customBorder: const CircleBorder(),
                   onTap: _cancel,
                   child: const SizedBox(
-                    width: 34,
-                    height: 34,
-                    child: Icon(Icons.close_rounded, color: Colors.white, size: 19),
+                    width: 28,
+                    height: 28,
+                    child: Icon(Icons.close_rounded, color: Colors.white, size: 15),
                   ),
                 ),
               ),
