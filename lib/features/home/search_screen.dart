@@ -700,7 +700,7 @@ class _SearchViewState extends State<_SearchView>
         (f.season != null ? 1 : 0) +
         (f.format != null ? 1 : 0) +
         (f.status != null ? 1 : 0) +
-        (f.countryOfOrigin != null ? 1 : 0) +
+        (f.countryOfOrigin != null || f.countries.isNotEmpty ? 1 : 0) +
         (f.minScore != null ? 1 : 0) +
         (f.adult ? 1 : 0) +
         (f.sort != MetaSort.popularity || f.sortAscending ? 1 : 0);
@@ -1381,6 +1381,8 @@ class _SearchViewState extends State<_SearchView>
       if (f.status != null) (f.status!.name, f.copyWith(clearStatus: true)),
       if (f.countryOfOrigin != null)
         (f.countryOfOrigin!.label, f.copyWith(clearCountryOfOrigin: true)),
+      for (final country in f.countries)
+        (country.label, f.copyWith(countries: [...f.countries]..remove(country))),
       if (f.minEpisodes > 0 || f.maxEpisodes < 200)
         ('Episode: ${f.minEpisodes}–${f.maxEpisodes}',
           f.copyWith(minEpisodes: 0, maxEpisodes: 200)),
