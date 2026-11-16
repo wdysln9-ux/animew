@@ -1141,9 +1141,8 @@ class PlayerCubit extends Cubit<PlayerState> {
             player.seek(_pendingResume);
           }
         }
-        // Opt-in auto-skip of the opening / ending. Sits here (not in the player
-        // UI) so it still fires with the controls hidden or the screen off.
-        _maybeAutoSkip(p);
+        // Auto-skip countdown and its on-screen cancel/skip control are driven
+        // by the player overlay so viewers get the full three-second warning.
 
         if (p > Duration.zero) {
           _startedThisSource = true; // source is playing
