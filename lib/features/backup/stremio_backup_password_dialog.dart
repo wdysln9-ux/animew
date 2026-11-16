@@ -23,9 +23,9 @@ class _StremioBackupPasswordDialogState
   void _submit() {
     final password = _password.text;
     final error = password.length < 8 || password.length > 1024
-        ? context.l10n.passwordMustBeAtLeast8Characters
+        ? 'Password minimal 8 karakter.'
         : widget.confirm && password != _confirmation.text
-        ? 'Passwords do not match.'
+        ? 'Password tidak cocok.'
         : null;
     if (error != null) {
       setState(() => _error = error);
@@ -61,20 +61,20 @@ class _StremioBackupPasswordDialogState
 
   @override
   Widget build(BuildContext context) => TvAlertDialog(
-    title: widget.confirm ? 'Protect addon backup' : 'Unlock addon backup',
+    title: widget.confirm ? 'Lindungi backup add-on' : 'Buka backup add-on',
     body: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           widget.confirm
-              ? 'Addon URLs may contain private account tokens. Keep this password to restore them on another device.'
-              : 'Enter the password used when this backup was saved.',
+              ? 'URL add-on bisa berisi token akun pribadi. Simpan password ini untuk memulihkannya di perangkat lain.'
+              : 'Masukkan password yang digunakan saat backup ini dibuat.',
         ),
         const SizedBox(height: 12),
         _field(_password, context.l10n.password),
         if (widget.confirm) ...[
           const SizedBox(height: 12),
-          _field(_confirmation, 'Confirm password'),
+          _field(_confirmation, 'Konfirmasi password'),
         ],
       ],
     ),
@@ -84,7 +84,7 @@ class _StremioBackupPasswordDialogState
         onTap: () => Navigator.of(context).pop(),
       ),
       TvAlertAction(
-        label: 'Continue',
+        label: 'Lanjutkan',
         primary: true,
         autofocus: true,
         onTap: _submit,
