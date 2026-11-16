@@ -2758,6 +2758,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       final t = await sl<TorrentService>().startStream(
         s.url,
         allowMobileData: sl<TorrentPrefs>().allowMobileData,
+        fileIndex: s.torrentFileIndex,
       );
       await _torrentSub?.cancel();
       _torrentSub = null;
