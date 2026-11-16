@@ -9,7 +9,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../search/browse_sources_screen.dart';
-import '../sources/stremio_sources_screen.dart';
+import '../home/stremio_home_screen.dart';
 import '../../core/app_mode.dart';
 import '../../core/di/injector.dart';
 import '../../core/playback/my_list.dart';
@@ -306,7 +306,7 @@ class _RootShellState extends State<RootShell>
             DockTab.downloads => const DownloadsScreen(showBack: false),
             DockTab.history => const HistoryScreen(showBack: false),
             DockTab.sources => const BrowseSourcesScreen(),
-            DockTab.stremio => const StremioSourcesScreen(),
+            DockTab.stremio => const StremioHomeScreen(),
             DockTab.explore => const ExploreScreen(),
           },
         ),
