@@ -2346,7 +2346,7 @@ class _SheetRow extends StatelessWidget {
                     onChanged: (_) => onTap(),
                     activeThumbColor: Colors.white,
                     activeTrackColor: AppColors.accent,
-                    inactiveThumbColor: AppColors.textTertiary,
+                    inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
                     inactiveTrackColor: AppColors.surface2,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   )
