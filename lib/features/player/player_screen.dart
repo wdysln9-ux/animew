@@ -2489,7 +2489,25 @@ class _PlayerScreenState extends State<PlayerScreen> {
             ? episode.number!.toInt().toString()
             : episode.number!.toString();
     final hasHeading = episodeNumber != null || title.isNotEmpty;
-    final description = episode.description?.trim();
+    final rawDescription = episode.description?.trim() ?? '';
+    // Some metadata providers append "Sumber: ..." to the synopsis.
+    // Keep that attribution out of the paragraph and show it as a compact
+    // label beside the episode title instead.
+    final sourceMatch = RegExp(
+      r'(^|\\n)\\s*Sumber\\s*:\\s*([^\\r\\n]+)',
+      caseSensitive: false,
+    ).firstMatch(rawDescription);
+    final sourceLabel = sourceMatch?.group(2)?.trim();
+    final description = rawDescription
+        .replaceAll(
+          RegExp(
+            r'(^|\\n)\\s*Sumber\\s*:\\s*[^\\r\\n]+',
+            caseSensitive: false,
+          ),
+          '',
+        )
+        .replaceAll(RegExp(r'\\n{3,}'), '\\n\\n')
+        .trim();
 
     _bumpControls();
     showDialog<void>(
@@ -2555,7 +2573,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           ),
                         ),
                       if (title.isNotEmpty)
-                        Expanded(
+                        Flexible(
+                          fit: FlexFit.loose,
                           child: AutoTranslatedText(
                             text: title,
                             style: TextStyle(
@@ -2566,6 +2585,31 @@ class _PlayerScreenState extends State<PlayerScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                      if (sourceLabel != null && sourceLabel.isNotEmpty) ...[
+                        const SizedBox(width: 7),
+                        Container(
+                          constraints: const BoxConstraints(maxWidth: 104),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface2,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppColors.hairline),
+                          ),
+                          child: Text(
+                            sourceLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   )
                 else
