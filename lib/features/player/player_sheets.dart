@@ -959,16 +959,16 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
 
   Future<void> _resetTypography() => _apply(() async {
     await _prefs.setSubtitleFont('');
-    await _prefs.setSubtitleFontWeight(500);
+    await _prefs.setSubtitleFontWeight(400);
     await _prefs.setSubtitleItalic(false);
     await _prefs.setSubtitleJustification('center');
     await _prefs.setSubtitleOutlineType('soft');
-    await _prefs.setSubtitleOutlineWidth(2.0);
-    await _prefs.setSubtitleShadowAngle(90.0);
-    await _prefs.setSubtitleShadowDistance(1.0);
+    await _prefs.setSubtitleOutlineWidth(2.5);
+    await _prefs.setSubtitleShadowAngle(45.0);
+    await _prefs.setSubtitleShadowDistance(2.5);
     await _prefs.setSubtitleShadowBlur(0.0);
-    await _prefs.setSubtitleShadowWidth(1.0);
-    await _prefs.setSubtitleScale(1.0);
+    await _prefs.setSubtitleShadowWidth(2.5);
+    await _prefs.setSubtitleScale(0.78125);
   });
 
   Future<void> _resetSelectedColor() => _apply(() async {
