@@ -590,7 +590,7 @@ class AniListCatalogue implements AnimeCatalogue {
             items.sort((left, right) {
               final newestFirst = (latestAired[right.id] ?? 0)
                   .compareTo(latestAired[left.id] ?? 0);
-              return f.sortAscending ? -newestFirst : newestFirst;
+              return (f?.sortAscending ?? false) ? -newestFirst : newestFirst;
             });
           } catch (_) {
             // Keep AniList's updated-record order if airing history is unavailable.
