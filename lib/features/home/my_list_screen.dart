@@ -1403,6 +1403,8 @@ class _MyListViewState extends State<_MyListView> with WidgetsBindingObserver {
                   score: entry.score,
                   tmdbIsTv: entry.tmdbIsTv,
                   customLists: entry.customLists,
+              isPrivate: entry.isPrivate,
+                  isPrivate: entry.isPrivate,
                   onFind: () => _openTrackerItem(context, entry.item),
                   onChanged: () => context.read<TrackerListCubit>().refresh(),
                 ),
