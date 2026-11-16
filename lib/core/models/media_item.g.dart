@@ -11,6 +11,7 @@ MediaItem _$MediaItemFromJson(Map<String, dynamic> json) => MediaItem(
   title: json['title'] as String,
   englishTitle: json['englishTitle'] as String?,
   cover: json['cover'] as String?,
+  coverColor: json['coverColor'] as String?,
   coverHeaders: (json['coverHeaders'] as Map<String, dynamic>?)?.map(
     (k, e) => MapEntry(k, e as String),
   ),
@@ -41,6 +42,7 @@ Map<String, dynamic> _$MediaItemToJson(MediaItem instance) => <String, dynamic>{
   'title': instance.title,
   'englishTitle': instance.englishTitle,
   'cover': instance.cover,
+  'coverColor': instance.coverColor,
   'coverHeaders': instance.coverHeaders,
   'banner': instance.banner,
   'url': instance.url,
