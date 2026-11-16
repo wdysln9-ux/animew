@@ -559,7 +559,7 @@ class _SearchViewState extends State<_SearchView>
     final aniList = sl<AniListService>();
     if (!aniList.isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hubungkan akun AniList untuk memakai Hide My Anime.')),
+        const SnackBar(content: Text('Hubungkan akun AniList untuk memakai Sembunyikan Daftar.')),
       );
       return;
     }
@@ -631,7 +631,7 @@ class _SearchViewState extends State<_SearchView>
                 Icon(Icons.visibility_off_outlined, size: 13, color: active ? AppColors.accent : AppColors.textSecondary),
               const SizedBox(width: 5),
               Text(
-                'Hide My Anime',
+                'Sembunyikan Daftar',
                 style: AppText.caption.copyWith(
                   fontSize: 10.5,
                   color: active ? AppColors.accent : AppColors.textSecondary,
@@ -1420,7 +1420,7 @@ class _SearchViewState extends State<_SearchView>
             Padding(
               padding: const EdgeInsetsDirectional.only(end: 8),
               child: _ActiveFilterChip(
-                label: 'Hide My Anime',
+                label: 'Sembunyikan Daftar',
                 onRemove: () => setState(() => _hideMyAnime = false),
               ),
             ),
