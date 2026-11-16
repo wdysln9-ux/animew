@@ -281,7 +281,7 @@ class _ControlsOverlay extends StatelessWidget {
         case 'lock':
           out.add(
             _BarButton(
-              icon: Icons.lock_open_rounded,
+              icon: Icons.lock_rounded,
               tooltip: context.l10n.lockControls,
               onTap: onLock,
             ),
@@ -326,7 +326,7 @@ class _ControlsOverlay extends StatelessWidget {
     final c = controller;
     switch (id) {
       case 'lock':
-        return (Icons.lock_open_rounded, context.l10n.lockControls, onLock);
+        return (Icons.lock_rounded, context.l10n.lockControls, onLock);
       case 'speed':
         return (Icons.speed_rounded, 'Playback speed', onSpeed);
       case 'tracks':
@@ -544,8 +544,8 @@ class _ControlsOverlay extends StatelessWidget {
               // the back arrow on 44 — the exact line the bottom capsules start
               // at. Writing 44 here would land it at 56 and overshoot inward.
               padding: EdgeInsets.symmetric(
-                horizontal: 7,
-                vertical: compactEpisodePortrait ? 0 : 0,
+                horizontal: 6,
+                vertical: 1.3,
               ),
               child: Row(
                 children: [
@@ -553,6 +553,7 @@ class _ControlsOverlay extends StatelessWidget {
                     icon: const Icon(
                       Icons.arrow_back_rounded,
                       color: Colors.white,
+                      size: 23,
                     ),
                     tooltip: context.l10n.back,
                     onPressed: onBack,
@@ -777,7 +778,7 @@ class _ControlsOverlay extends StatelessWidget {
                         );
                       },
                     ),
-                    SizedBox(height: compactEpisodePortrait ? 0 : 3),
+                    SizedBox(height: compactEpisodePortrait ? 2 : 5),
                   ],
                 ),
               ),
