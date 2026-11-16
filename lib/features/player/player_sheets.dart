@@ -91,7 +91,10 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
 
   Widget _subColumn(PlayerCubit c, String subId) {
     final embedded = c.mediaSubtitleTracks;
-    final soft = c.softSubs;
+    final embeddedIds = embedded.map((t) => t.id.trim().toLowerCase()).toSet();
+    final soft = c.softSubs
+        .where((s) => !embeddedIds.contains(s.url.trim().toLowerCase()))
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -224,7 +227,12 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
     final seen = <String>{};
     final result = tracks.where((track) {
       final id = track.id.trim().toLowerCase();
-      if (id.isEmpty || !seen.add(id)) return false;
+      final title = (track.title ?? '').trim().toLowerCase();
+      final language = (track.language ?? '').trim().toLowerCase();
+      final identity = title.isNotEmpty || language.isNotEmpty
+          ? '$language|$title'
+          : id;
+      if (id.isEmpty || !seen.add(identity)) return false;
       return true;
     }).toList();
     result.sort((a, b) {
@@ -240,7 +248,9 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
     final seen = <String>{};
     final result = subs.where((sub) {
       final uri = sub.url.trim().toLowerCase();
-      if (uri.isEmpty || !seen.add(uri)) return false;
+      final identity = sub.lang.trim().toLowerCase() + '|' +
+          (sub.label ?? '').trim().toLowerCase();
+      if (uri.isEmpty || !seen.add(identity)) return false;
       return true;
     }).toList();
     result.sort((a, b) =>
