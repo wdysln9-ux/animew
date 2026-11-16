@@ -44,6 +44,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Map<int, int> _becauseRatings = const {};
   bool _becauseLoading = false;
   int _becauseGeneration = 0;
+  int? _becauseAniListId;
+  int _becauseNextPage = 1;
+  bool _becauseHasNextPage = true;
+  bool _becauseMoreLoading = false;
+  final Set<int> _becauseSeenIds = {};
   String _selected = 'Untukmu';
   int _heroIndex = 0;
   List<MediaItem> _rankedItems = const [];
@@ -104,6 +109,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _becauseCarousel = const [];
           _becauseRatings = const {};
           _becauseLoading = false;
+          _becauseAniListId = null;
+          _becauseNextPage = 1;
+          _becauseHasNextPage = false;
+          _becauseSeenIds.clear();
         });
       }
       return;
@@ -114,6 +123,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
       setState(() {
         _becauseCarousel = const [];
         _becauseRatings = const {};
+        _becauseAniListId = null;
+        _becauseNextPage = 1;
+        _becauseHasNextPage = true;
+        _becauseSeenIds.clear();
       });
     }
     _becauseLoading = true;
@@ -169,6 +182,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
         setState(() {
           _becauseCarousel = items;
           _becauseRatings = ratings;
+          _becauseAniListId = anilistId;
+          _becauseNextPage = page;
+          _becauseHasNextPage = hasNextPage;
+          _becauseSeenIds
+            ..clear()
+            ..addAll(seen);
         });
       }
     } catch (_) {
@@ -268,10 +287,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
   // Do not synthesize a second recommendation list from genres/history here.
   List<MediaItem> get _recommendations => _row('Rekomendasi Anime');
   List<MediaItem> get _heroes {
-    // The first 10 recommendations are shown in the poster catalogue;
-    // the following 5 are reserved for the top carousel.
+    // Recommendations 11–15 are reserved for the top carousel.
     return _becauseCarousel.skip(10).take(5).toList();
   }
+
+  List<MediaItem> get _becauseCatalog => [
+    ..._becauseCarousel.take(10),
+    ..._becauseCarousel.skip(15),
+  ];
 
   void _search({String query = '', MetaFilters? filters, bool hideMyAnime = false}) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) =>
@@ -457,14 +480,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
 
-  Widget _posterRail(List<MediaItem> items, {bool hidden = false, bool recommendationMode = false}) {
+  Widget _posterRail(List<MediaItem> items, {bool hidden = false, bool recommendationMode = false, bool paginateRecommendations = false}) {
     if (items.isEmpty) return const SizedBox(height: 184);
-    final list = items.take(18).toList();
+    final list = paginateRecommendations ? items : items.take(18).toList();
     final width = posterRowWidth(context);
     final height = posterRowHeight(context);
     return SizedBox(
       height: height,
-      child: ListView.separated(
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (paginateRecommendations &&
+              notification.metrics.axis == Axis.horizontal &&
+              notification.metrics.extentAfter < width * 2) {
+            _loadMoreBecauseRecommendations();
+          }
+          return false;
+        },
+        child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         scrollDirection: Axis.horizontal,
         itemCount: list.length,
@@ -497,6 +529,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
           );
         },
+        ),
       ),
     );
   }
@@ -766,7 +799,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             const SizedBox(height: 10), _hero(),
             _heading('Selera Kamu'), _taste(),
             _heading('Karena kamu menonton $watched'),
-            _posterRail(_becauseCarousel.take(10).toList(), recommendationMode: true),
+            _posterRail(_becauseCatalog, recommendationMode: true, paginateRecommendations: true),
             _heading('Permata Tersembunyi', subtitle: 'Skor tinggi, jarang dilirik', subtitleColor: AppColors.textSecondary),
             if (hidden.isNotEmpty) _posterRail(hidden)
             else Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('Belum ada anime tersembunyi yang cocok.', style: _txt(11, color: AppColors.textTertiary))),
