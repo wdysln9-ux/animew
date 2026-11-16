@@ -138,11 +138,11 @@ class ThemeController {
     Color color,
   ) {
     final hsl = HSLColor.fromColor(color);
-    final lightness = (0.045 + hsl.lightness * 0.15).clamp(0.045, 0.165);
+    final lightness = (0.045 + hsl.lightness * 0.15).clamp(0.045, 0.165).toDouble();
     return (
       bg: HSLColor.fromAHSL(1, hsl.hue, 0.30, lightness).toColor(),
-      surface: HSLColor.fromAHSL(1, hsl.hue, 0.22, (lightness + 0.035).clamp(0.07, 0.20)).toColor(),
-      surface2: HSLColor.fromAHSL(1, hsl.hue, 0.20, (lightness + 0.075).clamp(0.10, 0.24)).toColor(),
+      surface: HSLColor.fromAHSL(1, hsl.hue, 0.22, (lightness + 0.035).clamp(0.07, 0.20).toDouble()).toColor(),
+      surface2: HSLColor.fromAHSL(1, hsl.hue, 0.20, (lightness + 0.075).clamp(0.10, 0.24).toDouble()).toColor(),
     );
   }
 
