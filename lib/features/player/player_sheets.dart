@@ -258,8 +258,9 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
     final seen = <String>{};
     final result = subs.where((sub) {
       final uri = sub.url.trim().toLowerCase();
-      final identity = sub.lang.trim().toLowerCase() + '|' +
-          (sub.label ?? '').trim().toLowerCase();
+      final identity = _isEnglishSubtitle(sub.lang, sub.label)
+          ? 'english'
+          : sub.lang.trim().toLowerCase() + '|' + (sub.label ?? '').trim().toLowerCase();
       if (uri.isEmpty || !seen.add(identity)) return false;
       return true;
     }).toList();
@@ -1003,6 +1004,7 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setSubtitleItalic(false);
     await _prefs.setSubtitleJustification('center');
     await _prefs.setSubtitleShadowAngle(45.0);
+    await _prefs.setSubtitleShadowWidth(2.5);
     await _prefs.setSubtitleShadowDistance(2.5);
     await _prefs.setSubtitleShadowBlur(0.0);
     await _prefs.setSubtitleShadowColorHex('#000000FF');
