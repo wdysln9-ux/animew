@@ -399,6 +399,7 @@ class _BufferedSliderTrackShape extends SliderTrackShape
     );
     final radius = Radius.circular(rect.height / 2);
     final canvas = context.canvas;
+    final isRtl = textDirection == TextDirection.rtl;
 
     // 1. Background (unbuffered remainder).
     canvas.drawRRect(
@@ -411,7 +412,12 @@ class _BufferedSliderTrackShape extends SliderTrackShape
       final bw = rect.width * buffered.clamp(0.0, 1.0);
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-          Rect.fromLTWH(rect.left, rect.top, bw, rect.height),
+          Rect.fromLTWH(
+            isRtl ? rect.right - bw : rect.left,
+            rect.top,
+            bw,
+            rect.height,
+          ),
           radius,
         ),
         Paint()..color = bufferedColor,
@@ -422,7 +428,12 @@ class _BufferedSliderTrackShape extends SliderTrackShape
     final activeRight = thumbCenter.dx.clamp(rect.left, rect.right);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTRB(rect.left, rect.top, activeRight, rect.bottom),
+        Rect.fromLTRB(
+          isRtl ? activeRight : rect.left,
+          rect.top,
+          isRtl ? rect.right : activeRight,
+          rect.bottom,
+        ),
         radius,
       ),
       Paint()..color = sliderTheme.activeTrackColor ?? AppColors.accent,
@@ -436,8 +447,12 @@ class _BufferedSliderTrackShape extends SliderTrackShape
         if (range.length < 2) continue;
         final start = range[0].clamp(0.0, 1.0);
         final end = range[1].clamp(start, 1.0);
-        final left = rect.left + rect.width * start;
-        final right = rect.left + rect.width * end;
+        final left = isRtl
+            ? rect.right - rect.width * end
+            : rect.left + rect.width * start;
+        final right = isRtl
+            ? rect.right - rect.width * start
+            : rect.left + rect.width * end;
         if (right <= left) continue;
         canvas.drawRRect(
           RRect.fromRectAndRadius(
