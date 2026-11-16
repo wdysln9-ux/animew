@@ -9,6 +9,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../search/browse_sources_screen.dart';
+import '../sources/stremio_sources_screen.dart';
 import '../../core/app_mode.dart';
 import '../../core/di/injector.dart';
 import '../../core/playback/my_list.dart';
@@ -305,6 +306,7 @@ class _RootShellState extends State<RootShell>
             DockTab.downloads => const DownloadsScreen(showBack: false),
             DockTab.history => const HistoryScreen(showBack: false),
             DockTab.sources => const BrowseSourcesScreen(),
+            DockTab.stremio => const StremioSourcesScreen(),
             DockTab.explore => const ExploreScreen(),
           },
         ),
@@ -735,6 +737,7 @@ class _FloatingDock extends StatelessWidget {
   DockTab.downloads => (Icons.download_outlined, Icons.download_rounded),
   DockTab.history => (Icons.history_outlined, Icons.history_rounded),
   DockTab.sources => (Icons.extension_outlined, Icons.extension_rounded),
+  DockTab.stremio => (Icons.play_circle_outline_rounded, Icons.play_circle_rounded),
   DockTab.explore => (Icons.explore_outlined, Icons.explore_rounded),
   _ => null,
 };
