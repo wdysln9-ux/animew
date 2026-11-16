@@ -1100,7 +1100,7 @@ class PlaybackPrefs {
 
   /// Thickness of the drop shadow around subtitle glyphs (0–8).
   double get subtitleShadowWidth =>
-      (_box.get('subtitleShadowWidth', defaultValue: 2.5) as num)
+      (_box.get('subtitleShadowWidth', defaultValue: 0.0) as num)
           .toDouble()
           .clamp(0.0, 8.0);
   Future<void> setSubtitleShadowWidth(double value) =>
