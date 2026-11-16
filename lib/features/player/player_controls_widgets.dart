@@ -74,8 +74,8 @@ class _SkipButtonState extends State<_SkipButton>
           end: Offset.zero,
         ).animate(CurvedAnimation(parent: _entry, curve: Curves.easeOutCubic)),
         child: SizedBox(
-          width: 54,
-          height: 54,
+          width: 40,
+          height: 40,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -83,8 +83,8 @@ class _SkipButtonState extends State<_SkipButton>
                 AnimatedBuilder(
                   animation: _countdown,
                   builder: (context, _) => SizedBox(
-                    width: 54,
-                    height: 54,
+                    width: 40,
+                    height: 40,
                     child: CircularProgressIndicator(
                       value: 1 - _countdown.value,
                       strokeWidth: 2.5,
@@ -96,8 +96,8 @@ class _SkipButtonState extends State<_SkipButton>
                 )
               else
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
@@ -114,9 +114,9 @@ class _SkipButtonState extends State<_SkipButton>
                   customBorder: const CircleBorder(),
                   onTap: _cancel,
                   child: const SizedBox(
-                    width: 46,
-                    height: 46,
-                    child: Icon(Icons.close_rounded, color: Colors.white, size: 25),
+                    width: 34,
+                    height: 34,
+                    child: Icon(Icons.close_rounded, color: Colors.white, size: 19),
                   ),
                 ),
               ),
@@ -143,41 +143,42 @@ class _EpisodeVoteOverlay extends StatelessWidget {
           ? '${(value / 1000).toStringAsFixed(1)}k'
           : value.toString();
 
-  Widget _button(IconData icon, int count) {
-    return Container(
-      width: 48,
-      height: 57,
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 19, color: Colors.white),
-          const SizedBox(height: 3),
-          Text(
-            _compact(count),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              height: 1,
-            ),
+  Widget _button(IconData icon, int count) => Expanded(
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: Colors.white),
+        const SizedBox(width: 4),
+        Text(
+          _compact(count),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            height: 1,
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 
   @override
-  Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      _button(Icons.thumb_up_alt_outlined, likes),
-      const SizedBox(height: 7),
-      _button(Icons.thumb_down_alt_outlined, dislikes),
-    ],
+  Widget build(BuildContext context) => Container(
+    width: 92,
+    height: 32,
+    padding: const EdgeInsets.symmetric(horizontal: 5),
+    decoration: BoxDecoration(
+      color: Colors.black.withValues(alpha: 0.5),
+      borderRadius: BorderRadius.circular(9),
+    ),
+    child: Row(
+      children: [
+        _button(Icons.thumb_up_alt_outlined, likes),
+        Container(width: 1, height: 16, color: Colors.white24),
+        _button(Icons.thumb_down_alt_outlined, dislikes),
+      ],
+    ),
   );
 }
 
