@@ -592,7 +592,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
 
   Future<void> _reset() => _apply(() async {
     await p.setSubtitleFont('');
-    await p.setSubtitleScale(1);
+    await p.setSubtitleScale(0.78125);
     await p.setSubtitleFontWeight(400);
     await p.setSubtitleItalic(false);
     await p.setSubtitleJustification('center');
@@ -601,9 +601,9 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
     await p.setSubtitleOutlineType('soft');
     await p.setSubtitleOutlineColorHex('#000000FF');
     await p.setSubtitleShadowAngle(45);
-    await p.setSubtitleShadowWidth(1);
+    await p.setSubtitleShadowWidth(2.5);
     await p.setSubtitleShadowDistance(2.5);
-    await p.setSubtitleShadowBlur(2.5);
+    await p.setSubtitleShadowBlur(0);
     await p.setSubtitleShadowColorHex('#000000FF');
     await p.setSubtitleBgOpacity(0);
     await p.setSubtitleTextOpacity(1);
@@ -998,18 +998,18 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setSubtitleTextOpacity(1.0);
     await _prefs.setSubtitleOutlineType('soft');
     await _prefs.setSubtitleOutlineColorHex('#000000FF');
-    await _prefs.setSubtitleOutlineWidth(2.0);
-    await _prefs.setSubtitleFontWeight(500);
+    await _prefs.setSubtitleOutlineWidth(2.5);
+    await _prefs.setSubtitleFontWeight(400);
     await _prefs.setSubtitleItalic(false);
     await _prefs.setSubtitleJustification('center');
-    await _prefs.setSubtitleShadowAngle(90.0);
-    await _prefs.setSubtitleShadowDistance(1.0);
+    await _prefs.setSubtitleShadowAngle(45.0);
+    await _prefs.setSubtitleShadowDistance(2.5);
     await _prefs.setSubtitleShadowBlur(0.0);
     await _prefs.setSubtitleShadowColorHex('#000000FF');
     await _prefs.setSubtitleOverallOpacity(1.0);
     await _prefs.setSubtitleBgOpacity(0.0);
     await _prefs.setSubtitlePosition(95);
-    await _prefs.setSubtitleScale(1.0);
+    await _prefs.setSubtitleScale(0.78125);
     await _prefs.setStyledSubtitles(false);
   });
 
