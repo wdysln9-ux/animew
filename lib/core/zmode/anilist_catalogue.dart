@@ -537,7 +537,7 @@ class AniListCatalogue implements AnimeCatalogue {
     }
 
     late List<MediaItem> items;
-    if (countries.length > 1 && kind == ZKind.anime) {
+    if (countries.length > 1) {
       // AniList exposes a single countryOfOrigin argument. Query each
       // selected country (and selected seasons) as aliases, then merge by id.
       final seasonVariants = seasons.length > 1
