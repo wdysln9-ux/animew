@@ -397,7 +397,7 @@ class _EpisodeDetailGalleryContentState
       }
       final urls = snapshot.data ?? const <String>[];
       if (urls.isEmpty) {
-        return const _GalleryMessage('Screenshot untuk episode ini belum tersedia.');
+        return _GalleryMessage('Screenshot untuk episode ini belum tersedia.');
       }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -559,7 +559,7 @@ class _AllEpisodeStillRail extends StatelessWidget {
         return const _GalleryLoading();
       }
       final stills = snapshot.data ?? const <_EpisodeStill>[];
-      if (stills.isEmpty) return const _GalleryMessage('Screenshot belum tersedia.');
+      if (stills.isEmpty) return _GalleryMessage('Screenshot belum tersedia.');
       return _StillRail(stills: stills);
     },
   );
