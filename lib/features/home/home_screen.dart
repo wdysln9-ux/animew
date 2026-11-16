@@ -139,7 +139,7 @@ class _HomeViewState extends State<_HomeView>
   final _sourceCatalogueController = SourceCatalogueHomeController();
   StreamSubscription<ContentMode>? _sourceCatalogueModeSubscription;
   late final ValueNotifier<bool> _sourceCatalogueSelection;
-  String? _sourceCatalogueSourceId = HomeCataloguePrefs.sourceId;
+  String? _sourceCatalogueSourceId;
   List<HomeSection> _sourceCatalogueSections = const [];
   bool _sourceCatalogueSelected = HomeCataloguePrefs.sourceSelected;
 
@@ -174,14 +174,24 @@ class _HomeViewState extends State<_HomeView>
     super.initState();
     _notificationCountFuture = sl<AniListService>().api.unreadNotificationCount();
     sl<AniListService>().addListener(_onAniListNotificationChanged);
+    final initialMode = sl<ContentModeCubit>().state;
+    _sourceCatalogueSourceId =
+        HomeCataloguePrefs.sourceIdFor(initialMode) ??
+        sl<ActiveSourceCubit>().state;
     _sourceCatalogueSelection = HomeCataloguePrefs.sourceSelection;
     _sourceCatalogueSelection.addListener(_onSourceCatalogueSelectionChanged);
     _sourceCatalogueModeSubscription = sl<ContentModeCubit>().stream.listen((
-      _,
+      mode,
     ) {
-      if (mounted && _sourceCatalogueSelected) {
-        setState(() => _sourceCatalogueSections = const []);
-      }
+      if (!mounted) return;
+      setState(() {
+        _sourceCatalogueSourceId =
+            HomeCataloguePrefs.sourceIdFor(mode) ??
+            sl<ActiveSourceCubit>().state;
+        if (_sourceCatalogueSelected) {
+          _sourceCatalogueSections = const [];
+        }
+      });
     });
     ThemeController.revision.addListener(_onThemeRevision);
     // Swap the content mode at the slash's peak (hidden behind the scrim), then
@@ -294,7 +304,9 @@ class _HomeViewState extends State<_HomeView>
       _sourceCatalogueSelected = selected;
       _sourceCatalogueSections = const [];
       if (selected) {
-        _sourceCatalogueSourceId ??= sl<ActiveSourceCubit>().state;
+        _sourceCatalogueSourceId =
+            HomeCataloguePrefs.sourceIdFor(sl<ContentModeCubit>().state) ??
+            sl<ActiveSourceCubit>().state;
       }
     });
   }
@@ -428,7 +440,9 @@ class _HomeViewState extends State<_HomeView>
       _sourceCatalogueSourceId = sourceId;
       _sourceCatalogueSections = const [];
     });
-    unawaited(HomeCataloguePrefs.setSourceId(sourceId));
+    unawaited(
+      HomeCataloguePrefs.setSourceIdFor(sl<ContentModeCubit>().state, sourceId),
+    );
   }
 
   void _setSourceCatalogueSections(List<HomeSection> sections) {
