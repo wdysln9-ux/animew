@@ -32,6 +32,7 @@ class ThemeController {
   /// Selectable accents. First entry is the default coral.
   static const List<(String, Color)> accentPresets = [
     ('Coral', AppColors.defaultAccent),
+    ('Orange', Color(0xFFF97216)),
     ('Blue', Color(0xFF4D8DFF)),
     ('Violet', Color(0xFF9B6DFF)),
     ('Emerald', Color(0xFF32D583)),
