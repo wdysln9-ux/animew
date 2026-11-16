@@ -413,7 +413,6 @@ class PhonePlayerActivity : Activity() {
                     intent.getIntExtra(PhonePlayerIntent.EXTRA_BUF_MAX_MS, 0),
                     intent.getIntExtra(PhonePlayerIntent.EXTRA_BUF_BYTES, 0),
                     intent.getIntExtra(PhonePlayerIntent.EXTRA_BUF_BACK_MS, 0),
-                    maxHeapBytes = Runtime.getRuntime().maxMemory(),
                 ),
             )
             .build()
