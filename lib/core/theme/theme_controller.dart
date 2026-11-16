@@ -18,6 +18,7 @@ class ThemeController {
   static const String _amoledKey = 'amoled';
   static const String _materialYouKey = 'materialYou';
   static const String _adaptiveKey = 'adaptiveColour';
+  static const String _customBackgroundKey = 'customBackground';
 
   /// Near-black palette used when AMOLED is on (bg + card surfaces).
   static const Color amoledBg = Color(0xFF000000);
@@ -169,10 +170,16 @@ class ThemeController {
 
     AppColors.accent = activeAccent;
 
+    final customBackground = customBackgroundColor;
     if (amoled) {
       AppColors.bg = amoledBg;
       AppColors.surface = amoledSurface;
       AppColors.surface2 = amoledSurface2;
+    } else if (customBackground != null) {
+      final palette = _paletteFromAccent(customBackground);
+      AppColors.bg = palette.bg;
+      AppColors.surface = palette.surface;
+      AppColors.surface2 = palette.surface2;
     } else if (d != null) {
       AppColors.bg = d.bg;
       AppColors.surface = d.surface;
@@ -216,6 +223,26 @@ class ThemeController {
   /// Persist the poster-tint toggle and rebuild listeners.
   static Future<void> setAdaptiveColour(bool on) async {
     await _box.put(_adaptiveKey, on);
+    revision.value++;
+  }
+
+  /// Optional user-selected background hue. The selected hue is converted to
+  /// a dark palette so existing white text remains legible. AMOLED remains the
+  /// strongest override; clearing this restores the accent-derived palette.
+  static Color? get customBackgroundColor {
+    if (!Hive.isBoxOpen(boxName)) return null;
+    final value = _box.get(_customBackgroundKey);
+    if (value is! num || value < 0 || value > 0xFFFFFFFF) return null;
+    return Color(value.toInt());
+  }
+
+  static Future<void> setCustomBackgroundColor(Color? color) async {
+    if (color == null) {
+      await _box.delete(_customBackgroundKey);
+    } else {
+      await _box.put(_customBackgroundKey, color.toARGB32());
+    }
+    _applyColors();
     revision.value++;
   }
 
