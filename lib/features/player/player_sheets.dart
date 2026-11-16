@@ -2285,7 +2285,10 @@ class _SheetRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onTap,
+          // A toggle owns its own Switch gesture. Letting the parent InkWell
+          // also receive that tap can toggle twice and leave every switch
+          // appearing stuck or out of sync.
+          onTap: toggleValue == null ? onTap : null,
           onLongPress: onLongPress,
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -2341,7 +2344,10 @@ class _SheetRow extends StatelessWidget {
                   Switch.adaptive(
                     value: toggleValue!,
                     onChanged: (_) => onTap(),
-                    activeThumbColor: AppColors.accent,
+                    activeThumbColor: Colors.white,
+                    activeTrackColor: AppColors.accent,
+                    inactiveThumbColor: AppColors.textTertiary,
+                    inactiveTrackColor: AppColors.surface2,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   )
                 else if (icon != null)
