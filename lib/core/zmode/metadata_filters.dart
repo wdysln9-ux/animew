@@ -251,7 +251,7 @@ extension MetaCountryDetails on MetaCountry {
   String get label => switch (this) {
     MetaCountry.japan => 'Jepang',
     MetaCountry.china => 'China',
-    MetaCountry.southKorea => 'Korea Selatan',
+    MetaCountry.southKorea => 'Korea',
     MetaCountry.taiwan => 'Taiwan',
   };
 }
