@@ -125,6 +125,15 @@ class _TrackerSyncSheetState extends State<TrackerSyncSheet> {
   WatchStatus? _status;
   int _score = 0; // 0 = unrated, else 1–10
   int _progress = 0;
+  bool _private = false;
+  bool _initPrivate = false;
+
+  bool get _supportsPrivacy =>
+      widget.tracker is AniListService ||
+      (widget.tracker == null &&
+          (_kind == MediaKind.anime || _kind == MediaKind.manga) &&
+          _hub.connected.any((t) => t is AniListService));
+
   int? _maxEpisodes;
   int? _nextEp;
   DateTime? _nextAt;
@@ -174,6 +183,9 @@ class _TrackerSyncSheetState extends State<TrackerSyncSheet> {
     );
     // Only entries actually on a list can disagree — a tracker that's never
     // seen the title has no opinion to conflict with.
+    _private =
+        all.where((e) => e.trackerName == 'AniList').firstOrNull?.isPrivate ??
+        false;
     _conflicts = [
       for (final e in all)
         if (e.onList && e.progress != null && e.progress! > 0) e,
@@ -203,6 +215,8 @@ class _TrackerSyncSheetState extends State<TrackerSyncSheet> {
     if (!mounted) return;
     setState(() {
       _matchedTitle = entry?.title;
+      if (one is AniListService) _private = entry?.isPrivate ?? false;
+      _initPrivate = _private;
       _status = entry?.status;
       _score = (entry?.score ?? 0).round().clamp(0, 10);
       // When trackers disagree, start from the furthest along — pulling the
@@ -230,7 +244,8 @@ class _TrackerSyncSheetState extends State<TrackerSyncSheet> {
     final statusChanged = _status != _initStatus;
     final scoreChanged = _score != _initScore;
     final progressChanged = _progress != _initProgress;
-    if (!statusChanged && !scoreChanged && !progressChanged) {
+    final privacyChanged = _supportsPrivacy && _private != _initPrivate;
+    if (!statusChanged && !scoreChanged && !progressChanged && !privacyChanged) {
       Navigator.pop(context);
       return;
     }
@@ -247,6 +262,7 @@ class _TrackerSyncSheetState extends State<TrackerSyncSheet> {
         status: statusChanged ? _status : null,
         score: scoreChanged ? _score.toDouble() : null,
         progress: progressChanged ? _progress : null,
+        isPrivate: privacyChanged ? _private : null,
         kind: _kind,
       );
     } else {
@@ -391,6 +407,16 @@ class _TrackerSyncSheetState extends State<TrackerSyncSheet> {
         ],
       ),
       const SizedBox(height: 20),
+      if (_supportsPrivacy)
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Privat di AniList'),
+          subtitle: const Text('Hanya kamu yang bisa melihat entri ini di AniList'),
+          value: _private,
+          onChanged: _saving
+              ? null
+              : (value) => setState(() => _private = value),
+        ),
       _sectionLabel('YOUR SCORE'),
       const SizedBox(height: 8),
       _stepperRow(
