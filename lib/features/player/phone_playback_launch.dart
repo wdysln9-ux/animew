@@ -976,7 +976,6 @@ class PhoneNativePlayer {
                 tmdbId: _tmdbId,
                 tmdbIsTv: _tmdbIsTv,
                 imdbId: _imdbId,
-                auto: false,
               ),
             );
           }
