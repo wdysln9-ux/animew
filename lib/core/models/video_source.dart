@@ -58,6 +58,10 @@ class Subtitle extends Equatable {
       _$SubtitleFromJson(json);
   Map<String, dynamic> toJson() => _$SubtitleToJson(this);
 
+  String get displayLabel => providerName?.trim().isNotEmpty == true
+      ? '${label ?? lang} · $providerName'
+      : label ?? lang;
+
   @override
   List<Object?> get props => [url, lang, label, format, isDefault, providerName];
 }
