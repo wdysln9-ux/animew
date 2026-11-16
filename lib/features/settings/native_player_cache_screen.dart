@@ -6,7 +6,6 @@ import '../../core/playback/playback_prefs.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/ui/settings_widgets.dart';
-import '../../l10n/l10n.dart';
 
 class NativePlayerCacheScreen extends StatefulWidget {
   const NativePlayerCacheScreen({super.key});
@@ -64,13 +63,13 @@ class _NativePlayerCacheScreenState extends State<NativePlayerCacheScreen> {
         await _loadInfo();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.androidCacheClearBusy)),
+          SnackBar(content: const Text('Cache masih dipakai. Coba lagi setelah pemutaran selesai.')),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.androidCacheUnavailable)),
+          SnackBar(content: const Text('Cache pemutar tidak tersedia di perangkat ini.')),
         );
       }
     } finally {
@@ -151,14 +150,13 @@ class _NativePlayerCacheScreenState extends State<NativePlayerCacheScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final nativeMb = _nativeMb.clamp(
       32.0,
       _nativeLimitMb >= 32 ? _nativeLimitMb.toDouble() : 32.0,
     );
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: settingsAppBar(l10n.androidPlayerCache),
+      appBar: settingsAppBar('Cache pemutar Android'),
       body: ListView(
         padding: const EdgeInsets.only(top: 8, bottom: 32),
         children: [
@@ -169,10 +167,10 @@ class _NativePlayerCacheScreenState extends State<NativePlayerCacheScreen> {
                   children: [
                     SettingsTile(
                       icon: Icons.memory_rounded,
-                      title: l10n.androidNativeCache,
+                      title: 'Cache memori (RAM)',
                       subtitle: _nativeLimitMb >= 32
-                          ? l10n.androidNativeCacheDescription
-                          : l10n.androidNativeCacheUnavailable,
+                          ? 'Menggunakan memori untuk membantu pembacaan data saat streaming.'
+                          : 'Tidak tersedia pada perangkat ini.',
                       subtitleMaxLines: null,
                       trailing: Switch(
                         activeThumbColor: AppColors.accent,
@@ -211,8 +209,8 @@ class _NativePlayerCacheScreenState extends State<NativePlayerCacheScreen> {
                   children: [
                     SettingsTile(
                       icon: Icons.storage_rounded,
-                      title: l10n.androidDiskCache,
-                      subtitle: l10n.androidDiskCacheDescription,
+                      title: 'Cache penyimpanan',
+                      subtitle: 'Menyimpan data video sementara di penyimpanan perangkat.',
                       subtitleMaxLines: null,
                       trailing: Switch(
                         activeThumbColor: AppColors.accent,
@@ -244,7 +242,7 @@ class _NativePlayerCacheScreenState extends State<NativePlayerCacheScreen> {
               children: [
                 SettingsTile(
                   icon: Icons.delete_outline_rounded,
-                  title: l10n.androidCacheClear,
+                  title: 'Hapus cache pemutaran',
                   subtitle:
                       '${(_diskBytes / (1024 * 1024)).toStringAsFixed(1)} MB',
                   onTap: _clearing ? null : _clear,
@@ -260,7 +258,7 @@ class _NativePlayerCacheScreenState extends State<NativePlayerCacheScreen> {
           if (_unavailable)
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-              child: Text(l10n.androidCacheUnavailable, style: AppText.caption),
+              child: const Text('Cache pemutar tidak tersedia di perangkat ini.', style: AppText.caption),
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -275,7 +273,7 @@ class _NativePlayerCacheScreenState extends State<NativePlayerCacheScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    l10n.androidPlayerCacheNote,
+                    'Cache hanya dipakai oleh pemutar Android. Menghapus cache tidak menghapus unduhan atau daftar tontonan.',
                     style: AppText.caption.copyWith(
                       color: AppColors.textSecondary,
                       height: 1.5,
