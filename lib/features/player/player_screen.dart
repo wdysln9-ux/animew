@@ -2464,27 +2464,61 @@ class _PlayerScreenState extends State<PlayerScreen> {
   /// (anime). No blind manual fallback — movies/series with no skip data never
   /// show an inaccurate "Skip intro".
   Widget? _skipButtonFor(Duration pos) {
-    if (!_skipIntroEnabled) return null;
+    final prefs = sl<PlaybackPrefs>();
     for (final iv in _c.currentSkips) {
       // Hide a beat before the interval ends so it doesn't flicker at the edge.
-      if (pos >= iv.start && pos < iv.end - const Duration(seconds: 1)) {
-        return _SkipButton(
-          // Only a recap is named. An opening/ending keeps the plain "Skip"
-          // it has always had — no reason to reword what already works.
-          label: isRecapSkip(iv.type) ? context.l10n.skipRecap : context.l10n.skip,
-          onTap: () {
-            if (isEndingSkip(iv.type)) {
-              _c.showStatus('Ending dilewati');
-            } else if (!isRecapSkip(iv.type)) {
-              _c.showStatus('Opening dilewati');
-            }
-            _c.seekTo(iv.end);
-            // OP/ED skip is a seek action; preserve the current control visibility.
-          },
-        );
+      if (pos < iv.start || pos >= iv.end - const Duration(seconds: 1)) continue;
+      final autoSkip = isEndingSkip(iv.type)
+          ? prefs.autoSkipEd
+          : isRecapSkip(iv.type)
+              ? prefs.autoSkipRecap
+              : prefs.autoSkipOp;
+      if (!_skipIntroEnabled && !autoSkip) return null;
+      void skipNow() {
+        if (isEndingSkip(iv.type)) {
+          _c.showStatus('Ending dilewati');
+        } else if (isRecapSkip(iv.type)) {
+          _c.showStatus('Rekap dilewati');
+        } else {
+          _c.showStatus('Opening dilewati');
+        }
+        _c.seekTo(iv.end);
       }
+      return _SkipButton(
+        key: ValueKey('skip-${iv.start.inMilliseconds}-${iv.end.inMilliseconds}'),
+        autoSkip: autoSkip,
+        onTap: skipNow,
+        onAutoComplete: autoSkip ? skipNow : null,
+      );
     }
     return null;
+  }
+
+  Widget _episodeVoteOverlay() {
+    final episode = _c.currentEpisode;
+    final episodes = _c.episodes;
+    final index = _c.state.currentIndex;
+    final episodeNumber = episode.number ?? (index + 1);
+    final progress = episodes.length <= 1
+        ? 0.0
+        : ((episodeNumber - 1) / (episodes.length - 1)).clamp(0.0, 1.0);
+    final viewers = _showPopularity == null
+        ? 0
+        : (_showPopularity! * math.pow(0.4, progress)).round();
+    final ratingShare = ((episode.rating ?? 5.0).clamp(0.0, 10.0)) / 10.0;
+    final totalVotes = (viewers * 0.30).round();
+    final baseLikes = (totalVotes * ratingShare).round();
+    final baseDislikes = totalVotes - baseLikes;
+    final likes = ((baseLikes + (_episodeVote == 1 ? 1 : 0)) * 0.1).round();
+    final dislikes = ((baseDislikes + (_episodeVote == -1 ? 1 : 0)) * 0.1).round();
+    return _EpisodeVoteOverlay(
+      vote: _episodeVote,
+      likes: likes,
+      dislikes: dislikes,
+      onVote: (value) => setState(() {
+        _episodeVote = _episodeVote == value ? null : value;
+      }),
+    );
   }
 
   /// MegaSkip: jump forward by the configured seconds (clamped to the end) and
@@ -5048,14 +5082,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         if (btn == null) return const SizedBox.shrink();
                         // Sit low (Netflix-style) while watching; slide up above the
                         // seek bar when the controls are showing so they never clash.
-                        return AnimatedAlign(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOut,
-                          alignment: Alignment(
-                            0.94,
-                            _controlsVisible ? 0.4 : 0.74,
+                        return Align(
+                          alignment: const Alignment(0.94, 0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              btn,
+                              const SizedBox(height: 12),
+                              _episodeVoteOverlay(),
+                            ],
                           ),
-                          child: btn,
                         );
                       },
                     ),
