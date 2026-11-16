@@ -2223,7 +2223,6 @@ class PlayerCubit extends Cubit<PlayerState> {
     _recovering = false;
     _skips = const []; // clear previous episode's skip markers
     _skipsForIndex = -1; // refetched when the new duration arrives
-    _autoSkipped.clear(); // new episode → its OP/ED may auto-skip again
     _prefetchedNextForIndex = -1; // re-arm next-episode prefetch for the new ep
     _subApplied = false; // restore the remembered subtitle for the new episode
     _autoSubDlTried = false; // re-arm keyless auto-download for the new episode
@@ -3623,47 +3622,6 @@ class PlayerCubit extends Cubit<PlayerState> {
   // the index it fired for so it re-arms whenever the episode/index changes.
   int _prefetchedNextForIndex = -1;
   List<SkipInterval> get currentSkips => _skips;
-
-  /// Interval starts (ms) already auto-skipped for the current episode.
-  final Set<int> _autoSkipped = <int>{};
-
-  /// Auto-skip the opening / ending when the user has opted in. Called on every
-  /// position tick, so it bails on the cheap checks first — the vast majority of
-  /// playback has no skip data at all.
-  ///
-  /// Routed through [seekTo] rather than `player.seek` so it drops the resume
-  /// floor, moves the glitch-guard baseline (otherwise the jump reads as a bad
-  /// forward seek and progress never persists), and — in a watch party — the
-  /// host's skip carries to the viewers instead of desyncing them.
-  void _maybeAutoSkip(Duration pos) {
-    if (_skips.isEmpty || _isRoomViewer) return;
-    // A resume seek still in flight means the player is briefly reporting ~0,
-    // which sits inside the opening. Skipping there would fire seekTo, drop the
-    // resume floor, and strand the user at the end of the OP instead of where
-    // they actually left off. Wait for the resume to land.
-    if (_pendingResume > Duration.zero) return;
-    final prefs = sl<PlaybackPrefs>();
-    final op = prefs.autoSkipOp;
-    final ed = prefs.autoSkipEd;
-    final recap = prefs.autoSkipRecap;
-    if (!op && !ed && !recap) return;
-    final iv = autoSkipAt(
-      _skips,
-      pos,
-      op: op,
-      ed: ed,
-      recap: recap,
-      fired: _autoSkipped,
-    );
-    if (iv == null) return;
-    _autoSkipped.add(iv.start.inMilliseconds);
-    if (isEndingSkip(iv.type)) {
-      _toast('Ending dilewati');
-    } else if (!isRecapSkip(iv.type)) {
-      _toast('Opening dilewati');
-    }
-    seekTo(iv.end);
-  }
 
   Future<void> _fetchSkips(int index, Duration dur) async {
     _skips = const [];
