@@ -48,7 +48,6 @@ import 'app_face_screen.dart';
 import 'appearance_screen.dart';
 import 'poster_card_settings_screen.dart';
 import 'home_rows_screen.dart';
-import 'home_custom_catalogues_screen.dart';
 import 'nav_tabs_screen.dart';
 import 'reader_settings_screen.dart';
 import 'discord_settings_screen.dart';
@@ -1157,16 +1156,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         subtitle: 'Which rows show on Home, and their order',
         keywords: 'home rows order hide show continue watching trending',
         onTap: () => _push(const HomeRowsScreen()),
-      ),
-    if (!_isTv)
-      _SettingsEntry(
-        section: SettingsSection.interface,
-        group: 'Layout',
-        icon: Icons.view_carousel_outlined,
-        title: 'Kustom katalog',
-        subtitle: 'Buat deretan Beranda dari filter pilihanmu',
-        keywords: 'custom catalogue katalog filter genre tahun status',
-        onTap: () => _push(const HomeCustomCataloguesScreen()),
       ),
     if (!_isTv)
       _SettingsEntry(
