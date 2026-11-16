@@ -72,6 +72,10 @@ import '../../core/ui/featured_hero.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../core/ui/poster_palette.dart';
 import '../../core/ui/home_custom_catalog_prefs.dart';
+import '../../core/ui/home_rows_prefs.dart';
+import '../../core/zmode/home_layouts.dart';
+import '../../core/zmode/metadata_provider_prefs.dart';
+import 'cubit/home_rows_composer.dart';
 import '../../core/metadata/title_logo_service.dart';
 import 'metadata_switch_sheet.dart';
 import 'home_banner_header.dart';
@@ -1319,6 +1323,78 @@ class _HomeViewState extends State<_HomeView>
     );
   }
 
+  /// Merge user-defined catalogue rows into the same saved Home order as
+  /// built-in rows. Their results are fetched separately, but their positions
+  /// are persisted by the existing Home rows editor.
+  List<Widget> _orderedHomeRowSlivers(List<HomeRow> rows) {
+    final kind = ZModePrefs.enabled
+        ? browseKindFor(sl<ContentModeCubit>().state, ZModePrefs.streamKind)
+        : null;
+    if (kind == null || _customCatalogueSections.isEmpty) {
+      return rows.map(_homeRowSliver).toList();
+    }
+    final providerPrefs = sl.isRegistered<MetadataProviderPrefs>()
+        ? sl<MetadataProviderPrefs>()
+        : null;
+    final layoutKey = layoutKeyFor(
+      sourceId: _repo.sourceId,
+      zModeOn: true,
+      browseKind: kind,
+      malPreferred: providerPrefs?.anime == AnimeProvider.mal,
+      simklPreferred: providerPrefs?.video == VideoProvider.simkl,
+    );
+    final saved = HomeRowsPrefs.savedFor(layoutKey);
+    final catalogues = HomeCustomCatalogPrefs.forKind(kind);
+    final customById = <String, HomeSection>{};
+    for (final catalogue in catalogues) {
+      for (final section in _customCatalogueSections) {
+        if (section.title == catalogue.name) {
+          customById['custom:${catalogue.id}'] = section;
+          break;
+        }
+      }
+    }
+    if (saved == null) {
+      return [
+        ...rows.map(_homeRowSliver),
+        ...customById.values.map((section) => SliverToBoxAdapter(
+          child: _sectionRow(section, customCatalogue: true),
+        )),
+      ];
+    }
+    final builtInById = {for (final row in rows) row.id: row};
+    final out = <Widget>[];
+    final seen = <String>{};
+    for (final stored in saved) {
+      final entry = parseRowEntry(stored);
+      if (entry.hidden || !seen.add(entry.id)) continue;
+      final builtIn = builtInById[entry.id];
+      if (builtIn != null) {
+        out.add(_homeRowSliver(builtIn));
+        continue;
+      }
+      final custom = customById[entry.id];
+      if (custom != null) {
+        out.add(SliverToBoxAdapter(
+          child: _sectionRow(custom, customCatalogue: true),
+        ));
+      }
+    }
+    // Rows added since the last save remain visible at the end, matching the
+    // editor's sanitize behaviour without losing any newly fetched content.
+    for (final row in rows) {
+      if (seen.add(row.id)) out.add(_homeRowSliver(row));
+    }
+    for (final entry in customById.entries) {
+      if (seen.add(entry.key)) {
+        out.add(SliverToBoxAdapter(
+          child: _sectionRow(entry.value, customCatalogue: true),
+        ));
+      }
+    }
+    return out;
+  }
+
   /// One row of the merged home arrangement, as a sliver. Every [HomeRow]
   /// type maps to the widget that already renders that shape — the sealed
   /// switch makes a future row type a compile error here instead of a silent
@@ -2348,7 +2424,7 @@ class _HomeViewState extends State<_HomeView>
                         if (_sourceCatalogueSelected)
                           ..._sourceCatalogueHomeSlivers(rows)
                         else
-                          ...rows.map(_homeRowSliver)
+                          ..._orderedHomeRowSlivers(rows)
                       else ...[
                         ContinueSection(
                           onResume: _openContinueShowDetail,
@@ -2360,13 +2436,6 @@ class _HomeViewState extends State<_HomeView>
                         if (_sourceCatalogueSelected)
                           _sourceCatalogueHomeSliver(),
                       ],
-
-                      if (!_sourceCatalogueSelected)
-                        ..._customCatalogueSections.map(
-                          (section) => SliverToBoxAdapter(
-                            child: _sectionRow(section, customCatalogue: true),
-                          ),
-                        ),
 
                       // ── Skeletons while the first load runs / empty states ───
                       // The provider rows themselves are part of state.rows
