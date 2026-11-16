@@ -2128,7 +2128,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       barrierDismissible: true,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, refresh) => _CompactPlayerDialog(
-          maxHeight: 353,
+          maxHeight: 430,
           child: _SheetColumn(
             header: null,
             compactDialog: true,
