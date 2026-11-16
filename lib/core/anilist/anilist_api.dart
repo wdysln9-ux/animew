@@ -72,7 +72,7 @@ String mediaListCollectionQuery(MediaKind kind) {
   final formatField = kind == MediaKind.manga ? ' format' : '';
   final airingField = kind == MediaKind.manga ? '' : ' nextAiringEpisode{episode}';
   return 'query(\$u:String){ MediaListCollection(userName:\$u, type:${_anilistType(kind)}){ '
-      'lists { status entries { status progress score(format:POINT_10) '
+      'lists { status entries { status private progress score(format:POINT_10) '
       'updatedAt customLists(asArray:true) '
       'media { id idMal title { romaji english native }$formatField '
       '${_totalCountFields(kind)}$airingField coverImage { large } } } } } }';
