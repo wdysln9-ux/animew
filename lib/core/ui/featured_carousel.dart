@@ -64,7 +64,7 @@ class FastFlingPageScrollPhysics extends PageScrollPhysics {
   ) {
     final viewport = position.viewportDimension;
     if (viewport <= 0 || velocity.abs() < tolerance.velocity) {
-      return super.getTargetPixels(position, tolerance, velocity);
+      return (position.pixels / viewport).roundToDouble() * viewport;
     }
     final currentPage = (position.pixels / viewport).round();
     final pages = ((velocity.abs() - tolerance.velocity) / 1600)
