@@ -3285,21 +3285,39 @@ class _PlayerScreenState extends State<PlayerScreen> {
             label: 'Mati',
             active: !enabled,
             onTap: () {
-              Navigator.pop(context);
               unawaited(_c.setVolumeBoost(current, enabled: false));
               _bumpControls();
             },
           ),
-          for (final percent in [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200])
-            _SheetRow(
-              label: '${percent}%',
-              active: enabled && current == percent,
-              onTap: () {
-                Navigator.pop(context);
-                unawaited(_c.setVolumeBoost(percent, enabled: true));
-                _bumpControls();
-              },
+          StatefulBuilder(
+            builder: (sheetContext, refresh) => Padding(
+              padding: const EdgeInsets.fromLTRB(18, 4, 18, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(child: Text('Tingkat boost')),
+                      Text('${current}%'),
+                    ],
+                  ),
+                  Slider(
+                    value: current.toDouble(),
+                    min: 100,
+                    max: 200,
+                    divisions: 20,
+                    label: '${current}%',
+                    onChanged: (value) {
+                      current = value.round();
+                      unawaited(_c.setVolumeBoost(current, enabled: current > 100));
+                      refresh(() {});
+                      _bumpControls();
+                    },
+                  ),
+                ],
+              ),
             ),
+          ),
         ],
       ),
     );
