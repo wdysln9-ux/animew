@@ -32,6 +32,7 @@ Future<void> showTrackerEntrySheet(
   VoidCallback? onFind,
   VoidCallback? onChanged,
   List<String> customLists = const [],
+  bool isPrivate = false,
 }) async {
   await showModalBottomSheet<void>(
     context: context,
@@ -43,6 +44,7 @@ Future<void> showTrackerEntrySheet(
     builder: (_) => _TrackerEntrySheet(
       tracker: tracker,
       customLists: customLists,
+      isPrivate: isPrivate,
       item: item,
       status: status,
       progress: progress,
@@ -58,6 +60,7 @@ class _TrackerEntrySheet extends StatefulWidget {
   const _TrackerEntrySheet({
     required this.tracker,
     required this.customLists,
+    required this.isPrivate,
     required this.item,
     required this.status,
     required this.progress,
@@ -72,6 +75,7 @@ class _TrackerEntrySheet extends StatefulWidget {
   /// Which of the tracker's own custom lists this entry is in. AniList only —
   /// the row below doesn't appear for the others, which have no such concept.
   final List<String> customLists;
+  final bool isPrivate;
   final MediaItem item;
   final WatchStatus? status;
   final int? progress;
@@ -101,6 +105,7 @@ class _TrackerEntrySheetState extends State<_TrackerEntrySheet> {
   late WatchStatus? _status = widget.status;
   late int _progress = widget.progress ?? 0;
   late int _score = (widget.score ?? 0).round().clamp(0, 10);
+  late bool _private = widget.isPrivate;
   bool _busy = false;
 
   Future<void> _apply() async {
@@ -111,7 +116,9 @@ class _TrackerEntrySheetState extends State<_TrackerEntrySheet> {
     final statusChanged = _status != widget.status;
     final progressChanged = _progress != (widget.progress ?? 0);
     final scoreChanged = _score != (widget.score ?? 0).round().clamp(0, 10);
-    if (!statusChanged && !progressChanged && !scoreChanged) {
+    final privacyChanged = widget.tracker is AniListService &&
+        _private != widget.isPrivate;
+    if (!statusChanged && !progressChanged && !scoreChanged && !privacyChanged) {
       Navigator.pop(context);
       return;
     }
@@ -125,6 +132,7 @@ class _TrackerEntrySheetState extends State<_TrackerEntrySheet> {
       status: statusChanged ? _status : null,
       score: scoreChanged ? _score.toDouble() : null,
       progress: progressChanged ? _progress : null,
+      isPrivate: privacyChanged ? _private : null,
       kind: _kind,
     );
     widget.onChanged?.call();
@@ -203,6 +211,16 @@ class _TrackerEntrySheetState extends State<_TrackerEntrySheet> {
                   onMinus: _score > 0 ? () => setState(() => _score--) : null,
                   onPlus: _score < 10 ? () => setState(() => _score++) : null,
                 ),
+                if (widget.tracker is AniListService)
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Privat di AniList'),
+                    subtitle: const Text('Hanya kamu yang bisa melihat entri ini'),
+                    value: _private,
+                    onChanged: _busy
+                        ? null
+                        : (value) => setState(() => _private = value),
+                  ),
                 const SizedBox(height: 24),
                 _applyButton(),
                 const SizedBox(height: 6),
