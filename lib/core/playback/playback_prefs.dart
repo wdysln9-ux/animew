@@ -509,7 +509,7 @@ class PlaybackPrefs {
   bool get holdSpeed => _box.get('holdSpeed', defaultValue: true) as bool;
   Future<void> setHoldSpeed(bool value) => _box.put('holdSpeed', value);
 
-  /// In-app volume level (0–200%), applied via mpv's own volume — independent of
+  /// In-app boost level (100–200%), applied via mpv's own volume — independent of
   /// the Android system volume. 100 = original loudness; >100 boosts (with
   /// volume-max raised to 200, CloudStream-style).
   int get volumeBoost =>
