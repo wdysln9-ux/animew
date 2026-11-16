@@ -3191,39 +3191,44 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
+  void _showCompactSelector(Widget child, {double maxHeight = 430}) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => _CompactPlayerDialog(
+        maxHeight: maxHeight,
+        child: SafeArea(top: false, child: child),
+      ),
+    );
+  }
+
   void _openSpeedSheet() {
     const rates = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0];
     var current = _c.player.state.rate.clamp(0.25, 6.0).toDouble();
-    _sheet<void>(
+    _showCompactSelector(
       StatefulBuilder(
         builder: (sheetContext, refresh) => _SheetColumn(
           header: context.l10n.playbackSpeed,
+          compactDialog: true,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 4, 18, 2),
+              padding: const EdgeInsets.fromLTRB(8, 2, 8, 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          'Kecepatan khusus',
-                          style: const TextStyle(
-                            fontFamily: 'Urbanist',
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                      const Expanded(
+                        child: Text('Kecepatan khusus', style: TextStyle(
+                          fontFamily: 'Urbanist', color: AppColors.textSecondary,
+                          fontSize: 12, fontWeight: FontWeight.w500,
+                        )),
                       ),
                       Text(
                         '${current.toStringAsFixed(current % 1 == 0 ? 0 : 2)}x',
                         style: const TextStyle(
-                          fontFamily: 'Urbanist',
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Urbanist', color: AppColors.textPrimary,
+                          fontSize: 13, fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -3241,10 +3246,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       tickMarkShape: SliderTickMarkShape.noTickMark,
                     ),
                     child: Slider(
-                      value: current,
-                      min: 0.25,
-                      max: 6,
-                      divisions: 115,
+                      value: current, min: 0.25, max: 6, divisions: 115,
                       label: '${current.toStringAsFixed(2)}x',
                       onChanged: (value) {
                         current = value;
@@ -3258,6 +3260,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             ),
             for (final rate in rates)
               _SheetRow(
+                compactDialog: true,
                 label: rate == 1.0 ? context.l10n.normalSpeed : '${rate}x',
                 active: (current - rate).abs() < 0.01,
                 onTap: () {
@@ -3519,53 +3522,41 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final activeSource = _c.state.active;
     final sourceOptions = activeSource == null
         ? <VideoSource>[]
-        : sortByQuality(_c.state.sources
-            .where((s) =>
-                _sourceGroupName(s).toLowerCase() ==
-                    _sourceGroupName(activeSource).toLowerCase() &&
-                s.kind == activeSource.kind &&
-                _sourceResolution(s) != null)
-            .toList());
+        : sortByQuality(_c.state.sources.where((s) =>
+            _sourceGroupName(s).toLowerCase() == _sourceGroupName(activeSource).toLowerCase() &&
+            s.kind == activeSource.kind && _sourceResolution(s) != null).toList());
     final List<Widget> rows;
     if (_c.state.qualities.isNotEmpty) {
       rows = [
         _SheetRow(
+          compactDialog: true,
           label: context.l10n.auto,
           active: _c.state.activeQuality == null,
-          onTap: () {
-            Navigator.pop(context);
-            _c.chooseQuality(null);
-            _bumpControls();
-          },
+          onTap: () { Navigator.pop(context); _c.chooseQuality(null); _bumpControls(); },
         ),
         for (final v in _c.state.qualities)
           _SheetRow(
+            compactDialog: true,
             label: v.quality,
             active: _c.state.activeQuality?.url == v.url,
-            onTap: () {
-              Navigator.pop(context);
-              _c.chooseQuality(v);
-              _bumpControls();
-            },
+            onTap: () { Navigator.pop(context); _c.chooseQuality(v); _bumpControls(); },
           ),
       ];
     } else if (_c.mediaVideoTracks.length > 1) {
       rows = [
         for (final t in _c.mediaVideoTracks)
           _SheetRow(
+            compactDialog: true,
             label: '${t.h}p',
             active: _c.selectedVideoTrack?.id == t.id,
-            onTap: () {
-              Navigator.pop(context);
-              _c.selectVideoTrack(t);
-              _bumpControls();
-            },
+            onTap: () { Navigator.pop(context); _c.selectVideoTrack(t); _bumpControls(); },
           ),
       ];
     } else if (sourceOptions.isNotEmpty) {
       rows = [
         for (final source in sourceOptions)
           _SheetRow(
+            compactDialog: true,
             label: _sourceResolution(source)!,
             subtitle: _sourceGroupName(source),
             active: source.url == _c.state.active?.url,
@@ -3581,7 +3572,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
       return;
     }
     if (rows.isEmpty) return;
-    _sheet<void>(_SheetColumn(header: context.l10n.quality, children: rows));
+    _showCompactSelector(_SheetColumn(
+      header: context.l10n.quality,
+      compactDialog: true,
+      children: rows,
+    ));
   }
 
   String _sourceGroupName(VideoSource source) {
@@ -3602,29 +3597,26 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _openGroupedSourceQualities(String name, List<VideoSource> sources) {
     final ordered = sortByQuality(sources);
-    _sheet<void>(
-      _SheetColumn(
-        header: name,
-        children: [
-          for (final s in ordered)
-            _SheetRow(
-              label: s.quality?.trim().isNotEmpty == true
-                  ? s.quality!.trim()
-                  : (RegExp(r'\d{3,4}\s*p', caseSensitive: false)
-                          .firstMatch(s.label ?? '')
-                          ?.group(0) ??
-                      s.container.name),
-              active: s == _c.state.active,
-              onTap: () async {
-                Navigator.pop(context);
-                await _c.selectSource(s);
-                await _maybeRecast();
-                _bumpControls();
-              },
-            ),
-        ],
-      ),
-    );
+    _showCompactSelector(_SheetColumn(
+      header: name,
+      compactDialog: true,
+      children: [
+        for (final s in ordered)
+          _SheetRow(
+            compactDialog: true,
+            label: s.quality?.trim().isNotEmpty == true
+                ? s.quality!.trim()
+                : (RegExp(r'\d{3,4}\s*p', caseSensitive: false).firstMatch(s.label ?? '')?.group(0) ?? s.container.name),
+            active: s == _c.state.active,
+            onTap: () async {
+              Navigator.pop(context);
+              await _c.selectSource(s);
+              await _maybeRecast();
+              _bumpControls();
+            },
+          ),
+      ],
+    ));
   }
 
   void _openSourceSheet() {
@@ -3640,54 +3632,50 @@ class _PlayerScreenState extends State<PlayerScreen> {
       }
     }
 
-    _sheet<void>(
-      _SheetColumn(
-        header: context.l10n.sources,
-        children: [
-          for (final entry in groups.entries)
-            Builder(
-              builder: (context) {
-                final options = entry.value;
-                final name = _sourceGroupName(options.first);
-                final kind = groupKinds[entry.key]!;
-                final displayName = kind != AudioKind.unknown
-                    ? '${kind.name.toUpperCase()} • $name'
-                    : name;
-                final active = options.firstWhere(
-                  (s) => s.url == _c.state.active?.url,
-                  orElse: () => sortByQuality(options).first,
-                );
-                return _SheetRow(
-                  label: displayName,
-                  subtitle: [
-                    options.map(_sourceResolution).whereType<String>().toSet().join(' • '),
-                    if (options.any((s) => s.subtitles.isNotEmpty)) 'Softsubs',
-                  ].where((s) => s.isNotEmpty).join(' • '),
-                  active: options.any((s) => s.url == _c.state.active?.url),
-                  onLongPress: () async {
-                    await Clipboard.setData(ClipboardData(text: active.url));
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context)
-                      ..clearSnackBars()
-                      ..showSnackBar(
-                        const SnackBar(
-                          content: Text('Link sumber disalin'),
-                          duration: Duration(seconds: 1),
-                        ),
-                      );
-                  },
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await _c.selectSource(active);
-                    await _maybeRecast();
-                    _bumpControls();
-                  },
-                );
-              },
-            ),
-        ],
-      ),
-    );
+    _showCompactSelector(_SheetColumn(
+      header: context.l10n.sources,
+      compactDialog: true,
+      children: [
+        for (final entry in groups.entries)
+          Builder(
+            builder: (rowContext) {
+              final options = entry.value;
+              final name = _sourceGroupName(options.first);
+              final kind = groupKinds[entry.key]!;
+              final displayName = kind != AudioKind.unknown ? '${kind.name.toUpperCase()} • $name' : name;
+              final active = options.firstWhere(
+                (s) => s.url == _c.state.active?.url,
+                orElse: () => sortByQuality(options).first,
+              );
+              return _SheetRow(
+                compactDialog: true,
+                label: displayName,
+                subtitle: [
+                  options.map(_sourceResolution).whereType<String>().toSet().join(' • '),
+                  if (options.any((s) => s.subtitles.isNotEmpty)) 'Softsubs',
+                ].where((s) => s.isNotEmpty).join(' • '),
+                active: options.any((s) => s.url == _c.state.active?.url),
+                onLongPress: () async {
+                  await Clipboard.setData(ClipboardData(text: active.url));
+                  if (!rowContext.mounted) return;
+                  ScaffoldMessenger.of(rowContext)
+                    ..clearSnackBars()
+                    ..showSnackBar(const SnackBar(
+                      content: Text('Link sumber disalin'),
+                      duration: Duration(seconds: 1),
+                    ));
+                },
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _c.selectSource(active);
+                  await _maybeRecast();
+                  _bumpControls();
+                },
+              );
+            },
+          ),
+      ],
+    ));
   }
 
   // ── Build ───────────────────────────────────────────────────────────────
