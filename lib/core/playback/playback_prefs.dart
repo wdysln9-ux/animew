@@ -971,7 +971,7 @@ class PlaybackPrefs {
 
   /// Subtitle size multiplier: 0.8 (small) / 1.0 / 1.3 (large).
   double get subtitleScale =>
-      (_box.get('subtitleScale', defaultValue: 1.0) as num).toDouble();
+      (_box.get('subtitleScale', defaultValue: 0.78125) as num).toDouble();
   Future<void> setSubtitleScale(double value) =>
       _box.put('subtitleScale', value);
 
