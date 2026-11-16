@@ -124,6 +124,7 @@ import '../../features/home/cubit/home_cache.dart';
 import '../../features/home/cubit/home_cubit.dart';
 import '../../features/watch_together/watch_room_service.dart';
 import '../../features/watch_together/watch_together_controller.dart';
+import '../../features/player/mpv_player_pool.dart';
 import '../cast/cast_controller.dart';
 import '../cast/cast_proxy.dart';
 import '../supabase/supabase_service.dart';
@@ -382,6 +383,7 @@ Future<void> initDependencies() async {
   sl.registerSingleton<WatchTogetherController>(
     WatchTogetherController(sl<WatchRoomService>()),
   );
+  sl.registerLazySingleton<MpvPlayerPool>(MpvPlayerPool.new);
   // ListStatusStore is registered BEFORE MyListStore so the latter can wire the
   // status read/hydrate seams straight to it (keeps My List's cloud row + the
   // deliberately-local status store in sync without either importing the other).
