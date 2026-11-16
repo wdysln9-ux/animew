@@ -1111,6 +1111,7 @@ class PlayerCubit extends Cubit<PlayerState> {
     _subs.add(
       player.stream.playing.listen((v) {
         _playing = v;
+        if (sourceId == stremioSourceId && !v) _resumePauseEpoch++;
         if (v) {
           _discordPaused = false;
           _discordPauseTimer?.cancel();
@@ -2897,6 +2898,7 @@ class PlayerCubit extends Cubit<PlayerState> {
     String? playUrlOverride,
     bool softwareDecodeRetry = false,
   }) async {
+    final originalSource = s;
     final g = gen ?? ++_gen;
     final invalidatesSoftwareRetry = shouldInvalidateSoftwareDecoderRetry(
       retryInProgress: _softwareDecodeRetryInProgress,
@@ -2946,7 +2948,21 @@ class PlayerCubit extends Cubit<PlayerState> {
       }
       _failoverFromStall(allowNotBuffering: true);
     });
-    emit(state.copyWith(active: () => s, error: () => null));
+    if (sourceId == stremioSourceId) {
+      _stremioSubtitleSource = originalSource;
+      emit(
+        state.copyWith(
+          active: () => s,
+          error: () => null,
+          loadingAddonSubtitles: false,
+          addonSubtitlesChecked: false,
+        ),
+      );
+      unawaited(loadAddonSubtitles());
+    } else {
+      _stremioSubtitleSource = null;
+      emit(state.copyWith(active: () => s, error: () => null));
+    }
     // When auto-resume is off, ignore the saved resume mark and start from the
     // explicit seek (a mid-session source/quality switch) or the very start.
     // In a Watch Together room the room position is authoritative, not the
