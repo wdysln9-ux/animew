@@ -1017,7 +1017,7 @@ class _SearchViewState extends State<_SearchView>
                     child: TextField(
                       controller: _controller,
                       focusNode: _focusNode,
-                      autofocus: widget.showBack,
+                      autofocus: false,
                       textInputAction: TextInputAction.search,
                       // Typing only updates suggestions — it never starts the
                       // heavy multi-source search.
