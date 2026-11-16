@@ -309,6 +309,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     if (widget.style == HeroTransition.posterStack) {
       return PageView.builder(
         controller: _pc,
+        physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
         padEnds: true,
         clipBehavior: Clip.none,
         onPageChanged: (i) {
@@ -365,6 +366,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
     // Parallax slide.
     return PageView.builder(
       controller: _pc,
+      physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
       onPageChanged: (i) {
         setState(() => _index = i);
         _syncActiveTint();
