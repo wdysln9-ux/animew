@@ -28,6 +28,7 @@ import '../../core/playback/external_player.dart';
 import '../../core/logging/app_logger.dart';
 import 'phone_playback_launch.dart';
 import '../../core/playback/playback_prefs.dart';
+import '../../core/playback/remote_file_size.dart';
 import 'subtitle_style.dart';
 import 'subtitle_font_service.dart';
 import 'player_lifecycle.dart';
