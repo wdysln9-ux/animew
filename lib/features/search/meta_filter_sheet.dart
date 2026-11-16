@@ -303,7 +303,11 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                       activeColor: AppColors.accent,
                       contentPadding: EdgeInsets.zero,
                       dense: true,
-                      title: const Text('Hide My Anime', style: TextStyle(fontSize: 14)),
+                      title: const Text('Sembunyikan Daftar', style: TextStyle(fontSize: 14)),
+                      subtitle: const Text(
+                        'Menyembunyikan Anime yang ada di daftarmu',
+                        style: TextStyle(fontSize: 11),
+                      ),
                       value: hideMyAnime,
                       onChanged: (v) { setState(() => hideMyAnime = v); widget.onHideMyAnimeChanged?.call(v); },
                     ),
