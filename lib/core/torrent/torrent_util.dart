@@ -21,5 +21,5 @@ String? buildTorrentMagnet({
       parts.add('tr=${Uri.encodeComponent(value)}');
     }
   }
-  return 'magnet:?\u0024{parts.join('&')}';
+  return 'magnet:?${parts.join('&')}';
 }
