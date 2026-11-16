@@ -41,12 +41,17 @@ class Subtitle extends Equatable {
   @JsonKey(name: 'default', defaultValue: false)
   final bool isDefault;
 
+  /// Add-on that supplied this external subtitle; runtime metadata only.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? providerName;
+
   const Subtitle({
     required this.url,
     required this.lang,
     this.label,
     this.format,
     this.isDefault = false,
+    this.providerName,
   });
 
   factory Subtitle.fromJson(Map<String, dynamic> json) =>
@@ -54,7 +59,7 @@ class Subtitle extends Equatable {
   Map<String, dynamic> toJson() => _$SubtitleToJson(this);
 
   @override
-  List<Object?> get props => [url, lang, label, format, isDefault];
+  List<Object?> get props => [url, lang, label, format, isDefault, providerName];
 }
 
 /// A single playable stream for an episode. The video-native analogue of
