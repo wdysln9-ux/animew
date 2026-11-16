@@ -169,6 +169,49 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _pickCustomBackground() async {
+    var temp = ThemeController.customBackgroundColor ?? AppColors.bg;
+    final result = await showDialog<int>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text('Warna latar aplikasi', style: AppText.headline),
+          content: SingleChildScrollView(
+            child: ColorPicker(
+              pickerColor: temp,
+              onColorChanged: (color) => setDialogState(() => temp = color),
+              enableAlpha: false,
+              displayThumbColor: true,
+              paletteType: PaletteType.hueWheel,
+              labelTypes: const [],
+              pickerAreaBorderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, -1),
+              child: Text('Reset', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(context.l10n.cancel, style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, temp.toARGB32()),
+              child: Text(context.l10n.apply, style: TextStyle(color: AppColors.accent)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (result == null) return;
+    await ThemeController.setCustomBackgroundColor(
+      result == -1 ? null : Color(result),
+    );
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final presets = ThemeController.accentPresets;
@@ -244,6 +287,28 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                 subtitle: context.l10n.trueBlackForOLED,
                 value: ThemeController.amoled,
                 onChanged: (value) => _updateProfileTheme(amoled: value),
+              ),
+              SettingsTile(
+                icon: Icons.color_lens_outlined,
+                title: 'Warna latar kustom',
+                subtitle: 'Pilih nuansa latar gelap untuk aplikasi',
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: ThemeController.customBackgroundColor ?? AppColors.bg,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.hairline),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
+                  ],
+                ),
+                onTap: _pickCustomBackground,
               ),
               _switchTile(
                 icon: Icons.auto_awesome_outlined,
