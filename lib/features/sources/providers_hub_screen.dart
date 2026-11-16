@@ -14,6 +14,9 @@ import '../../core/provider/provider_manager.dart';
 import '../../core/provider/provider_registry.dart';
 import '../../core/provider/provider_repo_registry.dart';
 import '../../core/state/active_source_cubit.dart';
+import '../../core/stremio/stremio_manager.dart';
+import '../../core/stremio/stremio_ref.dart';
+import 'stremio_sources_screen.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/tv/tv_back_button.dart';
@@ -97,6 +100,8 @@ class _HubPhoneView extends StatelessWidget {
     final zangetsuCount = sl<ProviderRegistry>().getAll().length;
     final showCs = Platform.isAndroid;
     final showAniyomi = Platform.isAndroid;
+    final showStremio = sl.isRegistered<StremioManager>();
+    final stremioCount = showStremio ? sl<StremioManager>().installations.length : 0;
     // Mihon (manga extensions) boot-loads the same way Aniyomi does — the
     // load step is Android-only (M7) — so the row is gated identically.
     final showMihon = Platform.isAndroid;
@@ -134,6 +139,7 @@ class _HubPhoneView extends StatelessWidget {
         (showCs ? csInstalled : 0) +
         (showAniyomi ? aniCount : 0) +
         (showMihon ? mihonCount : 0) +
+        (showStremio ? stremioCount : 0) +
         (showLnReader ? lnrCount : 0) +
         mangayomiCount;
     final ecoCount =
@@ -143,6 +149,7 @@ class _HubPhoneView extends StatelessWidget {
     final activeName = activeId.isEmpty
         ? context.l10n.subtitleOutlineNone
         : _activeSourceLabel(activeId);
+    final activeIsStremio = activeId == stremioSourceId;
     final activeIsCs = activeId.startsWith('cs:');
     final activeIsAni = activeId.startsWith('ani:');
     final activeIsMihon = activeId.startsWith('mihon:');
@@ -153,7 +160,8 @@ class _HubPhoneView extends StatelessWidget {
         !activeIsCs &&
         !activeIsAni &&
         !activeIsMihon &&
-        !activeIsMangayomi;
+        !activeIsMangayomi &&
+        !activeIsStremio;
 
     // Manga/novel sources are also Zangetsu JS providers under the hood, but
     // get their own hub entry (Task E3) so reading sources read as visibly
@@ -202,6 +210,16 @@ class _HubPhoneView extends StatelessWidget {
           ],
           const _SectionLabel('STREAMING'),
           const SizedBox(height: 12),
+          if (showStremio)
+            _EcoRow(
+              icon: Icons.extension_rounded,
+              title: 'Stremio',
+              desc: 'Stremio addons and catalogues',
+              info: '$stremioCount addons',
+              active: activeIsStremio,
+              onTap: () => open(const StremioSourcesScreen()),
+            ),
+          if (showStremio) const SizedBox(height: 12),
           _EcoRow(
             icon: Icons.dns_rounded,
             title: context.l10n.zangetsu,
@@ -574,6 +592,8 @@ class _HubTvViewState extends State<_HubTvView> {
     final zangetsuCount = sl<ProviderRegistry>().getAll().length;
     final showCs = Platform.isAndroid;
     final showAniyomi = Platform.isAndroid;
+    final showStremio = sl.isRegistered<StremioManager>();
+    final stremioCount = showStremio ? sl<StremioManager>().installations.length : 0;
     final mangayomiCount = mangayomi?.installed.length ?? 0;
     var autofocusAssigned = false;
 
@@ -675,6 +695,14 @@ class _HubTvViewState extends State<_HubTvView> {
                         subtitle: '$mangayomiCount installed',
                         tint: const Color(0xFF8B9CF6),
                         onTap: () => _open(const MangayomiSourcesScreen()),
+                      ),
+                    if (showStremio)
+                      row(
+                        icon: Icons.extension_rounded,
+                        title: 'Stremio',
+                        subtitle: '$stremioCount addons installed',
+                        tint: const Color(0xFF7B5CE1),
+                        onTap: () => _open(const StremioSourcesScreen()),
                       ),
                     row(
                       icon: Icons.dns_rounded,
