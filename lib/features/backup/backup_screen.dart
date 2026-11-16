@@ -160,8 +160,7 @@ class _BackupScreenState extends State<BackupScreen> {
         );
         return;
       }
-      if (!await _authorizeBackup()) return;
-      report = await _service.restore(p, _selected, password: password);
+      report = await _service.restore(p, _selected);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -201,7 +200,8 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() => _busy = true);
     RestoreReport? report;
     try {
-      report = await _service.restore(p, _selected);
+      if (!await _authorizeBackup()) return;
+      report = await _service.restore(p, _selected, password: password);
     } on BackupFormatException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
