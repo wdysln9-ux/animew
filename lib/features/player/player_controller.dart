@@ -3604,8 +3604,21 @@ class PlayerCubit extends Cubit<PlayerState> {
     await Future.delayed(const Duration(seconds: 15));
     if (g != _gen) return;
     final before = _lastPos;
+    final wasPlaying = player.state.playing;
+    final pauseEpoch = _resumePauseEpoch;
     await Future.delayed(const Duration(seconds: 4));
     if (g != _gen) return;
+    if (sourceId == stremioSourceId &&
+        !shouldResetStremioResume(
+          playingThroughout:
+              wasPlaying &&
+              player.state.playing &&
+              pauseEpoch == _resumePauseEpoch,
+          position: _lastPos,
+          target: _pendingResume,
+        )) {
+      return;
+    }
     // Position hasn't advanced in 4s → playback is frozen (the resume seek
     // stalled on a deep / corrupted-mark target the host can't serve). Abandon
     // the resume, restart from 0, and reset the bad mark so the title plays.
