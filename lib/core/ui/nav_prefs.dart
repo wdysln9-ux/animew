@@ -62,7 +62,7 @@ class NavPrefs extends ChangeNotifier {
   /// so neither is here. Sources moved down from the Home header, where a
   /// small icon was doing the work of a destination; the mode switcher sits
   /// between My List and Sources as the dock's centre button rather than a
-  /// tab, so these four names fill all five icon slots.
+  /// tab, so the Stremio tab has a dedicated home alongside Sources, My List and Profile.
   static const List<DockTab> defaultTabs = [
     DockTab.home,
     DockTab.stremio,
