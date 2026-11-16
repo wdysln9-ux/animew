@@ -1184,7 +1184,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
   Widget build(BuildContext context) {
     final cast = widget.cast;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 0, 0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
       child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -1203,7 +1203,12 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
                   style: AppText.caption.copyWith(fontSize: 12, color: AppColors.textSecondary),
                 ),
               const Spacer(),
-              Icon(_expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 21),
+              AnimatedRotation(
+                turns: _expanded ? 0.25 : 0,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeInOutCubic,
+                child: Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 21),
+              ),
             ]),
           ),
         ),
@@ -1385,7 +1390,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
     final selectedTab = tabs[_selected];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 0, 0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1523,7 +1528,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                       child: ListView.separated(
                         controller: selectedTab == 'Rekomendasi' ? _recommendationsController : null,
                         scrollDirection: Axis.horizontal,
-                        clipBehavior: Clip.hardEdge,
+                        clipBehavior: Clip.none,
                         padding: const EdgeInsets.only(left: 16, right: 16),
                         itemCount: cards.length,
                         // Match the 12 px spacing used by ContentRow on Home.
