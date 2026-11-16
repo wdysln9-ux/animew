@@ -1853,9 +1853,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final routeLease = _routeTeardownLease;
     if (_ready) {
       _c.close();
-      unawaited(_c.nativeTeardown.whenComplete(() => routeLease?.release()));
+      unawaited(_c.nativeTeardown.whenComplete(() {
+        routeLease?.release();
+        if (_engineTeardown?.isCompleted == false) _engineTeardown!.complete();
+      }));
     } else {
       routeLease?.release();
+      if (_engineTeardown?.isCompleted == false) _engineTeardown!.complete();
     }
     // Detach from the app-level party controller (nulls out player hooks and,
     // if this client is host, marks the room lobby). Does NOT leave the party —
