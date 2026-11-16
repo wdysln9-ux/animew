@@ -19,6 +19,20 @@ void main() {
     expect(item.sourceId, 'example');
   });
 
+  test('MediaItem persists AniList cover color', () {
+    final item = MediaItem(
+      id: 'color-title',
+      title: 'Color Title',
+      cover: 'https://cdn.test/color.jpg',
+      coverColor: '#F1BB93',
+      url: 'https://example.test/color-title',
+      type: ProviderType.anime,
+      sourceId: 'anilist',
+    );
+    final restored = MediaItem.fromJson(item.toJson());
+    expect(restored.coverColor, '#F1BB93');
+  });
+
   test('MediaItem tolerates a missing cover', () {
     final item = MediaItem.fromJson({
       'id': 'x', 'title': 'X', 'url': 'https://x.test',
