@@ -26,6 +26,15 @@ class MediaItem extends Equatable {
   /// home hero. Null outside Z Mode — every existing source keeps rendering
   /// its hero from [cover], exactly as before this field existed.
   final String? banner;
+
+  /// Stremio addon artwork hints; runtime-only and never persisted to My List.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? titleLogo;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? posterShape;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? landscapePoster;
+
   final String url;
   final ProviderType type;
   final String sourceId;
@@ -147,6 +156,9 @@ class MediaItem extends Equatable {
     this.coverColor,
     this.coverHeaders,
     this.banner,
+    this.titleLogo,
+    this.posterShape,
+    this.landscapePoster,
     required this.url,
     required this.type,
     required this.sourceId,
@@ -196,6 +208,9 @@ class MediaItem extends Equatable {
     coverColor: coverColor,
     coverHeaders: coverHeaders,
     banner: banner,
+    titleLogo: titleLogo,
+    posterShape: posterShape,
+    landscapePoster: landscapePoster,
     url: url,
     type: type,
     sourceId: sourceId ?? this.sourceId,
@@ -237,6 +252,9 @@ class MediaItem extends Equatable {
     coverColor,
     coverHeaders,
     banner,
+    titleLogo,
+    posterShape,
+    landscapePoster,
     url,
     type,
     sourceId,
