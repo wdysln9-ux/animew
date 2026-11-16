@@ -2436,7 +2436,7 @@ class _DetailViewState extends State<_DetailView> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: Color.lerp(AppColors.bg, tint ?? AppColors.bg, 0.62),
+                    color: Color.lerp(AppColors.bg, tint ?? AppColors.bg, 0.76),
                     border: Border.all(color: AppColors.textTertiary.withValues(alpha: 0.48)),
                     borderRadius: BorderRadius.circular(28),
                   ),
