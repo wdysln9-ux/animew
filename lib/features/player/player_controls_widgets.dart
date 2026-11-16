@@ -4,12 +4,10 @@ part of 'player_screen.dart';
 class _SkipButton extends StatefulWidget {
   const _SkipButton({
     super.key,
-    required this.onTap,
     this.autoSkip = false,
     this.onAutoComplete,
   });
 
-  final VoidCallback onTap;
   final bool autoSkip;
   final VoidCallback? onAutoComplete;
 
@@ -27,29 +25,35 @@ class _SkipButtonState extends State<_SkipButton>
     vsync: this,
     duration: const Duration(seconds: 3),
   );
+  bool _cancelled = false;
 
   @override
   void initState() {
     super.initState();
-    if (widget.autoSkip) {
-      _countdown.addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          widget.onAutoComplete?.call();
-        }
-      });
-      _countdown.forward();
-    }
+    _countdown.addStatusListener((status) {
+      if (status == AnimationStatus.completed && !_cancelled) {
+        widget.onAutoComplete?.call();
+      }
+    });
+    if (widget.autoSkip) _countdown.forward();
   }
 
   @override
   void didUpdateWidget(covariant _SkipButton oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.autoSkip != widget.autoSkip) {
+      _cancelled = false;
       _countdown
         ..stop()
         ..reset();
       if (widget.autoSkip) _countdown.forward();
     }
+  }
+
+  void _cancel() {
+    if (_cancelled) return;
+    _countdown.stop();
+    setState(() => _cancelled = true);
   }
 
   @override
@@ -61,6 +65,7 @@ class _SkipButtonState extends State<_SkipButton>
 
   @override
   Widget build(BuildContext context) {
+    if (_cancelled) return const SizedBox.shrink();
     return FadeTransition(
       opacity: CurvedAnimation(parent: _entry, curve: Curves.easeOut),
       child: SlideTransition(
@@ -107,7 +112,7 @@ class _SkipButtonState extends State<_SkipButton>
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   customBorder: const CircleBorder(),
-                  onTap: widget.onTap,
+                  onTap: _cancel,
                   child: const SizedBox(
                     width: 46,
                     height: 46,
@@ -127,12 +132,10 @@ class _EpisodeVoteOverlay extends StatelessWidget {
   const _EpisodeVoteOverlay({
     required this.likes,
     required this.dislikes,
-    required this.onVote,
   });
 
   final int likes;
   final int dislikes;
-  final ValueChanged<int> onVote;
 
   String _compact(int value) => value >= 100000
       ? '${(value / 1000).round()}k'
@@ -140,33 +143,29 @@ class _EpisodeVoteOverlay extends StatelessWidget {
           ? '${(value / 1000).toStringAsFixed(1)}k'
           : value.toString();
 
-  Widget _button(IconData icon, int value, int count) {
-    return Material(
-      color: Colors.black.withValues(alpha: 0.5),
-      borderRadius: BorderRadius.circular(9),
-      child: InkWell(
+  Widget _button(IconData icon, int count) {
+    return Container(
+      width: 48,
+      height: 57,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(9),
-        onTap: () => onVote(value),
-        child: SizedBox(
-          width: 48,
-          height: 57,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 19, color: Colors.white),
-              const SizedBox(height: 3),
-              Text(
-                _compact(count),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  height: 1,
-                ),
-              ),
-            ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 19, color: Colors.white),
+          const SizedBox(height: 3),
+          Text(
+            _compact(count),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -175,9 +174,9 @@ class _EpisodeVoteOverlay extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      _button(Icons.thumb_up_alt_outlined, 1, likes),
+      _button(Icons.thumb_up_alt_outlined, likes),
       const SizedBox(height: 7),
-      _button(Icons.thumb_down_alt_outlined, -1, dislikes),
+      _button(Icons.thumb_down_alt_outlined, dislikes),
     ],
   );
 }
