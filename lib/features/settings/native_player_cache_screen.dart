@@ -258,7 +258,7 @@ class _NativePlayerCacheScreenState extends State<NativePlayerCacheScreen> {
           if (_unavailable)
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-              child: const Text('Cache pemutar tidak tersedia di perangkat ini.', style: AppText.caption),
+              child: Text('Cache pemutar tidak tersedia di perangkat ini.', style: AppText.caption),
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
