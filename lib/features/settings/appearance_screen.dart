@@ -171,6 +171,9 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
 
   Future<void> _pickCustomBackground() async {
     var temp = ThemeController.customBackgroundColor ?? AppColors.bg;
+    var hue = HSLColor.fromColor(temp).hue;
+    var lightness = HSLColor.fromColor(temp).lightness;
+    var saturation = HSLColor.fromColor(temp).saturation;
     final result = await showDialog<int>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -178,14 +181,46 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
           backgroundColor: AppColors.surface,
           title: Text('Warna latar aplikasi', style: AppText.headline),
           content: SingleChildScrollView(
-            child: ColorPicker(
-              pickerColor: temp,
-              onColorChanged: (color) => setDialogState(() => temp = color),
-              enableAlpha: false,
-              displayThumbColor: true,
-              paletteType: PaletteType.hueWheel,
-              labelTypes: const [],
-              pickerAreaBorderRadius: BorderRadius.circular(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ColorPicker(
+                  pickerColor: temp,
+                  onColorChanged: (color) => setDialogState(() {
+                    temp = color;
+                    final hsl = HSLColor.fromColor(color);
+                    hue = hsl.hue;
+                    saturation = hsl.saturation;
+                    lightness = hsl.lightness;
+                  }),
+                  enableAlpha: false,
+                  displayThumbColor: true,
+                  paletteType: PaletteType.hueWheel,
+                  labelTypes: const [],
+                  pickerAreaBorderRadius: BorderRadius.circular(12),
+                ),
+                const SizedBox(height: 8),
+                Align(alignment: Alignment.centerLeft, child: Text('Hue', style: AppText.caption)),
+                Slider(
+                  value: hue.clamp(0, 360).toDouble(),
+                  min: 0,
+                  max: 360,
+                  onChanged: (value) => setDialogState(() {
+                    hue = value;
+                    temp = HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+                  }),
+                ),
+                Align(alignment: Alignment.centerLeft, child: Text('Kecerahan', style: AppText.caption)),
+                Slider(
+                  value: lightness.clamp(0, 1).toDouble(),
+                  min: 0.05,
+                  max: 0.8,
+                  onChanged: (value) => setDialogState(() {
+                    lightness = value;
+                    temp = HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+                  }),
+                ),
+              ],
             ),
           ),
           actions: [
@@ -288,10 +323,17 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                 value: ThemeController.amoled,
                 onChanged: (value) => _updateProfileTheme(amoled: value),
               ),
-              SettingsTile(
+              _switchTile(
                 icon: Icons.color_lens_outlined,
-                title: 'Warna latar kustom',
-                subtitle: 'Pilih nuansa latar gelap untuk aplikasi',
+                title: 'Latar kustom',
+                subtitle: 'Gunakan latar pilihanmu atau kembali ke latar biasa',
+                value: ThemeController.customBackgroundEnabled,
+                onChanged: ThemeController.setCustomBackgroundEnabled,
+              ),
+              SettingsTile(
+                icon: Icons.palette_outlined,
+                title: 'Atur latar kustom',
+                subtitle: 'Pilih warna, hue, dan kecerahan',
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
