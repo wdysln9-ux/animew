@@ -219,21 +219,36 @@ class TrackerHub {
     WatchStatus? status,
     double? score,
     int? progress,
+    bool? isPrivate,
     MediaKind kind = MediaKind.anime,
-  }) => _fan(
-    (t) => t.updateEntry(
-      malId: malId,
-      title: title,
-      tmdbId: tmdbId,
-      tmdbIsTv: tmdbIsTv,
-      imdbId: imdbId,
-      pinnedId: pinnedIds?[t.displayName],
-      status: status,
-      score: score,
-      progress: progress,
-      kind: kind,
-    ),
-  );
+  }) async {
+    if (isPrivate != null) {
+      for (final tracker in connected.whereType<AniListService>()) {
+        await tracker.updateEntry(
+          malId: malId,
+          title: title,
+          pinnedId: pinnedIds?[tracker.displayName],
+          isPrivate: isPrivate,
+          kind: kind,
+        );
+      }
+      if (status == null && score == null && progress == null) return;
+    }
+    await _fan(
+      (t) => t.updateEntry(
+        malId: malId,
+        title: title,
+        tmdbId: tmdbId,
+        tmdbIsTv: tmdbIsTv,
+        imdbId: imdbId,
+        pinnedId: pinnedIds?[t.displayName],
+        status: status,
+        score: score,
+        progress: progress,
+        kind: kind,
+      ),
+    );
+  }
 
   /// Candidate matches from every connected tracker (the match-fixer), in
   /// connection order.
