@@ -593,6 +593,7 @@ class _DetailViewState extends State<_DetailView> {
   // Tracker-driven episode grey-out: the connected tracker's watched-episode
   // count, fetched once after the detail loads (null until then / no match).
   int? _trackerProgress;
+  WatchStatus? _trackerStatus;
 
   /// Whether any connected tracker has this title on a list. Drives the
   /// Tracking action's icon — separate from [_trackerProgress] because a title
@@ -630,15 +631,10 @@ class _DetailViewState extends State<_DetailView> {
           if (!mounted) return;
           final p = e?.progress;
           final onList = e?.onList ?? false;
-          if (p == null || p <= 0) {
-            setState(() {
-              _tracked = onList;
-            });
-            return;
-          }
           setState(() {
             _tracked = onList;
-            _trackerProgress = p;
+            _trackerStatus = e?.status;
+            _trackerProgress = p != null && p > 0 ? p : null;
           });
         });
   }
@@ -2095,9 +2091,10 @@ class _DetailViewState extends State<_DetailView> {
         .map((episode) => episode.number?.toInt() ?? 0)
         .fold<int>(0, (highest, number) => number > highest ? number : highest);
     final trackerCompleted = !isReading &&
-        _trackerProgress != null &&
-        lastEpisodeNumber > 0 &&
-        _trackerProgress! >= lastEpisodeNumber;
+        (_trackerStatus == WatchStatus.completed ||
+            (_trackerProgress != null &&
+                lastEpisodeNumber > 0 &&
+                _trackerProgress! >= lastEpisodeNumber));
     final buttonLabel = isReading
         ? (readResume!.hasResume
               ? context.l10n.continueLabel
