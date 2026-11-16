@@ -16,6 +16,7 @@ import '../../core/ui/home_custom_catalog_prefs.dart';
 import '../../core/ui/settings_widgets.dart';
 import '../../core/zmode/home_layouts.dart';
 import '../../core/zmode/metadata_provider_prefs.dart';
+import '../../core/zmode/metadata_filters.dart';
 import '../../core/zmode/zmode_ids.dart';
 import '../../core/zmode/zmode_module.dart' show browseKindFor;
 import '../../core/zmode/zmode_prefs.dart';
@@ -24,6 +25,7 @@ import '../home/cubit/home_cubit.dart';
 import '../home/cubit/home_rows_composer.dart';
 import '../home/cubit/tracker_home_rows.dart';
 import '../home/tracker_continue_section.dart';
+import '../search/meta_filter_sheet.dart';
 
 /// The home-rows editor (Settings → Interface → Appearance → Customise Home,
 /// phone only).
@@ -282,6 +284,88 @@ class _HomeRowsScreenState extends State<HomeRowsScreen> {
     _save();
   }
 
+  Future<void> _editCustomCatalogue([HomeCustomCatalog? existing]) async {
+    final kind = _kind;
+    if (kind == null) return;
+    final name = TextEditingController(text: existing?.name ?? '');
+    var filters = existing?.filters ?? const MetaFilters();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(existing == null ? 'Buat katalog' : 'Edit katalog'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: name,
+                  autofocus: existing == null,
+                  maxLength: 40,
+                  decoration: const InputDecoration(labelText: 'Nama katalog'),
+                ),
+                const SizedBox(height: 12),
+                Text('Filter', style: AppText.body.copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 6),
+                Text(
+                  filters.isEmpty ? 'Belum ada filter' : 'Filter sudah dipilih',
+                  style: AppText.caption.copyWith(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final selected = await showMetaFilterSheet(context, kind, filters, showStatus: true);
+                    if (selected != null) setDialogState(() => filters = selected);
+                  },
+                  icon: const Icon(Icons.tune_rounded, size: 18),
+                  label: const Text('Pilih filter'),
+                ),
+                if (!filters.isEmpty)
+                  TextButton(
+                    onPressed: () => setDialogState(() => filters = const MetaFilters()),
+                    child: const Text('Hapus semua filter'),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Batal')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Simpan')),
+          ],
+        ),
+      ),
+    );
+    if (result == true && name.text.trim().isNotEmpty) {
+      await HomeCustomCatalogPrefs.save(HomeCustomCatalog(
+        id: existing?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
+        name: name.text.trim(),
+        kind: kind,
+        filtersJson: filters.toJson(),
+      ));
+      if (mounted) setState(_reload);
+    }
+    name.dispose();
+  }
+
+  Future<void> _deleteCustomCatalogue(HomeCustomCatalog catalogue) async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus katalog?'),
+        content: Text('Katalog "${catalogue.name}" akan dihapus dari Beranda.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Hapus')),
+        ],
+      ),
+    );
+    if (yes == true) {
+      await HomeCustomCatalogPrefs.delete(catalogue.id);
+      if (mounted) setState(_reload);
+    }
+  }
+
   Future<void> _reset() async {
     await HomeRowsPrefs.resetFor(_layoutKey);
     if (!mounted) return;
@@ -329,6 +413,12 @@ class _HomeRowsScreenState extends State<HomeRowsScreen> {
       appBar: settingsAppBar(
         l10n.homeRows,
         actions: [
+          if (_kind != null)
+            IconButton(
+              tooltip: 'Buat katalog kustom',
+              onPressed: () => _editCustomCatalogue(),
+              icon: const Icon(Icons.add_rounded),
+            ),
           TextButton(
             onPressed: canReset ? _reset : null,
             child: Text(
@@ -452,9 +542,29 @@ class _HomeRowsScreenState extends State<HomeRowsScreen> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (e.id.startsWith('custom:'))
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                final id = e.id.substring('custom:'.length);
+                HomeCustomCatalog? catalogue;
+                for (final item in HomeCustomCatalogPrefs.all()) {
+                  if (item.id == id) { catalogue = item; break; }
+                }
+                if (catalogue == null) return;
+                if (value == 'edit') _editCustomCatalogue(catalogue);
+                if (value == 'delete') _deleteCustomCatalogue(catalogue);
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'edit', child: Text('Edit')),
+                PopupMenuItem(value: 'delete', child: Text('Hapus')),
+              ],
+            ),
           Switch.adaptive(
             value: !e.hidden,
-            activeThumbColor: AppColors.accent,
+            activeThumbColor: Colors.white,
+            activeTrackColor: AppColors.accent,
+            inactiveThumbColor: AppColors.textTertiary,
+            inactiveTrackColor: AppColors.surface2,
             onChanged: (v) => _toggle(e, v),
           ),
         ],
