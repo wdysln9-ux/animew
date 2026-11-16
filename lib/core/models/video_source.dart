@@ -147,6 +147,25 @@ class VideoSource extends Equatable {
       _$VideoSourceFromJson(json);
   Map<String, dynamic> toJson() => _$VideoSourceToJson(this);
 
+  /// Copy a resolved source while replacing its external subtitle list.
+  VideoSource withSubtitles(List<Subtitle> tracks) => VideoSource(
+    url: url,
+    quality: quality,
+    label: label,
+    container: container,
+    headers: headers,
+    kind: kind,
+    audioLang: audioLang,
+    subtitles: tracks,
+    subtitleSkewSeconds: subtitleSkewSeconds,
+    subtitleSkewAfterSeconds: subtitleSkewAfterSeconds,
+    proxyUrl: proxyUrl,
+    torrentFileIndex: torrentFileIndex,
+    bingeGroup: bingeGroup,
+    drmKid: drmKid,
+    drmKey: drmKey,
+  );
+
   @override
   List<Object?> get props => [
     url,
