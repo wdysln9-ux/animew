@@ -1240,6 +1240,7 @@ class _HomeViewState extends State<_HomeView>
                   builder: (_) => SearchScreen(initialFilters: catalogue.filters),
                 ),
               );
+            }
           } else if (!sourceCatalogue && ZModePrefs.enabled) {
             _openCatalogueSearch(section.title);
           } else {
