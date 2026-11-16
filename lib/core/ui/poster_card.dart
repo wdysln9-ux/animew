@@ -205,7 +205,7 @@ double posterGridCellWidth(BuildContext context) {
 
 double posterRowWidth(BuildContext context) {
   final wide = posterLayout(context) == PosterCardLayout.wide;
-  return (wide ? 184 : 122) * posterCardScale(context);
+  return (wide ? 184 : 119.5) * posterCardScale(context);
 }
 
 double posterRowHeight(BuildContext context) {
