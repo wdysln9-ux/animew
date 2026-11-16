@@ -594,7 +594,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
 
   Future<void> _reset() => _apply(() async {
     await p.setSubtitleFont('');
-    await p.setSubtitleScale(1.0);
+    await p.setSubtitleScale(0.78125);
     await p.setSubtitleFontWeight(400);
     await p.setSubtitleItalic(false);
     await p.setSubtitleJustification('center');
@@ -603,7 +603,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
     await p.setSubtitleOutlineType('soft');
     await p.setSubtitleOutlineColorHex('#000000FF');
     await p.setSubtitleShadowAngle(45);
-    await p.setSubtitleShadowWidth(0.0);
+    await p.setSubtitleShadowWidth(2.5);
     await p.setSubtitleShadowDistance(2.5);
     await p.setSubtitleShadowBlur(2.5);
     await p.setSubtitleShadowColorHex('#000000FF');
@@ -798,7 +798,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
               style: const TextStyle(color: muted, fontSize: 12)),
           ]),
         ]))),
-        _step('Ukuran Font',(25.0*p.subtitleScale).toStringAsFixed(1)+' px',p.subtitleScale,0.25/25.0,0.5,2.5,p.setSubtitleScale),
+        _step('Ukuran Font',(32.0*p.subtitleScale).toStringAsFixed(1)+' px',p.subtitleScale,0.25/25.0,0.5,2.5,p.setSubtitleScale),
         _step('Ketebalan Font',p.subtitleFontWeight.toString(),p.subtitleFontWeight.toDouble(),100,100,900,(v)=>p.setSubtitleFontWeight(v.round())),
         _colorRow('Warna Font',p.subtitleColorHex,p.setSubtitleColorHex),
         _step('Ketebalan Garis Tepi',p.subtitleOutlineWidth.toStringAsFixed(1)+' px',p.subtitleOutlineWidth,0.25,0,8,p.setSubtitleOutlineWidth),
@@ -969,8 +969,8 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setSubtitleShadowAngle(45.0);
     await _prefs.setSubtitleShadowDistance(2.5);
     await _prefs.setSubtitleShadowBlur(2.5);
-    await _prefs.setSubtitleShadowWidth(0.0);
-    await _prefs.setSubtitleScale(1.0);
+    await _prefs.setSubtitleShadowWidth(2.5);
+    await _prefs.setSubtitleScale(0.78125);
   });
 
   Future<void> _resetSelectedColor() => _apply(() async {
@@ -990,7 +990,7 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setStyledSubtitles(false);
     await _prefs.setSubtitleBgOpacity(0.0);
     await _prefs.setSubtitlePosition(95);
-    await _prefs.setSubtitleScale(1.0);
+    await _prefs.setSubtitleScale(0.78125);
   });
 
   /// Reset every subtitle-style pref to its default value.
@@ -1005,14 +1005,14 @@ class _SubtitleStyleSheetState extends State<_SubtitleStyleSheet> {
     await _prefs.setSubtitleItalic(false);
     await _prefs.setSubtitleJustification('center');
     await _prefs.setSubtitleShadowAngle(45.0);
-    await _prefs.setSubtitleShadowWidth(0.0);
+    await _prefs.setSubtitleShadowWidth(2.5);
     await _prefs.setSubtitleShadowDistance(2.5);
     await _prefs.setSubtitleShadowBlur(2.5);
     await _prefs.setSubtitleShadowColorHex('#000000FF');
     await _prefs.setSubtitleOverallOpacity(1.0);
     await _prefs.setSubtitleBgOpacity(0.0);
     await _prefs.setSubtitlePosition(95);
-    await _prefs.setSubtitleScale(1.0);
+    await _prefs.setSubtitleScale(0.78125);
     await _prefs.setStyledSubtitles(false);
   });
 
