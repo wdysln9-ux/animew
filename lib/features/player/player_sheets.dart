@@ -560,13 +560,25 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
   }
 
   Future<void> _reset() => _apply(() async {
-    await p.setSubtitleFont(''); await p.setSubtitleScale(1);
-    await p.setSubtitleFontWeight(500); await p.setSubtitleColorHex('#FFFFFFFF');
-    await p.setSubtitleOutlineWidth(2); await p.setSubtitleOutlineColorHex('#000000FF');
-    await p.setSubtitleShadowAngle(90); await p.setSubtitleShadowDistance(2);
-    await p.setSubtitleShadowBlur(0); await p.setSubtitleShadowColorHex('#000000FF');
-    await p.setSubtitleBgOpacity(0); await p.setSubtitleTextOpacity(1);
+    await p.setSubtitleFont('');
+    await p.setSubtitleScale(1);
+    await p.setSubtitleFontWeight(400);
+    await p.setSubtitleItalic(false);
+    await p.setSubtitleJustification('center');
+    await p.setSubtitleColorHex('#FFFFFFFF');
+    await p.setSubtitleOutlineWidth(2.5);
+    await p.setSubtitleOutlineType('soft');
+    await p.setSubtitleOutlineColorHex('#000000FF');
+    await p.setSubtitleShadowAngle(90);
+    await p.setSubtitleShadowWidth(1);
+    await p.setSubtitleShadowDistance(2.5);
+    await p.setSubtitleShadowBlur(2.5);
+    await p.setSubtitleShadowColorHex('#000000FF');
+    await p.setSubtitleBgOpacity(0);
+    await p.setSubtitleTextOpacity(1);
     await p.setSubtitleOverallOpacity(1);
+    await p.setSubtitlePosition(95);
+    await p.resetSubtitleLayout();
   });
 
   Future<void> _font() async {
@@ -753,7 +765,7 @@ class _SubtitleStyleFullScreenState extends State<_SubtitleStyleFullScreen> {
               style: const TextStyle(color: muted, fontSize: 12)),
           ]),
         ]))),
-        _step('Ukuran Font',(24.5*p.subtitleScale).toStringAsFixed(1)+' px',p.subtitleScale,0.25/24.5,0.5,2.5,p.setSubtitleScale),
+        _step('Ukuran Font',(25.0*p.subtitleScale).toStringAsFixed(1)+' px',p.subtitleScale,0.25/25.0,0.5,2.5,p.setSubtitleScale),
         _step('Ketebalan Font',p.subtitleFontWeight.toString(),p.subtitleFontWeight.toDouble(),100,100,900,(v)=>p.setSubtitleFontWeight(v.round())),
         _colorRow('Warna Font',p.subtitleColorHex,p.setSubtitleColorHex),
         _step('Ketebalan Garis Tepi',p.subtitleOutlineWidth.toStringAsFixed(1)+' px',p.subtitleOutlineWidth,0.25,0,8,p.setSubtitleOutlineWidth),
