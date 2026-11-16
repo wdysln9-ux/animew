@@ -3547,6 +3547,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     headers: active.headers,
                   ),
                   active: options.any((s) => s.url == _c.state.active?.url),
+                  onLongPress: () async {
+                    await Clipboard.setData(ClipboardData(text: active.url));
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context)
+                      ..clearSnackBars()
+                      ..showSnackBar(
+                        const SnackBar(
+                          content: Text('Link sumber disalin'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                  },
                   onTap: () async {
                     Navigator.pop(context);
                     await _c.selectSource(active);
