@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../search/meta_filter_sheet.dart';
+import 'stremio_discover_sheet.dart';
+import '../../core/stremio/stremio_provider.dart';
+import '../../core/stremio/stremio_ref.dart';
 import '../../core/ui/app_toast.dart';
 import '../../core/zmode/zmode_module.dart';
 import '../../core/zmode/zmode_ids.dart';
@@ -277,6 +280,8 @@ IconData _outcomeIcon(SourceOutcome outcome) => switch (outcome) {
 
 class _SearchViewState extends State<_SearchView>
     with TickerProviderStateMixin {
+  bool get _stremioSearch => widget.fixedSourceId == stremioSourceId;
+  StremioDiscoverSelection? _stremioDiscover;
   late final TextEditingController _controller;
   final _focusNode = FocusNode();
 
@@ -847,6 +852,30 @@ class _SearchViewState extends State<_SearchView>
   /// take effect immediately.
   Future<void> _openFilterSheet(BuildContext context) async {
     final bloc = context.read<SearchBloc>();
+    if (_stremioSearch && sl.isRegistered<StremioProvider>()) {
+      final result = await showModalBottomSheet<StremioDiscoverSheetResult>(
+        context: context,
+        backgroundColor: AppColors.surface,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (_) => StremioDiscoverSheet(
+          manager: sl<StremioProvider>().manager,
+          initial: _stremioDiscover,
+        ),
+      );
+      if (!mounted || result == null) return;
+      if (!result.searchFilters) {
+        final selection = result.selection;
+        if (selection == null) return;
+        _controller.clear();
+        _focusNode.unfocus();
+        bloc.add(const SearchQueryChanged(''));
+        setState(() => _stremioDiscover = selection);
+        return;
+      }
+    }
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.surface,
@@ -2449,6 +2478,50 @@ class _SearchViewState extends State<_SearchView>
 
   // ── Idle view: recent searches + trending ─────────────────────────────────
   Widget _idleView(SearchState state) {
+    final discover = _stremioDiscover;
+    if (_stremioSearch && discover != null && state.query.trim().isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+            child: Text(
+              [
+                discover.addon.name,
+                discover.catalog.name,
+                if (discover.genre != null) discover.genre!,
+              ].join(' · '),
+              style: AppText.caption,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            child: _StremioDiscoverGrid(
+              key: ValueKey(discover.key),
+              selection: discover,
+              provider: sl<StremioProvider>(),
+              itemBuilder: (item) => PosterCard(
+                title: item.title,
+                logoItem: item,
+                imageUrl: item.cover,
+                wideImageUrl: item.banner,
+                genres: item.genres,
+                isAdult: item.isAdult,
+                headers: item.coverHeaders,
+                tags: _tagsFor(item),
+                qualityBadge: item.quality,
+                scoreBadge: item.score,
+                dubBadge: item.dubBadge,
+                cellWidth: posterGridCellWidth(context),
+                onTap: () => _openDetail(item),
+                onLongPress: () => _showInfo(item),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
     // Recent searches are hidden during a filtered browse — the screen is
     // showing filter results, not a search landing page, and the chips would
     // push them below the fold.
@@ -3591,6 +3664,169 @@ class _ActiveFilterChip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+
+class _StremioDiscoverGrid extends StatefulWidget {
+  const _StremioDiscoverGrid({
+    super.key,
+    required this.selection,
+    required this.provider,
+    required this.itemBuilder,
+  });
+
+  final StremioDiscoverSelection selection;
+  final StremioProvider provider;
+  final Widget Function(MediaItem item) itemBuilder;
+
+  @override
+  State<_StremioDiscoverGrid> createState() => _StremioDiscoverGridState();
+}
+
+class _StremioDiscoverGridState extends State<_StremioDiscoverGrid> {
+  final List<MediaItem> _items = [];
+  var _page = 0;
+  var _loading = false;
+  var _hasMore = true;
+  var _failed = false;
+  var _generation = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.provider.manager.addListener(_addonChanged);
+    unawaited(_load());
+  }
+
+  @override
+  void dispose() {
+    widget.provider.manager.removeListener(_addonChanged);
+    super.dispose();
+  }
+
+  void _addonChanged() {
+    final current = widget.provider.manager.byId(widget.selection.addon.id);
+    if (current != null &&
+        current.enabled &&
+        current.revision == widget.selection.addon.revision) {
+      return;
+    }
+    _generation++;
+    setState(() {
+      _items.clear();
+      _page = 0;
+      _loading = false;
+      _hasMore = true;
+      _failed = true;
+    });
+  }
+
+  Future<void> _load() async {
+    if (_loading || !_hasMore) return;
+    setState(() {
+      _loading = true;
+      _failed = false;
+    });
+    final selection = widget.selection;
+    final generation = ++_generation;
+    try {
+      final page = await widget.provider
+          .browseCatalog(
+            installationId: selection.addon.id,
+            type: selection.catalog.type,
+            catalogId: selection.catalog.id,
+            genre: selection.genre,
+            page: _page + 1,
+          )
+          .timeout(const Duration(seconds: 15));
+      if (!mounted || generation != _generation) return;
+      final known = _items.map((item) => item.id).toSet();
+      final fresh = page.where((item) => known.add(item.id)).toList();
+      setState(() {
+        _items.addAll(fresh);
+        _page++;
+        _hasMore = selection.catalog.isPaged && fresh.isNotEmpty;
+      });
+    } catch (_) {
+      if (mounted && generation == _generation) setState(() => _failed = true);
+    } finally {
+      if (mounted && generation == _generation) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading && _items.isEmpty) {
+      return const Padding(padding: EdgeInsets.all(20), child: SkeletonGrid());
+    }
+    if (_failed && _items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Could not load this catalogue', style: AppText.body),
+            TextButton(onPressed: _load, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+    if (_items.isEmpty) {
+      return Center(child: Text('No titles found', style: AppText.body));
+    }
+    return Stack(
+      children: [
+        NotificationListener<ScrollNotification>(
+          onNotification: (event) {
+            if (!_failed &&
+                _hasMore &&
+                !_loading &&
+                event.metrics.axis == Axis.vertical &&
+                event.metrics.extentAfter < 600) {
+              unawaited(_load());
+            }
+            return false;
+          },
+          child: GridView.builder(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              6,
+              16,
+              MediaQuery.paddingOf(context).bottom + 36,
+            ),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: posterGridColumns(context),
+              childAspectRatio: posterGridAspect(context),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: _items.length,
+            itemBuilder: (context, index) => widget.itemBuilder(_items[index]),
+          ),
+        ),
+        if (_loading || _failed)
+          Positioned(
+            bottom: 8,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: _failed
+                  ? TextButton(
+                      onPressed: _load,
+                      child: const Text('Retry loading more'),
+                    )
+                  : const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+            ),
+          ),
+      ],
     );
   }
 }
