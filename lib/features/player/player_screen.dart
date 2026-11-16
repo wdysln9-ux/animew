@@ -4950,6 +4950,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           episodeDetailMode: widget.episodeDetailMode,
                           onBack: _handlePlayerBack,
                           onSpeed: _openSpeedSheet,
+                          onBoostAudio: _openAudioBoostSheet,
                           onAudioSubs: _openAudioSubsSheet,
                           onQuality: _openQualitySheet,
                           onSources: _openSourceSheet,
