@@ -2,76 +2,186 @@
 part of 'player_screen.dart';
 
 class _SkipButton extends StatefulWidget {
-  const _SkipButton({required this.label, required this.onTap});
-  final String label;
+  const _SkipButton({
+    super.key,
+    required this.onTap,
+    this.autoSkip = false,
+    this.onAutoComplete,
+  });
+
   final VoidCallback onTap;
+  final bool autoSkip;
+  final VoidCallback? onAutoComplete;
 
   @override
   State<_SkipButton> createState() => _SkipButtonState();
 }
 
 class _SkipButtonState extends State<_SkipButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
+    with TickerProviderStateMixin {
+  late final AnimationController _entry = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 340),
+    duration: const Duration(milliseconds: 260),
   )..forward();
-  bool _pressed = false;
+  late final AnimationController _countdown = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 3),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoSkip) {
+      _countdown.addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          widget.onAutoComplete?.call();
+        }
+      });
+      _countdown.forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _SkipButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.autoSkip != widget.autoSkip) {
+      _countdown
+        ..stop()
+        ..reset();
+      if (widget.autoSkip) _countdown.forward();
+    }
+  }
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _entry.dispose();
+    _countdown.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
+      opacity: CurvedAnimation(parent: _entry, curve: Curves.easeOut),
       child: SlideTransition(
         position: Tween<Offset>(
-          begin: const Offset(0, 0.45),
+          begin: const Offset(0.35, 0),
           end: Offset.zero,
-        ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic)),
-        child: AnimatedScale(
-          scale: _pressed ? 0.94 : 1,
-          duration: const Duration(milliseconds: 110),
-          curve: Curves.easeOut,
-          child: Material(
-            color: Colors.black.withValues(alpha: 0.38),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(
-                color: Colors.white.withValues(alpha: 0.6),
-                width: 1.2,
-              ),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: widget.onTap,
-              onTapDown: (_) => setState(() => _pressed = true),
-              onTapCancel: () => setState(() => _pressed = false),
-              onTapUp: (_) => setState(() => _pressed = false),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
+        ).animate(CurvedAnimation(parent: _entry, curve: Curves.easeOutCubic)),
+        child: SizedBox(
+          width: 54,
+          height: 54,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (widget.autoSkip)
+                AnimatedBuilder(
+                  animation: _countdown,
+                  builder: (context, _) => SizedBox(
+                    width: 54,
+                    height: 54,
+                    child: CircularProgressIndicator(
+                      value: 1 - _countdown.value,
+                      strokeWidth: 2.5,
+                      strokeCap: StrokeCap.round,
+                      color: const Color(0xFF35D06F),
+                      backgroundColor: Colors.transparent,
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF35D06F),
+                      width: 2,
+                    ),
+                  ),
                 ),
-                child: Text(
-                  widget.label,
-                  style: AppText.body.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3,
+              Material(
+                color: Colors.black.withValues(alpha: 0.5),
+                shape: const CircleBorder(),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: widget.onTap,
+                  child: const SizedBox(
+                    width: 46,
+                    height: 46,
+                    child: Icon(Icons.close_rounded, color: Colors.white, size: 25),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
+}
+
+class _EpisodeVoteOverlay extends StatelessWidget {
+  const _EpisodeVoteOverlay({
+    required this.vote,
+    required this.likes,
+    required this.dislikes,
+    required this.onVote,
+  });
+
+  final int? vote;
+  final int likes;
+  final int dislikes;
+  final ValueChanged<int> onVote;
+
+  String _compact(int value) => value >= 100000
+      ? '${(value / 1000).round()}k'
+      : value >= 1000
+          ? '${(value / 1000).toStringAsFixed(1)}k'
+          : value.toString();
+
+  Widget _button(IconData icon, int value, int count) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.5),
+      borderRadius: BorderRadius.circular(9),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(9),
+        onTap: () => onVote(value),
+        child: SizedBox(
+          width: 48,
+          height: 57,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 19, color: Colors.white),
+              const SizedBox(height: 3),
+              Text(
+                _compact(count),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  height: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      _button(Icons.thumb_up_alt_outlined, 1, likes),
+      const SizedBox(height: 7),
+      _button(Icons.thumb_down_alt_outlined, -1, dislikes),
+    ],
+  );
 }
 
 // MegaSkip — Aniyomi-style manual "jump forward N seconds" pill. A compact,
