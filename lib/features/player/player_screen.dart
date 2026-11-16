@@ -2472,7 +2472,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               ? prefs.autoSkipRecap
               : prefs.autoSkipOp;
       if (!_skipIntroEnabled && !autoSkip) return null;
-      void skipNow() {
+      void skipAutomatically() {
         if (isEndingSkip(iv.type)) {
           _c.showStatus('Ending dilewati');
         } else if (isRecapSkip(iv.type)) {
@@ -2485,8 +2485,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       return _SkipButton(
         key: ValueKey('skip-${iv.start.inMilliseconds}-${iv.end.inMilliseconds}'),
         autoSkip: autoSkip,
-        onTap: skipNow,
-        onAutoComplete: autoSkip ? skipNow : null,
+        onAutoComplete: autoSkip ? skipAutomatically : null,
       );
     }
     return null;
@@ -2505,16 +2504,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
         : (_showPopularity! * math.pow(0.4, progress)).round();
     final ratingShare = ((episode.rating ?? 5.0).clamp(0.0, 10.0)) / 10.0;
     final totalVotes = (viewers * 0.30).round();
-    final baseLikes = (totalVotes * ratingShare).round();
-    final baseDislikes = totalVotes - baseLikes;
-    final likes = ((baseLikes + (_episodeVote == 1 ? 1 : 0)) * 0.1).round();
-    final dislikes = ((baseDislikes + (_episodeVote == -1 ? 1 : 0)) * 0.1).round();
+    final episodeLikes = (totalVotes * ratingShare).round();
+    final episodeDislikes = totalVotes - episodeLikes;
     return _EpisodeVoteOverlay(
-      likes: likes,
-      dislikes: dislikes,
-      onVote: (value) => setState(() {
-        _episodeVote = _episodeVote == value ? null : value;
-      }),
+      likes: (episodeLikes * 0.1).round(),
+      dislikes: (episodeDislikes * 0.1).round(),
     );
   }
 
