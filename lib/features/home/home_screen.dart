@@ -1227,7 +1227,19 @@ class _HomeViewState extends State<_HomeView>
               MaterialPageRoute<void>(builder: (_) => const ScheduleScreen()),
             );
           } else if (customCatalogue) {
-            _openSeeAll(section);
+            final kind = browseKindFor(
+              sl<ContentModeCubit>().state,
+              ZModePrefs.streamKind,
+            );
+            final catalogue = HomeCustomCatalogPrefs.forKind(kind)
+                .where((entry) => entry.name == section.title)
+                .firstOrNull;
+            if (catalogue != null) {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => SearchScreen(initialFilters: catalogue.filters),
+                ),
+              );
           } else if (!sourceCatalogue && ZModePrefs.enabled) {
             _openCatalogueSearch(section.title);
           } else {
