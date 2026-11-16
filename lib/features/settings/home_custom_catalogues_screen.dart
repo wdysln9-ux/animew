@@ -118,7 +118,7 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
             for (final catalogue in entries) Card(
               color: AppColors.surface,
               child: ListTile(
-                leading: const Icon(Icons.view_carousel_outlined, color: AppColors.accent),
+                leading: Icon(Icons.view_carousel_outlined, color: AppColors.accent),
                 title: Text(catalogue.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                 subtitle: Text(_filterCount(catalogue.filters).toString() + ' filter', style: AppText.caption),
                 onTap: () => _edit(catalogue),
