@@ -609,16 +609,17 @@ class AniListCatalogue implements AnimeCatalogue {
             // shows, leaving other titles with no timestamp and a false rank.
             final scheduleFields = [
               for (var i = 0; i < ids.length; i++)
-                's$i: airingSchedules(mediaId:${ids[i]},'
-                'airingAt_lesser:$now,sort:TIME_DESC,perPage:1){ airingAt }',
+                's$i: Media(id:${ids[i]}){'
+                'airingSchedules(airingAt_lesser:$now,sort:TIME_DESC,perPage:1){ airingAt } }',
             ].join(' ');
             final airingData = await _gql(
-              'query{ Page(page:1){ $scheduleFields } }',
+              'query{ $scheduleFields }',
               const {},
             );
             final latestAired = <String, int>{};
             for (var i = 0; i < ids.length; i++) {
-              final schedules = (airingData?['Page'] as Map?)?['s$i'];
+              final media = airingData?['s$i'];
+              final schedules = (media as Map?)?['airingSchedules'];
               if (schedules is! List || schedules.isEmpty) continue;
               final airingAt = (schedules.first as Map?)?['airingAt'];
               if (airingAt is int) latestAired[ids[i].toString()] = airingAt;
