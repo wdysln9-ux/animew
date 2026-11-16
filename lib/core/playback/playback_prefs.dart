@@ -515,7 +515,7 @@ class PlaybackPrefs {
   int get volumeBoost =>
       (_box.get('volumeBoost', defaultValue: 100) as num).toInt().clamp(100, 200);
   Future<void> setVolumeBoost(int value) =>
-      _box.put('volumeBoost', value.clamp(100, 200));
+      _box.put('volumeBoost', value.clamp(100, 200).toInt());
 
   /// Boost is opt-in. When disabled, mpv stays at unity gain while retaining
   /// the last selected percentage for the next time it is enabled.
