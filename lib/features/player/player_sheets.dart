@@ -230,7 +230,8 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
     final lang = (language ?? '').trim().toLowerCase();
     final name = (title ?? '').trim().toLowerCase();
     return lang == 'en' || lang.startsWith('en-') ||
-        name.contains('english') || name == 'eng' || name.startsWith('eng ');
+        name.contains('english') || name.contains('inggris') ||
+        name == 'eng' || name.startsWith('eng ');
   }
 
   List<SubtitleTrack> _orderedSubtitleTracks(List<SubtitleTrack> tracks) {
