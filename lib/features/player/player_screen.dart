@@ -3686,6 +3686,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 },
                 onTap: () async {
                   Navigator.pop(context);
+                  if (options.length > 1) {
+                    _openGroupedSourceQualities(name, options);
+                    return;
+                  }
                   await _c.selectSource(active);
                   await _maybeRecast();
                   _bumpControls();
