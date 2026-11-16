@@ -41,7 +41,7 @@ ThemeData buildAppTheme() {
         if (states.contains(WidgetState.disabled)) {
           return AppColors.textTertiary.withValues(alpha: 0.45);
         }
-        if (states.contains(WidgetState.selected)) return AppColors.bg;
+        if (states.contains(WidgetState.selected)) return Colors.white;
         return AppColors.accent.withValues(alpha: 0.58);
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
