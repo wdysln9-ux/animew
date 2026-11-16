@@ -358,6 +358,12 @@ class PlaybackPrefs {
   bool get keepScreenOn => _box.get('keepScreenOn', defaultValue: true) as bool;
   Future<void> setKeepScreenOn(bool value) => _box.put('keepScreenOn', value);
 
+  /// Default orientation for the Android phone player.
+  String get playerOrientation =>
+      _box.get('playerOrientation', defaultValue: 'landscape') as String;
+  Future<void> setPlayerOrientation(String value) =>
+      _box.put('playerOrientation', value);
+
   /// Auto-enter Picture-in-Picture when leaving the app mid-playback (Android).
   /// The manual PiP button works regardless of this setting.
   bool get autoPip => _box.get('autoPip', defaultValue: true) as bool;
@@ -626,6 +632,30 @@ class PlaybackPrefs {
       _box.get('videoBufferLength', defaultValue: 'default') as String;
   Future<void> setVideoBufferLength(String value) =>
       _box.put('videoBufferLength', value);
+
+  bool get phoneNativeCacheEnabled =>
+      _box.get('phoneNativeCacheEnabled', defaultValue: false) == true;
+  Future<void> setPhoneNativeCacheEnabled(bool value) =>
+      _box.put('phoneNativeCacheEnabled', value);
+
+  bool get phoneDiskCacheEnabled =>
+      _box.get('phoneDiskCacheEnabled', defaultValue: false) == true;
+  Future<void> setPhoneDiskCacheEnabled(bool value) =>
+      _box.put('phoneDiskCacheEnabled', value);
+
+  int get phoneNativeCacheMb {
+    final value = _box.get('phoneNativeCacheMb');
+    return value is num && value.isFinite ? value.toInt().clamp(32, 512) : 128;
+  }
+  Future<void> setPhoneNativeCacheMb(int value) =>
+      _box.put('phoneNativeCacheMb', value.clamp(32, 512));
+
+  int get phoneDiskCacheGb {
+    final value = _box.get('phoneDiskCacheGb');
+    return value is num && value.isFinite ? value.toInt().clamp(1, 20) : 2;
+  }
+  Future<void> setPhoneDiskCacheGb(int value) =>
+      _box.put('phoneDiskCacheGb', value.clamp(1, 20));
 
   /// mpv `demuxer-max-bytes` for the current size preset (default = 128MiB).
   String get bufferMaxBytes => bufferMaxBytesFor(videoBufferSize);
@@ -914,6 +944,11 @@ class PlaybackPrefs {
 
   Future<void> setMegaSkipSeconds(int value) =>
       _box.put('megaSkipSeconds', value.clamp(megaSkipMin, megaSkipMax));
+
+  bool get autoPlayerFallback =>
+      _box.get('autoPlayerFallback', defaultValue: false) as bool;
+  Future<void> setAutoPlayerFallback(bool value) =>
+      _box.put('autoPlayerFallback', value);
 
   /// Default player. Empty string = the built-in player; otherwise the package
   /// id of an external player (e.g. 'org.videolan.vlc') to hand streams to.
