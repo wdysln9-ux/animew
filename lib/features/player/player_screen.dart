@@ -3049,43 +3049,84 @@ class _PlayerScreenState extends State<PlayerScreen> {
           children: [
             // Custom speed slider appears first, above the quick presets.
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 8, 18, 12),
+              padding: const EdgeInsets.fromLTRB(18, 4, 18, 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(children: [
-                    const Expanded(child: Text('Kecepatan khusus')),
-                    Text('${current.toStringAsFixed(current % 1 == 0 ? 0 : 2)}x'),
-                  ]),
-                  Slider(
-                    value: current,
-                    min: 0.25,
-                    max: 6,
-                    divisions: 115,
-                    label: '${current.toStringAsFixed(2)}x',
-                    onChanged: (value) {
-                      current = value;
-                      _c.setRateRemembered(value);
-                      refresh(() {});
-                    },
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Kecepatan khusus',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${current.toStringAsFixed(current % 1 == 0 ? 0 : 2)}x',
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
-                  const Align(
-                    alignment: Alignment.centerRight,
-                    child: Text('Maksimal 6x', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  const SizedBox(height: 2),
+                  SliderTheme(
+                    data: SliderTheme.of(sheetContext).copyWith(
+                      activeTrackColor: Theme.of(sheetContext).colorScheme.primary,
+                      thumbColor: Theme.of(sheetContext).colorScheme.primary,
+                      overlayColor: Theme.of(sheetContext).colorScheme.primary.withValues(alpha: 0.14),
+                      inactiveTrackColor: AppColors.surface2,
+                      trackHeight: 3,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                      tickMarkShape: SliderTickMarkShape.noTickMark,
+                    ),
+                    child: Slider(
+                      value: current,
+                      min: 0.25,
+                      max: 6,
+                      divisions: 115,
+                      label: '${current.toStringAsFixed(2)}x',
+                      onChanged: (value) {
+                        current = value;
+                        _c.setRateRemembered(value);
+                        refresh(() {});
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 children: [
                   for (final rate in rates)
                     ChoiceChip(
-                      label: Text(rate == 1.0 ? context.l10n.normalSpeed : '${rate}x'),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      labelPadding: const EdgeInsets.symmetric(horizontal: 7),
+                      label: Text(
+                        rate == 1.0 ? context.l10n.normalSpeed : '${rate}x',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
                       selected: (current - rate).abs() < 0.01,
+                      selectedColor: Theme.of(sheetContext).colorScheme.primary.withValues(alpha: 0.22),
+                      backgroundColor: AppColors.surface2,
+                      side: BorderSide(
+                        color: (current - rate).abs() < 0.01
+                            ? Theme.of(sheetContext).colorScheme.primary
+                            : AppColors.hairline,
+                      ),
                       onSelected: (_) {
                         current = rate;
                         _c.setRateRemembered(rate);
@@ -3171,7 +3212,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       context: context,
       barrierDismissible: true,
       builder: (_) => _CompactPlayerDialog(
-        maxHeight: 400,
+        maxHeight: 520,
         child: SafeArea(
           top: false,
           child: _AudioSubsSheet(
