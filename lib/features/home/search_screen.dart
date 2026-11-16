@@ -468,7 +468,7 @@ class _SearchViewState extends State<_SearchView>
       context,
       MaterialPageRoute(
         builder: (_) => SeeAllScreen(
-          title: g.sourceName,
+          title: g.addonName ?? g.sourceName,
           items: g.items,
           tagsFor: _tagsFor,
           onTap: _openDetail,
@@ -2077,7 +2077,7 @@ class _SearchViewState extends State<_SearchView>
       mainAxisSize: MainAxisSize.min,
       children: [
         _sectionHeader(
-          g.sourceName,
+          g.addonName ?? g.sourceName,
           g.items.length,
           onSeeAll: overflows ? () => _openSourceSeeAll(g) : null,
           onFilter: filter.onFilter,
