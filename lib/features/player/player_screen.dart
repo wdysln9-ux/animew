@@ -1611,6 +1611,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
       initialResume: widget.resumePosition,
       initialSource: widget.initialSource,
       onDrmSource: _handoffToNativeDrm,
+      onSourceFailure: _canTryOtherPlayer ? _onMpvSourceFailure : null,
+      engineFallback: _canTryOtherPlayer ? _engineFallback : null,
+      forceInitialResume: widget.engineRecovery,
     )..init(startIndex);
 
     // Bind the wake-lock to playback now that the player exists: on while
