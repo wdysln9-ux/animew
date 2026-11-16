@@ -17,12 +17,15 @@ import 'animation_prefs.dart';
 /// Self-gating: on TV, or with [AnimationPrefs.listAnimations] off, the child
 /// is returned untouched with no detector and no controller.
 class RevealItem extends StatefulWidget {
-  const RevealItem({super.key, required this.index, required this.child});
+  const RevealItem({super.key, required this.index, required this.child, this.cacheKey});
 
   /// Position in the list — drives the stagger so a screenful cascades in
   /// rather than snapping as one block.
   final int index;
   final Widget child;
+  /// Stable media identity so a card that leaves the lazy viewport does not
+  /// replay its entrance animation when it is built again.
+  final String? cacheKey;
 
   @override
   State<RevealItem> createState() => _RevealItemState();
@@ -30,6 +33,7 @@ class RevealItem extends StatefulWidget {
 
 class _RevealItemState extends State<RevealItem>
     with SingleTickerProviderStateMixin {
+  static final Set<String> _revealedItems = <String>{};
   AnimationController? _c;
   bool _fired = false;
 
@@ -56,6 +60,11 @@ class _RevealItemState extends State<RevealItem>
       vsync: this,
       duration: const Duration(milliseconds: 380),
     );
+    final key = widget.cacheKey;
+    if (key != null && _revealedItems.contains(key)) {
+      _fired = true;
+      _c!.value = 1;
+    }
   }
 
   @override
@@ -67,6 +76,8 @@ class _RevealItemState extends State<RevealItem>
   void _onVisible(VisibilityInfo info) {
     if (_fired || !mounted || info.visibleFraction <= 0) return;
     _fired = true;
+    final key = widget.cacheKey;
+    if (key != null) _revealedItems.add(key);
     // Cascade across a screenful. The old stagger was `index % 4`, which reset
     // every fourth card, so items 4, 8, 12… all started together and there was
     // no wave. Modulo 8 with a longer step reads as one continuous run, and
