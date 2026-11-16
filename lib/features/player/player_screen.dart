@@ -4541,8 +4541,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                             enabled: show,
                             child: Center(
                               child: SizedBox(
-                                width: 78,
-                                height: 78,
+                                width: 83,
+                                height: 83,
                                 child: CircularProgressIndicator(
                                   color: Colors.white,
                                   strokeWidth: 1.5,
