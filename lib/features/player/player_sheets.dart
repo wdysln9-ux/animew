@@ -2306,7 +2306,7 @@ class _SheetRow extends StatelessWidget {
                         const SizedBox(height: 2),
                         subtitleWidget ?? Text(
                           subtitle!,
-                          style: AppText.caption.copyWith(color: AppColors.textSecondary),
+                          style: AppText.caption.copyWith(fontFamily: 'Urbanist', color: AppColors.textSecondary),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
