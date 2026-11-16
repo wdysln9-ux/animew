@@ -3275,22 +3275,24 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _openAudioBoostSheet() {
     final prefs = sl<PlaybackPrefs>();
-    final current = prefs.volumeBoost;
-    final enabled = prefs.volumeBoostEnabled;
+    var current = prefs.volumeBoost;
+    var enabled = prefs.volumeBoostEnabled;
     _sheet<void>(
-      _SheetColumn(
-        header: 'Boost Audio',
-        children: [
-          _SheetRow(
-            label: 'Mati',
-            active: !enabled,
-            onTap: () {
-              unawaited(_c.setVolumeBoost(current, enabled: false));
-              _bumpControls();
-            },
-          ),
-          StatefulBuilder(
-            builder: (sheetContext, refresh) => Padding(
+      StatefulBuilder(
+        builder: (sheetContext, refresh) => _SheetColumn(
+          header: 'Boost Audio',
+          children: [
+            _SheetRow(
+              label: 'Mati',
+              active: !enabled,
+              onTap: () {
+                enabled = false;
+                unawaited(_c.setVolumeBoost(current, enabled: false));
+                refresh(() {});
+                _bumpControls();
+              },
+            ),
+            Padding(
               padding: const EdgeInsets.fromLTRB(18, 4, 18, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3309,7 +3311,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     label: '${current}%',
                     onChanged: (value) {
                       current = value.round();
-                      unawaited(_c.setVolumeBoost(current, enabled: current > 100));
+                      enabled = current > 100;
+                      unawaited(_c.setVolumeBoost(current, enabled: enabled));
                       refresh(() {});
                       _bumpControls();
                     },
@@ -3317,8 +3320,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
