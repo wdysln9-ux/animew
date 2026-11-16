@@ -79,7 +79,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
               ),
               const SizedBox(height: 10),
               SizedBox(
-                height: (h * 0.44).clamp(180.0, 340.0),
+                height: (h * 0.58).clamp(260.0, 440.0),
                 child: _subColumn(c, subId),
               ),
             ],
