@@ -15,6 +15,7 @@ enum DockTab {
   downloads('Downloads'),
   history('History'),
   sources('Sources'),
+  stremio('Stremio'),
   explore('Jelajahi'),
   profile('Profile');
 
@@ -64,8 +65,8 @@ class NavPrefs extends ChangeNotifier {
   /// tab, so these four names fill all five icon slots.
   static const List<DockTab> defaultTabs = [
     DockTab.home,
+    DockTab.stremio,
     DockTab.sources,
-    DockTab.history,
     DockTab.myList,
     DockTab.profile,
   ];
