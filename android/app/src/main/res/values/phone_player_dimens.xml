@@ -5,4 +5,6 @@
     <dimen name="phone_player_top_bar_side_margin">16dp</dimen>
     <dimen name="phone_player_top_bar_top_margin">12dp</dimen>
     <dimen name="phone_player_bottom_bar_bottom_margin">22dp</dimen>
+    <dimen name="phone_player_top_scrim_height_portrait">64dp</dimen>
+    <dimen name="phone_player_bottom_scrim_height_portrait">110dp</dimen>
 </resources>
