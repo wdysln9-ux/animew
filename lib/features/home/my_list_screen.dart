@@ -1037,9 +1037,9 @@ class _MyListViewState extends State<_MyListView> with WidgetsBindingObserver {
       shrinkWrap: shrinkWrap,
       physics: shrinkWrap ? const NeverScrollableScrollPhysics() : const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
-        16,
+        shrinkWrap ? 0 : 16,
         4,
-        16,
+        shrinkWrap ? 0 : 16,
         MediaQuery.paddingOf(context).bottom,
       ),
       cacheExtent: 800,
@@ -1067,6 +1067,10 @@ child: PosterCard(
                 ? null
                 : '${entry.item.type == ProviderType.manga || entry.item.type == ProviderType.novel ? 'Ch' : 'EP'} ${entry.progress}',
             headers: entry.item.coverHeaders,
+            scoreBadge: entry.item.score,
+            statusBadge: entry.item.status == MediaStatus.ongoing ? 'Tayang' : entry.item.status == MediaStatus.completed ? 'Selesai' : null,
+            viewsBadge: entry.item.popularity,
+            metaLine: [if (entry.item.format?.isNotEmpty == true) entry.item.format!, if (entry.item.year != null) entry.item.year.toString(), if (entry.item.totalEpisodes != null && entry.item.totalEpisodes! > 0) '${entry.item.totalEpisodes} Eps'].join(' · '),
             cellWidth: cellW,
             onTap: () => onTap(entry.item),
             onLongPress: () => onMore(entry),
@@ -1164,7 +1168,7 @@ child: PosterCard(
                 ),
               const Padding(
                 padding: EdgeInsets.only(top: 14, bottom: 8),
-                child: Text('Update Terbaru',
+                child: Text('Semua',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               ),
               _folderGrid(
@@ -1647,6 +1651,10 @@ child: PosterCard(
                     ? null
                     : '${entry.item.type == ProviderType.manga || entry.item.type == ProviderType.novel ? 'Ch' : 'EP'} ${entry.progress}',
                 headers: entry.item.coverHeaders,
+                scoreBadge: entry.item.score,
+                statusBadge: entry.item.status == MediaStatus.ongoing ? 'Tayang' : entry.item.status == MediaStatus.completed ? 'Selesai' : null,
+                viewsBadge: entry.item.popularity,
+                metaLine: [if (entry.item.format?.isNotEmpty == true) entry.item.format!, if (entry.item.year != null) entry.item.year.toString(), if (entry.item.totalEpisodes != null && entry.item.totalEpisodes! > 0) '${entry.item.totalEpisodes} Eps'].join(' · '),
                 cellWidth: cellW,
                 onTap: () => onTap(entry.item),
                 // Long-press opens the per-card edit sheet (own list →
