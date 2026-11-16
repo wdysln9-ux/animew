@@ -108,16 +108,6 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                     }
                   },
                 ),
-                const SizedBox(height: 5),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Masukkan 6 digit HEX, contoh #F47521',
-                    style: AppText.caption.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
