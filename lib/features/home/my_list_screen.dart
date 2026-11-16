@@ -451,6 +451,38 @@ class _MyListViewState extends State<_MyListView> with WidgetsBindingObserver {
       menuChildren: [
         Builder(
           builder: (menuContext) {
+            final trackerHub = sl<TrackerHub>();
+            AniListService? anilist;
+            for (final tracker in trackerHub.connected) {
+              if (tracker is AniListService) {
+                anilist = tracker;
+                break;
+              }
+            }
+            final currentSource = menuContext.read<TrackerListCubit>().state;
+            final useLocal = !currentSource.isMyList;
+            return MenuItemButton(
+              onPressed: useLocal
+                  ? () => menuContext.read<TrackerListCubit>().selectMyList()
+                  : anilist == null
+                      ? null
+                      : () => menuContext.read<TrackerListCubit>().selectTracker(anilist!),
+              style: _libraryMenuItemStyle(),
+              leadingIcon: Icon(
+                useLocal ? Icons.phone_android_rounded : Icons.cloud_outlined,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
+              child: Text(useLocal ? 'Daftar lokal' : 'Daftar AniList'),
+            );
+          },
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Divider(color: AppColors.hairline, height: 1),
+        ),
+        Builder(
+          builder: (menuContext) {
             final shuffleAction = _shuffleAction;
             return MenuItemButton(
               onPressed: shuffleAction,
