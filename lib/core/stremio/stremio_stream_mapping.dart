@@ -54,7 +54,6 @@ VideoSource? stremioVideoSource(
     final magnet = buildTorrentMagnet(
       infoHash: hash,
       trackers: stream.trackers,
-      fileIndex: stream.fileIndex,
     );
     if (magnet == null) return null;
     return VideoSource(
