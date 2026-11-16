@@ -4,11 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/app_mode.dart';
+import '../../core/stremio/stremio_backup_cipher.dart';
+import 'stremio_backup_password_dialog.dart';
 import '../../core/backup/backup_cloud.dart';
 import '../../core/backup/backup_file.dart';
 import '../../core/backup/backup_payload.dart';
 import '../../core/backup/backup_service.dart';
 import '../../core/di/injector.dart';
+import '../../core/profiles/profile_lock_store.dart';
+import '../../core/profiles/profile_lock_remote.dart';
+import '../../core/profiles/viewer_profile.dart';
+import '../profiles/profile_lock_gate.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/tv/tv_list_focusable.dart';
@@ -34,6 +40,44 @@ class _BackupScreenState extends State<BackupScreen> {
 
   bool get _isTv => sl<AppMode>().isTv;
 
+  Future<bool> _authorizeBackup() async {
+    try {
+      if (sl.isRegistered<ProfileLockStore>() &&
+          sl.isRegistered<ViewerProfileStore>()) {
+        final locks = sl<ProfileLockStore>();
+        for (final profile in sl<ViewerProfileStore>().profiles) {
+          if (await locks.isLocked(profile.id) &&
+              !locks.isUnlocked(profile.id)) {
+            if (!mounted || !await ensureProfileUnlocked(context, profile)) {
+              return false;
+            }
+          }
+        }
+      }
+      await _service.authorize();
+      return mounted;
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is ProfileLockException
+                  ? error.message
+                  : context.l10n.somethingWentWrong,
+            ),
+          ),
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<String?> _addonPassword({required bool confirm}) =>
+      showDialog<String>(
+        context: context,
+        builder: (_) => StremioBackupPasswordDialog(confirm: confirm),
+      );
+
   Future<void> _backupToCloud() async {
     if (!requireLogin(context, action: context.l10n.signInToBackUpToCloud)) {
       return;
@@ -42,7 +86,8 @@ class _BackupScreenState extends State<BackupScreen> {
     if (uid == null) return;
     setState(() => _busy = true);
     try {
-      await _cloud.upload(uid, _service.build(_selected));
+      if (!await _authorizeBackup()) return;
+      await _cloud.upload(uid, await _service.buildProtected(_selected));
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -58,12 +103,20 @@ class _BackupScreenState extends State<BackupScreen> {
   }
 
   Future<void> _saveToFile() async {
+    String? password;
+    if (_selected.contains(BackupBundle.sources)) {
+      password = await _addonPassword(confirm: true);
+      if (!mounted || password == null) return;
+    }
     setState(() => _busy = true);
     try {
-      // On TV also keep an app-private copy so restore-from-file can list it
-      // without a document picker (see [_restoreFromFile]).
+      if (!await _authorizeBackup()) return;
       final path = await BackupFile().export(
-        _service.build(_selected),
+        await _service.buildProtected(
+          _selected,
+          forFile: true,
+          password: password,
+        ),
         keepLocalCopy: _isTv,
       );
       if (!mounted) return;
@@ -71,13 +124,19 @@ class _BackupScreenState extends State<BackupScreen> {
         SnackBar(
           content: Text(
             path == null
-                ? context
-                      .l10n
-                      .couldnTSaveTheBackupFileStoragePermissionMayBeNeeded
+                ? context.l10n.couldnTSaveTheBackupFileStoragePermissionMayBeNeeded
                 : context.l10n.savedToDownloadsZangetsu,
           ),
         ),
       );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal menyimpan backup. Data AnimeW saat ini tetap aman.'),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -92,6 +151,7 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() => _busy = true);
     late final RestoreReport report;
     try {
+      if (!await _authorizeBackup()) return;
       final p = await _cloud.download(uid);
       if (!mounted) return;
       if (p == null) {
@@ -100,7 +160,8 @@ class _BackupScreenState extends State<BackupScreen> {
         );
         return;
       }
-      report = await _service.restore(p, _selected);
+      if (!await _authorizeBackup()) return;
+      report = await _service.restore(p, _selected, password: password);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -126,7 +187,17 @@ class _BackupScreenState extends State<BackupScreen> {
       p = null;
     }
     if (_isTv) p ??= await _pickLocalBackupTv();
-    if (p == null) return;
+    if (p == null || !mounted) return;
+    String? password;
+    final sources = p['bundles'] as Map?;
+    final sourceBundle = sources?['sources'];
+    final envelope = sourceBundle is Map ? sourceBundle['stremio'] : null;
+    if (_selected.contains(BackupBundle.sources) &&
+        envelope is Map &&
+        envelope['format'] == StremioBackupCipher.format) {
+      password = await _addonPassword(confirm: false);
+      if (!mounted || password == null) return;
+    }
     setState(() => _busy = true);
     RestoreReport? report;
     try {
