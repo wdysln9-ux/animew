@@ -2459,10 +2459,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _bumpControls(); // the top-bar zoom label reflects the new mode
   }
 
-  /// The skip button for the current [pos]: an accurate AniSkip "Skip
-  /// Shows "Skip opening/ending" ONLY when inside a real AniSkip interval
-  /// (anime). No blind manual fallback — movies/series with no skip data never
-  /// show an inaccurate "Skip intro".
+  /// Show the countdown/skip control only while the playhead is inside a
+  /// real AniSkip interval. No guessed intervals are shown for unmatched titles.
   Widget? _skipButtonFor(Duration pos) {
     final prefs = sl<PlaybackPrefs>();
     for (final iv in _c.currentSkips) {
@@ -2512,7 +2510,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final likes = ((baseLikes + (_episodeVote == 1 ? 1 : 0)) * 0.1).round();
     final dislikes = ((baseDislikes + (_episodeVote == -1 ? 1 : 0)) * 0.1).round();
     return _EpisodeVoteOverlay(
-      vote: _episodeVote,
       likes: likes,
       dislikes: dislikes,
       onVote: (value) => setState(() {
