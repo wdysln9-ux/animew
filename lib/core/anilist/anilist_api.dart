@@ -48,7 +48,7 @@ String mediaEntryQuery(MediaKind kind) {
   return 'query(\$id:Int){ Media(id:\$id){ ${_totalCountFields(kind)} '
       'title{ romaji english native } '
       'nextAiringEpisode{ episode airingAt } '
-      'mediaListEntry{ status score(format:POINT_10) progress } } }';
+      'mediaListEntry{ status score(format:POINT_10) progress private } } }';
 }
 
 /// Query text for [AniListApi.searchMedia]. [novelFormat] narrows a manga
@@ -1207,6 +1207,7 @@ query($id:Int,$page:Int) {
     String? status,
     int? progress,
     int? scoreRaw,
+    bool? isPrivate,
   }) async {
     final varDefs = <String>['\$mediaId:Int'];
     final args = <String>['mediaId:\$mediaId'];
@@ -1225,6 +1226,11 @@ query($id:Int,$page:Int) {
       varDefs.add('\$scoreRaw:Int');
       args.add('scoreRaw:\$scoreRaw');
       vars['scoreRaw'] = scoreRaw;
+    }
+    if (isPrivate != null) {
+      varDefs.add(r'$private:Boolean');
+      args.add(r'private:$private');
+      vars['private'] = isPrivate;
     }
     final d = await _gql(
       'mutation(${varDefs.join(',')}){'
