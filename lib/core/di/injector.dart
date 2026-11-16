@@ -820,6 +820,7 @@ Future<void> initDependencies() async {
       ),
       LibraryBackup(),
       SettingsBackup(),
+      stremio: () => sl<StremioBackup>(),
     ),
   );
 
