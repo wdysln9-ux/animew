@@ -47,10 +47,15 @@ class _AniListTrailerSectionState extends State<_AniListTrailerSection> {
                   color: AppColors.textSecondary,
                 )),
                 const Spacer(),
-                Icon(
-                  _expanded ? Icons.keyboard_arrow_down_rounded : Icons.chevron_right_rounded,
-                  color: AppColors.textSecondary,
-                  size: 21,
+                AnimatedRotation(
+                  turns: _expanded ? 0.25 : 0,
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOutCubic,
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                    size: 21,
+                  ),
                 ),
               ],
             ),
