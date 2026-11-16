@@ -19,6 +19,7 @@ class ThemeController {
   static const String _materialYouKey = 'materialYou';
   static const String _adaptiveKey = 'adaptiveColour';
   static const String _customBackgroundKey = 'customBackground';
+  static const String _customBackgroundEnabledKey = 'customBackgroundEnabled';
 
   /// Near-black palette used when AMOLED is on (bg + card surfaces).
   static const Color amoledBg = Color(0xFF000000);
@@ -175,7 +176,7 @@ class ThemeController {
       AppColors.bg = amoledBg;
       AppColors.surface = amoledSurface;
       AppColors.surface2 = amoledSurface2;
-    } else if (customBackground != null) {
+    } else if (customBackgroundEnabled && customBackground != null) {
       final palette = _paletteFromAccent(customBackground);
       AppColors.bg = palette.bg;
       AppColors.surface = palette.surface;
@@ -229,6 +230,17 @@ class ThemeController {
   /// Optional user-selected background hue. The selected hue is converted to
   /// a dark palette so existing white text remains legible. AMOLED remains the
   /// strongest override; clearing this restores the accent-derived palette.
+  static bool get customBackgroundEnabled {
+    if (!Hive.isBoxOpen(boxName)) return false;
+    return _box.get(_customBackgroundEnabledKey, defaultValue: false) as bool;
+  }
+
+  static Future<void> setCustomBackgroundEnabled(bool enabled) async {
+    await _box.put(_customBackgroundEnabledKey, enabled);
+    _applyColors();
+    revision.value++;
+  }
+
   static Color? get customBackgroundColor {
     if (!Hive.isBoxOpen(boxName)) return null;
     final value = _box.get(_customBackgroundKey);
