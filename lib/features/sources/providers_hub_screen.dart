@@ -143,13 +143,15 @@ class _HubPhoneView extends StatelessWidget {
         (showLnReader ? lnrCount : 0) +
         mangayomiCount;
     final ecoCount =
-        1 + (showCs ? 1 : 0) + (showAniyomi ? 1 : 0) + (showMihon ? 1 : 0);
+        1 + (showCs ? 1 : 0) + (showAniyomi ? 1 : 0) + (showMihon ? 1 : 0) + (showStremio ? 1 : 0);
 
     final activeId = sl<ActiveSourceCubit>().state;
+    final activeIsStremio = activeId == stremioSourceId;
     final activeName = activeId.isEmpty
         ? context.l10n.subtitleOutlineNone
+        : activeIsStremio
+        ? 'Stremio'
         : _activeSourceLabel(activeId);
-    final activeIsStremio = activeId == stremioSourceId;
     final activeIsCs = activeId.startsWith('cs:');
     final activeIsAni = activeId.startsWith('ani:');
     final activeIsMihon = activeId.startsWith('mihon:');
