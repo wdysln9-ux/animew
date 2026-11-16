@@ -13,8 +13,6 @@ import '../../core/download/download_record.dart';
 import '../downloads/episode_download_source_sheet.dart'
     show matchDownloadEpisode, resolveEpisodeDownloadShowId;
 import '../../core/repository/catalogue_repository.dart';
-import '../../core/discord/discord_rpc.dart';
-import '../../core/discord/discord_presence.dart';
 import '../../core/share/share_link.dart';
 import '../../core/models/provider_info.dart';
 import '../../core/models/episode.dart';
@@ -561,9 +559,6 @@ class PhoneNativePlayer {
     _resumeOverride = resumePosition;
     _seedUsed = false;
     _scrobbled = false;
-    _simklPlayback?.stop();
-    _simklPlayback = null;
-    _simklIndex = -1;
     final subFontPath = await _stageSubtitleFont(prefs.subtitleFont);
     final args = phonePlayerArgs(
       title: _showTitle,
@@ -1124,10 +1119,6 @@ class PhoneNativePlayer {
           );
           return true;
         }
-      case 'discordPresence':
-        final args = _callArgs(call);
-        _pushDiscordPresence(args);
-        return null;
       case 'saveProgress':
         final args = _callArgs(call);
         await _saveProgress(args, flush: true);
@@ -1135,13 +1126,6 @@ class PhoneNativePlayer {
         return null;
       case 'playerClosed':
         final closingArgs = _callArgs(call);
-        if (closingArgs?['sessionId'] == _sessionId) {
-        }
-        if (!_peek &&
-            _closed?.isCompleted == false &&
-            sl.isRegistered<DiscordRpc>()) {
-          sl<DiscordRpc>().clear(delay: DiscordRpc.playerExitClearDelay);
-        }
         final args = _callArgs(call);
         await _saveProgress(args, flush: true);
         final failure = _pendingEngineFailure;
