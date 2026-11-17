@@ -94,7 +94,10 @@ class _TrackerSettingsScreenState extends State<TrackerSettingsScreen> {
                       subtitle: context.l10n.updateTrackerAsYouWatch(_t.displayName),
                       trailing: Switch.adaptive(
                         value: _t.autoSync,
-                        activeThumbColor: AppColors.accent,
+                        activeThumbColor: Colors.white,
+        activeTrackColor: AppColors.accent,
+        inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
+        inactiveTrackColor: AppColors.surface2,
                         onChanged: (v) => setState(() => _t.autoSync = v),
                       ),
                     ),
