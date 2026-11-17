@@ -68,7 +68,8 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
   int get count =>
       f.genres.length + f.tags.length + f.years.length +
       f.seasons.length + f.formats.length + f.statuses.length +
-      (f.minEpisodes > 0 || f.maxEpisodes < 200 ? 1 : 0) +
+      (f.minEpisodes > 0 || f.maxEpisodes < 250 ? 1 : 0) +
+      (f.minDuration > 0 || f.maxDuration < 250 ? 1 : 0) +
       (f.minTagRank > 0 ? 1 : 0) +
       ((f.countries.isNotEmpty || f.countryOfOrigin != null) ? 1 : 0) +
       (f.sort != MetaSort.popularity ? 1 : 0);
@@ -242,11 +243,41 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                       overlayShape: const RoundSliderOverlayShape(overlayRadius: 13),
                     ),
                     child: RangeSlider(
-                    min: 0, max: 200,
-                    values: RangeValues(f.minEpisodes.toDouble(), f.maxEpisodes.toDouble()),
+                    min: 0, max: 250,
+                    values: RangeValues(f.minEpisodes.clamp(0, 250).toDouble(), f.maxEpisodes.clamp(0, 250).toDouble()),
                     activeColor: AppColors.accent,
                     onChanged: (v) => setState(() => f = f.copyWith(
                       minEpisodes: v.start.round(), maxEpisodes: v.end.round())),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _heading('Durasi Episode (menit)', theme),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Text('${f.minDuration} menit', style: theme.textTheme.titleMedium?.copyWith(fontSize: 13)),
+                    Text('${f.maxDuration} menit', style: theme.textTheme.titleMedium?.copyWith(fontSize: 13)),
+                  ]),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      rangeThumbShape: const RoundRangeSliderThumbShape(
+                        enabledThumbRadius: 7,
+                        disabledThumbRadius: 7,
+                        elevation: 0,
+                        pressedElevation: 0,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 13),
+                    ),
+                    child: RangeSlider(
+                      min: 0,
+                      max: 250,
+                      values: RangeValues(
+                        f.minDuration.clamp(0, 250).toDouble(),
+                        f.maxDuration.clamp(0, 250).toDouble(),
+                      ),
+                      activeColor: AppColors.accent,
+                      onChanged: (v) => setState(() => f = f.copyWith(
+                        minDuration: v.start.round(),
+                        maxDuration: v.end.round(),
+                      )),
                     ),
                   ),
                   const SizedBox(height: 10),
