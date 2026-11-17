@@ -135,13 +135,15 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 onTap: () => IncognitoMode.set(!IncognitoMode.on),
                 trailing: ValueListenableBuilder<bool>(
                   valueListenable: IncognitoMode.notifier,
-                  builder: (_, on, _) => Switch.adaptive(
-                    value: on,
-                    activeThumbColor: Colors.white,
-        activeTrackColor: AppColors.accent,
-        inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
-        inactiveTrackColor: AppColors.surface2,
-                    onChanged: (v) => IncognitoMode.set(v),
+                  builder: (_, on, _) => IgnorePointer(
+                    child: Switch.adaptive(
+                      value: on,
+                      activeThumbColor: Colors.white,
+                      activeTrackColor: AppColors.accent,
+                      inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
+                      inactiveTrackColor: AppColors.surface2,
+                      onChanged: (v) => IncognitoMode.set(v),
+                    ),
                   ),
                 ),
               ),
@@ -161,13 +163,15 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 title: context.l10n.enableNSFWSources2,
                 subtitle: context.l10n.showSourcesMarked18,
                 onTap: () => _onNsfwChanged(!_nsfw),
-                trailing: Switch.adaptive(
-                  value: _nsfw,
-                  activeThumbColor: Colors.white,
-        activeTrackColor: AppColors.accent,
-        inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
-        inactiveTrackColor: AppColors.surface2,
-                  onChanged: _onNsfwChanged,
+                trailing: IgnorePointer(
+                  child: Switch.adaptive(
+                    value: _nsfw,
+                    activeThumbColor: Colors.white,
+                    activeTrackColor: AppColors.accent,
+                    inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
+                    inactiveTrackColor: AppColors.surface2,
+                    onChanged: _onNsfwChanged,
+                  ),
                 ),
               ),
               SettingsTile(
@@ -189,13 +193,15 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 title: context.l10n.showNSFWSources,
                 subtitle: context.l10n.adultAniyomiExtensions,
                 onTap: () => _onNsfwAniChanged(!_nsfwAni),
-                trailing: Switch.adaptive(
-                  value: _nsfwAni,
-                  activeThumbColor: Colors.white,
-        activeTrackColor: AppColors.accent,
-        inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
-        inactiveTrackColor: AppColors.surface2,
-                  onChanged: _onNsfwAniChanged,
+                trailing: IgnorePointer(
+                  child: Switch.adaptive(
+                    value: _nsfwAni,
+                    activeThumbColor: Colors.white,
+                    activeTrackColor: AppColors.accent,
+                    inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
+                    inactiveTrackColor: AppColors.surface2,
+                    onChanged: _onNsfwAniChanged,
+                  ),
                 ),
               ),
             ],
