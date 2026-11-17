@@ -539,14 +539,16 @@ class _PlaybackSettingsScreenState extends State<PlaybackSettingsScreen> {
       subtitle: subtitle,
       subtitleMaxLines: null,
       onTap: () => onChanged(!value),
-      trailing: Switch.adaptive(
-        value: value,
-        onChanged: onChanged,
-        activeThumbColor: Colors.white,
-        activeTrackColor: AppColors.accent,
-        inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
-        inactiveTrackColor: AppColors.surface2,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      trailing: IgnorePointer(
+        child: Switch.adaptive(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: Colors.white,
+          activeTrackColor: AppColors.accent,
+          inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
+          inactiveTrackColor: AppColors.surface2,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
       ),
     );
   }
