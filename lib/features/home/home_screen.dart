@@ -329,11 +329,15 @@ class _HomeViewState extends State<_HomeView>
       Set<int> myAniListIds = {};
       Set<int> myMalIds = {};
       Set<String> myTitles = {};
+      var myListLoaded = false;
       final needsMyList = kind == ZKind.anime &&
           catalogues.any((catalogue) => catalogue.hideMyAnime);
       if (needsMyList) {
         try {
-          final entries = await sl<AniListService>().fetchList();
+          final aniList = sl<AniListService>();
+          if (!aniList.isConnected) throw StateError('AniList belum terhubung');
+          final entries = await aniList.fetchList();
+          myListLoaded = true;
           final anime = entries.where((entry) => entry.item.type == ProviderType.anime);
           myAniListIds = {
             for (final entry in anime)
@@ -355,10 +359,10 @@ class _HomeViewState extends State<_HomeView>
           myAniListIds = {};
           myMalIds = {};
           myTitles = {};
+          myListLoaded = false;
         }
       }
-      final canApplyMyList = !needsMyList ||
-          myAniListIds.isNotEmpty || myMalIds.isNotEmpty || myTitles.isNotEmpty;
+      final canApplyMyList = !needsMyList || myListLoaded;
       final sections = <HomeSection>[];
       for (final catalogue in catalogues) {
         try {
