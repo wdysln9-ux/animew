@@ -12,12 +12,14 @@ class HomeCustomCatalog {
     required this.name,
     required this.kind,
     required this.filtersJson,
+    this.hideMyAnime = false,
   });
 
   final String id;
   final String name;
   final ZKind kind;
   final String filtersJson;
+  final bool hideMyAnime;
 
   MetaFilters get filters => MetaFilters.fromJson(filtersJson) ?? const MetaFilters();
 
@@ -26,6 +28,7 @@ class HomeCustomCatalog {
     'name': name,
     'kind': kind.name,
     'filters': filtersJson,
+    'hideMyAnime': hideMyAnime,
   };
 
   factory HomeCustomCatalog.fromJson(Map<String, dynamic> json) {
@@ -34,6 +37,7 @@ class HomeCustomCatalog {
       name: json['name'] as String,
       kind: ZKind.values.firstWhere((v) => v.name == json['kind']),
       filtersJson: json['filters'] as String? ?? '',
+      hideMyAnime: json['hideMyAnime'] as bool? ?? false,
     );
   }
 }
