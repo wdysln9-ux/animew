@@ -304,6 +304,11 @@ class _HomeViewState extends State<_HomeView>
     await cubit.load(reset: true);
   }
 
+  String _normalizeCustomCatalogueTitle(String? value) => (value ?? '')
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+      .trim();
+
   void _reloadCustomCatalogues() {
     if (!mounted || !ZModePrefs.enabled ||
         !sl.isRegistered<MetadataRepository>()) {
@@ -319,14 +324,62 @@ class _HomeViewState extends State<_HomeView>
     );
     final catalogues = HomeCustomCatalogPrefs.forKind(kind);
     unawaited(() async {
+      // Fetch the AniList library once for all custom catalogues that enable
+      // "Sembunyikan Daftar". This setting is specific to anime catalogues.
+      Set<int> myAniListIds = {};
+      Set<int> myMalIds = {};
+      Set<String> myTitles = {};
+      final needsMyList = kind == ZKind.anime &&
+          catalogues.any((catalogue) => catalogue.hideMyAnime);
+      if (needsMyList) {
+        try {
+          final entries = await sl<AniListService>().fetchList();
+          final anime = entries.where((entry) => entry.item.type == ProviderType.anime);
+          myAniListIds = {
+            for (final entry in anime)
+              if (entry.item.anilistId != null) entry.item.anilistId!,
+          };
+          myMalIds = {
+            for (final entry in anime)
+              if (entry.item.malId != null) entry.item.malId!,
+          };
+          myTitles = {
+            for (final entry in anime) ...[
+              _normalizeCustomCatalogueTitle(entry.item.title),
+              _normalizeCustomCatalogueTitle(entry.item.englishTitle),
+            ],
+          }..removeWhere((title) => title.isEmpty);
+        } catch (_) {
+          // Do not silently show the unfiltered catalogue if AniList could
+          // not be loaded; affected catalogues are skipped below.
+          myAniListIds = {};
+          myMalIds = {};
+          myTitles = {};
+        }
+      }
+      final canApplyMyList = !needsMyList ||
+          myAniListIds.isNotEmpty || myMalIds.isNotEmpty || myTitles.isNotEmpty;
       final sections = <HomeSection>[];
       for (final catalogue in catalogues) {
         try {
-          final items = await sl<MetadataRepository>().searchFiltered(
+          if (catalogue.hideMyAnime && kind == ZKind.anime && !canApplyMyList) {
+            continue;
+          }
+          var items = await sl<MetadataRepository>().searchFiltered(
             '',
             filters: catalogue.filters,
             page: 1,
           );
+          if (catalogue.hideMyAnime && kind == ZKind.anime) {
+            items = items.where((item) {
+              if (item.anilistId != null && myAniListIds.contains(item.anilistId)) return false;
+              if (item.malId != null && myMalIds.contains(item.malId)) return false;
+              final title = _normalizeCustomCatalogueTitle(item.title);
+              final english = _normalizeCustomCatalogueTitle(item.englishTitle);
+              return !(title.isNotEmpty && myTitles.contains(title)) &&
+                  !(english.isNotEmpty && myTitles.contains(english));
+            }).toList();
+          }
           if (items.isNotEmpty) {
             sections.add(HomeSection(title: catalogue.name, items: items));
           }
