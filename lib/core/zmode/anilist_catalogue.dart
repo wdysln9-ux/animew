@@ -472,6 +472,8 @@ class AniListCatalogue implements AnimeCatalogue {
       if (f != null) ...[
         if (f.genres.isNotEmpty)
           'genre_in:[${f.genres.map((g) => '"$g"').join(',')}]',
+        if (f.excludedGenres.isNotEmpty)
+          'genre_not_in:[${f.excludedGenres.map((g) => '"$g"').join(',')}]',
         if (f.tags.isNotEmpty)
           'tag_in:[${f.tags.map((t) => '"$t"').join(',')}]',
         if (f.minTagRank > 0) 'minimumTagRank:${f.minTagRank}',
