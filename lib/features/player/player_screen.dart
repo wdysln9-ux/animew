@@ -2129,7 +2129,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       barrierDismissible: true,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, refresh) => _CompactPlayerDialog(
-          maxHeight: 430,
+          maxHeight: 410,
           child: _SheetColumn(
             header: null,
             compactDialog: true,
@@ -2138,19 +2138,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 icon: Icons.tune_rounded,
                 label: 'Kualitas',
                 value: qualityValue,
-                onTap: () {
-                  Navigator.pop(dialogContext);
-                  _openQualitySheet();
-                },
+                onTap: _openQualitySheet,
               ),
               _QuickSettingRow(
                 icon: Icons.speed_rounded,
                 label: 'Kecepatan',
                 value: '${_c.player.state.rate.toStringAsFixed(_c.player.state.rate % 1 == 0 ? 0 : 2)}x',
-                onTap: () {
-                  Navigator.pop(dialogContext);
-                  _openSpeedSheet();
-                },
+                onTap: _openSpeedSheet,
               ),
               _QuickSettingRow(
                 icon: Icons.subtitles_outlined,
@@ -2158,7 +2152,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 value: hasSubtitles ? subtitleValue : 'Tidak tersedia',
                 enabled: hasSubtitles,
                 onTap: () {
-                  Navigator.pop(dialogContext);
                   if (hasSubtitles) {
                     _openAudioSubsSheet();
                   } else {
@@ -2172,10 +2165,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 icon: Icons.volume_up_rounded,
                 label: 'Boost Audio',
                 value: boostEnabled ? '${boostPercent}%' : 'Mati',
-                onTap: () {
-                  Navigator.pop(dialogContext);
-                  _openAudioBoostSheet();
-                },
+                onTap: _openAudioBoostSheet,
+              ),
+              _QuickSettingRow(
+                icon: Icons.layers_rounded,
+                label: 'Sumber',
+                value: active == null ? 'Tidak tersedia' : _sourceGroupName(active),
+                enabled: active != null,
+                onTap: active == null ? () {} : _openSourceSheet,
               ),
               _QuickSettingRow(
                 icon: Icons.skip_next_rounded,
@@ -2218,10 +2215,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   refresh(() => cinematicLighting = value);
                   _setCinematicLighting(value);
                 },
-                onTap: () {
-                  Navigator.pop(dialogContext);
-                  _openCinematicLightingSheet();
-                },
+                onTap: _openCinematicLightingSheet,
               ),
               _QuickSettingRow(
                 icon: Icons.subject_rounded,
@@ -3186,7 +3180,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
-  void _showCompactSelector(Widget child, {double maxHeight = 430}) {
+  void _showCompactSelector(Widget child, {double maxHeight = 390}) {
     showDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -3203,11 +3197,23 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _showCompactSelector(
       StatefulBuilder(
         builder: (sheetContext, refresh) => _SheetColumn(
-          header: context.l10n.playbackSpeed,
+          header: null,
           compactDialog: true,
           children: [
+            for (final rate in rates)
+              _SheetRow(
+                compactDialog: true,
+                label: rate == 1.0 ? context.l10n.normalSpeed : '${rate}x',
+                active: (current - rate).abs() < 0.01,
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Navigator.pop(context);
+                  _c.setRateRemembered(rate);
+                  _bumpControls();
+                },
+              ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 2, 8, 2),
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3253,17 +3259,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ],
               ),
             ),
-            for (final rate in rates)
-              _SheetRow(
-                compactDialog: true,
-                label: rate == 1.0 ? context.l10n.normalSpeed : '${rate}x',
-                active: (current - rate).abs() < 0.01,
-                onTap: () {
-                  current = rate;
-                  _c.setRateRemembered(rate);
-                  refresh(() {});
-                },
-              ),
           ],
         ),
       ),
@@ -3277,7 +3272,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _showCompactSelector(
       StatefulBuilder(
         builder: (sheetContext, refresh) => _SheetColumn(
-          header: 'Boost Audio',
+          header: null,
           compactDialog: true,
           children: [
             _SheetRow(
@@ -3418,7 +3413,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       context: context,
       barrierDismissible: true,
       builder: (_) => _CompactPlayerDialog(
-        maxHeight: 430,
+        maxHeight: 390,
         child: SafeArea(
           top: false,
           child: _AudioSubsSheet(
@@ -3593,7 +3588,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
     if (rows.isEmpty) return;
     _showCompactSelector(_SheetColumn(
-      header: context.l10n.quality,
+      header: null,
       compactDialog: true,
       children: rows,
     ));
@@ -3618,7 +3613,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _openGroupedSourceQualities(String name, List<VideoSource> sources) {
     final ordered = sortByQuality(sources);
     _showCompactSelector(_SheetColumn(
-      header: name,
+      header: null,
       compactDialog: true,
       children: [
         for (final s in ordered)
@@ -3653,7 +3648,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
 
     _showCompactSelector(_SheetColumn(
-      header: context.l10n.sources,
+      header: null,
       compactDialog: true,
       children: [
         for (final entry in groups.entries)
