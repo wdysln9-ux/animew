@@ -568,10 +568,18 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
       subtitle: subtitle,
       subtitleMaxLines: subtitleMaxLines,
       onTap: () => flip(!value),
-      trailing: Switch.adaptive(
-        value: value,
-        activeThumbColor: AppColors.accent,
-        onChanged: flip,
+      // The row owns the tap, matching the compact Quick Setting rows.
+      // Prevent the nested Switch and parent InkWell from handling one gesture.
+      trailing: IgnorePointer(
+        child: Switch.adaptive(
+          value: value,
+          onChanged: null,
+          activeThumbColor: Colors.white,
+          activeTrackColor: AppColors.accent,
+          inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
+          inactiveTrackColor: AppColors.surface2,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
       ),
     );
   }
