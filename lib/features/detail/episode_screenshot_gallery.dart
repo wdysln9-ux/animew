@@ -220,7 +220,11 @@ class _EpisodeGalleryChip extends StatelessWidget {
     padding: const EdgeInsets.only(right: 7),
     child: Material(
       color: selected ? AppColors.accent : AppColors.surface2,
-      shape: const StadiumBorder(),
+      shape: StadiumBorder(
+        side: BorderSide(
+          color: AppColors.textTertiary.withValues(alpha: 0.48),
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
