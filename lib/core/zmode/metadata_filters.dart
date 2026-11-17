@@ -17,7 +17,9 @@ class MetaFilters {
     this.formats = const [],
     this.statuses = const [],
     this.minEpisodes = 0,
-    this.maxEpisodes = 200,
+    this.maxEpisodes = 250,
+    this.minDuration = 0,
+    this.maxDuration = 250,
     this.minTagRank = 0,
     this.minYear = 1980,
     this.maxYear = 2026,
@@ -49,6 +51,9 @@ class MetaFilters {
   final List<MetaStatus> statuses;
   final int minEpisodes;
   final int maxEpisodes;
+  /// Per-episode duration in minutes (AniList).
+  final int minDuration;
+  final int maxDuration;
   /// Minimum AniList tag rank (0–100 percent).
   final int minTagRank;
   final int minYear;
@@ -83,7 +88,9 @@ class MetaFilters {
       formats.isEmpty &&
       statuses.isEmpty &&
       minEpisodes == 0 &&
-      maxEpisodes == 200 &&
+      maxEpisodes == 250 &&
+      minDuration == 0 &&
+      maxDuration == 250 &&
       minTagRank == 0 &&
       minYear == 1980 && maxYear == 2026 &&
       year == null &&
@@ -114,7 +121,9 @@ class MetaFilters {
       formats.isNotEmpty ||
       statuses.isNotEmpty ||
       minEpisodes > 0 ||
-      maxEpisodes < 200 ||
+      maxEpisodes < 250 ||
+      minDuration > 0 ||
+      maxDuration < 250 ||
       minTagRank > 0 ||
       minYear > 1980 || maxYear < 2026 ||
       year != null ||
@@ -135,6 +144,8 @@ class MetaFilters {
     List<MetaStatus>? statuses,
     int? minEpisodes,
     int? maxEpisodes,
+    int? minDuration,
+    int? maxDuration,
     int? minTagRank,
     int? minYear,
     int? maxYear,
@@ -163,6 +174,8 @@ class MetaFilters {
     statuses: statuses ?? this.statuses,
     minEpisodes: minEpisodes ?? this.minEpisodes,
     maxEpisodes: maxEpisodes ?? this.maxEpisodes,
+    minDuration: minDuration ?? this.minDuration,
+    maxDuration: maxDuration ?? this.maxDuration,
     minTagRank: minTagRank ?? this.minTagRank,
     minYear: minYear ?? this.minYear,
     maxYear: maxYear ?? this.maxYear,
@@ -189,7 +202,9 @@ class MetaFilters {
     if (formats.isNotEmpty) 'fs': formats.map((v) => v.name).toList(),
     if (statuses.isNotEmpty) 'sts': statuses.map((v) => v.name).toList(),
     if (minEpisodes > 0) 'emin': minEpisodes,
-    if (maxEpisodes < 200) 'emax': maxEpisodes,
+    if (maxEpisodes < 250) 'emax': maxEpisodes,
+    if (minDuration > 0) 'dmin': minDuration,
+    if (maxDuration < 250) 'dmax': maxDuration,
     if (minTagRank > 0) 'mtr': minTagRank,
     if (minYear > 1980) 'ymin': minYear,
     if (maxYear < 2026) 'ymax': maxYear,
@@ -219,7 +234,9 @@ class MetaFilters {
         formats: [for (final v in (m['fs'] as List? ?? [])) ...MetaFormat.values.where((e) => e.name == v)],
         statuses: [for (final v in (m['sts'] as List? ?? [])) ...MetaStatus.values.where((e) => e.name == v)],
         minEpisodes: m['emin'] as int? ?? 0,
-        maxEpisodes: m['emax'] as int? ?? 200,
+        maxEpisodes: (m['emax'] as int? ?? 250).clamp(0, 250),
+        minDuration: (m['dmin'] as int? ?? 0).clamp(0, 250),
+        maxDuration: (m['dmax'] as int? ?? 250).clamp(0, 250),
         minTagRank: (m['mtr'] as int? ?? 0).clamp(0, 100).toInt(),
         minYear: m['ymin'] as int? ?? 1980,
         maxYear: m['ymax'] as int? ?? 2026,
