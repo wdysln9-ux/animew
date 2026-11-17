@@ -12,6 +12,7 @@ class MetaFilters {
   const MetaFilters({
     this.genres = const [],
     this.tags = const [],
+    this.excludedGenres = const [],
     this.years = const [],
     this.seasons = const [],
     this.formats = const [],
@@ -43,6 +44,8 @@ class MetaFilters {
   /// AniList's alone. Nothing else exposes them, so a tag chip is only
   /// offered while AniList is the one answering.
   final List<String> tags;
+  /// Genres explicitly excluded via long-press in the genre picker.
+  final List<String> excludedGenres;
   /// Multi-select AniList filters. Legacy scalar fields remain for TMDB and
   /// older saved filter payloads.
   final List<int> years;
@@ -83,6 +86,7 @@ class MetaFilters {
   bool get isEmpty =>
       genres.isEmpty &&
       tags.isEmpty &&
+      excludedGenres.isEmpty &&
       years.isEmpty &&
       seasons.isEmpty &&
       formats.isEmpty &&
@@ -116,6 +120,7 @@ class MetaFilters {
   bool get narrowsCatalogue =>
       genres.isNotEmpty ||
       tags.isNotEmpty ||
+      excludedGenres.isNotEmpty ||
       years.isNotEmpty ||
       seasons.isNotEmpty ||
       formats.isNotEmpty ||
@@ -138,6 +143,7 @@ class MetaFilters {
   MetaFilters copyWith({
     List<String>? genres,
     List<String>? tags,
+    List<String>? excludedGenres,
     List<int>? years,
     List<MetaSeason>? seasons,
     List<MetaFormat>? formats,
@@ -168,6 +174,7 @@ class MetaFilters {
   }) => MetaFilters(
     genres: genres ?? this.genres,
     tags: tags ?? this.tags,
+    excludedGenres: excludedGenres ?? this.excludedGenres,
     years: years ?? this.years,
     seasons: seasons ?? this.seasons,
     formats: formats ?? this.formats,
@@ -197,6 +204,7 @@ class MetaFilters {
   String toJson() => jsonEncode({
     if (genres.isNotEmpty) 'g': genres,
     if (tags.isNotEmpty) 't': tags,
+    if (excludedGenres.isNotEmpty) 'gn': excludedGenres,
     if (years.isNotEmpty) 'ys': years,
     if (seasons.isNotEmpty) 'ss': seasons.map((v) => v.name).toList(),
     if (formats.isNotEmpty) 'fs': formats.map((v) => v.name).toList(),
@@ -229,6 +237,7 @@ class MetaFilters {
       return MetaFilters(
         genres: [...?(m['g'] as List?)?.cast<String>()],
         tags: [...?(m['t'] as List?)?.cast<String>()],
+        excludedGenres: [...?(m['gn'] as List?)?.cast<String>()],
         years: [...?(m['ys'] as List?)?.cast<int>()],
         seasons: [for (final v in (m['ss'] as List? ?? [])) ...MetaSeason.values.where((e) => e.name == v)],
         formats: [for (final v in (m['fs'] as List? ?? [])) ...MetaFormat.values.where((e) => e.name == v)],
