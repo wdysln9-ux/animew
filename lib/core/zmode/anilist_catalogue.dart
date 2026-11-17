@@ -437,7 +437,9 @@ class AniListCatalogue implements AnimeCatalogue {
                 f.formats.isNotEmpty ||
                 f.statuses.isNotEmpty ||
                 f.minEpisodes > 0 ||
-                f.maxEpisodes < 200 ||
+                f.maxEpisodes < 250 ||
+                f.minDuration > 0 ||
+                f.maxDuration < 250 ||
                 f.minTagRank > 0 ||
                 f.minYear > 1980 ||
                 f.maxYear < DateTime.now().year ||
@@ -502,7 +504,9 @@ class AniListCatalogue implements AnimeCatalogue {
         if (countries.length == 1)
           'countryOfOrigin:${countries.single.aniListCode}',
         if (f.minEpisodes > 0) 'episodes_greater:${f.minEpisodes - 1}',
-        if (f.maxEpisodes < 200) 'episodes_lesser:${f.maxEpisodes + 1}',
+        if (f.maxEpisodes < 250) 'episodes_lesser:${f.maxEpisodes + 1}',
+        if (f.minDuration > 0) 'duration_greater:${f.minDuration - 1}',
+        if (f.maxDuration < 250) 'duration_lesser:${f.maxDuration + 1}',
         if (f.minScore != null) 'averageScore_greater:${f.minScore! - 1}',
         if (!f.adult) 'isAdult:false',
         'sort:${randomRecommendation ? 'ID' : _alSort(f.sort, ascending: f.sortAscending)}',
