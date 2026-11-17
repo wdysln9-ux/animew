@@ -437,33 +437,35 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
 
   Widget _chips(List<_ChipData> data, ColorScheme cs) => Wrap(
     spacing: 6, runSpacing: 6,
-    children: data.map((d) => ChoiceChip(
-      label: Text(d.label, maxLines: 1, overflow: TextOverflow.ellipsis),
-      selected: d.selected,
-      onSelected: (_) => d.onTap(),
-      showCheckmark: false,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: const VisualDensity(horizontal: -1, vertical: 0),
-      selectedColor: d.excluded ? Colors.red.shade700 : AppColors.accent,
-      backgroundColor: Colors.transparent,
+    children: data.map((d) => GestureDetector(
       onLongPress: d.onLongPress,
-      side: BorderSide(
-        color: d.excluded ? Colors.red : d.selected || d.action
-            ? AppColors.accent
-            : cs.outline.withValues(alpha: .24),
+      child: ChoiceChip(
+        label: Text(d.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        selected: d.selected,
+        onSelected: (_) => d.onTap(),
+        showCheckmark: false,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: const VisualDensity(horizontal: -1, vertical: 0),
+        selectedColor: d.excluded ? Colors.red.shade700 : AppColors.accent,
+        backgroundColor: Colors.transparent,
+        side: BorderSide(
+          color: d.excluded ? Colors.red : d.selected || d.action
+              ? AppColors.accent
+              : cs.outline.withValues(alpha: .24),
+        ),
+        labelStyle: TextStyle(
+          fontSize: 12.5,
+          height: 1.15,
+          color: d.selected
+              ? Colors.white
+              : d.action
+                  ? AppColors.accent
+                  : cs.onSurface.withValues(alpha: .58),
+          fontWeight: d.action ? FontWeight.w600 : FontWeight.normal,
+        ),
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       ),
-      labelStyle: TextStyle(
-        fontSize: 12.5,
-        height: 1.15,
-        color: d.selected
-            ? Colors.white
-            : d.action
-                ? AppColors.accent
-                : cs.onSurface.withValues(alpha: .58),
-        fontWeight: d.action ? FontWeight.w600 : FontWeight.normal,
-      ),
-      shape: const StadiumBorder(),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
     )).toList(),
   );
 
