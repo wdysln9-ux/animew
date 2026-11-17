@@ -72,8 +72,8 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
                             visualDensity: VisualDensity.compact,
                             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             padding: EdgeInsets.zero,
-                            backgroundColor: AppColors.surface2,
-                            side: BorderSide(color: AppColors.textTertiary.withValues(alpha: 0.35)),
+                            backgroundColor: label.startsWith('− ') ? Colors.red.withValues(alpha: 0.16) : AppColors.surface2,
+                            side: BorderSide(color: label.startsWith('− ') ? Colors.red : AppColors.textTertiary.withValues(alpha: 0.35)),
                           )).toList(),
                         ),
                       const SizedBox(height: 8),
@@ -130,6 +130,7 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
   List<String> _selectedFilterLabels(MetaFilters f) {
     final labels = <String>[
       ...f.genres,
+      ...f.excludedGenres.map((v) => '− $v'),
       ...f.tags,
       ...f.years.map((v) => v.toString()),
       ...f.seasons.map((v) => switch (v) {
