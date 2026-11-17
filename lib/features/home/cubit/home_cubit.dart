@@ -541,7 +541,7 @@ class HomeCubit extends Cubit<HomeState> {
     // Remove AniList tracker catalogue rows from the Anime Home layout too:
     // new episodes, continue on AniList, and the four status buckets.
     final extraRowIds = kind == ZKind.anime
-        ? const <String>[]
+        ? const [airingEpisodesRowId]
         : const <String>[];
     final withTrackerRows = kind != null && kind != ZKind.anime;
     final layoutKey = _layoutKey;
