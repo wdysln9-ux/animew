@@ -23,6 +23,7 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
   Future<void> _edit([HomeCustomCatalog? existing]) async {
     final name = TextEditingController(text: existing?.name ?? '');
     var filters = existing?.filters ?? const MetaFilters();
+    var hideMyAnime = existing?.hideMyAnime ?? false;
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -48,6 +49,17 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
                 icon: const Icon(Icons.tune_rounded, size: 18),
                 label: const Text('Pilih filter'),
               ),
+              if (_kind == ZKind.anime) ...[
+                const SizedBox(height: 12),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  value: hideMyAnime,
+                  onChanged: (value) => setDialogState(() => hideMyAnime = value),
+                  title: const Text('Sembunyikan Daftar'),
+                  subtitle: const Text('Sembunyikan anime yang sudah ada di daftar AniList kamu.'),
+                  secondary: const Icon(Icons.visibility_off_outlined),
+                ),
+              ],
               if (!filters.isEmpty) TextButton(
                 onPressed: () => setDialogState(() => filters = const MetaFilters()),
                 child: const Text('Hapus semua filter'),
@@ -65,6 +77,7 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
       await HomeCustomCatalogPrefs.save(HomeCustomCatalog(
         id: existing?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
         name: name.text.trim(), kind: _kind, filtersJson: filters.toJson(),
+        hideMyAnime: hideMyAnime,
       ));
       if (mounted) setState(() {});
     }
@@ -75,7 +88,8 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
       f.seasons.length + f.formats.length + f.statuses.length +
       (f.countries.length + (f.countryOfOrigin == null ? 0 : 1)) + (f.minScore == null ? 0 : 1) +
       (f.minEpisodes == 0 && f.maxEpisodes == 200 ? 0 : 1) +
-      (f.minYear == 1980 && f.maxYear == DateTime.now().year ? 0 : 1);
+      (f.minYear == 1980 && f.maxYear == DateTime.now().year ? 0 : 1) +
+      (false ? 1 : 0);
 
   Future<void> _delete(HomeCustomCatalog catalogue) async {
     final yes = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
