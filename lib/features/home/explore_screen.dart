@@ -499,7 +499,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _sorts() {
     const names = ['Untukmu', 'Populer', 'Nilai Tertinggi', 'Sedang Tayang'];
-    return SizedBox(height: 42, child: ListView(scrollDirection: Axis.horizontal,
+    return SizedBox(height: 42, child: ListView(key: const PageStorageKey<String>('explore-sort-chips'), scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16), children: [
         for (var i = 0; i < names.length; i++)
           Padding(padding: const EdgeInsets.only(right: 8), child: _pill(names[i], () {
@@ -878,7 +878,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       });
     return Scaffold(backgroundColor: AppColors.bg, body: RefreshIndicator(
       color: AppColors.accent, backgroundColor: AppColors.surface, onRefresh: () => _load(refresh: true),
-      child: CustomScrollView(physics: const AlwaysScrollableScrollPhysics(), slivers: [
+      child: CustomScrollView(key: const PageStorageKey<String>('explore-catalogue-scroll'), physics: const AlwaysScrollableScrollPhysics(), slivers: [
         SliverToBoxAdapter(child: SafeArea(bottom: false, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(padding: const EdgeInsets.fromLTRB(16, 18, 16, 2), child: Text('Jelajahi', style: _txt(20, weight: FontWeight.w900))),
           _searchBar(), _sorts(),
