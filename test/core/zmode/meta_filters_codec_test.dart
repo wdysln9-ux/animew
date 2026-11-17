@@ -30,6 +30,27 @@ void main() {
     expect(back.sort, MetaSort.score);
   });
 
+  test('country chips can add and remove multiple countries', () {
+    const initial = MetaFilters(countryOfOrigin: MetaCountry.japan);
+
+    final withChina = initial.copyWith(
+      countries: [MetaCountry.japan, MetaCountry.china],
+      clearCountryOfOrigin: true,
+    );
+    expect(withChina.countryOfOrigin, isNull);
+    expect(withChina.countries, [MetaCountry.japan, MetaCountry.china]);
+
+    final withTaiwan = withChina.copyWith(
+      countries: [MetaCountry.japan, MetaCountry.china, MetaCountry.taiwan],
+      clearCountryOfOrigin: true,
+    );
+    expect(withTaiwan.countries, [
+      MetaCountry.japan,
+      MetaCountry.china,
+      MetaCountry.taiwan,
+    ]);
+  });
+
   test('an empty selection reads as empty', () {
     const f = MetaFilters();
     expect(f.isEmpty, isTrue);
