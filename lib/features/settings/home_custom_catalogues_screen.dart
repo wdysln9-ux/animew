@@ -88,8 +88,7 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
       f.seasons.length + f.formats.length + f.statuses.length +
       (f.countries.length + (f.countryOfOrigin == null ? 0 : 1)) + (f.minScore == null ? 0 : 1) +
       (f.minEpisodes == 0 && f.maxEpisodes == 200 ? 0 : 1) +
-      (f.minYear == 1980 && f.maxYear == DateTime.now().year ? 0 : 1) +
-      (false ? 1 : 0);
+      (f.minYear == 1980 && f.maxYear == DateTime.now().year ? 0 : 1);
 
   Future<void> _delete(HomeCustomCatalog catalogue) async {
     final yes = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
@@ -134,7 +133,7 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
               child: ListTile(
                 leading: Icon(Icons.view_carousel_outlined, color: AppColors.accent),
                 title: Text(catalogue.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                subtitle: Text(_filterCount(catalogue.filters).toString() + ' filter', style: AppText.caption),
+                subtitle: Text((_filterCount(catalogue.filters) + (catalogue.hideMyAnime ? 1 : 0)).toString() + ' filter', style: AppText.caption),
                 onTap: () => _edit(catalogue),
                 trailing: PopupMenuButton<String>(
                   onSelected: (value) { if (value == 'edit') _edit(catalogue); if (value == 'delete') _delete(catalogue); },
