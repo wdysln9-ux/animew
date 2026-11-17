@@ -98,10 +98,7 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeInOutCubic,
-        alignment: Alignment.topCenter,
+      child: ClipRect(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -147,46 +144,59 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
                 ],
               ),
             ),
-            if (_expanded) ...[
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 34,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  clipBehavior: Clip.none,
-                  children: [
-                    _EpisodeGalleryChip(
-                      label: 'Semua',
-                      selected: _selectedEpisode == -1,
-                      onTap: () => setState(() => _selectedEpisode = -1),
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 34,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      clipBehavior: Clip.none,
+                      children: [
+                        _EpisodeGalleryChip(
+                          label: 'Semua',
+                          selected: _selectedEpisode == -1,
+                          onTap: () => setState(() => _selectedEpisode = -1),
+                        ),
+                        for (final number in episodeNumbers)
+                          _EpisodeGalleryChip(
+                            label: 'Episode $number',
+                            selected: selectedEpisode == number,
+                            onTap: () => setState(() => _selectedEpisode = number),
+                          ),
+                      ],
                     ),
-                    for (final number in episodeNumbers)
-                      _EpisodeGalleryChip(
-                        label: 'Episode $number',
-                        selected: selectedEpisode == number,
-                        onTap: () => setState(() => _selectedEpisode = number),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (selectedEpisode == null)
-                _AllEpisodeStillRail(
-                  episodes: widget.episodes,
-                  malId: widget.malId,
-                  tmdbId: widget.tmdbId,
-                )
-              else
-                _EpisodeStillRail(
-                  key: ValueKey('anime-gallery:$selectedEpisode'),
-                  malId: widget.malId,
-                  tmdbId: widget.tmdbId,
-                  episode: widget.episodes.firstWhere(
-                    (e) => e.number?.round() == selectedEpisode,
                   ),
-                ),
-            ],
+                  const SizedBox(height: 10),
+                  if (selectedEpisode == null)
+                    _AllEpisodeStillRail(
+                      episodes: widget.episodes,
+                      malId: widget.malId,
+                      tmdbId: widget.tmdbId,
+                    )
+                  else
+                    _EpisodeStillRail(
+                      key: ValueKey('anime-gallery:$selectedEpisode'),
+                      malId: widget.malId,
+                      tmdbId: widget.tmdbId,
+                      episode: widget.episodes.firstWhere(
+                        (e) => e.number?.round() == selectedEpisode,
+                      ),
+                    ),
+                ],
+              ),
+              crossFadeState: _expanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 260),
+              reverseDuration: const Duration(milliseconds: 240),
+              sizeCurve: Curves.easeInOutCubic,
+              alignment: Alignment.topCenter,
+            ),
           ],
         ),
       ),
