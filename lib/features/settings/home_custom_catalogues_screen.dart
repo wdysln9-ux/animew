@@ -27,49 +27,92 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(existing == null ? 'Buat katalog' : 'Edit katalog'),
-          content: SingleChildScrollView(child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(controller: name, autofocus: existing == null, maxLength: 40,
-                decoration: const InputDecoration(labelText: 'Nama katalog', hintText: 'Contoh: Anime action terbaru')),
-              const SizedBox(height: 12),
-              Text('Filter', style: AppText.body.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 6),
-              Text(filters.isEmpty ? 'Belum ada filter' : 'Filter sudah dipilih (' + _filterCount(filters).toString() + ')',
-                style: AppText.caption.copyWith(color: AppColors.textSecondary)),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final selected = await showMetaFilterSheet(context, _kind, filters, showStatus: true);
-                  if (selected != null) setDialogState(() => filters = selected);
-                },
-                icon: const Icon(Icons.tune_rounded, size: 18),
-                label: const Text('Pilih filter'),
+        builder: (context, setDialogState) => Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 560,
+              maxHeight: MediaQuery.sizeOf(context).height * 0.82,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(existing == null ? 'Buat katalog' : 'Edit katalog', style: AppText.title),
+                  const SizedBox(height: 12),
+                  Expanded(child: SingleChildScrollView(child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(controller: name, autofocus: existing == null, maxLength: 40,
+                        decoration: const InputDecoration(
+                          labelText: 'Nama katalog',
+                          hintText: 'Contoh: Anime action terbaru',
+                          counterText: '',
+                          isDense: true,
+                        )),
+                      const SizedBox(height: 16),
+                      Row(children: [
+                        Text('Filter', style: AppText.body.copyWith(fontWeight: FontWeight.w700)),
+                        const Spacer(),
+                        Text(_filterCount(filters).toString() + ' dipilih',
+                          style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+                      ]),
+                      const SizedBox(height: 8),
+                      if (filters.isEmpty)
+                        Text('Belum ada filter', style: AppText.caption.copyWith(color: AppColors.textSecondary))
+                      else
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 2,
+                          children: _selectedFilterLabels(filters).map((label) => Chip(
+                            label: Text(label, style: AppText.caption),
+                            visualDensity: VisualDensity.compact,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            padding: EdgeInsets.zero,
+                            backgroundColor: AppColors.surface2,
+                            side: BorderSide(color: AppColors.textTertiary.withValues(alpha: 0.35)),
+                          )).toList(),
+                        ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final selected = await showMetaFilterSheet(context, _kind, filters, showStatus: true);
+                          if (selected != null) setDialogState(() => filters = selected);
+                        },
+                        icon: const Icon(Icons.tune_rounded, size: 18),
+                        label: const Text('Pilih filter'),
+                        style: OutlinedButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                        ),
+                      ),
+                      if (_kind == ZKind.anime) ...[
+                        const SizedBox(height: 12),
+                        SwitchListTile.adaptive(
+                          contentPadding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                          value: hideMyAnime,
+                          onChanged: (value) => setDialogState(() => hideMyAnime = value),
+                          title: const Text('Sembunyikan Daftar'),
+                          subtitle: const Text('Sembunyikan anime yang sudah ada di daftar AniList kamu.'),
+                          secondary: const Icon(Icons.visibility_off_outlined),
+                        ),
+                      ],
+                    ],
+                  ))),
+                  const SizedBox(height: 8),
+                  Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                    TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Batal')),
+                    const SizedBox(width: 8),
+                    FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Simpan')),
+                  ]),
+                ],
               ),
-              if (_kind == ZKind.anime) ...[
-                const SizedBox(height: 12),
-                SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
-                  value: hideMyAnime,
-                  onChanged: (value) => setDialogState(() => hideMyAnime = value),
-                  title: const Text('Sembunyikan Daftar'),
-                  subtitle: const Text('Sembunyikan anime yang sudah ada di daftar AniList kamu.'),
-                  secondary: const Icon(Icons.visibility_off_outlined),
-                ),
-              ],
-              if (!filters.isEmpty) TextButton(
-                onPressed: () => setDialogState(() => filters = const MetaFilters()),
-                child: const Text('Hapus semua filter'),
-              ),
-            ],
-          )),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Batal')),
-            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Simpan')),
-          ],
+            ),
+          ),
         ),
       ),
     );
@@ -82,6 +125,43 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
       if (mounted) setState(() {});
     }
     name.dispose();
+  }
+
+  List<String> _selectedFilterLabels(MetaFilters f) {
+    final labels = <String>[
+      ...f.genres,
+      ...f.tags,
+      ...f.years.map((v) => v.toString()),
+      ...f.seasons.map((v) => switch (v) {
+        MetaSeason.winter => 'Winter', MetaSeason.spring => 'Spring',
+        MetaSeason.summer => 'Summer', MetaSeason.fall => 'Fall',
+      }),
+      ...f.formats.map((v) => v.name == 'oneShot' ? 'One-shot' : v.name.toUpperCase()),
+      ...f.statuses.map((v) => switch (v) {
+        MetaStatus.releasing => 'Sedang tayang',
+        MetaStatus.finished => 'Selesai',
+        MetaStatus.notYetReleased => 'Belum tayang',
+        MetaStatus.cancelled => 'Dibatalkan',
+      }),
+      ...f.countries.map((v) => v.label),
+    ];
+    if (f.year != null) labels.add('Tahun ${f.year}');
+    if (f.season != null) labels.add('Musim ${f.season!.name}');
+    if (f.format != null) labels.add('Format ${f.format!.name.toUpperCase()}');
+    if (f.status != null) labels.add('Status ${f.status!.name}');
+    if (f.countryOfOrigin != null) labels.add(f.countryOfOrigin!.label);
+    if (f.minScore != null) labels.add('Skor ≥ ${f.minScore}');
+    if (f.minEpisodes > 0 || f.maxEpisodes < 200) {
+      labels.add('Episode ${f.minEpisodes}–${f.maxEpisodes}');
+    }
+    if (f.minYear > 1980 || f.maxYear < 2026) {
+      labels.add('Rentang ${f.minYear}–${f.maxYear}');
+    }
+    if (f.minTagRank > 0) labels.add('Rank tag ≥ ${f.minTagRank}%');
+    if (f.sort != MetaSort.popularity) labels.add('Urut: ${f.sort.name}');
+    if (f.sortAscending) labels.add('Urutan naik');
+    if (f.adult) labels.add('Konten dewasa');
+    return labels;
   }
 
   int _filterCount(MetaFilters f) => f.genres.length + f.tags.length + f.years.length +
