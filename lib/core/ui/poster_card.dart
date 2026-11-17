@@ -258,8 +258,15 @@ bool posterTitleInside(BuildContext context, {required bool wide}) {
   };
 }
 
-class _PosterCardState extends State<PosterCard> {
+class _PosterCardState extends State<PosterCard>
+    with AutomaticKeepAliveClientMixin<PosterCard> {
   bool _pressed = false;
+
+  // Keep a visited poster (and its already-decoded artwork) alive while its
+  // lazy catalogue/search list scrolls away and back. This avoids flashing
+  // the cover-color placeholder again for images the user has already seen.
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -314,6 +321,7 @@ class _PosterCardState extends State<PosterCard> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final wide = posterLayout(context) == PosterCardLayout.wide;
     final titleInside = posterTitleInside(context, wide: wide);
     final artUrl = wide && widget.wideImageUrl?.isNotEmpty == true
