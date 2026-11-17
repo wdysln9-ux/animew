@@ -2144,7 +2144,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 icon: Icons.speed_rounded,
                 label: 'Kecepatan',
                 value: '${_c.player.state.rate.toStringAsFixed(_c.player.state.rate % 1 == 0 ? 0 : 2)}x',
-                onTap: _openSpeedSheet,
+                onTap: () => _openSpeedSheet(closeQuickSettings: true),
               ),
               _QuickSettingRow(
                 icon: Icons.subtitles_outlined,
@@ -3191,7 +3191,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
-  void _openSpeedSheet() {
+  void _openSpeedSheet({bool closeQuickSettings = false}) {
     const rates = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0];
     var current = _c.player.state.rate.clamp(0.25, 6.0).toDouble();
     _showCompactSelector(
@@ -3207,7 +3207,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 active: (current - rate).abs() < 0.01,
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  Navigator.pop(context);
+                  if (closeQuickSettings) Navigator.pop(context);
                   _c.setRateRemembered(rate);
                   _bumpControls();
                 },
