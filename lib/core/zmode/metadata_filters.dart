@@ -171,7 +171,7 @@ class MetaFilters {
     format: clearFormat ? null : (format ?? this.format),
     status: clearStatus ? null : (status ?? this.status),
     countryOfOrigin: clearCountryOfOrigin ? null : (countryOfOrigin ?? this.countryOfOrigin),
-    countries: clearCountryOfOrigin ? const [] : (countries ?? this.countries),
+    countries: countries ?? (clearCountryOfOrigin ? const [] : this.countries),
     sort: sort ?? this.sort,
     sortAscending: sortAscending ?? this.sortAscending,
     minScore: clearScore ? null : (minScore ?? this.minScore),
