@@ -573,7 +573,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
       trailing: IgnorePointer(
         child: Switch.adaptive(
           value: value,
-          onChanged: null,
+          onChanged: flip,
           activeThumbColor: Colors.white,
           activeTrackColor: AppColors.accent,
           inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
