@@ -1050,7 +1050,12 @@ class _DetailCreditsState extends State<_DetailCredits> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(
+      child: ClipRect(
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeInOutCubic,
+          alignment: Alignment.topCenter,
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (widget.genres.isNotEmpty)
@@ -1139,8 +1144,9 @@ class _DetailCreditsState extends State<_DetailCredits> {
                 ]),
               ),
             ),
-        ],
-      )),
+          ],
+        ),
+      ),
     );
   }
 }
