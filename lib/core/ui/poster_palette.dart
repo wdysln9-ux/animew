@@ -55,16 +55,9 @@ Color? parseAniListCoverColor(String? raw) {
   return parsed == null ? null : Color(parsed);
 }
 
-/// Maps a poster's dominant colour to the background tint: keep the hue, drop
-/// lightness to a fixed dark level and halve saturation (capped), so text and
-/// chrome designed for near-black keep their contrast.
-Color tintFromDominant(Color dominant) {
-  final hsl = HSLColor.fromColor(dominant);
-  return hsl
-      .withSaturation((hsl.saturation * 0.5).clamp(0.0, 0.32))
-      .withLightness(0.15)
-      .toColor();
-}
+/// Uses the artwork's original dominant / AniList coverImage.color without
+/// darkening or desaturating it.
+Color tintFromDominant(Color dominant) => dominant;
 
 /// Full-bleed animated colour wash for a screen's background. Sits as the
 /// bottom child of the screen's body Stack; [notifier] carries the current
