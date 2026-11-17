@@ -151,8 +151,11 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
     if (f.status != null) labels.add('Status ${f.status!.name}');
     if (f.countryOfOrigin != null) labels.add(f.countryOfOrigin!.label);
     if (f.minScore != null) labels.add('Skor ≥ ${f.minScore}');
-    if (f.minEpisodes > 0 || f.maxEpisodes < 200) {
+    if (f.minEpisodes > 0 || f.maxEpisodes < 250) {
       labels.add('Episode ${f.minEpisodes}–${f.maxEpisodes}');
+    }
+    if (f.minDuration > 0 || f.maxDuration < 250) {
+      labels.add('Durasi ${f.minDuration}–${f.maxDuration} menit');
     }
     if (f.minYear > 1980 || f.maxYear < 2026) {
       labels.add('Rentang ${f.minYear}–${f.maxYear}');
