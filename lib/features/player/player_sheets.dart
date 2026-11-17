@@ -2112,17 +2112,20 @@ class _QuickSettingRow extends StatelessWidget {
             ),
             if (value != null) ...[
               const SizedBox(width: 8),
-              Text(
-                value!,
-                textAlign: TextAlign.end,
-                style: AppText.body.copyWith(
-                  fontFamily: 'Urbanist',
-                  color: AppColors.textSecondary,
-                  fontSize: 11.5,
-                  height: 1.2,
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 124),
+                child: Text(
+                  value!,
+                  textAlign: TextAlign.end,
+                  style: AppText.body.copyWith(
+                    fontFamily: 'Urbanist',
+                    color: AppColors.textSecondary,
+                    fontSize: 11.5,
+                    height: 1.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
             if (switchValue != null)
