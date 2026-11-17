@@ -3520,14 +3520,24 @@ class _PlayerScreenState extends State<PlayerScreen> {
           compactDialog: true,
           label: context.l10n.auto,
           active: _c.state.activeQuality == null,
-          onTap: () { Navigator.pop(context); _c.chooseQuality(null); _bumpControls(); },
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pop(context);
+            _c.chooseQuality(null);
+            _bumpControls();
+          },
         ),
         for (final v in _c.state.qualities)
           _SheetRow(
             compactDialog: true,
             label: v.quality,
             active: _c.state.activeQuality?.url == v.url,
-            onTap: () { Navigator.pop(context); _c.chooseQuality(v); _bumpControls(); },
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+              _c.chooseQuality(v);
+              _bumpControls();
+            },
           ),
       ];
     } else if (_c.mediaVideoTracks.length > 1) {
@@ -3537,7 +3547,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
             compactDialog: true,
             label: '${t.h}p',
             active: _c.selectedVideoTrack?.id == t.id,
-            onTap: () { Navigator.pop(context); _c.selectVideoTrack(t); _bumpControls(); },
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+              _c.selectVideoTrack(t);
+              _bumpControls();
+            },
           ),
       ];
     } else if (sourceOptions.isNotEmpty) {
@@ -3549,6 +3564,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             subtitle: _sourceGroupName(source),
             active: source.url == _c.state.active?.url,
             onTap: () async {
+              Navigator.pop(context);
               Navigator.pop(context);
               await _c.selectSource(source);
               await _maybeRecast();
@@ -3597,6 +3613,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 : (RegExp(r'\d{3,4}\s*p', caseSensitive: false).firstMatch(s.label ?? '')?.group(0) ?? s.container.name),
             active: s == _c.state.active,
             onTap: () async {
+              Navigator.pop(context);
               Navigator.pop(context);
               await _c.selectSource(s);
               await _maybeRecast();
@@ -3659,6 +3676,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     _openGroupedSourceQualities(name, options);
                     return;
                   }
+                  Navigator.pop(context);
                   await _c.selectSource(active);
                   await _maybeRecast();
                   _bumpControls();
