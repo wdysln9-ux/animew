@@ -2297,7 +2297,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) => _CompactPlayerDialog(
-        maxHeight: 430,
+        maxHeight: 390,
         child: StatefulBuilder(
           builder: (context, refreshSheet) => SafeArea(
             top: false,
@@ -2319,33 +2319,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Pencahayaan sinematik',
-                            style: TextStyle(
-                              fontFamily: 'Urbanist',
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        Switch.adaptive(
-                          value: _cinematicLighting,
-                          onChanged: (value) {
-                            _setCinematicLighting(value);
-                            refreshSheet(() {});
-                          },
-                          activeThumbColor: Colors.white,
-                          activeTrackColor: AppColors.accent,
-                          inactiveThumbColor: AppColors.textTertiary,
-                          inactiveTrackColor: AppColors.surface2,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
                     _CinematicSlider(
                       label: 'Kecerahan',
                       value: _cinematicBrightness,
