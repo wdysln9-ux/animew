@@ -51,6 +51,7 @@ class _AudioSubsSheet extends StatefulWidget {
 
 class _AudioSubsSheetState extends State<_AudioSubsSheet> {
   late String _category = widget.controller.activeCategory;
+  String? _selectedSubtitleId;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +61,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
       stream: c.player.stream.track,
       builder: (context, snap) {
         final track = snap.data ?? c.player.state.track;
-        final subId = track.subtitle.id;
+        final subId = _selectedSubtitleId ?? track.subtitle.id;
         return Padding(
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
           child: Column(
@@ -114,6 +115,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                 label: 'No',
                 active: subId == 'no',
                 onTap: () {
+                  setState(() => _selectedSubtitleId = 'no');
                   widget.onSubtitlesOff?.call();
                   c.subtitlesOff();
                   widget.onInteract();
@@ -138,6 +140,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                               )),
                     active: subId == t.id,
                     onTap: () {
+                      setState(() => _selectedSubtitleId = t.id);
                       c.setSubtitle(t);
                       widget.onInteract();
                     },
@@ -152,6 +155,7 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
                   // media_kit track id IS the url — so the active one highlights.
                   active: subId == s.url,
                   onTap: () async {
+                    setState(() => _selectedSubtitleId = s.url);
                     widget.onSoftSubPicked?.call(s);
                     await c.setSoftSub(s);
                     widget.onInteract();
