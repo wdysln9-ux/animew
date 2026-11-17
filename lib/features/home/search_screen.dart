@@ -1939,6 +1939,7 @@ class _SearchViewState extends State<_SearchView>
     ];
 
     return ListView(
+      key: PageStorageKey<String>('search-source-results:${widget.scope.name}'),
       padding: EdgeInsets.only(
         bottom: MediaQuery.paddingOf(context).bottom,
       ),
@@ -2088,6 +2089,7 @@ class _SearchViewState extends State<_SearchView>
         SizedBox(
           height: itemH,
           child: ListView.builder(
+            key: PageStorageKey<String>('search-source-row:${g.sourceId}'),
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             // With a screen reader on, build every poster (not just the lazy
@@ -2407,6 +2409,7 @@ child: PosterCard(
   // ── Flat results grid (single-source / vertical) ──────────────────────────
   Widget _resultsGrid(List<MediaItem> items, double cellW) {
     return GridView.builder(
+      key: PageStorageKey<String>('search-flat-grid:${widget.scope.name}'),
       padding: EdgeInsets.fromLTRB(
         16,
         6,
