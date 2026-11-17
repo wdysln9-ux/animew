@@ -425,7 +425,7 @@ class _PosterCardState extends State<PosterCard>
                           fadeInDuration:
                               sl.isRegistered<AppMode>() && sl<AppMode>().isTv
                               ? Duration.zero
-                              : const Duration(milliseconds: 45),
+                              : const Duration(milliseconds: 20),
                           placeholder: (context, url) =>
                               ColoredBox(color: _loadingSurfaceColor),
                           errorWidget: (context, url, err) =>
