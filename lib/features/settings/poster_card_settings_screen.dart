@@ -81,13 +81,15 @@ class _PosterCardSettingsScreenState extends State<PosterCardSettingsScreen> {
       subtitle: subtitle,
       subtitleMaxLines: 2,
       onTap: enabled ? () => flip(!value) : null,
-      trailing: Switch.adaptive(
-        value: value,
-        activeThumbColor: Colors.white,
-        activeTrackColor: AppColors.accent,
-        inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
-        inactiveTrackColor: AppColors.surface2,
-        onChanged: enabled ? flip : null,
+      trailing: IgnorePointer(
+        child: Switch.adaptive(
+          value: value,
+          activeThumbColor: Colors.white,
+          activeTrackColor: AppColors.accent,
+          inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
+          inactiveTrackColor: AppColors.surface2,
+          onChanged: enabled ? flip : null,
+        ),
       ),
     );
   }
