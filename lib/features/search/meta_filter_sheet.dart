@@ -66,7 +66,7 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
   bool get isAniList => widget.kind == ZKind.anime ||
       widget.kind == ZKind.manga || widget.kind == ZKind.novel;
   int get count =>
-      f.genres.length + f.tags.length + f.years.length +
+      f.genres.length + f.excludedGenres.length + f.tags.length + f.years.length +
       f.seasons.length + f.formats.length + f.statuses.length +
       (f.minEpisodes > 0 || f.maxEpisodes < 250 ? 1 : 0) +
       (f.minDuration > 0 || f.maxDuration < 250 ? 1 : 0) +
@@ -298,8 +298,31 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     FutureBuilder<List<String>>(
                       future: genresFuture,
                       builder: (context, snap) => snap.hasData
-                        ? _chips(snap.data!.map((g) => _ChipData(g, f.genres.contains(g),
-                            () => _toggle<String>(f.genres, g, (xs) => f = f.copyWith(genres: xs)))).toList(), cs)
+                        ? _chips(snap.data!.map((g) => _ChipData(
+                            g,
+                            f.genres.contains(g) || f.excludedGenres.contains(g),
+                            () => setState(() {
+                              final included = [...f.genres]..remove(g);
+                              final excluded = [...f.excludedGenres]..remove(g);
+                              if (f.excludedGenres.contains(g)) {
+                                f = f.copyWith(genres: included, excludedGenres: excluded);
+                              } else {
+                                if (f.genres.contains(g)) {
+                                  f = f.copyWith(genres: included, excludedGenres: excluded);
+                                } else {
+                                  included.add(g);
+                                  f = f.copyWith(genres: included, excludedGenres: excluded);
+                                }
+                              }
+                            }),
+                            onLongPress: () => setState(() {
+                              final included = [...f.genres]..remove(g);
+                              final excluded = [...f.excludedGenres];
+                              if (!excluded.contains(g)) excluded.add(g);
+                              f = f.copyWith(genres: included, excludedGenres: excluded);
+                            }),
+                            excluded: f.excludedGenres.contains(g),
+                          )).toList(), cs)
                         : const Padding(padding: EdgeInsets.all(12), child: LinearProgressIndicator()),
                     ),
                     const SizedBox(height: 22),
@@ -421,10 +444,11 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
       showCheckmark: false,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: const VisualDensity(horizontal: -1, vertical: 0),
-      selectedColor: AppColors.accent,
+      selectedColor: d.excluded ? Colors.red.shade700 : AppColors.accent,
       backgroundColor: Colors.transparent,
+      onLongPress: d.onLongPress,
       side: BorderSide(
-        color: d.selected || d.action
+        color: d.excluded ? Colors.red : d.selected || d.action
             ? AppColors.accent
             : cs.outline.withValues(alpha: .24),
       ),
@@ -486,9 +510,11 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
 }
 
 class _ChipData {
-  const _ChipData(this.label, this.selected, this.onTap, {this.action = false});
+  const _ChipData(this.label, this.selected, this.onTap, {this.action = false, this.onLongPress, this.excluded = false});
   final String label;
   final bool selected;
   final VoidCallback onTap;
   final bool action;
+  final VoidCallback? onLongPress;
+  final bool excluded;
 }
