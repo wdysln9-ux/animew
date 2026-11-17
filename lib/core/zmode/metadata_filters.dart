@@ -265,7 +265,7 @@ extension MetaCountryDetails on MetaCountry {
   };
 }
 
-enum MetaSort { popularity, score, trending, newest, episodeNew, title, recommendation }
+enum MetaSort { popularity, score, trending, newest, title, recommendation }
 
 /// The genres offered for [kind]. AniList's list is fixed and small, and the
 /// TMDB ids below cover the same ground for movies and TV, so one picker
