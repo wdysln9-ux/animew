@@ -519,15 +519,31 @@ class HomeCubit extends Cubit<HomeState> {
     List<MediaItem> airingItems,
   ) {
     final isTv = _sl.isRegistered<AppMode>() ? _sl<AppMode>().isTv : false;
+    // These built-in AniList Home catalogues are intentionally omitted from
+    // the shipped Anime layout. Keep the rest of the provider catalogue intact.
+    const removedAniListSectionTitles = {
+      'Paling Dinanti',
+      'Action',
+      'Romantis',
+      'Anime Selesai',
+      'Rekomendasi Anime',
+    };
+    final visibleSections = kind == ZKind.anime
+        ? sections
+            .where((section) => !removedAniListSectionTitles.contains(section.title))
+            .toList()
+        : sections;
     final rowSections = [
-      ...providerRowSections(sections, isTv: isTv),
+      ...providerRowSections(visibleSections, isTv: isTv),
       if (kind == ZKind.anime && airingItems.isNotEmpty)
         HomeSection(title: airingEpisodesSectionTitle, items: airingItems),
     ];
+    // Remove AniList tracker catalogue rows from the Anime Home layout too:
+    // new episodes, continue on AniList, and the four status buckets.
     final extraRowIds = kind == ZKind.anime
-        ? const [airingEpisodesRowId]
+        ? const <String>[]
         : const <String>[];
-    final withTrackerRows = kind != null;
+    final withTrackerRows = kind != null && kind != ZKind.anime;
     final layoutKey = _layoutKey;
     final withRail = streamingRailForLayout(layoutKey);
     final available = availableRowIds(
