@@ -64,13 +64,20 @@ class FastFlingPageScrollPhysics extends PageScrollPhysics {
   ) {
     final viewport = position.viewportDimension;
     if (viewport <= 0) return position.pixels;
+    // Fractional PageViews advance by the page extent, not the full viewport.
+    // Using the viewport here made posterStack flings travel only about half
+    // the intended distance, so a long swipe moved just a couple of cards.
+    final pageExtent = position is PageMetrics
+        ? viewport * position.viewportFraction
+        : viewport;
+    if (pageExtent <= 0) return position.pixels;
     if (velocity.abs() < tolerance.velocity) {
-      return (position.pixels / viewport).roundToDouble() * viewport;
+      return (position.pixels / pageExtent).roundToDouble() * pageExtent;
     }
-    final currentPage = (position.pixels / viewport).round();
-    final pages = (velocity.abs() / 400).ceil().clamp(1, 12);
+    final currentPage = (position.pixels / pageExtent).round();
+    final pages = (velocity.abs() / 300).ceil().clamp(1, 16);
     final targetPage = currentPage + (velocity.isNegative ? -pages : pages);
-    return (targetPage * viewport)
+    return (targetPage * pageExtent)
         .clamp(position.minScrollExtent, position.maxScrollExtent)
         .toDouble();
   }
