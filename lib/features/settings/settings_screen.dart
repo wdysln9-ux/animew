@@ -1011,7 +1011,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         keywords: 'source updates notify extensions upgrade',
         trailing: Switch.adaptive(
           value: sl<CloudStreamManager>().notifyUpdates,
-          activeThumbColor: AppColors.accent,
+          activeThumbColor: Colors.white,
+        activeTrackColor: AppColors.accent,
+        inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
+        inactiveTrackColor: AppColors.surface2,
           onChanged: (v) async {
             await sl<CloudStreamManager>().setNotifyUpdates(v);
             if (mounted) setState(() {});
@@ -1027,7 +1030,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'auto update extensions sources plugins automatic upgrade cloudstream aniyomi',
         trailing: Switch.adaptive(
           value: sl<PlaybackPrefs>().autoUpdateExtensions,
-          activeThumbColor: AppColors.accent,
+          activeThumbColor: Colors.white,
+        activeTrackColor: AppColors.accent,
+        inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
+        inactiveTrackColor: AppColors.surface2,
           onChanged: (v) async {
             await sl<PlaybackPrefs>().setAutoUpdateExtensions(v);
             if (mounted) setState(() {});
