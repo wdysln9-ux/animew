@@ -104,7 +104,6 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _SheetSectionHeader(context.l10n.subtitles, compactDialog: true),
         Flexible(
           child: ListView(
             shrinkWrap: true,
