@@ -42,6 +42,7 @@ class ContentRow extends StatelessWidget {
         SizedBox(
           height: itemHeight,
           child: ListView.builder(
+            key: PageStorageKey<String>('home-content-row:$title'),
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             padding: const EdgeInsets.symmetric(horizontal: 16),
