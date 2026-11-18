@@ -368,7 +368,11 @@ class _MetaFilterSheetState extends State<_MetaFilterSheet> {
                     const SizedBox(height: 18),
                     const Divider(),
                     SwitchListTile.adaptive(
-                      activeColor: AppColors.accent,
+                      activeThumbColor: Colors.white,
+                      activeTrackColor: AppColors.accent,
+                      inactiveThumbColor: AppColors.accent.withValues(alpha: 0.58),
+                      inactiveTrackColor: AppColors.surface2,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       contentPadding: EdgeInsets.zero,
                       dense: true,
                       title: const Text('Sembunyikan Daftar', style: TextStyle(fontSize: 14)),
