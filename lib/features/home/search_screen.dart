@@ -76,12 +76,14 @@ MetaFilters initialSearchFilters(
   MetaFilters? provided,
   bool privacyAllowsAdult, {
   bool trendingByDefault = false,
+  bool preserveProvidedSort = false,
 }) {
   final defaults = MetaFilters(
     adult: privacyAllowsAdult,
     sort: trendingByDefault ? MetaSort.trending : MetaSort.popularity,
   );
   if (provided == null) return defaults;
+  if (preserveProvidedSort) return provided;
   // Genre/tag entry points may provide filters created elsewhere. Keep their
   // selections, but use Trending when they still carry the old default sort.
   if (trendingByDefault && provided.sort == MetaSort.popularity) {
@@ -101,6 +103,7 @@ class SearchScreen extends StatefulWidget {
     this.fixedSourceId,
     this.initialFilters,
     this.initialHideMyAnime = false,
+    this.preserveInitialSort = false,
   });
 
   final String? initialQuery;
@@ -139,6 +142,7 @@ class SearchScreen extends StatefulWidget {
   /// the results, not on an empty filter sheet.
   final MetaFilters? initialFilters;
   final bool initialHideMyAnime;
+  final bool preserveInitialSort;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -356,7 +360,8 @@ class _SearchViewState extends State<_SearchView>
     // Arrived from a genre or tag chip: run that filtered browse straight
     // away, not a frame later. context.read is safe here, it subscribes to
     // nothing.
-    if (!(widget.initialFilters ?? const MetaFilters()).isEmpty) {
+    if (widget.preserveInitialSort ||
+        !(widget.initialFilters ?? const MetaFilters()).isEmpty) {
       _applyMetaFilters();
     } else if (widget.scope == SearchScope.library &&
         _metaFilters.sort == MetaSort.trending) {
@@ -528,6 +533,7 @@ class _SearchViewState extends State<_SearchView>
           sl<ContentModeCubit>().state,
           ZModePrefs.streamKind,
         ) == ZKind.anime,
+    preserveProvidedSort: widget.preserveInitialSort,
   );
 
   /// What this search will actually look through.
