@@ -6,7 +6,7 @@ import 'person.dart';
 /// from a metadata API (AniList for anime, TMDB for movie/TV) — never persisted,
 /// so it carries no JSON serialization.
 class CastMember extends Equatable {
-  const CastMember({required this.name, this.role, this.photo, this.person});
+  const CastMember({required this.name, this.role, this.photo, this.person, this.voiceActor});
 
   /// The person (actor / voice actor) or, for anime, the character.
   final String name;
@@ -22,8 +22,11 @@ class CastMember extends Equatable {
   /// those cards stay non-tappable.
   final PersonRef? person;
 
+  /// Japanese voice actor, when supplied by AniList.
+  final String? voiceActor;
+
   @override
-  List<Object?> get props => [name, role, photo, person];
+  List<Object?> get props => [name, role, photo, person, voiceActor];
 }
 
 /// A related title (sequel, prequel, side story, recommendation) shown in the
