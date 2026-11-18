@@ -1950,8 +1950,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _subtitleScaleStartY = 0.88;
   double _subtitleScaleStartSize = 1.0;
 
+  bool get _canEditActiveSubtitle {
+    final extension = _c.activeSubtitleFileExtension;
+    // ASS/SSA carry authored positioning and are rendered by libass. Plain
+    // external subtitle formats can use the draggable Flutter overlay.
+    return extension != null && extension != '.ass' && extension != '.ssa';
+  }
+
   void _onSubtitleScaleStart(ScaleStartDetails details) {
-    if (_c.activeSubtitleFileExtension != '.srt' ||
+    if (!_canEditActiveSubtitle ||
         sl<PlaybackPrefs>().subtitlePositionLocked) return;
     setState(() => _subtitleGestureActive = true);
     _subtitleScaleStartFocal = details.focalPoint;
@@ -1961,7 +1968,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _onSubtitleScaleUpdate(ScaleUpdateDetails details) {
-    if (_c.activeSubtitleFileExtension != '.srt' ||
+    if (!_canEditActiveSubtitle ||
         sl<PlaybackPrefs>().subtitlePositionLocked) return;
     final object = _playerStackKey.currentContext?.findRenderObject();
     if (object is! RenderBox || !object.hasSize) return;
@@ -3154,13 +3161,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
-  void _showCompactSelector(Widget child, {double maxHeight = 390}) {
+  void _showCompactSelector(Widget child, {double? maxHeight}) {
+    final availableHeight = (MediaQuery.sizeOf(context).height * 0.72)
+        .clamp(260.0, 560.0).toDouble();
     showDialog<void>(
       context: context,
       barrierDismissible: true,
       builder: (_) => _CompactPlayerDialog(
-        maxHeight: maxHeight,
-        matchSubtitleHeight: true,
+        maxHeight: maxHeight ?? availableHeight,
+        matchSubtitleHeight: false,
         child: SafeArea(top: false, child: child),
       ),
     );
@@ -3525,8 +3534,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           label: context.l10n.auto,
           active: _c.state.activeQuality == null,
           onTap: () {
-            Navigator.of(context, rootNavigator: true).pop();
-            Navigator.of(context, rootNavigator: true).pop();
+            Navigator.of(context).pop();
             _c.chooseQuality(null);
             _bumpControls();
           },
@@ -3537,8 +3545,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             label: v.quality,
             active: _c.state.activeQuality?.url == v.url,
             onTap: () {
-              Navigator.of(context, rootNavigator: true).pop();
-              Navigator.of(context, rootNavigator: true).pop();
+              Navigator.of(context).pop();
               _c.chooseQuality(v);
               _bumpControls();
             },
@@ -3552,8 +3559,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             label: '${t.h}p',
             active: _c.selectedVideoTrack?.id == t.id,
             onTap: () {
-              Navigator.of(context, rootNavigator: true).pop();
-              Navigator.of(context, rootNavigator: true).pop();
+              Navigator.of(context).pop();
               _c.selectVideoTrack(t);
               _bumpControls();
             },
@@ -3568,8 +3574,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             subtitle: _sourceGroupName(source),
             active: source.url == _c.state.active?.url,
             onTap: () async {
-              Navigator.of(context, rootNavigator: true).pop();
-              Navigator.of(context, rootNavigator: true).pop();
+              Navigator.of(context).pop();
               await _c.selectSource(source);
               await _maybeRecast();
               _bumpControls();
@@ -3617,8 +3622,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 : (RegExp(r'\d{3,4}\s*p', caseSensitive: false).firstMatch(s.label ?? '')?.group(0) ?? s.container.name),
             active: s == _c.state.active,
             onTap: () async {
-              Navigator.of(context, rootNavigator: true).pop();
-              Navigator.of(context, rootNavigator: true).pop();
+              Navigator.of(context).pop();
               await _c.selectSource(s);
               await _maybeRecast();
               _bumpControls();
@@ -4817,7 +4821,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   // touch/seek overlay so it can receive drag and pinch gestures.
                   // The GestureDetector itself wraps only the rendered text bounds.
                   if (!sl<PlaybackPrefs>().styledSubtitles ||
-                      _c.activeSubtitleFileExtension == '.srt')
+                      _canEditActiveSubtitle)
                     Positioned.fill(
                       child: StreamBuilder<List<String>>(
                         stream: _c.player.stream.subtitle,
@@ -4840,7 +4844,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           if (caption.isEmpty) return const SizedBox.shrink();
                           final prefs = sl<PlaybackPrefs>();
                            final canEditSubtitle =
-                               _c.activeSubtitleFileExtension == '.srt';
+                               _canEditActiveSubtitle;
                           return LayoutBuilder(
                             builder: (context, constraints) {
                               final subtitle = Transform.scale(
