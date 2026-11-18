@@ -37,7 +37,7 @@ const _features = <_MenuFeature>[
   _MenuFeature('shorts','Short','Jelajahi video pendek vertikal dari YouTube.',_MenuGroup.fun,Icons.smart_display_rounded,url:'https://www.youtube.com/shorts',service:'YouTube'),
   _MenuFeature('guess','Tebak Karakter','Tebak karakter dari gambar, petunjuk, atau siluet.',_MenuGroup.fun,Icons.person_search_rounded),
   _MenuFeature('quiz','Kuis Anime','Uji pengetahuan tentang anime, studio, karakter, dan pengisi suara.',_MenuGroup.fun,Icons.quiz_rounded),
-  _MenuFeature('games','Mini Games','Permainan ringan seperti Tic-tac-toe, tebak kata, dan sambung kata.',_MenuGroup.fun,Icons.sports_esports_rounded),
+  _MenuFeature('games','Mini Games','Tic-tac-toe, tebak kata, dan sambung kata untuk dimainkan lokal.',_MenuGroup.fun,Icons.sports_esports_rounded),
   _MenuFeature('music','Musik','Cari dan putar soundtrack anime melalui YouTube Music.',_MenuGroup.fun,Icons.music_note_rounded,url:'https://music.youtube.com/search?q=anime%20soundtrack',service:'YouTube Music'),
   _MenuFeature('explorer','Penjelajah Anime','Jelajahi anime berdasarkan studio, genre, tema, tahun, dan rekomendasi.',_MenuGroup.anime,Icons.travel_explore_rounded),
   _MenuFeature('characters','Database Karakter','Jelajahi karakter, pengisi suara, relasi, dan anime terkait.',_MenuGroup.anime,Icons.face_rounded),
