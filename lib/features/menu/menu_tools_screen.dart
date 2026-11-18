@@ -1,7 +1,10 @@
 import 'dart:math';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
@@ -27,6 +30,9 @@ class MenuToolsScreen extends StatelessWidget {
       'games' => const _TicTacToeScreen(),
       'roulette' => const _AnimeRouletteScreen(),
       'random-character' => const _RandomCharacterScreen(),
+      'guess' => const _GuessCharacterScreen(),
+      'quiz' => const _AnimeQuizScreen(),
+      'screenshots' => const _ScreenshotGalleryScreen(),
       _ => const _UnavailableMenuToolScreen(),
     };
   }
@@ -437,4 +443,183 @@ class _UnavailableMenuToolScreen extends StatelessWidget {
   const _UnavailableMenuToolScreen();
   @override
   Widget build(BuildContext context) => const _BasePage(title: 'Fitur', child: Center(child: Text('Fitur ini belum tersedia.')));
+}
+
+
+class _GuessCharacterScreen extends StatefulWidget {
+  const _GuessCharacterScreen();
+  @override State<_GuessCharacterScreen> createState() => _GuessCharacterScreenState();
+}
+
+class _GuessCharacterScreenState extends State<_GuessCharacterScreen> {
+  Map<String, dynamic>? _media;
+  dynamic _character;
+  final _answer = TextEditingController();
+  bool _loading = false, _revealed = false;
+  String? _result;
+
+  Future<void> _next() async {
+    setState(() { _loading = true; _revealed = false; _result = null; _answer.clear(); });
+    try {
+      final api = sl<AniListService>().api;
+      final anime = await api.searchMedia('anime', perPage: 40);
+      final candidates = anime.where((e) => e['id'] is num).toList()..shuffle();
+      for (final m in candidates.take(10)) {
+        final cast = (await api.mediaCharacters((m['id'] as num).toInt())).cast;
+        if (cast.isEmpty) continue;
+        if (!mounted) return;
+        setState(() { _media = m; _character = cast[Random().nextInt(cast.length)]; });
+        return;
+      }
+      throw StateError('No character');
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Soal belum bisa dimuat. Coba lagi.')));
+    } finally { if (mounted) setState(() => _loading = false); }
+  }
+
+  void _check() {
+    if (_character == null) return;
+    final expected = (_character.name as String).toLowerCase().trim();
+    final answer = _answer.text.toLowerCase().trim();
+    setState(() { _revealed = true; _result = answer == expected ? 'Benar!' : 'Belum tepat. Jawabannya: ${_character.name}'; });
+  }
+
+  @override void dispose() { _answer.dispose(); super.dispose(); }
+
+  @override Widget build(BuildContext context) => _BasePage(title: 'Tebak Karakter', child: ListView(padding: const EdgeInsets.all(20), children: [
+    Text('Tebak nama karakter dari gambar yang ditampilkan.', style: AppText.body.copyWith(color: AppColors.textSecondary)),
+    const SizedBox(height: 14),
+    FilledButton.icon(onPressed: _loading ? null : _next, icon: const Icon(Icons.shuffle), label: Text(_loading ? 'Menyiapkan soal...' : 'Mulai / Soal berikutnya')),
+    if (_loading) const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator())),
+    if (_character != null) ...[
+      const SizedBox(height: 16),
+      if (_character.photo != null) Center(child: Image.network(_character.photo, height: 280, fit: BoxFit.contain, errorBuilder: (_,__,___) => const SizedBox(height: 120, child: Icon(Icons.person, size: 60)))),
+      const SizedBox(height: 12),
+      TextField(controller: _answer, enabled: !_revealed, decoration: const InputDecoration(labelText: 'Nama karakter')),
+      const SizedBox(height: 10),
+      if (!_revealed) FilledButton(onPressed: _check, child: const Text('Periksa jawaban')),
+      if (_result != null) Text(_result!, style: AppText.title.copyWith(color: AppColors.accent)),
+      if (_revealed) Text('Anime: ${((_media?['title'] as Map?)?['romaji'] ?? (_media?['title'] as Map?)?['english'] ?? '-')}', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+    ],
+  ]));
+}
+
+class _AnimeQuizScreen extends StatefulWidget {
+  const _AnimeQuizScreen();
+  @override State<_AnimeQuizScreen> createState() => _AnimeQuizScreenState();
+}
+
+class _AnimeQuizScreenState extends State<_AnimeQuizScreen> {
+  List<Map<String, dynamic>> _pool = [];
+  Map<String, dynamic>? _question;
+  List<String> _choices = [];
+  String? _selected;
+  int _score = 0, _answered = 0;
+  bool _loading = false;
+
+  String _title(Map<String, dynamic> m) {
+    final t = m['title'] is Map ? m['title'] as Map : const {};
+    return (t['romaji'] ?? t['english'] ?? 'Anime').toString();
+  }
+
+  Future<void> _next() async {
+    setState(() => _loading = true);
+    try {
+      if (_pool.isEmpty) _pool = await sl<AniListService>().api.searchMedia('anime', perPage: 40);
+      if (_pool.length < 4) throw StateError('Not enough anime');
+      _pool.shuffle();
+      final q = _pool.first;
+      final correct = _title(q);
+      final choices = <String>{correct};
+      for (final m in _pool.skip(1)) {
+        choices.add(_title(m));
+        if (choices.length == 4) break;
+      }
+      if (mounted) setState(() { _question = q; _choices = choices.toList()..shuffle(); _selected = null; });
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kuis gagal dimuat.')));
+    } finally { if (mounted) setState(() => _loading = false); }
+  }
+
+  void _choose(String value) {
+    if (_selected != null || _question == null) return;
+    final correct = value == _title(_question!);
+    setState(() { _selected = value; _answered++; if (correct) _score++; });
+  }
+
+  @override Widget build(BuildContext context) {
+    final cover = _question?['coverImage'] is Map ? (_question!['coverImage'] as Map)['large'] as String? : null;
+    return _BasePage(title: 'Kuis Anime', child: ListView(padding: const EdgeInsets.all(20), children: [
+      Text('Tebak judul anime dari poster.', style: AppText.body.copyWith(color: AppColors.textSecondary)),
+      const SizedBox(height: 8),
+      Text('Skor: $_score / $_answered', style: AppText.title.copyWith(color: AppColors.accent)),
+      const SizedBox(height: 12),
+      FilledButton.icon(onPressed: _loading ? null : _next, icon: const Icon(Icons.play_arrow), label: Text(_question == null ? 'Mulai kuis' : 'Soal berikutnya')),
+      if (_loading) const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator())),
+      if (_question != null) ...[
+        const SizedBox(height: 14),
+        if (cover != null) Center(child: ClipRRect(borderRadius: BorderRadius.circular(14), child: Image.network(cover, height: 300, fit: BoxFit.contain))),
+        const SizedBox(height: 14),
+        for (final choice in _choices) Padding(padding: const EdgeInsets.only(bottom: 8), child: OutlinedButton(onPressed: _selected == null ? () => _choose(choice) : null, style: OutlinedButton.styleFrom(side: BorderSide(color: _selected == choice ? (choice == _title(_question!) ? Colors.green : AppColors.accent) : AppColors.hairline)), child: Text(choice))),
+        if (_selected != null) Text(_selected == _title(_question!) ? 'Jawaban benar!' : 'Jawaban: ${_title(_question!)}', style: AppText.title.copyWith(color: AppColors.accent)),
+      ],
+    ]));
+  }
+}
+
+class _ScreenshotGalleryScreen extends StatefulWidget {
+  const _ScreenshotGalleryScreen();
+  @override State<_ScreenshotGalleryScreen> createState() => _ScreenshotGalleryScreenState();
+}
+
+class _ScreenshotGalleryScreenState extends State<_ScreenshotGalleryScreen> {
+  final _picker = ImagePicker();
+  List<String> _paths = [];
+  bool _loading = true;
+
+  @override void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    final box = await _openMenuToolsBox();
+    final raw = box.get('screenshot_paths');
+    if (!mounted) return;
+    setState(() { _paths = raw is List ? raw.whereType<String>().where((p) => File(p).existsSync()).toList() : []; _loading = false; });
+  }
+
+  Future<void> _add() async {
+    try {
+      final picked = await _picker.pickMultiImage(imageQuality: 95);
+      if (picked.isEmpty) return;
+      final docs = await getApplicationDocumentsDirectory();
+      final dir = Directory('${docs.path}/animew_screenshots');
+      await dir.create(recursive: true);
+      for (final x in picked) {
+        final ext = x.path.contains('.') ? x.path.substring(x.path.lastIndexOf('.')) : '.jpg';
+        final target = '${dir.path}/shot_${DateTime.now().microsecondsSinceEpoch}_${_paths.length}$ext';
+        await File(x.path).copy(target);
+        _paths.insert(0, target);
+      }
+      final box = await _openMenuToolsBox();
+      await box.put('screenshot_paths', _paths);
+      if (mounted) setState(() {});
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal menambahkan gambar.')));
+    }
+  }
+
+  Future<void> _remove(String path) async {
+    _paths.remove(path);
+    try { await File(path).delete(); } catch (_) {}
+    final box = await _openMenuToolsBox();
+    await box.put('screenshot_paths', _paths);
+    if (mounted) setState(() {});
+  }
+
+  @override Widget build(BuildContext context) => _BasePage(title: 'Screenshot Gallery', child: _loading ? const Center(child: CircularProgressIndicator()) : Column(children: [
+    Padding(padding: const EdgeInsets.all(12), child: Row(children: [Expanded(child: Text('Screenshot tersimpan di perangkat ini.', style: AppText.caption.copyWith(color: AppColors.textSecondary))), FilledButton.icon(onPressed: _add, icon: const Icon(Icons.add_photo_alternate), label: const Text('Tambah'))])),
+    Expanded(child: _paths.isEmpty ? Center(child: Text('Belum ada screenshot.', style: AppText.body.copyWith(color: AppColors.textSecondary))) : GridView.builder(padding: const EdgeInsets.all(8), itemCount: _paths.length, gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 7, mainAxisSpacing: 7), itemBuilder: (_, i) {
+      final path = _paths[i];
+      return GestureDetector(onLongPress: () => _remove(path), onTap: () => showDialog<void>(context: context, builder: (_) => Dialog(child: InteractiveViewer(child: Image.file(File(path), fit: BoxFit.contain)))), child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.file(File(path), fit: BoxFit.cover, errorBuilder: (_,__,___) => const ColoredBox(color: Colors.black12, child: Icon(Icons.broken_image)))));
+    })),
+  ]));
 }
