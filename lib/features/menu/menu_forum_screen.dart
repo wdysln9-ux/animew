@@ -265,30 +265,56 @@ class _ThreadDetailScreenState extends State<_ThreadDetailScreen> {
 
   @override void dispose() { _input.dispose(); super.dispose(); }
 
-  @override Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     final user = widget.thread['user'] is Map ? widget.thread['user'] as Map : const {};
+    final avatar = user['avatar'] is Map ? (user['avatar'] as Map)['large'] as String? : null;
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(backgroundColor: AppColors.bg, foregroundColor: AppColors.textPrimary, title: const Text('Diskusi')),
+      appBar: AppBar(backgroundColor: AppColors.bg, foregroundColor: AppColors.textPrimary, elevation: 0, title: const Text('Diskusi')),
       body: Column(children: [
-        Expanded(child: ListView(padding: const EdgeInsets.all(16), children: [
-          Text(widget.thread['title']?.toString() ?? '', style: AppText.headline.copyWith(color: AppColors.textPrimary, fontSize: 22)),
-          const SizedBox(height: 8),
-          Text('Oleh ${user['name'] ?? 'AniList user'}', style: AppText.caption.copyWith(color: AppColors.textTertiary)),
-          const SizedBox(height: 14),
-          Text(_plain(widget.thread['body']?.toString()), style: AppText.body.copyWith(color: AppColors.textSecondary, height: 1.5)),
-          Align(alignment: Alignment.centerLeft, child: TextButton.icon(onPressed: _like, icon: Icon(_liked ? Icons.favorite : Icons.favorite_border, color: AppColors.accent), label: Text('$_likes suka'))),
-          const Divider(),
-          Text('Komentar', style: AppText.title.copyWith(color: AppColors.textPrimary)),
+        Expanded(child: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 18), children: [
+          Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(22), border: Border.all(color: AppColors.hairline)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('FORUM THREAD', style: AppText.caption.copyWith(color: AppColors.accent, fontWeight: FontWeight.w900, letterSpacing: 1)),
+            const SizedBox(height: 10),
+            Text(widget.thread['title']?.toString() ?? '', style: AppText.headline.copyWith(color: AppColors.textPrimary, fontSize: 23, fontWeight: FontWeight.w900, height: 1.2)),
+            const SizedBox(height: 14),
+            Row(children: [
+              CircleAvatar(radius: 17, backgroundColor: AppColors.surface2, backgroundImage: avatar == null ? null : NetworkImage(avatar), child: avatar == null ? const Icon(Icons.person_rounded, size: 17) : null),
+              const SizedBox(width: 9),
+              Expanded(child: Text(user['name']?.toString() ?? 'AniList user', style: AppText.caption.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w700))),
+              Text('${widget.thread['replyCount'] ?? 0} balasan', style: AppText.caption.copyWith(color: AppColors.textTertiary, fontSize: 10)),
+            ]),
+            const SizedBox(height: 16),
+            Text(_plain(widget.thread['body']?.toString()), style: AppText.body.copyWith(color: AppColors.textSecondary, height: 1.65)),
+            const SizedBox(height: 12),
+            Align(alignment: Alignment.centerLeft, child: FilledButton.tonalIcon(
+              onPressed: _like,
+              icon: Icon(_liked ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: AppColors.accent),
+              label: Text('$_likes suka'),
+              style: FilledButton.styleFrom(foregroundColor: AppColors.accent, backgroundColor: AppColors.accentSoft),
+            )),
+          ])),
+          const SizedBox(height: 20),
+          Row(children: [
+            Text('Komentar', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+            const SizedBox(width: 8),
+            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: AppColors.surface2, borderRadius: BorderRadius.circular(8)), child: Text('${_comments.length}', style: AppText.caption.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w800))),
+          ]),
+          const SizedBox(height: 10),
           if (_loading) const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
-          if (!_loading && _comments.isEmpty) Text('Belum ada komentar.', style: AppText.caption.copyWith(color: AppColors.textTertiary)),
-          for (final c in _comments) _CommentCard(comment: c, onReply: () => _reply(c)),
+          if (!_loading && _comments.isEmpty) Padding(padding: const EdgeInsets.symmetric(vertical: 18), child: Text('Jadi yang pertama ikut berdiskusi.', style: AppText.caption.copyWith(color: AppColors.textTertiary))),
+          for (final comment in _comments) _CommentCard(comment: comment, onReply: () => _reply(comment)),
         ])),
-        SafeArea(top: false, child: Padding(padding: const EdgeInsets.all(10), child: Row(children: [
-          Expanded(child: TextField(controller: _input, minLines: 1, maxLines: 4, decoration: const InputDecoration(hintText: 'Tulis komentar...'))),
-          const SizedBox(width: 8),
-          IconButton.filled(onPressed: _sending ? null : _send, icon: _sending ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.send)),
-        ]))),
+        SafeArea(top: false, child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: BoxDecoration(color: AppColors.bg, border: Border(top: BorderSide(color: AppColors.hairline))),
+          child: Row(children: [
+            Expanded(child: TextField(controller: _input, minLines: 1, maxLines: 4, decoration: InputDecoration(hintText: 'Tulis komentar...', filled: true, fillColor: AppColors.surface, contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12), border: OutlineInputBorder(borderRadius: BorderRadius.circular(17), borderSide: BorderSide.none)))),
+            const SizedBox(width: 8),
+            IconButton.filled(onPressed: _sending ? null : _send, style: IconButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white), icon: _sending ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.arrow_upward_rounded)),
+          ]),
+        )),
       ]),
     );
   }
