@@ -2136,8 +2136,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
       barrierDismissible: true,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, refresh) => _CompactPlayerDialog(
-          maxHeight: 390,
-          matchSubtitleHeight: true,
+          maxHeight: (MediaQuery.sizeOf(context).height * 0.82)
+              .clamp(420.0, 680.0).toDouble(),
+          matchSubtitleHeight: false,
           child: _SheetColumn(
             header: null,
             compactDialog: true,
@@ -3679,12 +3680,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     ));
                 },
                 onTap: () async {
-                  Navigator.of(context, rootNavigator: true).pop();
+                  // Dismiss only the source selector. Popping the root
+                  // navigator twice also removes the player route.
+                  Navigator.of(context).pop();
                   if (options.length > 1) {
                     _openGroupedSourceQualities(name, options);
                     return;
                   }
-                  Navigator.of(context, rootNavigator: true).pop();
                   await _c.selectSource(active);
                   await _maybeRecast();
                   _bumpControls();
