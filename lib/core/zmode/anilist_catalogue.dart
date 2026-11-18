@@ -185,16 +185,8 @@ class AniListCatalogue implements AnimeCatalogue {
         '$seasonTitle ${now.year}',
         'sort:SCORE_DESC,season:$season,seasonYear:${now.year}',
       ),
-      (
-        'Paling Dinanti',
-        'sort:POPULARITY_DESC,season:$nextSeason,seasonYear:$nextYear,'
-            'status:NOT_YET_RELEASED',
-      ),
       ('Populer', 'sort:POPULARITY_DESC'),
       ('Skor Tinggi', 'sort:SCORE_DESC'),
-      ('Action', 'genre_in:["Action"],status:FINISHED,sort:TRENDING_DESC'),
-      ('Romantis', 'genre_in:["Romance"],status:FINISHED,sort:TRENDING_DESC'),
-      ('Anime Selesai', _completedAnimeRowId),
     ];
   }
 
@@ -218,11 +210,7 @@ class AniListCatalogue implements AnimeCatalogue {
     // Fetch a genuinely random AniList ID sample alongside the normal home
     // request. Sampling IDs across the full anime ID range means score and
     // popularity never influence which titles can appear.
-    final recommendationsFuture = kind == ZKind.anime
-        ? _randomAnimePage()
-        : Future.value(const <MediaItem>[]);
     final data = await _gql('query{ $query }', const {});
-    final recommendations = await recommendationsFuture;
     final out = <HomeSection>[];
     for (final (i, (title, args)) in rows.indexed) {
       var items = args == _completedAnimeRowId
@@ -248,19 +236,6 @@ class AniListCatalogue implements AnimeCatalogue {
             sourceId: ZmodeIds.sourceId,
             kind: 'zm_${kind.name}',
             categoryId: args,
-          ),
-        ),
-      );
-    }
-    if (kind == ZKind.anime && recommendations.isNotEmpty) {
-      out.add(
-        HomeSection(
-          title: 'Rekomendasi Anime',
-          items: recommendations,
-          more: BrowseMore(
-            sourceId: ZmodeIds.sourceId,
-            kind: 'zm_anime',
-            categoryId: _recommendationsRowId,
           ),
         ),
       );
