@@ -2224,7 +2224,7 @@ class _SheetColumn extends StatelessWidget {
           Flexible(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.48,
+                maxHeight: (MediaQuery.sizeOf(context).height * 0.72).clamp(300.0, 600.0),
               ),
               child: ListView(
                 shrinkWrap: true,
