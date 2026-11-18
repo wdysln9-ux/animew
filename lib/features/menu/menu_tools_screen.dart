@@ -184,8 +184,9 @@ class _ChallengeScreenState extends State<_ChallengeScreen> {
   Future<void> _set(int goal, int progress) async {
     final box = await _openMenuToolsBox();
     await box.put('challenge_goal', goal);
-    await box.put('challenge_progress', progress.clamp(0, goal));
-    if (mounted) setState(() { _goal = goal; _progress = progress.clamp(0, goal); });
+    final safeProgress = progress.clamp(0, goal).toInt();
+    await box.put('challenge_progress', safeProgress);
+    if (mounted) setState(() { _goal = goal; _progress = safeProgress; });
   }
 
   @override
