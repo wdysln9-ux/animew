@@ -315,7 +315,7 @@ class _AnimeRouletteScreenState extends State<_AnimeRouletteScreen> {
     try {
       final rows = await sl<AniListService>().api.searchMedia(_query.text.trim().isEmpty ? 'anime' : _query.text.trim(), perPage: 50);
       if (rows.isEmpty) throw StateError('Tidak ada hasil dari AniList.');
-      final valid = rows.where((e) => e['id'] is num).toList();
+      final valid = rows.where((e) => e['id'] is num && e['isAdult'] != true).toList();
       if (valid.isEmpty) throw StateError('Data anime tidak lengkap.');
       if (mounted) setState(() => _picked = valid[Random().nextInt(valid.length)]);
     } catch (e) {
@@ -361,7 +361,7 @@ class _RandomCharacterScreenState extends State<_RandomCharacterScreen> {
     try {
       final api = sl<AniListService>().api;
       final titles = await api.searchMedia('anime', perPage: 50);
-      final candidates = titles.where((e) => e['id'] is num).toList();
+      final candidates = titles.where((e) => e['id'] is num && e['isAdult'] != true).toList();
       if (candidates.isEmpty) throw StateError('Tidak ada anime.');
       candidates.shuffle();
       for (final media in candidates.take(8)) {
@@ -463,7 +463,7 @@ class _GuessCharacterScreenState extends State<_GuessCharacterScreen> {
     try {
       final api = sl<AniListService>().api;
       final anime = await api.searchMedia('anime', perPage: 40);
-      final candidates = anime.where((e) => e['id'] is num).toList()..shuffle();
+      final candidates = anime.where((e) => e['id'] is num && e['isAdult'] != true).toList()..shuffle();
       for (final m in candidates.take(10)) {
         final cast = (await api.mediaCharacters((m['id'] as num).toInt())).cast;
         if (cast.isEmpty) continue;
@@ -525,7 +525,7 @@ class _AnimeQuizScreenState extends State<_AnimeQuizScreen> {
   Future<void> _next() async {
     setState(() => _loading = true);
     try {
-      if (_pool.isEmpty) _pool = await sl<AniListService>().api.searchMedia('anime', perPage: 40);
+      if (_pool.isEmpty) _pool = (await sl<AniListService>().api.searchMedia('anime', perPage: 40)).where((e) => e['isAdult'] != true).toList();
       if (_pool.length < 4) throw StateError('Not enough anime');
       _pool.shuffle();
       final q = _pool.first;
