@@ -360,7 +360,7 @@ class _RandomCharacterScreenState extends State<_RandomCharacterScreen> {
     setState(() { _loading = true; _error = null; _character = null; });
     try {
       final api = sl<AniListService>().api;
-      final titles = await api.searchMedia('anime', perPage: 50);
+      final titles = await api.fetchRandomAnimePool(perPage: 50);
       final candidates = titles.where((e) => e['id'] is num && e['isAdult'] != true).toList();
       if (candidates.isEmpty) throw StateError('Tidak ada anime.');
       candidates.shuffle();
@@ -462,7 +462,7 @@ class _GuessCharacterScreenState extends State<_GuessCharacterScreen> {
     setState(() { _loading = true; _revealed = false; _result = null; _answer.clear(); });
     try {
       final api = sl<AniListService>().api;
-      final anime = await api.searchMedia('anime', perPage: 40);
+      final anime = await api.fetchRandomAnimePool(perPage: 40);
       final candidates = anime.where((e) => e['id'] is num && e['isAdult'] != true).toList()..shuffle();
       for (final m in candidates.take(10)) {
         final cast = (await api.mediaCharacters((m['id'] as num).toInt())).cast;
