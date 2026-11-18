@@ -102,7 +102,8 @@ class _MenuReleaseTrackerScreenState extends State<MenuReleaseTrackerScreen> {
                     final name = (title['romaji'] ?? title['english'] ?? 'Anime').toString();
                     final cover = (item['coverImage'] as Map?)?['large'] as String?;
                     final date = _date(item, _tab == 0);
-                    final episode = (_tab == 0 ? (item['nextAiringEpisode'] as Map?)?['episode'] : null);
+                    final airingInfo = item['nextAiringEpisode'];
+                    final episode = _tab == 0 && airingInfo is Map ? airingInfo['episode'] : null;
                     final details = _tab == 0
                       ? '${episode == null ? 'Episode berikutnya' : 'Episode $episode'} · ${_dateLabel(date)}'
                       : _startDateLabel(item);
@@ -124,7 +125,7 @@ class _MenuReleaseTrackerScreenState extends State<MenuReleaseTrackerScreen> {
                       ]),
                     );
                   },
-                )),
+                ))),
       ]),
     );
   }
