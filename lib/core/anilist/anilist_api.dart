@@ -509,6 +509,28 @@ query($id:Int,$page:Int) {
     return result;
   }
 
+  /// Genre statistics for a public AniList user, used by Recommendation Match.
+  Future<Map<String, int>> userAnimeGenreCounts(String userName) async {
+    if (userName.trim().isEmpty) return const {};
+    final data = await _gql(
+      r'query($name:String){ User(name:$name){ statistics{ anime{ genres{ genre count } } } } }',
+      {'name': userName.trim()},
+    );
+    final user = data?['User'];
+    final statistics = user is Map ? user['statistics'] : null;
+    final anime = statistics is Map ? statistics['anime'] : null;
+    final genres = anime is Map ? anime['genres'] : null;
+    if (genres is! List) return const {};
+    final result = <String, int>{};
+    for (final item in genres) {
+      if (item is! Map) continue;
+      final genre = item['genre'];
+      final count = item['count'];
+      if (genre is String && count is num && count > 0) result[genre] = count.toInt();
+    }
+    return result;
+  }
+
   /// Resolve the MAL cross-reference from AniList's own media id.
   /// This is exact and avoids an ambiguous title search for AniList detail pages.
   Future<int?> malIdByMediaId(int mediaId) async {
