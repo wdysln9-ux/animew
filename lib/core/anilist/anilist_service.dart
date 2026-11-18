@@ -13,7 +13,6 @@ import '../platform/apple_tv.dart';
 import '../tracker/tracker.dart';
 import '../ui/global_messenger.dart';
 import 'anilist_api.dart';
-import 'anilist_graphql.dart';
 import '../di/injector.dart';
 import '../zmode/metadata_provider_prefs.dart';
 import 'anilist_title.dart';
@@ -539,52 +538,6 @@ class AniListService extends ChangeNotifier implements Tracker {
       _fetchListOf(MediaKind.manga, user),
     ]);
     return [...both[0], ...both[1]];
-  }
-
-  /// Read the anime library for catalogue exclusion. Unlike [fetchList],
-  /// this strict variant throws on API errors so callers never treat a failed
-  /// request as an empty AniList library.
-  Future<List<TrackerListItem>> fetchAnimeListStrict() async {
-    final user = _store.viewerName;
-    if (!isConnected || user == null || user.isEmpty) {
-      throw StateError('AniList belum terhubung.');
-    }
-    await _seedTitleLanguageOnce();
-    final headers = Map<String, String>.from(AniListGraphql.headers)
-      ..['Authorization'] = 'Bearer ${_store.token}';
-    final response = await _dio.post<dynamic>(
-      'https://graphql.anilist.co',
-      data: {
-        'query': mediaListCollectionQuery(MediaKind.anime),
-        'variables': {'u': user},
-      },
-      options: Options(
-        headers: headers,
-        validateStatus: (status) => status != null && status < 500,
-      ),
-    );
-    if ((response.statusCode ?? 500) >= 400) {
-      throw StateError('AniList gagal memuat daftar (HTTP ${response.statusCode}).');
-    }
-    final body = response.data;
-    if (body is! Map) throw StateError('Respons AniList tidak valid.');
-    final errors = body['errors'];
-    if (errors is List && errors.isNotEmpty) {
-      final message = errors
-          .whereType<Map>()
-          .map((error) => error['message']?.toString())
-          .whereType<String>()
-          .where((message) => message.isNotEmpty)
-          .join(' · ');
-      throw StateError(message.isEmpty ? 'AniList gagal memuat daftar.' : message);
-    }
-    final entries = parseAniListCollection(body, MediaKind.anime);
-    final data = body['data'];
-    final collection = data is Map ? data['MediaListCollection'] : null;
-    if (collection is! Map || collection['lists'] is! List) {
-      throw StateError('Data daftar AniList tidak lengkap.');
-    }
-    return entries;
   }
 
   /// Adopt the AniList account's title language, for accounts that were
