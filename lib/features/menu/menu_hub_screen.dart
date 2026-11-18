@@ -151,7 +151,7 @@ class _MenuFeatureScreen extends StatelessWidget {
       if(feature.url!=null)FilledButton.icon(onPressed:()=>_open(context),icon:const Icon(Icons.open_in_new_rounded),label:Text('Buka ${feature.service??'layanan'}'),style:FilledButton.styleFrom(backgroundColor:AppColors.accent,foregroundColor:Colors.white,minimumSize:const Size.fromHeight(48))),
       const SizedBox(height:18),
       Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:AppColors.surface,borderRadius:BorderRadius.circular(14)),child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        const Icon(Icons.info_outline_rounded,color:AppColors.accent,size:20),const SizedBox(width:10),
+        Icon(Icons.info_outline_rounded,color:AppColors.accent,size:20),const SizedBox(width:10),
         Expanded(child:Text(feature.url!=null?'Akses layanan ${feature.service} saat ini dibuka melalui aplikasi atau browser. Integrasi langsung di dalam AnimeW masih perlu dikembangkan.':'Halaman fitur sudah disiapkan. Integrasi data dan interaksi khusus fitur ini perlu dikembangkan pada tahap berikutnya.',style:AppText.caption.copyWith(color:AppColors.textSecondary,height:1.45))),
       ])),
     ]),
