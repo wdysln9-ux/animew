@@ -1130,6 +1130,28 @@ query($page:Int) {
     ];
   }
 
+  /// A broad non-adult anime pool for local random games and character picks.
+  Future<List<Map<String, dynamic>>> fetchRandomAnimePool({int page = 1, int perPage = 50}) async {
+    const query = r'''
+query($page:Int,$perPage:Int) {
+  Page(page:$page,perPage:$perPage) {
+    media(type:ANIME,sort:[TRENDING_DESC]) {
+      id isAdult title { romaji english }
+      coverImage { large }
+    }
+  }
+}''';
+    final data = await _gql(query, {'page': page, 'perPage': perPage});
+    final pageData = data?['Page'];
+    final rows = pageData is Map ? pageData['media'] : null;
+    if (rows is! List) return const [];
+    return [
+      for (final row in rows)
+        if (row is Map && row['isAdult'] != true)
+          Map<String, dynamic>.from(row),
+    ];
+  }
+
   /// Search public AniList user profiles.
   Future<List<Map<String, dynamic>>> searchUsers(String search, {int page = 1}) async {
     if (search.trim().isEmpty) return const [];
