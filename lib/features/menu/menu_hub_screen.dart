@@ -49,7 +49,7 @@ const _features = <_MenuFeature>[
   _MenuFeature('news','Anime News','Berita dan kabar terbaru seputar anime.',_MenuGroup.anime,Icons.newspaper_rounded),
   _MenuFeature('screenshots','Screenshot Gallery','Jelajahi dan simpan screenshot anime favorit.',_MenuGroup.anime,Icons.photo_library_rounded),
 ];
-const _labels = {_MenuGroup.community:'Komunitas',_MenuGroup.fun:'Hiburan',_MenuGroup.anime:'Anime',_MenuGroup.anime:'Unik'};
+const _labels = {_MenuGroup.community:'Komunitas',_MenuGroup.fun:'Hiburan',_MenuGroup.anime:'Anime'};
 
 class MenuHubScreen extends StatefulWidget {
   const MenuHubScreen({super.key});
