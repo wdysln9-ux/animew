@@ -9,6 +9,7 @@ import '../schedule/schedule_screen.dart';
 import '../home/explore_screen.dart';
 import '../watch_together/ui/watch_party_lobby_screen.dart';
 import 'menu_tools_screen.dart';
+import 'menu_forum_screen.dart';
 
 enum _MenuGroup { community, fun, anime }
 class _MenuFeature {
@@ -113,6 +114,7 @@ class _MenuHubScreenState extends State<MenuHubScreen> {
       'calendar' => const ScheduleScreen(),
       'explorer' => const ExploreScreen(),
       'watch-together' => const WatchPartyLobbyScreen(),
+      'forum' => const MenuForumScreen(),
       'journal' || 'challenge' || 'games' || 'roulette' || 'random-character' => MenuToolsScreen(featureId: feature.id),
       _ => null,
     };
