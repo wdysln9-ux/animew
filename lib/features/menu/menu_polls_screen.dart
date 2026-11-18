@@ -34,6 +34,13 @@ class _MenuPollsScreenState extends State<MenuPollsScreen> {
     } finally { if (mounted) setState(() => _loading = false); }
   }
 
+  Future<void> _openLogin() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+    );
+    if (mounted) await _load();
+  }
+
   Future<void> _create() async {
     if (_userId == null) {
       requireLogin(context, action: 'membuat polling');
@@ -55,14 +62,19 @@ class _MenuPollsScreenState extends State<MenuPollsScreen> {
       if (result != null && mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Isi pertanyaan dan minimal dua pilihan.')));
       return;
     }
+    String? createdPollId;
     try {
       final inserted = await _client.from('community_polls').insert({'creator_id': _userId, 'question': result.$1}).select('id').single();
       final pollId = inserted['id'];
+      createdPollId = pollId?.toString();
       await _client.from('community_poll_options').insert([
         for (var i = 0; i < result.$2.length; i++) {'poll_id': pollId, 'label': result.$2[i], 'position': i}
       ]);
       await _load();
     } catch (_) {
+      if (createdPollId != null) {
+        try { await _client.from('community_polls').delete().eq('id', createdPollId!); } catch (_) {}
+      }
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Polling gagal dibuat. Periksa koneksi dan migrasi backend.')));
     }
   }
@@ -85,7 +97,7 @@ class _MenuPollsScreenState extends State<MenuPollsScreen> {
     backgroundColor: AppColors.bg,
     appBar: AppBar(backgroundColor: AppColors.bg, foregroundColor: AppColors.textPrimary, title: Text('Polling Komunitas', style: AppText.title.copyWith(color: AppColors.textPrimary)), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
     floatingActionButton: FloatingActionButton.extended(onPressed: _create, backgroundColor: AppColors.accent, foregroundColor: Colors.white, icon: const Icon(Icons.add), label: const Text('Buat polling')),
-    body: RefreshIndicator(onRefresh: _load, child: _loading ? const ListView(children: [SizedBox(height: 280, child: Center(child: CircularProgressIndicator()))]) : _error != null ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Column(children: [Text(_error!, textAlign: TextAlign.center, style: AppText.body.copyWith(color: AppColors.textSecondary)), if (_userId == null) Padding(padding: const EdgeInsets.only(top: 12), child: FilledButton(onPressed: () => requireLogin(context, action: 'menggunakan polling'), child: const Text('Masuk')))]))]) : _polls.isEmpty ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text('Belum ada polling. Buat polling pertama!', style: AppText.body.copyWith(color: AppColors.textSecondary)))]) : ListView.separated(padding: const EdgeInsets.fromLTRB(14, 12, 14, 90), itemCount: _polls.length, separatorBuilder: (_, __) => const SizedBox(height: 10), itemBuilder: (_, i) => _PollCard(poll: _polls[i], userId: _userId, onVote: (id) => _vote(_polls[i], id)))),
+    body: RefreshIndicator(onRefresh: _load, child: _loading ? const ListView(children: [SizedBox(height: 280, child: Center(child: CircularProgressIndicator()))]) : _error != null ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Column(children: [Text(_error!, textAlign: TextAlign.center, style: AppText.body.copyWith(color: AppColors.textSecondary)), if (_userId == null) Padding(padding: const EdgeInsets.only(top: 12), child: FilledButton(onPressed: _openLogin, child: const Text('Masuk')))]))]) : _polls.isEmpty ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text('Belum ada polling. Buat polling pertama!', style: AppText.body.copyWith(color: AppColors.textSecondary)))]) : ListView.separated(padding: const EdgeInsets.fromLTRB(14, 12, 14, 90), itemCount: _polls.length, separatorBuilder: (_, __) => const SizedBox(height: 10), itemBuilder: (_, i) => _PollCard(poll: _polls[i], userId: _userId, onVote: (id) => _vote(_polls[i], id)))),
   );
 }
 
