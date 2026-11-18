@@ -94,7 +94,7 @@ class _ChessScreenState extends State<_ChessScreen> {
         data: {'rated': 'false', 'time': '10', 'increment': '0', 'variant': 'standard', 'color': 'random'},
         options: Options(responseType: ResponseType.stream, contentType: Headers.formUrlEncodedContentType, headers: {'Authorization': 'Bearer $_token', 'Accept': 'application/x-ndjson'}));
       await _seek?.cancel();
-      _seek = r.data!.stream.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+      _seek = r.data!.stream.cast<List<int>>().transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
         try {
           final event = jsonDecode(line) as Map;
           if (event['type'] == 'gameStart') {
@@ -112,7 +112,7 @@ class _ChessScreenState extends State<_ChessScreen> {
       final r = await _dio.get<ResponseBody>('/api/board/game/stream/$id',
         options: Options(responseType: ResponseType.stream, headers: {'Authorization': 'Bearer $_token', 'Accept': 'application/x-ndjson'}));
       _gameStream?.cancel();
-      _gameStream = r.data!.stream.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+      _gameStream = r.data!.stream.cast<List<int>>().transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
         if (line.trim().isEmpty) return;
         try {
           final event = jsonDecode(line) as Map<String, dynamic>;
@@ -479,7 +479,7 @@ class _MusicScreenState extends State<_MusicScreen> {
         onTap: () => _play(t)));
     })),
     if (_current != null) SafeArea(top: false, child: _panel(Row(children: [
-      const Icon(Icons.equalizer_rounded, color: AppColors.accent), const SizedBox(width: 10),
+      Icon(Icons.equalizer_rounded, color: AppColors.accent), const SizedBox(width: 10),
       Expanded(child: Text(_current!['title']?.toString() ?? 'Now playing', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800))),
       IconButton(onPressed: () => _playing ? _player.pause() : _player.play(), icon: Icon(_playing ? Icons.pause_rounded : Icons.play_arrow_rounded, color: AppColors.accent)),
       IconButton(onPressed: () { _player.stop(); setState(() => _current = null); }, icon: const Icon(Icons.close_rounded)),
