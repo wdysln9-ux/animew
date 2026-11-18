@@ -10,6 +10,7 @@ import '../home/explore_screen.dart';
 import '../watch_together/ui/watch_party_lobby_screen.dart';
 import 'menu_tools_screen.dart';
 import 'menu_forum_screen.dart';
+import 'menu_social_screen.dart';
 
 enum _MenuGroup { community, fun, anime }
 class _MenuFeature {
@@ -115,6 +116,7 @@ class _MenuHubScreenState extends State<MenuHubScreen> {
       'explorer' => const ExploreScreen(),
       'watch-together' => const WatchPartyLobbyScreen(),
       'forum' => const MenuForumScreen(),
+      'feed' || 'users' => MenuSocialScreen(featureId: feature.id),
       'journal' || 'challenge' || 'games' || 'roulette' || 'random-character' => MenuToolsScreen(featureId: feature.id),
       _ => null,
     };
