@@ -3,12 +3,10 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:hive/hive.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/hive/safe_box.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 
@@ -302,76 +300,118 @@ class _ShortsScreen extends StatefulWidget {
   const _ShortsScreen();
   @override State<_ShortsScreen> createState() => _ShortsScreenState();
 }
+
 class _ShortsScreenState extends State<_ShortsScreen> {
-  static const _boxName = 'menu_custom_sources', _key = 'shorts_api_url';
-  final Dio _dio = Dio();
-  final _search = TextEditingController();
-  String? _endpoint;
+  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://commons.wikimedia.org/w/api.php', connectTimeout: const Duration(seconds: 15), receiveTimeout: const Duration(seconds: 20)));
+  final _search = TextEditingController(text: 'animation short film');
   List<Map<String, dynamic>> _videos = [];
-  bool _loading = false;
+  bool _loading = true;
   String? _error;
-  Future<Box> _box() async => Hive.isBoxOpen(_boxName) ? Hive.box(_boxName) : openBoxSafely(_boxName);
-  @override void initState() { super.initState(); _init(); }
-  Future<void> _init() async { final b = await _box(); _endpoint = b.get(_key) as String?; if (_endpoint != null) await _load(); if (mounted) setState(() {}); }
-  Future<void> _configure() async {
-    final c = TextEditingController(text: _endpoint ?? '');
-    final value = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: AppColors.surface, title: const Text('Sumber Short custom'),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Text('API mengembalikan videos: [{title, author, thumbnail, streamUrl, isAdult}]. Hanya URL HTTPS dan konten non-dewasa ditampilkan.'),
-        const SizedBox(height: 12), TextField(controller: c, keyboardType: TextInputType.url, decoration: const InputDecoration(hintText: 'https://alamat-api-kamu')),
-      ]),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')), FilledButton(onPressed: () => Navigator.pop(ctx, c.text.trim()), child: const Text('Simpan'))],
-    ));
-    c.dispose();
-    if (value == null) return;
-    final uri = Uri.tryParse(value);
-    if (value.isNotEmpty && (uri == null || uri.scheme != 'https' || uri.host.isEmpty)) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Masukkan URL HTTPS yang valid.')));
-      return;
-    }
-    final b = await _box(); _endpoint = value.isEmpty ? null : value;
-    if (_endpoint == null) { await b.delete(_key); _videos = []; } else { await b.put(_key, _endpoint); await _load(); }
-    if (mounted) setState(() {});
-  }
+
+  @override void initState() { super.initState(); _load(); }
+
   Future<void> _load() async {
-    if (_endpoint == null) return;
     setState(() { _loading = true; _error = null; });
     try {
-      final r = await _dio.get(_endpoint!, queryParameters: _search.text.trim().isEmpty ? null : {'q': _search.text.trim()});
-      final raw = r.data is Map ? ((r.data as Map)['videos'] ?? (r.data as Map)['data']) : r.data;
-      if (raw is! List) throw StateError('Bad feed');
-      _videos = [for (final v in raw) if (v is Map && v['isAdult'] != true && v['streamUrl'] is String && Uri.tryParse(v['streamUrl'].toString())?.scheme == 'https') Map<String, dynamic>.from(v)];
-    } catch (_) { _error = 'Sumber gagal dimuat. Periksa endpoint dan format respons.'; }
-    finally { if (mounted) setState(() => _loading = false); }
+      final query = _search.text.trim().isEmpty ? 'animation short film' : _search.text.trim();
+      final response = await _dio.get('', queryParameters: {
+        'action': 'query',
+        'format': 'json',
+        'formatversion': 2,
+        'generator': 'search',
+        'gsrnamespace': 6,
+        'gsrlimit': 30,
+        'gsrsearch': 'filetype:video §query',
+        'prop': 'imageinfo',
+        'iiprop': 'url|extmetadata|mime',
+        'iiurlwidth': 480,
+      });
+      final queryData = (response.data as Map?)?['query'];
+      final rawPages = queryData is Map ? queryData['pages'] : null;
+      final pages = rawPages is List ? rawPages : rawPages is Map ? rawPages.values.toList() : const [];
+      final found = <Map<String, dynamic>>[];
+      for (final page in pages) {
+        if (page is! Map || page['imageinfo'] is! List || (page['imageinfo'] as List).isEmpty) continue;
+        final info = (page['imageinfo'] as List).first;
+        if (info is! Map) continue;
+        final url = info['url']?.toString() ?? '';
+        final mime = info['mime']?.toString() ?? '';
+        final title = page['title']?.toString() ?? 'Video';
+        if (!url.startsWith('https://') || !mime.startsWith('video/')) continue;
+        final metadata = info['extmetadata'] is Map ? info['extmetadata'] as Map : const {};
+        final artist = _plain(metadata['Artist'] is Map ? (metadata['Artist'] as Map)['value']?.toString() ?? '' : '');
+        final license = _plain(metadata['LicenseShortName'] is Map ? (metadata['LicenseShortName'] as Map)['value']?.toString() ?? '' : '');
+        final description = _plain(metadata['ImageDescription'] is Map ? (metadata['ImageDescription'] as Map)['value']?.toString() ?? '' : '');
+        final unsafeText = '$title $description'.toLowerCase();
+        if (RegExp(r'nsfw|adult content|erotic|hentai|pornography|nudity').hasMatch(unsafeText)) continue;
+        found.add({
+          'title': title.replaceFirst(RegExp(r'^File:', caseSensitive: false), '').replaceAll('_', ' '),
+          'author': artist.isEmpty ? 'Wikimedia Commons contributor' : artist,
+          'license': license.isEmpty ? 'Lisensi tercantum di halaman sumber' : license,
+          'thumbnail': info['thumburl']?.toString(),
+          'streamUrl': url,
+          'sourceUrl': info['descriptionurl']?.toString(),
+        });
+      }
+      _videos = found;
+      if (_videos.isEmpty) _error = 'Tidak ada video yang cocok. Coba kata kunci lain.';
+    } catch (_) {
+      _error = 'Katalog video Commons belum bisa dimuat. Coba lagi nanti.';
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
-  @override void dispose() { _dio.close(force: true); _search.dispose(); super.dispose(); }
-  @override Widget build(BuildContext context) => _Page('Short', 'VIDEO VERTIKAL · PROVIDER CUSTOM', Column(children: [
-    Padding(padding: const EdgeInsets.fromLTRB(16, 12, 16, 10), child: TextField(controller: _search, onSubmitted: (_) => _load(), decoration: InputDecoration(hintText: 'Cari video...', prefixIcon: const Icon(Icons.search_rounded), suffixIcon: IconButton(onPressed: _load, icon: const Icon(Icons.arrow_forward_rounded)), filled: true, fillColor: AppColors.surface, border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none)))),
-    Expanded(child: _endpoint == null
-      ? _empty(Icons.video_library_outlined, 'Feed videomu sendiri', 'Tambahkan endpoint API custom. Tidak ada WebView atau feed video palsu.', FilledButton.icon(onPressed: _configure, icon: const Icon(Icons.add_link_rounded), label: const Text('Atur sumber')))
-      : _loading ? const Center(child: CircularProgressIndicator())
-      : _error != null ? _empty(Icons.wifi_off_rounded, 'Feed belum tersedia', _error!, TextButton(onPressed: _load, child: const Text('Coba lagi')))
-      : _videos.isEmpty ? _empty(Icons.movie_filter_outlined, 'Belum ada video', 'Provider belum mengirim video yang bisa diputar.', null)
-      : GridView.builder(padding: const EdgeInsets.all(14), itemCount: _videos.length, gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: .7), itemBuilder: (ctx, i) {
-        final v = _videos[i], image = v['thumbnail']?.toString();
-        return GestureDetector(onTap: () => Navigator.push(ctx, MaterialPageRoute<void>(builder: (_) => _ShortPlayer(video: v))), child: ClipRRect(borderRadius: BorderRadius.circular(18), child: Stack(fit: StackFit.expand, children: [
-          if (image != null && Uri.tryParse(image)?.scheme == 'https') Image.network(image, fit: BoxFit.cover, errorBuilder: (_, __, ___) => ColoredBox(color: AppColors.surface2, child: Icon(Icons.movie_rounded, color: AppColors.textTertiary))) else ColoredBox(color: AppColors.surface2, child: Icon(Icons.movie_rounded, color: AppColors.textTertiary)),
-          const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xE0000000)], stops: [.45, 1]))),
-          const Center(child: Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 40)),
-          Positioned(left: 10, right: 10, bottom: 10, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(v['title']?.toString() ?? 'Video', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-            Text(v['author']?.toString() ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 11)),
-          ])),
-        ])));
-      })),
-  ]), actions: [IconButton(onPressed: _configure, icon: const Icon(Icons.tune_rounded)), IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded))]);
-  Widget _empty(IconData icon, String title, String body, Widget? action) => Center(child: Padding(padding: const EdgeInsets.all(28), child: Column(mainAxisSize: MainAxisSize.min, children: [
-    Icon(icon, color: AppColors.accent, size: 44), const SizedBox(height: 12),
-    Text(title, style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
-    const SizedBox(height: 6), Text(body, textAlign: TextAlign.center, style: AppText.caption.copyWith(color: AppColors.textSecondary, height: 1.45)),
-    if (action != null) ...[const SizedBox(height: 16), action],
-  ])));
+
+  @override void dispose() { _search.dispose(); _dio.close(force: true); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) => _Page('Short', 'VIDEO PENDEK · SUMBER TERBUKA', Column(children: [
+    Padding(padding: const EdgeInsets.fromLTRB(16, 12, 16, 10), child: TextField(
+      controller: _search,
+      onSubmitted: (_) => _load(),
+      decoration: InputDecoration(
+        hintText: 'Cari video pendek...',
+        prefixIcon: const Icon(Icons.search_rounded),
+        suffixIcon: IconButton(onPressed: _load, icon: const Icon(Icons.arrow_forward_rounded)),
+        filled: true, fillColor: AppColors.surface,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      ),
+    )),
+    Expanded(child: _loading
+      ? const Center(child: CircularProgressIndicator())
+      : _error != null
+        ? Center(child: Padding(padding: const EdgeInsets.all(28), child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.video_library_outlined, size: 44, color: AppColors.accent),
+            const SizedBox(height: 12),
+            Text(_error!, textAlign: TextAlign.center, style: AppText.body.copyWith(color: AppColors.textSecondary)),
+            const SizedBox(height: 12),
+            TextButton(onPressed: _load, child: const Text('Coba lagi')),
+          ])))
+        : GridView.builder(
+            padding: const EdgeInsets.all(14),
+            itemCount: _videos.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: .7),
+            itemBuilder: (ctx, i) {
+              final video = _videos[i];
+              final image = video['thumbnail']?.toString();
+              return GestureDetector(
+                onTap: () => Navigator.push(ctx, MaterialPageRoute<void>(builder: (_) => _ShortPlayer(video: video))),
+                child: ClipRRect(borderRadius: BorderRadius.circular(18), child: Stack(fit: StackFit.expand, children: [
+                  if (image != null && image.startsWith('https://'))
+                    Image.network(image, fit: BoxFit.cover, errorBuilder: (_, __, ___) => ColoredBox(color: AppColors.surface2, child: Icon(Icons.movie_rounded, color: AppColors.textTertiary)))
+                  else
+                    ColoredBox(color: AppColors.surface2, child: Icon(Icons.movie_rounded, color: AppColors.textTertiary)),
+                  const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xE0000000)], stops: [.45, 1]))),
+                  const Center(child: Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 40)),
+                  Positioned(left: 10, right: 10, bottom: 10, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(video['title']?.toString() ?? 'Video', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                    Text(video['author']?.toString() ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 10)),
+                  ])),
+                ])),
+              );
+            },
+          )),
+  ]), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded))]);
 }
 
 class _ShortPlayer extends StatefulWidget {
@@ -390,6 +430,7 @@ class _ShortPlayerState extends State<_ShortPlayer> {
     SafeArea(child: Align(alignment: Alignment.bottomLeft, child: Padding(padding: const EdgeInsets.all(20), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(widget.video['title']?.toString() ?? 'Video', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
       Text(widget.video['author']?.toString() ?? '', style: const TextStyle(color: Colors.white70)),
+      Text(widget.video['license']?.toString() ?? 'Open media', style: const TextStyle(color: Colors.white54, fontSize: 11)),
     ])))),
   ]));
 }
