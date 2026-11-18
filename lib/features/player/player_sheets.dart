@@ -104,9 +104,10 @@ class _AudioSubsSheetState extends State<_AudioSubsSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Flexible(
+        Expanded(
           child: ListView(
-            shrinkWrap: true,
+            primary: false,
+            physics: const ClampingScrollPhysics(),
             padding: EdgeInsets.zero,
             children: [
               _SheetRow(
