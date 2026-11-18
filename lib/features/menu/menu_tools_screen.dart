@@ -676,7 +676,7 @@ class _ScreenshotGalleryScreenState extends State<_ScreenshotGalleryScreen> {
               InteractiveViewer(child: ClipRRect(borderRadius: BorderRadius.circular(18), child: Image.file(File(path), fit: BoxFit.contain))),
               Positioned(right: 8, top: 8, child: IconButton.filled(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded))),
             ]))),
-            child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(File(path), fit: BoxFit.cover, errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.surface2, child: Icon(Icons.broken_image_rounded)))),
+            child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(File(path), fit: BoxFit.cover, errorBuilder: (_, __, ___) => ColoredBox(color: AppColors.surface2, child: const Icon(Icons.broken_image_rounded)))),
           );
         })),
   ]));
