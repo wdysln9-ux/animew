@@ -1298,7 +1298,10 @@ class _HomeViewState extends State<_HomeView>
             if (catalogue != null) {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => SearchScreen(initialFilters: catalogue.filters),
+                  builder: (_) => SearchScreen(
+                    initialFilters: catalogue.filters,
+                    preserveInitialSort: true,
+                  ),
                 ),
               );
             }
