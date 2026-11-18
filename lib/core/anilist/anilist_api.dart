@@ -1104,6 +1104,31 @@ query($page:Int) {
     ];
   }
 
+  /// Upcoming and currently airing anime for the Menu Release Tracker.
+  Future<List<Map<String, dynamic>>> fetchReleaseTracker({int page = 1}) async {
+    const query = r'''
+query($page:Int) {
+  Page(page:$page,perPage:50) {
+    media(type:ANIME, status_in:[RELEASING,NOT_YET_RELEASED], sort:[POPULARITY_DESC]) {
+      id isAdult status seasonYear episodes
+      title { romaji english }
+      coverImage { large }
+      startDate { year month day }
+      nextAiringEpisode { episode airingAt timeUntilAiring }
+    }
+  }
+}''';
+    final data = await _gql(query, {'page': page});
+    final pageData = data?['Page'];
+    final rows = pageData is Map ? pageData['media'] : null;
+    if (rows is! List) return const [];
+    return [
+      for (final row in rows)
+        if (row is Map && row['isAdult'] != true)
+          Map<String, dynamic>.from(row),
+    ];
+  }
+
   /// Search public AniList user profiles.
   Future<List<Map<String, dynamic>>> searchUsers(String search, {int page = 1}) async {
     if (search.trim().isEmpty) return const [];
