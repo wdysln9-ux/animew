@@ -66,6 +66,17 @@ class _MenuEmbeddedServiceScreenState extends State<MenuEmbeddedServiceScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.bg,
           foregroundColor: AppColors.textPrimary,
+          leading: IconButton(
+            tooltip: 'Kembali',
+            onPressed: () async {
+              if (await _controller.canGoBack()) {
+                await _controller.goBack();
+              } else if (mounted) {
+                Navigator.of(context).maybePop();
+              }
+            },
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
           title: Text(
             widget.title,
             style: AppText.title.copyWith(color: AppColors.textPrimary),
