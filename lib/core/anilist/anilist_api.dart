@@ -410,7 +410,7 @@ query($id:Int,$page:Int) {
   Media(id:$id,type:ANIME) {
     characters(page:$page,perPage:25,sort:[ROLE,RELEVANCE]) {
       pageInfo { total hasNextPage }
-      edges { role node { id name { full } image { large } } }
+      edges { role node { id name { full } image { large } } voiceActors(language:JAPANESE) { id name { full } } }
     }
   }
 }''';
@@ -899,6 +899,7 @@ query($id:Int,$page:Int) {
             name: name,
             role: _titleCase(e['role'] as String?),
             photo: img,
+            voiceActor: va,
             person: charId == null
                 ? null
                 : PersonRef(
