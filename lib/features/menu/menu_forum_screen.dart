@@ -63,20 +63,69 @@ class _MenuForumScreenState extends State<MenuForumScreen> {
     }
   }
 
-  @override Widget build(BuildContext context) => Scaffold(
+  @override
+  Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.bg,
-    appBar: AppBar(backgroundColor: AppColors.bg, foregroundColor: AppColors.textPrimary, title: Text('Forum AniList', style: AppText.title.copyWith(color: AppColors.textPrimary)), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
-    floatingActionButton: FloatingActionButton.extended(onPressed: _create, backgroundColor: AppColors.accent, foregroundColor: Colors.white, icon: const Icon(Icons.add_comment), label: const Text('Buat thread')),
-    body: RefreshIndicator(onRefresh: _load, child: _loading
-      ? ListView(children: const [SizedBox(height: 300, child: Center(child: CircularProgressIndicator()))])
-      : _error != null
-        ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text(_error!, style: AppText.body.copyWith(color: AppColors.textSecondary)))])
-        : _threads.isEmpty
-          ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text('Belum ada diskusi.', style: AppText.body.copyWith(color: AppColors.textSecondary)))])
-          : ListView.separated(padding: const EdgeInsets.fromLTRB(14, 12, 14, 90), itemCount: _threads.length, separatorBuilder: (_, __) => const SizedBox(height: 10), itemBuilder: (context, i) {
-              final thread = _threads[i];
-              return _ThreadCard(thread: thread, onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => _ThreadDetailScreen(thread: thread))));
-            }),
+    appBar: AppBar(
+      backgroundColor: AppColors.bg,
+      foregroundColor: AppColors.textPrimary,
+      elevation: 0,
+      title: Text('Forum', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+      actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded))],
+    ),
+    floatingActionButton: FloatingActionButton.extended(
+      onPressed: _create,
+      backgroundColor: AppColors.accent,
+      foregroundColor: Colors.white,
+      icon: const Icon(Icons.edit_rounded),
+      label: const Text('Mulai diskusi'),
+    ),
+    body: RefreshIndicator(
+      onRefresh: _load,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        slivers: [
+          SliverToBoxAdapter(child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.accent.withValues(alpha: .2), AppColors.surface, AppColors.surface2]),
+                border: Border.all(color: AppColors.accent.withValues(alpha: .15)),
+              ),
+              child: Row(children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('OPEN DISCUSSIONS', style: AppText.caption.copyWith(color: AppColors.accent, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  const SizedBox(height: 7),
+                  Text('Punya teori? Bahas di sini.', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
+                  Text('Temukan sudut pandang dan rekomendasi baru.', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+                ])),
+                const SizedBox(width: 8),
+                Icon(Icons.forum_rounded, color: AppColors.accent, size: 40),
+              ]),
+            ),
+          )),
+          if (_loading)
+            const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+          else if (_error != null)
+            SliverFillRemaining(child: Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error!, style: AppText.body.copyWith(color: AppColors.textSecondary)))))
+          else if (_threads.isEmpty)
+            SliverFillRemaining(child: Center(child: Text('Belum ada diskusi.', style: AppText.body.copyWith(color: AppColors.textSecondary))))
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 100),
+              sliver: SliverList(delegate: SliverChildBuilderDelegate(
+                (context, i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 11),
+                  child: _ThreadCard(thread: _threads[i], onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => _ThreadDetailScreen(thread: _threads[i])))),
+                ),
+                childCount: _threads.length,
+              )),
+            ),
+        ],
+      ),
     ),
   );
 }
@@ -87,18 +136,48 @@ class _ThreadCard extends StatelessWidget {
   const _ThreadCard({required this.thread, required this.onTap});
   final Map<String, dynamic> thread;
   final VoidCallback onTap;
-  @override Widget build(BuildContext context) {
+
+  @override
+  Widget build(BuildContext context) {
     final user = thread['user'] is Map ? thread['user'] as Map : const {};
     final avatar = user['avatar'] is Map ? (user['avatar'] as Map)['large'] as String? : null;
-    return Material(color: AppColors.surface, borderRadius: BorderRadius.circular(16), child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(16), child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [CircleAvatar(radius: 15, backgroundImage: avatar == null ? null : NetworkImage(avatar), child: avatar == null ? const Icon(Icons.person, size: 16) : null), const SizedBox(width: 8), Expanded(child: Text(user['name']?.toString() ?? 'AniList user', style: AppText.caption.copyWith(color: AppColors.textSecondary))), Text('${thread['replyCount'] ?? 0} balasan', style: AppText.caption.copyWith(color: AppColors.textTertiary))]),
-      const SizedBox(height: 10),
-      Text(thread['title']?.toString() ?? 'Tanpa judul', style: AppText.body.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
-      const SizedBox(height: 6),
-      Text(_plain(thread['body']?.toString()), maxLines: 3, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(color: AppColors.textSecondary, height: 1.4)),
-      const SizedBox(height: 8),
-      Text('♥ ${thread['likeCount'] ?? 0}    •    ${thread['viewCount'] ?? 0} dilihat', style: AppText.caption.copyWith(color: AppColors.textTertiary)),
-    ]))));
+    final categories = thread['categories'] is List ? (thread['categories'] as List).whereType<Map>().map((e) => e['name']?.toString() ?? '').where((e) => e.isNotEmpty).take(2).toList() : <String>[];
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(19),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(padding: const EdgeInsets.all(15), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            CircleAvatar(radius: 16, backgroundColor: AppColors.surface2, backgroundImage: avatar == null ? null : NetworkImage(avatar), child: avatar == null ? const Icon(Icons.person_rounded, size: 16) : null),
+            const SizedBox(width: 9),
+            Expanded(child: Text(user['name']?.toString() ?? 'AniList user', style: AppText.caption.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w700))),
+            Text('${thread['replyCount'] ?? 0} balasan', style: AppText.caption.copyWith(color: AppColors.textTertiary, fontSize: 10)),
+          ]),
+          const SizedBox(height: 12),
+          Text(thread['title']?.toString() ?? 'Tanpa judul', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800, height: 1.25)),
+          const SizedBox(height: 7),
+          Text(_plain(thread['body']?.toString()), maxLines: 3, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(color: AppColors.textSecondary, height: 1.45)),
+          if (categories.isNotEmpty) ...[
+            const SizedBox(height: 11),
+            Wrap(spacing: 6, runSpacing: 6, children: [for (final category in categories) Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5), decoration: BoxDecoration(color: AppColors.accentSoft, borderRadius: BorderRadius.circular(8)), child: Text(category, style: AppText.caption.copyWith(color: AppColors.accent, fontSize: 10, fontWeight: FontWeight.w700)))]),
+          ],
+          const SizedBox(height: 11),
+          Row(children: [
+            Icon(Icons.favorite_border_rounded, size: 15, color: AppColors.textTertiary),
+            const SizedBox(width: 5),
+            Text('${thread['likeCount'] ?? 0}', style: AppText.caption.copyWith(color: AppColors.textTertiary, fontSize: 10)),
+            const SizedBox(width: 13),
+            Icon(Icons.visibility_outlined, size: 15, color: AppColors.textTertiary),
+            const SizedBox(width: 5),
+            Text('${thread['viewCount'] ?? 0}', style: AppText.caption.copyWith(color: AppColors.textTertiary, fontSize: 10)),
+            const Spacer(),
+            Icon(Icons.arrow_forward_rounded, size: 17, color: AppColors.accent),
+          ]),
+        ])),
+      ),
+    );
   }
 }
 
