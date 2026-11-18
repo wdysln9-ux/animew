@@ -156,7 +156,6 @@ class _JournalScreenState extends State<_JournalScreen> {
                       );
                     },
                   ),
-        ),
       );
 }
 
