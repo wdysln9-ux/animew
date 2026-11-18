@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show DragStartBehavior;
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
