@@ -93,8 +93,8 @@ class _ChessScreenState extends State<_ChessScreen> {
     setState(() { _busy = true; _message = null; _status = 'Mencari pemain online…'; });
     try {
       final r = await _dio.post<ResponseBody>('/api/board/seek',
-        queryParameters: {'rated': false, 'time': 10, 'increment': 0, 'variant': 'standard', 'color': 'random'},
-        options: Options(responseType: ResponseType.stream, headers: {'Authorization': 'Bearer $_token', 'Accept': 'application/x-ndjson'}));
+        data: {'rated': 'false', 'time': '10', 'increment': '0', 'variant': 'standard', 'color': 'random'},
+        options: Options(responseType: ResponseType.stream, contentType: Headers.formUrlEncodedContentType, headers: {'Authorization': 'Bearer $_token', 'Accept': 'application/x-ndjson'}));
       await _seek?.cancel();
       _seek = r.data!.stream.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
         try {
@@ -234,7 +234,7 @@ class _ChessScreenState extends State<_ChessScreen> {
       itemBuilder: (context, displayIndex) {
         final index = _myWhite ? displayIndex : 63 - displayIndex;
         final piece = _board[index];
-        final light = ((index ~/ 8) + (index % 8)).isOdd;
+        final light = ((index ~/ 8) + (index % 8)).isEven;
         final selected = _selected == _squareName(index);
         return GestureDetector(
           onTap: () => _tapSquare(displayIndex),
