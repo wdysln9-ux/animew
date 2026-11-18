@@ -49,8 +49,11 @@ class _ChessScreenState extends State<_ChessScreen> {
   static const _storage = FlutterSecureStorage();
   static const _key = 'menu_lichess_token';
   final Dio _dio = Dio(BaseOptions(baseUrl: 'https://lichess.org', receiveTimeout: const Duration(seconds: 0)));
-  StreamSubscription<String>? _seek;
-  String? _token, _user, _game, _message;
+  StreamSubscription<String>? _seek, _gameStream;
+  String? _token, _user, _game, _message, _initialFen, _selected;
+  List<String> _board = List.filled(64, '.');
+  Map<String, dynamic> _gameState = {};
+  bool _myWhite = true, _myTurn = false;
   String _status = 'Belum terhubung';
   bool _busy = false;
   @override void initState() { super.initState(); _restore(); }
@@ -98,7 +101,7 @@ class _ChessScreenState extends State<_ChessScreen> {
           final event = jsonDecode(line) as Map;
           if (event['type'] == 'gameStart') {
             final id = (event['game'] as Map?)?['id']?.toString();
-            if (id != null && mounted) setState(() { _game = id; _busy = false; _status = 'Pertandingan ditemukan'; });
+            if (id != null && mounted) { _seek?.cancel(); setState(() { _game = id; _busy = false; _status = 'Pertandingan ditemukan'; }); unawaited(_watchGame(id)); }
           }
         } catch (_) {}
       }, onError: (_) { if (mounted) setState(() { _busy = false; _status = 'Pencarian terhenti'; _message = 'Tidak bisa tersambung ke Lichess.'; }); });
@@ -106,7 +109,152 @@ class _ChessScreenState extends State<_ChessScreen> {
       if (mounted) setState(() { _busy = false; _status = 'Pencarian gagal'; _message = 'Periksa token dan koneksi internet.'; });
     }
   }
-  @override void dispose() { _seek?.cancel(); _dio.close(force: true); super.dispose(); }
+  Future<void> _watchGame(String id) async {
+    try {
+      final r = await _dio.get<ResponseBody>('/api/board/game/stream/$id',
+        options: Options(responseType: ResponseType.stream, headers: {'Authorization': 'Bearer $_token', 'Accept': 'application/x-ndjson'}));
+      _gameStream?.cancel();
+      _gameStream = r.data!.stream.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+        if (line.trim().isEmpty) return;
+        try {
+          final event = jsonDecode(line) as Map<String, dynamic>;
+          if (event['type'] == 'gameFull') {
+            _initialFen = event['initialFen']?.toString() ?? 'startpos';
+            final white = event['white'] is Map ? event['white'] as Map : const {};
+            _myWhite = white['id']?.toString().toLowerCase() == _user?.toLowerCase();
+            _applyGameState(event['state'] is Map ? Map<String, dynamic>.from(event['state']) : {});
+          } else if (event['type'] == 'gameState') {
+            _applyGameState(event);
+          }
+        } catch (_) {}
+      }, onError: (_) {
+        if (mounted) setState(() => _message = 'Koneksi pertandingan terputus.');
+      });
+    } catch (_) {
+      if (mounted) setState(() => _message = 'Tidak bisa membuka data pertandingan.');
+    }
+  }
+
+  void _applyGameState(Map<String, dynamic> state) {
+    final moves = state['moves']?.toString() ?? '';
+    final initial = _initialFen ?? 'startpos';
+    final board = _makeBoard(initial, moves);
+    final fields = initial.split(' ');
+    final startsWhite = fields.length < 2 || fields[1] == 'w';
+    final count = moves.trim().isEmpty ? 0 : moves.trim().split(RegExp(r'\\s+')).length;
+    final whiteTurn = startsWhite ? count.isEven : count.isOdd;
+    _gameState = state;
+    _board = board;
+    _myTurn = whiteTurn == _myWhite;
+    if (mounted) setState(() { _selected = null; });
+  }
+
+  List<String> _makeBoard(String fen, String moves) {
+    final board = List<String>.filled(64, '.');
+    final placement = fen == 'startpos' ? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR' : fen.split(' ').first;
+    final ranks = placement.split('/');
+    for (var rank = 0; rank < 8 && rank < ranks.length; rank++) {
+      var file = 0;
+      for (final char in ranks[rank].split('')) {
+        final empty = int.tryParse(char);
+        if (empty != null) { file += empty; continue; }
+        if (file < 8) board[rank * 8 + file] = char;
+        file++;
+      }
+    }
+    for (final move in moves.split(' ')) {
+      if (move.length < 4) continue;
+      final from = _squareIndex(move.substring(0, 2));
+      final to = _squareIndex(move.substring(2, 4));
+      if (from < 0 || to < 0) continue;
+      final piece = board[from];
+      if (piece == '.') continue;
+      final fileDiff = to % 8 - from % 8;
+      if (piece.toLowerCase() == 'p' && fileDiff != 0 && board[to] == '.') {
+        final captured = to + (piece == 'P' ? 8 : -8);
+        if (captured >= 0 && captured < 64) board[captured] = '.';
+      }
+      if (piece.toLowerCase() == 'k' && fileDiff.abs() == 2) {
+        final rookFrom = to > from ? from + 3 : from - 4;
+        final rookTo = to > from ? from + 1 : from - 1;
+        if (rookFrom >= 0 && rookFrom < 64 && rookTo >= 0 && rookTo < 64) {
+          board[rookTo] = board[rookFrom];
+          board[rookFrom] = '.';
+        }
+      }
+      board[from] = '.';
+      board[to] = move.length > 4 ? (piece == piece.toUpperCase() ? move[4].toUpperCase() : move[4].toLowerCase()) : piece;
+    }
+    return board;
+  }
+
+  int _squareIndex(String square) {
+    if (square.length != 2 || !'abcdefgh'.contains(square[0])) return -1;
+    final rank = int.tryParse(square[1]);
+    if (rank == null || rank < 1 || rank > 8) return -1;
+    return (8 - rank) * 8 + 'abcdefgh'.indexOf(square[0]);
+  }
+
+  String _squareName(int index) => '${'abcdefgh'[index % 8]}${8 - index ~/ 8}';
+
+  Future<void> _tapSquare(int displayIndex) async {
+    if (_game == null || !_myTurn || _busy || _gameState['status']?.toString() != 'started') return;
+    final index = _myWhite ? displayIndex : 63 - displayIndex;
+    final piece = _board[index];
+    final mine = piece != '.' && ((piece == piece.toUpperCase()) == _myWhite);
+    if (_selected == null) {
+      if (mine) setState(() => _selected = _squareName(index));
+      return;
+    }
+    if (mine) { setState(() => _selected = _squareName(index)); return; }
+    final from = _squareIndex(_selected!);
+    final moving = from < 0 ? '.' : _board[from];
+    final promotion = moving.toLowerCase() == 'p' && (index < 8 || index >= 56) ? 'q' : '';
+    final uci = '$_selected${_squareName(index)}$promotion';
+    setState(() { _busy = true; _message = null; });
+    try {
+      await _dio.post('/api/board/game/$_game/move/$uci', options: Options(headers: {'Authorization': 'Bearer $_token'}));
+    } catch (_) {
+      if (mounted) setState(() => _message = 'Langkah tidak diterima. Pilih langkah legal lainnya.');
+    } finally {
+      if (mounted) setState(() { _busy = false; _selected = null; });
+    }
+  }
+
+  Widget _liveBoard() => _panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Row(children: [
+      Expanded(child: Text('Pertandingan langsung', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800))),
+      Text(_myWhite ? 'Putih' : 'Hitam', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+    ]),
+    const SizedBox(height: 12),
+    AspectRatio(aspectRatio: 1, child: GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 64,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 8),
+      itemBuilder: (context, displayIndex) {
+        final index = _myWhite ? displayIndex : 63 - displayIndex;
+        final piece = _board[index];
+        final light = ((index ~/ 8) + (index % 8)).isOdd;
+        final selected = _selected == _squareName(index);
+        return GestureDetector(
+          onTap: () => _tapSquare(displayIndex),
+          child: Container(
+            color: selected ? AppColors.accent.withValues(alpha: .65) : light ? const Color(0xFFE8DCC8) : const Color(0xFF92765E),
+            alignment: Alignment.center,
+            child: Text(_glyph(piece), style: TextStyle(fontSize: 28, color: piece == '.' ? Colors.transparent : piece == piece.toUpperCase() ? const Color(0xFFFFFEF7) : const Color(0xFF191919), shadows: const [Shadow(color: Colors.black54, blurRadius: 2)])),
+          ),
+        );
+      },
+    )),
+    const SizedBox(height: 10),
+    Text(_gameState['status']?.toString() == 'started' ? (_myTurn ? 'Giliran kamu' : 'Menunggu langkah lawan…') : 'Pertandingan selesai', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+    if (_gameState['winner'] != null) Text('Pemenang: ${_gameState['winner']}', style: AppText.body.copyWith(color: AppColors.accent, fontWeight: FontWeight.w800)),
+    if (_message != null) Text(_message!, style: AppText.caption.copyWith(color: AppColors.accent)),
+  ]));
+
+  String _glyph(String p) => const {'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙','k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟'}[p] ?? '';
+
+  @override void dispose() { _seek?.cancel(); _gameStream?.cancel(); _dio.close(force: true); super.dispose(); }
   @override Widget build(BuildContext context) => _Page('Catur Online', 'PERTANDINGAN ANTARPEMAIN · LICHESS', ListView(padding: const EdgeInsets.all(16), children: [
     _panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
@@ -126,6 +274,7 @@ class _ChessScreenState extends State<_ChessScreen> {
       if (_message != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(_message!, style: AppText.caption.copyWith(color: AppColors.accent))),
     ])),
     const SizedBox(height: 14),
+    if (_game != null) ...[const SizedBox(height: 14), _liveBoard()],
     _panel(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('Mode pertandingan', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
       const SizedBox(height: 10),
@@ -134,7 +283,7 @@ class _ChessScreenState extends State<_ChessScreen> {
       _info('Tanpa chat', 'Fokus pada permainan dan keamanan pemain.'),
       if (_game != null) Text('ID pertandingan: $_game', style: AppText.caption.copyWith(color: AppColors.accent, fontWeight: FontWeight.w800)),
       const SizedBox(height: 6),
-      Text('Catatan: integrasi matchmaking sudah tersambung. Papan live dan pengiriman langkah menjadi tahap berikutnya.', style: AppText.caption.copyWith(color: AppColors.textTertiary, height: 1.4)),
+      Text('Papan native · langkah dikirim dan divalidasi server Lichess.', style: AppText.caption.copyWith(color: AppColors.textTertiary, height: 1.4)),
     ])),
   ]), actions: [
     if (_token != null) IconButton(onPressed: () async { await _storage.delete(key: _key); setState(() { _token = null; _user = null; _game = null; _status = 'Belum terhubung'; }); }, icon: const Icon(Icons.logout_rounded)),
