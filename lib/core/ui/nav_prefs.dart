@@ -11,6 +11,7 @@ import 'package:watch_app/core/hive/safe_box.dart';
 /// moment the user can reorder or hide them.
 enum DockTab {
   home('Home'),
+  menu('Menu'),
   myList('My List'),
   downloads('Downloads'),
   history('History'),
@@ -64,7 +65,7 @@ class NavPrefs extends ChangeNotifier {
   /// tab, so these four names fill all five icon slots.
   static const List<DockTab> defaultTabs = [
     DockTab.home,
-    DockTab.sources,
+    DockTab.menu,
     DockTab.history,
     DockTab.myList,
     DockTab.profile,
