@@ -12,6 +12,7 @@ import 'menu_tools_screen.dart';
 import 'menu_forum_screen.dart';
 import 'menu_social_screen.dart';
 import 'menu_catalog_tools_screen.dart';
+import 'menu_personal_list_screen.dart';
 
 enum _MenuGroup { community, fun, anime }
 class _MenuFeature {
@@ -119,6 +120,7 @@ class _MenuHubScreenState extends State<MenuHubScreen> {
       'forum' => const MenuForumScreen(),
       'feed' || 'users' => MenuSocialScreen(featureId: feature.id),
       'characters' || 'stats' || 'compare' => MenuCatalogToolsScreen(featureId: feature.id),
+      'ranking' || 'collections' => MenuPersonalListScreen(featureId: feature.id),
       'journal' || 'challenge' || 'games' || 'roulette' || 'random-character' => MenuToolsScreen(featureId: feature.id),
       _ => null,
     };
