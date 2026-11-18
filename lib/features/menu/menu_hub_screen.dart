@@ -9,7 +9,7 @@ import '../schedule/schedule_screen.dart';
 import '../home/explore_screen.dart';
 import '../watch_together/ui/watch_party_lobby_screen.dart';
 
-enum _MenuGroup { community, fun, anime, unique }
+enum _MenuGroup { community, fun, anime }
 class _MenuFeature {
   const _MenuFeature(this.id,this.title,this.description,this.group,this.icon,{this.url,this.service});
   final String id,title,description;
@@ -36,20 +36,20 @@ const _features = <_MenuFeature>[
   _MenuFeature('stats','Statistik Anime','Grafik genre, studio favorit, waktu menonton, skor, dan riwayat tahunan.',_MenuGroup.anime,Icons.query_stats_rounded),
   _MenuFeature('collections','Koleksi','Kumpulan anime, karakter, studio, dan daftar favorit.',_MenuGroup.anime,Icons.collections_bookmark_rounded),
   _MenuFeature('compare','Perbandingan Anime','Bandingkan rating, popularitas, genre, durasi, dan statistik dua anime.',_MenuGroup.anime,Icons.compare_arrows_rounded),
-  _MenuFeature('roulette','Anime Roulette','Pilih anime acak berdasarkan filter pilihan.',_MenuGroup.unique,Icons.casino_rounded),
-  _MenuFeature('watch-together','Watch Together','Menonton bersama teman dengan sinkronisasi pemutaran.',_MenuGroup.unique,Icons.groups_rounded),
-  _MenuFeature('timeline','Timeline Anime','Linimasa perkembangan anime dan franchise.',_MenuGroup.unique,Icons.timeline_rounded),
-  _MenuFeature('map','Anime Map','Peta hubungan anime, karakter, prekuel, dan sekuel.',_MenuGroup.unique,Icons.hub_rounded),
-  _MenuFeature('journal','Personal Journal','Catatan pribadi dan kesan setelah menonton anime.',_MenuGroup.unique,Icons.edit_note_rounded),
-  _MenuFeature('ranking','Ranking Builder','Buat dan bagikan ranking anime versimu.',_MenuGroup.unique,Icons.leaderboard_rounded),
-  _MenuFeature('challenge','Challenge','Tantangan menonton anime dengan target tertentu.',_MenuGroup.unique,Icons.flag_rounded),
-  _MenuFeature('random-character','Random Character','Temukan karakter anime secara acak.',_MenuGroup.unique,Icons.shuffle_rounded),
-  _MenuFeature('releases','Release Tracker','Pantau pengumuman dan tanggal rilis anime.',_MenuGroup.unique,Icons.event_available_rounded),
-  _MenuFeature('match','Recommendation Match','Cari pengguna dengan selera anime yang mirip.',_MenuGroup.unique,Icons.favorite_rounded),
-  _MenuFeature('news','Anime News','Berita dan kabar terbaru seputar anime.',_MenuGroup.unique,Icons.newspaper_rounded),
-  _MenuFeature('screenshots','Screenshot Gallery','Jelajahi dan simpan screenshot anime favorit.',_MenuGroup.unique,Icons.photo_library_rounded),
+  _MenuFeature('roulette','Anime Roulette','Pilih anime acak berdasarkan filter pilihan.',_MenuGroup.anime,Icons.casino_rounded),
+  _MenuFeature('watch-together','Watch Together','Menonton bersama teman dengan sinkronisasi pemutaran.',_MenuGroup.anime,Icons.groups_rounded),
+  _MenuFeature('timeline','Timeline Anime','Linimasa perkembangan anime dan franchise.',_MenuGroup.anime,Icons.timeline_rounded),
+  _MenuFeature('map','Anime Map','Peta hubungan anime, karakter, prekuel, dan sekuel.',_MenuGroup.anime,Icons.hub_rounded),
+  _MenuFeature('journal','Personal Journal','Catatan pribadi dan kesan setelah menonton anime.',_MenuGroup.anime,Icons.edit_note_rounded),
+  _MenuFeature('ranking','Ranking Builder','Buat dan bagikan ranking anime versimu.',_MenuGroup.anime,Icons.leaderboard_rounded),
+  _MenuFeature('challenge','Challenge','Tantangan menonton anime dengan target tertentu.',_MenuGroup.anime,Icons.flag_rounded),
+  _MenuFeature('random-character','Random Character','Temukan karakter anime secara acak.',_MenuGroup.anime,Icons.shuffle_rounded),
+  _MenuFeature('releases','Release Tracker','Pantau pengumuman dan tanggal rilis anime.',_MenuGroup.anime,Icons.event_available_rounded),
+  _MenuFeature('match','Recommendation Match','Cari pengguna dengan selera anime yang mirip.',_MenuGroup.anime,Icons.favorite_rounded),
+  _MenuFeature('news','Anime News','Berita dan kabar terbaru seputar anime.',_MenuGroup.anime,Icons.newspaper_rounded),
+  _MenuFeature('screenshots','Screenshot Gallery','Jelajahi dan simpan screenshot anime favorit.',_MenuGroup.anime,Icons.photo_library_rounded),
 ];
-const _labels = {_MenuGroup.community:'Komunitas',_MenuGroup.fun:'Hiburan',_MenuGroup.anime:'Anime',_MenuGroup.unique:'Unik'};
+const _labels = {_MenuGroup.community:'Komunitas',_MenuGroup.fun:'Hiburan',_MenuGroup.anime:'Anime',_MenuGroup.anime:'Unik'};
 
 class MenuHubScreen extends StatefulWidget {
   const MenuHubScreen({super.key});
