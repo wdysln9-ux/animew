@@ -69,7 +69,7 @@ class _CharacterDatabaseScreenState extends State<_CharacterDatabaseScreen> {
           final ch = _characters[i]; final photo = ch.photo as String?;
           return Container(decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)), clipBehavior: Clip.antiAlias, child: Column(children: [
             Expanded(child: photo == null ? const Center(child: Icon(Icons.person)) : Image.network(photo, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_,__,___) => const Center(child: Icon(Icons.person)))),
-            Padding(padding: const EdgeInsets.all(7), child: Column(children: [Text(ch.name as String, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: AppText.caption.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w700)), Text(ch.role?.toString() ?? '', style: AppText.caption.copyWith(color: AppColors.textTertiary, fontSize: 10))])),
+            Padding(padding: const EdgeInsets.all(7), child: Column(children: [Text(ch.name as String, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: AppText.caption.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w700)), Text([ch.role, ch.voiceActor == null ? null : 'CV: ${ch.voiceActor}'].whereType<String>().where((v) => v.isNotEmpty).join(' · '), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: AppText.caption.copyWith(color: AppColors.textTertiary, fontSize: 10))])),
           ]));
         })),
       ])),
