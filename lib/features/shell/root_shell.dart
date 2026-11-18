@@ -738,6 +738,7 @@ class _FloatingDock extends StatelessWidget {
   DockTab.history => (Icons.history_outlined, Icons.history_rounded),
   DockTab.sources => (Icons.extension_outlined, Icons.extension_rounded),
   DockTab.explore => (Icons.explore_outlined, Icons.explore_rounded),
+  DockTab.menu => (Icons.apps_outlined, Icons.apps_rounded),
   _ => null,
 };
 
