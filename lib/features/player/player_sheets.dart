@@ -1706,27 +1706,42 @@ class _CompactPlayerDialog extends StatelessWidget {
   const _CompactPlayerDialog({
     required this.child,
     this.maxHeight = 360,
+    this.matchSubtitleHeight = false,
   });
 
   final Widget child;
   final double maxHeight;
+  final bool matchSubtitleHeight;
 
   @override
-  Widget build(BuildContext context) => Dialog(
-    backgroundColor: AppColors.surface,
-    insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(18),
-      side: const BorderSide(color: AppColors.hairline),
-    ),
-    child: ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: 500, maxHeight: maxHeight),
-      child: ClipRRect(
+  Widget build(BuildContext context) {
+    // Use the same content height as the subtitle picker: 46% of the screen,
+    // clamped to 280–350dp, plus its 12dp top and 16dp bottom padding.
+    final subtitleHeight =
+        (MediaQuery.sizeOf(context).height * 0.46).clamp(280.0, 350.0) + 28;
+    final minHeight = matchSubtitleHeight
+        ? subtitleHeight.clamp(0.0, maxHeight).toDouble()
+        : 0.0;
+    return Dialog(
+      backgroundColor: AppColors.surface,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        child: child,
+        side: const BorderSide(color: AppColors.hairline),
       ),
-    ),
-  );
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 500,
+          minHeight: minHeight,
+          maxHeight: maxHeight,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: child,
+        ),
+      ),
+    );
+  }
 }
 
 class _SheetSurface extends StatelessWidget {
