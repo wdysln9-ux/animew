@@ -92,7 +92,8 @@ class _PollCard extends StatelessWidget {
   @override Widget build(BuildContext context) {
     final options = (poll['community_poll_options'] as List? ?? const []).whereType<Map>().toList()..sort((a,b) => ((a['position'] as num?)?.toInt() ?? 0).compareTo((b['position'] as num?)?.toInt() ?? 0));
     final votes = (poll['community_poll_votes'] as List? ?? const []).whereType<Map>().toList();
-    final selected = votes.where((v) => v['user_id'] == userId).map((v) => v['option_id']?.toString()).firstOrNull;
+    final myVotes = votes.where((v) => v['user_id'] == userId).map((v) => v['option_id']?.toString()).toList();
+    final selected = myVotes.isEmpty ? null : myVotes.first;
     final total = votes.length;
     return Container(padding: const EdgeInsets.all(15), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(poll['question']?.toString() ?? '', style: AppText.body.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
