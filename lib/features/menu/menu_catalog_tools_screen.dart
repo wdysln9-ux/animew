@@ -32,8 +32,11 @@ class _CharacterDatabaseScreenState extends State<_CharacterDatabaseScreen> {
     setState(() { _loading = true; _error = null; _selected = null; _characters = []; });
     try {
       final rows = await sl<AniListService>().api.searchMedia(_query.text, perPage: 15);
-      if (mounted) setState(() => _anime = rows.where((e) => e['isAdult'] != true).toList());
-      if (rows.isEmpty && mounted) setState(() => _error = 'Anime tidak ditemukan.');
+      final safeRows = rows.where((e) => e['isAdult'] != true).toList();
+      if (mounted) setState(() {
+        _anime = safeRows;
+        if (safeRows.isEmpty) _error = 'Anime tidak ditemukan.';
+      });
     } catch (_) {
       if (mounted) setState(() => _error = 'Pencarian AniList gagal.');
     } finally { if (mounted) setState(() => _loading = false); }
@@ -132,7 +135,7 @@ class _CompareAnimeScreenState extends State<_CompareAnimeScreen> {
 
   Future<Map<String, dynamic>?> _find(String q) async {
     if (q.trim().isEmpty) return null;
-    final rows = await sl<AniListService>().api.searchMedia(q, perPage: 1);
+    final rows = await sl<AniListService>().api.searchMedia(q, perPage: 20);
     final safe = rows.where((e) => e['isAdult'] != true).toList();
     return safe.isEmpty ? null : safe.first;
   }
