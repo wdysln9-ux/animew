@@ -68,7 +68,7 @@ class _MenuForumScreenState extends State<MenuForumScreen> {
     appBar: AppBar(backgroundColor: AppColors.bg, foregroundColor: AppColors.textPrimary, title: Text('Forum AniList', style: AppText.title.copyWith(color: AppColors.textPrimary)), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
     floatingActionButton: FloatingActionButton.extended(onPressed: _create, backgroundColor: AppColors.accent, foregroundColor: Colors.white, icon: const Icon(Icons.add_comment), label: const Text('Buat thread')),
     body: RefreshIndicator(onRefresh: _load, child: _loading
-      ? const ListView(children: [SizedBox(height: 300, child: Center(child: CircularProgressIndicator()))])
+      ? ListView(children: const [SizedBox(height: 300, child: Center(child: CircularProgressIndicator()))])
       : _error != null
         ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text(_error!, style: AppText.body.copyWith(color: AppColors.textSecondary)))])
         : _threads.isEmpty
