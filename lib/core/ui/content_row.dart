@@ -44,7 +44,10 @@ class ContentRow extends StatelessWidget {
           child: ListView.builder(
             key: PageStorageKey<String>('home-content-row:$title'),
             scrollDirection: Axis.horizontal,
-            physics: const ClampingScrollPhysics(),
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            dragStartBehavior: DragStartBehavior.down,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             // With a screen reader on, build every item (not just the lazy
             // window) so TalkBack can focus each one and the row auto-scrolls to
