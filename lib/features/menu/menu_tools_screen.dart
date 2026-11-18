@@ -42,17 +42,13 @@ class _BasePage extends StatelessWidget {
   const _BasePage({required this.title, required this.child});
   final String title;
   final Widget child;
-
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.bg,
-        appBar: AppBar(
-          backgroundColor: AppColors.bg,
-          foregroundColor: AppColors.textPrimary,
-          title: Text(title, style: AppText.title.copyWith(color: AppColors.textPrimary)),
-        ),
-        body: SafeArea(child: child),
-      );
+    backgroundColor: AppColors.bg,
+    appBar: AppBar(backgroundColor: AppColors.bg, foregroundColor: AppColors.textPrimary, elevation: 0,
+      title: Text(title, style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800))),
+    body: SafeArea(child: child),
+  );
 }
 
 class _JournalScreen extends StatefulWidget {
@@ -329,18 +325,29 @@ class _AnimeRouletteScreenState extends State<_AnimeRouletteScreen> {
 
   @override
   Widget build(BuildContext context) => _BasePage(
-        title: 'Anime Roulette',
-        child: ListView(padding: const EdgeInsets.all(20), children: [
-          Text('Cari anime secara acak dari katalog AniList.', style: AppText.body.copyWith(color: AppColors.textSecondary)),
+    title: 'Anime Roulette',
+    child: ListView(physics: const BouncingScrollPhysics(), padding: const EdgeInsets.fromLTRB(18, 12, 18, 30), children: [
+      Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.accent.withValues(alpha: .24), AppColors.surface, AppColors.surface2]),
+        border: Border.all(color: AppColors.accent.withValues(alpha: .18))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.auto_awesome_rounded, color: AppColors.accent, size: 30),
           const SizedBox(height: 14),
-          TextField(controller: _query, decoration: const InputDecoration(labelText: 'Kata kunci / genre', prefixIcon: Icon(Icons.search))),
-          const SizedBox(height: 14),
-          FilledButton.icon(onPressed: _loading ? null : _spin, icon: const Icon(Icons.casino), label: Text(_loading ? 'Mengacak...' : 'Putar roulette')),
-          if (_loading) const Padding(padding: EdgeInsets.all(28), child: Center(child: CircularProgressIndicator())),
-          if (_error != null) Padding(padding: const EdgeInsets.all(16), child: Text(_error!, style: TextStyle(color: AppColors.textSecondary))),
-          if (_picked != null) _AnimeResultCard(media: _picked!),
-        ]),
-      );
+          Text('Bingung mau nonton apa?', style: AppText.headline.copyWith(color: AppColors.textPrimary, fontSize: 23, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 6),
+          Text('Biar Anime Roulette yang memilihkan sesuatu dari katalog AniList.', style: AppText.caption.copyWith(color: AppColors.textSecondary, height: 1.45)),
+        ])),
+      const SizedBox(height: 18),
+      Text('Saring pilihan', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 8),
+      TextField(controller: _query, decoration: InputDecoration(labelText: 'Judul atau kata kunci', prefixIcon: const Icon(Icons.search_rounded), filled: true, fillColor: AppColors.surface, border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none))),
+      const SizedBox(height: 14),
+      FilledButton.icon(onPressed: _loading ? null : _spin, icon: const Icon(Icons.casino_rounded), label: Text(_loading ? 'Sedang memilih…' : 'Pilih anime untukku'), style: FilledButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)))),
+      if (_error != null) Padding(padding: const EdgeInsets.only(top: 14), child: Text(_error!, style: AppText.caption.copyWith(color: AppColors.textSecondary))),
+      if (_picked != null) _AnimeResultCard(media: _picked!),
+    ]),
+  );
 }
 
 class _RandomCharacterScreen extends StatefulWidget {
@@ -546,22 +553,50 @@ class _AnimeQuizScreenState extends State<_AnimeQuizScreen> {
     setState(() { _selected = value; _answered++; if (correct) _score++; });
   }
 
-  @override Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     final cover = _question?['coverImage'] is Map ? (_question!['coverImage'] as Map)['large'] as String? : null;
-    return _BasePage(title: 'Kuis Anime', child: ListView(padding: const EdgeInsets.all(20), children: [
-      Text('Tebak judul anime dari poster.', style: AppText.body.copyWith(color: AppColors.textSecondary)),
-      const SizedBox(height: 8),
-      Text('Skor: $_score / $_answered', style: AppText.title.copyWith(color: AppColors.accent)),
-      const SizedBox(height: 12),
-      FilledButton.icon(onPressed: _loading ? null : _next, icon: const Icon(Icons.play_arrow), label: Text(_question == null ? 'Mulai kuis' : 'Soal berikutnya')),
-      if (_loading) const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator())),
-      if (_question != null) ...[
+    return _BasePage(title: 'Kuis Anime', child: ListView(physics: const BouncingScrollPhysics(), padding: const EdgeInsets.fromLTRB(18, 12, 18, 28), children: [
+      Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(22), border: Border.all(color: AppColors.hairline)),
+        child: Row(children: [
+          Container(width: 48, height: 48, decoration: BoxDecoration(color: AppColors.accentSoft, borderRadius: BorderRadius.circular(15)), child: Icon(Icons.quiz_rounded, color: AppColors.accent, size: 26)),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Anime knowledge', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+            Text('Tebak judul dari poster anime.', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+          ])),
+          Text('$_score', style: AppText.headline.copyWith(color: AppColors.accent, fontWeight: FontWeight.w900)),
+        ])),
+      const SizedBox(height: 14),
+      if (_question == null)
+        FilledButton.icon(onPressed: _loading ? null : _next, icon: const Icon(Icons.play_arrow_rounded), label: const Text('Mulai kuis'), style: FilledButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white, minimumSize: const Size.fromHeight(50)))
+      else ...[
+        Row(children: [
+          Text('SOAL ${_answered + (_selected == null ? 1 : 0)}', style: AppText.caption.copyWith(color: AppColors.accent, fontWeight: FontWeight.w900, letterSpacing: 1)),
+          const Spacer(),
+          Text('$_score benar dari $_answered', style: AppText.caption.copyWith(color: AppColors.textTertiary)),
+        ]),
+        const SizedBox(height: 10),
+        if (cover != null) ClipRRect(borderRadius: BorderRadius.circular(22), child: Image.network(cover, height: 330, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const SizedBox(height: 220))),
         const SizedBox(height: 14),
-        if (cover != null) Center(child: ClipRRect(borderRadius: BorderRadius.circular(14), child: Image.network(cover, height: 300, fit: BoxFit.contain))),
-        const SizedBox(height: 14),
-        for (final choice in _choices) Padding(padding: const EdgeInsets.only(bottom: 8), child: OutlinedButton(onPressed: _selected == null ? () => _choose(choice) : null, style: OutlinedButton.styleFrom(side: BorderSide(color: _selected == choice ? (choice == _title(_question!) ? Colors.green : AppColors.accent) : AppColors.hairline)), child: Text(choice))),
-        if (_selected != null) Text(_selected == _title(_question!) ? 'Jawaban benar!' : 'Jawaban: ${_title(_question!)}', style: AppText.title.copyWith(color: AppColors.accent)),
+        Text('Anime apa ini?', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 10),
+        for (final choice in _choices)
+          Padding(padding: const EdgeInsets.only(bottom: 9), child: OutlinedButton(
+            onPressed: _selected == null ? () => _choose(choice) : null,
+            style: OutlinedButton.styleFrom(alignment: Alignment.centerLeft, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+              side: BorderSide(color: _selected == choice ? (choice == _title(_question!) ? Colors.green : AppColors.accent) : AppColors.hairline),
+              backgroundColor: _selected == choice ? AppColors.accentSoft : AppColors.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+            child: Text(choice, style: AppText.body.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)))),
+        if (_selected != null) ...[
+          const SizedBox(height: 4),
+          Text(_selected == _title(_question!) ? 'Tepat! Jawabanmu benar.' : 'Jawaban yang benar: ${_title(_question!)}', style: AppText.body.copyWith(color: AppColors.accent, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 12),
+          FilledButton(onPressed: _loading ? null : _next, style: FilledButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white, minimumSize: const Size.fromHeight(50)), child: const Text('Soal berikutnya')),
+        ],
       ],
+      if (_loading) const Padding(padding: EdgeInsets.all(18), child: Center(child: CircularProgressIndicator())),
     ]));
   }
 }
@@ -614,12 +649,36 @@ class _ScreenshotGalleryScreenState extends State<_ScreenshotGalleryScreen> {
     if (mounted) setState(() {});
   }
 
-  @override Widget build(BuildContext context) => _BasePage(title: 'Screenshot Gallery', child: _loading ? const Center(child: CircularProgressIndicator()) : Column(children: [
-    Padding(padding: const EdgeInsets.all(12), child: Row(children: [Expanded(child: Text('Screenshot tersimpan di perangkat ini.', style: AppText.caption.copyWith(color: AppColors.textSecondary))), FilledButton.icon(onPressed: _add, icon: const Icon(Icons.add_photo_alternate), label: const Text('Tambah'))])),
-    Expanded(child: _paths.isEmpty ? Center(child: Text('Belum ada screenshot.', style: AppText.body.copyWith(color: AppColors.textSecondary))) : GridView.builder(padding: const EdgeInsets.all(8), itemCount: _paths.length, gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 7, mainAxisSpacing: 7), itemBuilder: (_, i) {
-      final path = _paths[i];
-      return GestureDetector(onLongPress: () => _remove(path), onTap: () => showDialog<void>(context: context, builder: (_) => Dialog(child: InteractiveViewer(child: Image.file(File(path), fit: BoxFit.contain)))), child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.file(File(path), fit: BoxFit.cover, errorBuilder: (_,__,___) => const ColoredBox(color: Colors.black12, child: Icon(Icons.broken_image)))));
-    })),
+  @override
+  Widget build(BuildContext context) => _BasePage(title: 'Screenshot Gallery', child: _loading ? const Center(child: CircularProgressIndicator()) : Column(children: [
+    Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 12), child: Row(children: [
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('${_paths.length} gambar tersimpan', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+        Text('Koleksi lokal di perangkatmu', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+      ])),
+      FilledButton.icon(onPressed: _add, icon: const Icon(Icons.add_rounded), label: const Text('Tambah'), style: FilledButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white)),
+    ])),
+    Expanded(child: _paths.isEmpty
+      ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.photo_library_outlined, size: 54, color: AppColors.textTertiary),
+          const SizedBox(height: 12),
+          Text('Galeri masih kosong', style: AppText.title.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 5),
+          Text('Tambahkan screenshot favoritmu.', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+        ]))
+      : GridView.builder(padding: const EdgeInsets.fromLTRB(12, 0, 12, 18), itemCount: _paths.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 7, mainAxisSpacing: 7),
+        itemBuilder: (_, i) {
+          final path = _paths[i];
+          return GestureDetector(
+            onLongPress: () => _remove(path),
+            onTap: () => showDialog<void>(context: context, builder: (_) => Dialog(backgroundColor: Colors.transparent, insetPadding: const EdgeInsets.all(12), child: Stack(children: [
+              InteractiveViewer(child: ClipRRect(borderRadius: BorderRadius.circular(18), child: Image.file(File(path), fit: BoxFit.contain))),
+              Positioned(right: 8, top: 8, child: IconButton.filled(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded))),
+            ]))),
+            child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(File(path), fit: BoxFit.cover, errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.surface2, child: Icon(Icons.broken_image_rounded)))),
+          );
+        })),
   ]));
 }
 
