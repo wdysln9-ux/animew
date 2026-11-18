@@ -525,7 +525,7 @@ class _AnimeQuizScreenState extends State<_AnimeQuizScreen> {
   Future<void> _next() async {
     setState(() => _loading = true);
     try {
-      if (_pool.isEmpty) _pool = (await sl<AniListService>().api.searchMedia('anime', perPage: 40)).where((e) => e['isAdult'] != true).toList();
+      if (_pool.isEmpty) _pool = (await sl<AniListService>().api.fetchRandomAnimePool(perPage: 40)).where((e) => e['isAdult'] != true).toList();
       if (_pool.length < 4) throw StateError('Not enough anime');
       _pool.shuffle();
       final q = _pool.first;
