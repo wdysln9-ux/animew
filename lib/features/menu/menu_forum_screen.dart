@@ -48,7 +48,11 @@ class _MenuForumScreenState extends State<MenuForumScreen> {
       ],
     ));
     title.dispose(); body.dispose();
-    if (data == null || data.$1.isEmpty || data.$2.isEmpty) return;
+    if (data == null) return;
+    if (data.$1.length < 6 || data.$2.isEmpty) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Judul minimal 6 karakter dan isi diskusi tidak boleh kosong.')));
+      return;
+    }
     try {
       final id = await _api.createThread(title: data.$1, body: data.$2);
       if (id == null) throw StateError('CreateThread failed');
