@@ -1095,8 +1095,11 @@ query($page:Int) {
     if (rows is! List) return const [];
     return [
       for (final row in rows)
-        if (row is Map && (row['type'] == 'ANIME_LIST' || row['type'] == 'MANGA_LIST') &&
-            ((row['media'] as Map?)?['isAdult'] != true))
+        if (row is Map &&
+            // List activities include media metadata, so exclude adult titles.
+            // Text and message activities have no media field and remain visible.
+            !((row['type'] == 'ANIME_LIST' || row['type'] == 'MANGA_LIST') &&
+                ((row['media'] as Map?)?['isAdult'] == true)))
           Map<String, dynamic>.from(row),
     ];
   }
