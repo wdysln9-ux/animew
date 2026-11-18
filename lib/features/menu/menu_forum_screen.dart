@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../core/anilist/anilist_service.dart';
 import '../../core/di/injector.dart';
@@ -152,6 +153,37 @@ class _ThreadDetailScreenState extends State<_ThreadDetailScreen> {
     } finally { if (mounted) setState(() => _sending = false); }
   }
 
+  Future<void> _reply(Map<String, dynamic> parent) async {
+    final service = sl<AniListService>();
+    if (!service.isConnected && !await service.connect()) return;
+    final controller = TextEditingController();
+    final text = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Balas komentar'),
+        content: TextField(controller: controller, autofocus: true, minLines: 2, maxLines: 5, maxLength: 12000, decoration: const InputDecoration(hintText: 'Tulis balasan...')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          FilledButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: const Text('Kirim')),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (text == null || text.trim().isEmpty) return;
+    try {
+      final id = await _api.createThreadComment(
+        threadId: (widget.thread['id'] as num).toInt(),
+        parentCommentId: (parent['id'] as num).toInt(),
+        comment: text,
+      );
+      if (id == null) throw StateError('Reply failed');
+      await _load();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Balasan gagal dikirim.')));
+    }
+  }
+
   @override void dispose() { _input.dispose(); super.dispose(); }
 
   @override Widget build(BuildContext context) {
@@ -171,7 +203,7 @@ class _ThreadDetailScreenState extends State<_ThreadDetailScreen> {
           Text('Komentar', style: AppText.title.copyWith(color: AppColors.textPrimary)),
           if (_loading) const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
           if (!_loading && _comments.isEmpty) Text('Belum ada komentar.', style: AppText.caption.copyWith(color: AppColors.textTertiary)),
-          for (final c in _comments) _CommentCard(comment: c),
+          for (final c in _comments) _CommentCard(comment: c, onReply: () => _reply(c)),
         ])),
         SafeArea(top: false, child: Padding(padding: const EdgeInsets.all(10), child: Row(children: [
           Expanded(child: TextField(controller: _input, minLines: 1, maxLines: 4, decoration: const InputDecoration(hintText: 'Tulis komentar...'))),
@@ -183,15 +215,51 @@ class _ThreadDetailScreenState extends State<_ThreadDetailScreen> {
   }
 }
 
+List<Map<String, dynamic>> _threadReplies(dynamic raw) {
+  dynamic decoded = raw;
+  if (raw is String && raw.trim().isNotEmpty) {
+    try { decoded = jsonDecode(raw); } catch (_) { return const []; }
+  }
+  if (decoded is Map && decoded['nodes'] is List) decoded = decoded['nodes'];
+  if (decoded is! List) return const [];
+  return [for (final item in decoded) if (item is Map) Map<String, dynamic>.from(item)];
+}
+
 class _CommentCard extends StatelessWidget {
-  const _CommentCard({required this.comment});
+  const _CommentCard({required this.comment, required this.onReply});
   final Map<String, dynamic> comment;
+  final VoidCallback onReply;
   @override Widget build(BuildContext context) {
     final user = comment['user'] is Map ? comment['user'] as Map : const {};
-    return Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(user['name']?.toString() ?? 'Pengguna', style: AppText.caption.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
-      const SizedBox(height: 5),
-      Text(_plain(comment['comment']?.toString()), style: AppText.caption.copyWith(color: AppColors.textSecondary, height: 1.4)),
-    ])));
+    final replies = _threadReplies(comment['childComments']);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(user['name']?.toString() ?? 'Pengguna', style: AppText.caption.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 5),
+            Text(_plain(comment['comment']?.toString()), style: AppText.caption.copyWith(color: AppColors.textSecondary, height: 1.4)),
+            Align(alignment: Alignment.centerRight, child: TextButton.icon(onPressed: onReply, icon: const Icon(Icons.reply_rounded, size: 16), label: const Text('Balas'))),
+          ]),
+        ),
+        for (final reply in replies)
+          Padding(
+            padding: const EdgeInsets.only(left: 20, top: 6),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: AppColors.surface2, borderRadius: BorderRadius.circular(10)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(((reply['user'] as Map?)?['name'] ?? reply['name'] ?? 'Pengguna').toString(), style: AppText.caption.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 4),
+                Text(_plain((reply['comment'] ?? reply['text'])?.toString()), style: AppText.caption.copyWith(color: AppColors.textSecondary, height: 1.4)),
+              ]),
+            ),
+          ),
+      ]),
+    );
   }
 }
