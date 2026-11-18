@@ -336,8 +336,9 @@ class _HomeViewState extends State<_HomeView>
         try {
           final aniList = sl<AniListService>();
           if (!aniList.isConnected) throw StateError('AniList belum terhubung');
-          final anime = await aniList.fetchAnimeListStrict();
+          final entries = await aniList.fetchList();
           myListLoaded = true;
+          final anime = entries.where((entry) => entry.item.type == ProviderType.anime);
           myAniListIds = {
             for (final entry in anime)
               if (entry.item.anilistId != null) entry.item.anilistId!,
