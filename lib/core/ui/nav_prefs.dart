@@ -89,6 +89,12 @@ class NavPrefs extends ChangeNotifier {
   List<DockTab> get tabs {
     final raw = _box?.get(_tabsKey);
     if (raw is! List || raw.isEmpty) return defaultTabs;
+    // Upgrade the former shipped default dock by replacing Sources with Menu.
+    // Keep custom user ordering untouched.
+    final oldDefault = raw.map((value) => value.toString()).toList();
+    if (listEquals(oldDefault, const ['home', 'sources', 'history', 'myList', 'profile'])) {
+      return defaultTabs;
+    }
     final out = <DockTab>[];
     for (final name in raw) {
       final tab = DockTab.values.where((t) => t.name == name).firstOrNull;
