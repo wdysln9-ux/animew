@@ -45,7 +45,7 @@ class _PersonalListBodyState extends State<_PersonalListBody> {
     setState(() => _loading = true);
     try {
       final rows = await sl<AniListService>().api.searchMedia(_query.text, perPage: 15);
-      if (mounted) setState(() => _results = rows);
+      if (mounted) setState(() => _results = rows.where((e) => e['isAdult'] != true).toList());
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pencarian AniList gagal.')));
     } finally { if (mounted) setState(() => _loading = false); }
