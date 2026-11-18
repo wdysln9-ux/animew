@@ -696,7 +696,7 @@ class _WordChainScreenState extends State<_WordChainScreen> {
     final word = _input.text.trim().toLowerCase();
     if (word.length < 2) { setState(() => _error = 'Kata minimal dua huruf.'); return; }
     if (_words.contains(word)) { setState(() => _error = 'Kata itu sudah dipakai.'); return; }
-    if (_words.isNotEmpty && word[0] != _words.last.characters.last) { setState(() => _error = 'Kata harus dimulai dengan huruf "${_words.last.characters.last}".'); return; }
+    if (_words.isNotEmpty && word[0] != _words.last.substring(_words.last.length - 1)) { setState(() => _error = 'Kata harus dimulai dengan huruf "${_words.last.characters.last}".'); return; }
     setState(() { _words.add(word); _input.clear(); _error = null; _player = _player == 'Pemain 1' ? 'Pemain 2' : 'Pemain 1'; });
   }
   void _reset() => setState(() { _words.clear(); _player = 'Pemain 1'; _error = null; _input.clear(); });
