@@ -1077,7 +1077,7 @@ query($page:Int) {
       ... on ListActivity {
         id type status progress createdAt
         user { id name avatar { large } }
-        media { id title { romaji english } coverImage { large } }
+        media { id isAdult title { romaji english } coverImage { large } }
       }
       ... on TextActivity {
         id type text createdAt
@@ -1093,7 +1093,12 @@ query($page:Int) {
     final d = await _gql(query, {'page': page});
     final rows = (d?['Page'] as Map?)?['activities'];
     if (rows is! List) return const [];
-    return [for (final row in rows) if (row is Map) Map<String, dynamic>.from(row)];
+    return [
+      for (final row in rows)
+        if (row is Map && (row['type'] == 'ANIME_LIST' || row['type'] == 'MANGA_LIST') &&
+            ((row['media'] as Map?)?['isAdult'] != true))
+          Map<String, dynamic>.from(row),
+    ];
   }
 
   /// Search public AniList user profiles.
@@ -1122,13 +1127,21 @@ query($page:Int) {
     threads(sort:[REPLIED_AT_DESC]) {
       id title body viewCount likeCount isLiked replyCount createdAt updatedAt
       user { id name avatar { large } }
+      categories { name }
     }
   }
 }''';
     final d = await _gql(query, {'page': page});
     final rows = (d?['Page'] as Map?)?['threads'];
     if (rows is! List) return const [];
-    return [for (final row in rows) if (row is Map) Map<String, dynamic>.from(row)];
+    return [
+      for (final row in rows)
+        if (row is Map && !((row['categories'] as List? ?? const []).whereType<Map>().any((category) {
+          final name = category['name']?.toString().toLowerCase() ?? '';
+          return name.contains('adult') || name.contains('18+');
+        })))
+          Map<String, dynamic>.from(row),
+    ];
   }
 
   /// Create a public AniList forum thread. Requires an authenticated viewer.
