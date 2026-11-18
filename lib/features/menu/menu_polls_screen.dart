@@ -11,7 +11,7 @@ class MenuPollsScreen extends StatefulWidget {
 }
 
 class _MenuPollsScreenState extends State<MenuPollsScreen> {
-  final _client = sl<SupabaseService>().client;
+  SupabaseClient get _client => sl<SupabaseService>().client;
   List<Map<String, dynamic>> _polls = [];
   bool _loading = true;
   String? _error;
