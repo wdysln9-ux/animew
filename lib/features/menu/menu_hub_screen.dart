@@ -42,7 +42,7 @@ const _features = <_MenuFeature>[
   _MenuFeature('explorer','Penjelajah Anime','Jelajahi anime berdasarkan studio, genre, tema, tahun, dan rekomendasi.',_MenuGroup.anime,Icons.travel_explore_rounded),
   _MenuFeature('characters','Database Karakter','Jelajahi karakter, pengisi suara, relasi, dan anime terkait.',_MenuGroup.anime,Icons.face_rounded),
   _MenuFeature('calendar','Kalender Anime','Jadwal episode terbaru, hitung mundur, dan pengingat tayang.',_MenuGroup.anime,Icons.calendar_month_rounded),
-  _MenuFeature('stats','Statistik Anime','Grafik genre, studio favorit, waktu menonton, skor, dan riwayat tahunan.',_MenuGroup.anime,Icons.query_stats_rounded),
+  _MenuFeature('stats','Statistik Anime','Genre yang paling sering kamu tonton berdasarkan statistik AniList.',_MenuGroup.anime,Icons.query_stats_rounded),
   _MenuFeature('collections','Koleksi','Simpan dan kelola koleksi anime favorit secara lokal.',_MenuGroup.anime,Icons.collections_bookmark_rounded),
   _MenuFeature('compare','Perbandingan Anime','Bandingkan rating, popularitas, genre, durasi, dan statistik dua anime.',_MenuGroup.anime,Icons.compare_arrows_rounded),
   _MenuFeature('roulette','Anime Roulette','Pilih anime acak berdasarkan filter pilihan.',_MenuGroup.anime,Icons.casino_rounded),
