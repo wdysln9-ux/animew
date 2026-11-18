@@ -1147,6 +1147,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
           ],
         ),
       ),
+      ),
     );
   }
 }
