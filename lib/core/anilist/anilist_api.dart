@@ -1046,6 +1046,52 @@ query($id:Int,$page:Int) {
     return [for (final row in rows) if (row is Map) Map<String, dynamic>.from(row)];
   }
 
+  /// Fetch recent public AniList activities for the community feed.
+  Future<List<Map<String, dynamic>>> fetchGlobalActivities({int page = 1}) async {
+    const query = r'''
+query($page:Int) {
+  Page(page:$page,perPage:30) {
+    activities(sort:[ID_DESC]) {
+      ... on ListActivity {
+        id type status progress createdAt
+        user { id name avatar { large } }
+        media { id title { romaji english } coverImage { large } }
+      }
+      ... on TextActivity {
+        id type text createdAt
+        user { id name avatar { large } }
+      }
+      ... on MessageActivity {
+        id type message createdAt
+        user { id name avatar { large } }
+      }
+    }
+  }
+}''';
+    final d = await _gql(query, {'page': page});
+    final rows = (d?['Page'] as Map?)?['activities'];
+    if (rows is! List) return const [];
+    return [for (final row in rows) if (row is Map) Map<String, dynamic>.from(row)];
+  }
+
+  /// Search public AniList user profiles.
+  Future<List<Map<String, dynamic>>> searchUsers(String search, {int page = 1}) async {
+    if (search.trim().isEmpty) return const [];
+    const query = r'''
+query($search:String,$page:Int) {
+  Page(page:$page,perPage:30) {
+    users(search:$search,sort:[SEARCH_MATCH]) {
+      id name siteUrl avatar { large }
+      statistics { anime { count episodesWatched minutesWatched meanScore } }
+    }
+  }
+}''';
+    final d = await _gql(query, {'search': search.trim(), 'page': page});
+    final rows = (d?['Page'] as Map?)?['users'];
+    if (rows is! List) return const [];
+    return [for (final row in rows) if (row is Map) Map<String, dynamic>.from(row)];
+  }
+
   /// Fetch the global AniList discussion feed (not limited to one media title).
   Future<List<Map<String, dynamic>>> fetchGlobalThreads({int page = 1}) async {
     const query = r'''
