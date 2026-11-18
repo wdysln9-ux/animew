@@ -1189,7 +1189,7 @@ query($page:Int) {
       for (final row in rows)
         if (row is Map && !((row['categories'] as List? ?? const []).whereType<Map>().any((category) {
           final name = category['name']?.toString().toLowerCase() ?? '';
-          return name.contains('adult') || name.contains('18+');
+          return ['adult', '18+', 'nsfw', 'hentai', 'ecchi', 'explicit', 'mature', 'erotica'].any(name.contains);
         })))
           Map<String, dynamic>.from(row),
     ];
