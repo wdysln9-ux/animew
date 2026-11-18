@@ -37,7 +37,7 @@ const _features = <_MenuFeature>[
   _MenuFeature('guess','Tebak Karakter','Tebak karakter dari gambar, petunjuk, atau siluet.',_MenuGroup.fun,Icons.person_search_rounded),
   _MenuFeature('quiz','Kuis Anime','Uji pengetahuan tentang anime, studio, karakter, dan pengisi suara.',_MenuGroup.fun,Icons.quiz_rounded),
   _MenuFeature('games','Mini Games','Permainan ringan seperti Tic-tac-toe, tebak kata, dan sambung kata.',_MenuGroup.fun,Icons.sports_esports_rounded),
-  _MenuFeature('music','Musik','Pemutar musik anime, soundtrack, koleksi lagu, dan playlist.',_MenuGroup.fun,Icons.music_note_rounded),
+  _MenuFeature('music','Musik','Cari dan putar soundtrack anime melalui YouTube Music.',_MenuGroup.fun,Icons.music_note_rounded,url:'https://music.youtube.com/search?q=anime%20soundtrack',service:'YouTube Music'),
   _MenuFeature('explorer','Penjelajah Anime','Jelajahi anime berdasarkan studio, genre, tema, tahun, dan rekomendasi.',_MenuGroup.anime,Icons.travel_explore_rounded),
   _MenuFeature('characters','Database Karakter','Jelajahi karakter, pengisi suara, relasi, dan anime terkait.',_MenuGroup.anime,Icons.face_rounded),
   _MenuFeature('calendar','Kalender Anime','Jadwal episode terbaru, hitung mundur, dan pengingat tayang.',_MenuGroup.anime,Icons.calendar_month_rounded),
@@ -52,9 +52,9 @@ const _features = <_MenuFeature>[
   _MenuFeature('ranking','Ranking Builder','Buat dan bagikan ranking anime versimu.',_MenuGroup.anime,Icons.leaderboard_rounded),
   _MenuFeature('challenge','Challenge','Tantangan menonton anime dengan target tertentu.',_MenuGroup.anime,Icons.flag_rounded),
   _MenuFeature('random-character','Random Character','Temukan karakter anime secara acak.',_MenuGroup.anime,Icons.shuffle_rounded),
-  _MenuFeature('releases','Release Tracker','Pantau pengumuman dan tanggal rilis anime.',_MenuGroup.anime,Icons.event_available_rounded),
+  _MenuFeature('releases','Release Tracker','Pantau judul anime mendatang melalui katalog AniList.',_MenuGroup.anime,Icons.event_available_rounded,url:'https://anilist.co/search/anime?sort=START_DATE_DESC',service:'AniList'),
   _MenuFeature('match','Recommendation Match','Cari pengguna dengan selera anime yang mirip.',_MenuGroup.anime,Icons.favorite_rounded),
-  _MenuFeature('news','Anime News','Berita dan kabar terbaru seputar anime.',_MenuGroup.anime,Icons.newspaper_rounded),
+  _MenuFeature('news','Anime News','Baca berita anime dari Anime News Network.',_MenuGroup.anime,Icons.newspaper_rounded,url:'https://www.animenewsnetwork.com/',service:'Anime News Network'),
   _MenuFeature('screenshots','Screenshot Gallery','Jelajahi dan simpan screenshot anime favorit.',_MenuGroup.anime,Icons.photo_library_rounded),
 ];
 const _labels = {_MenuGroup.community:'Komunitas',_MenuGroup.fun:'Hiburan',_MenuGroup.anime:'Anime'};
