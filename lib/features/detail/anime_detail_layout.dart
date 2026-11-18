@@ -1535,9 +1535,9 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                       child: ListView.separated(
                         controller: selectedTab == 'Rekomendasi' ? _recommendationsController : null,
                         scrollDirection: Axis.horizontal,
-                        clipBehavior: Clip.none,
+                        clipBehavior: Clip.hardEdge,
                         physics: const ClampingScrollPhysics(),
-                        padding: const EdgeInsets.only(left: 16, right: 0),
+                        padding: const EdgeInsets.only(left: 16, right: 16),
                         itemCount: cards.length,
                         // Match the 12 px spacing used by ContentRow on Home.
                         separatorBuilder: (_, _) => const SizedBox(width: 12),
