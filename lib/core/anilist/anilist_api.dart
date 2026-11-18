@@ -1189,14 +1189,19 @@ query($page:Int) {
   Future<int?> createThreadComment({
     required int threadId,
     required String comment,
+    int? parentCommentId,
   }) async {
     final cleanComment = comment.trim();
     if (cleanComment.isEmpty || cleanComment.length > 12000) return null;
-    final d = await _gql(
-      r'mutation($threadId:Int,$parentCommentId:Int,$comment:String){ SaveThreadComment(threadId:$threadId,parentCommentId:$parentCommentId,comment:$comment){ id } }',
-      {'threadId': threadId, 'parentCommentId': 0, 'comment': cleanComment},
-      auth: true,
-    );
+    final mutation = parentCommentId == null
+        ? r'mutation($threadId:Int,$comment:String){ SaveThreadComment(threadId:$threadId,comment:$comment){ id } }'
+        : r'mutation($threadId:Int,$parentCommentId:Int,$comment:String){ SaveThreadComment(threadId:$threadId,parentCommentId:$parentCommentId,comment:$comment){ id } }';
+    final variables = <String, dynamic>{
+      'threadId': threadId,
+      'comment': cleanComment,
+      if (parentCommentId != null) 'parentCommentId': parentCommentId,
+    };
+    final d = await _gql(mutation, variables, auth: true);
     return ((d?['SaveThreadComment'] as Map?)?['id'] as num?)?.toInt();
   }
 
