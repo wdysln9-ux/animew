@@ -7,7 +7,6 @@ import '../../core/theme/app_text.dart';
 import '../notify/notifications_screen.dart';
 import '../schedule/schedule_screen.dart';
 import '../home/explore_screen.dart';
-import '../watch_together/ui/watch_party_lobby_screen.dart';
 import 'menu_tools_screen.dart';
 import 'menu_forum_screen.dart';
 import 'menu_social_screen.dart';
@@ -15,7 +14,6 @@ import 'menu_catalog_tools_screen.dart';
 import 'menu_personal_list_screen.dart';
 import 'menu_relations_screen.dart';
 import 'menu_polls_screen.dart';
-import 'menu_messages_screen.dart';
 import 'menu_recommendation_match_screen.dart';
 
 enum _MenuGroup { community, fun, anime }
@@ -29,7 +27,6 @@ class _MenuFeature {
 const _features = <_MenuFeature>[
   _MenuFeature('feed','Feed','Aktivitas AniList pengguna: mulai menonton, menyelesaikan anime, dan perubahan status.',_MenuGroup.community,Icons.dynamic_feed_rounded),
   _MenuFeature('forum','Forum','Diskusi anime dan manga, thread, komentar, balasan, dan membuat thread.',_MenuGroup.community,Icons.forum_rounded),
-  _MenuFeature('messages','Pesan','Ruang percakapan pribadi dengan pengguna lain.',_MenuGroup.community,Icons.chat_bubble_rounded),
   _MenuFeature('notifications','Notifikasi','Pemberitahuan aktivitas, komentar, balasan thread, dan interaksi akun.',_MenuGroup.community,Icons.notifications_rounded),
   _MenuFeature('users','Pengguna','Jelajahi profil AniList, daftar anime, statistik, dan aktivitas pengguna.',_MenuGroup.community,Icons.people_alt_rounded),
   _MenuFeature('polls','Polling','Buat dan ikuti voting anime, karakter favorit, dan topik komunitas.',_MenuGroup.community,Icons.poll_rounded),
@@ -46,7 +43,6 @@ const _features = <_MenuFeature>[
   _MenuFeature('collections','Koleksi','Simpan dan kelola koleksi anime favorit secara lokal.',_MenuGroup.anime,Icons.collections_bookmark_rounded),
   _MenuFeature('compare','Perbandingan Anime','Bandingkan rating, popularitas, genre, durasi, dan statistik dua anime.',_MenuGroup.anime,Icons.compare_arrows_rounded),
   _MenuFeature('roulette','Anime Roulette','Pilih anime acak berdasarkan filter pilihan.',_MenuGroup.anime,Icons.casino_rounded),
-  _MenuFeature('watch-together','Watch Together','Menonton bersama teman dengan sinkronisasi pemutaran.',_MenuGroup.anime,Icons.groups_rounded),
   _MenuFeature('timeline','Timeline Anime','Linimasa perkembangan anime dan franchise.',_MenuGroup.anime,Icons.timeline_rounded),
   _MenuFeature('map','Anime Map','Jelajahi daftar relasi prekuel, sekuel, dan judul terkait dari AniList.',_MenuGroup.anime,Icons.hub_rounded),
   _MenuFeature('journal','Personal Journal','Catatan pribadi dan kesan setelah menonton anime.',_MenuGroup.anime,Icons.edit_note_rounded),
@@ -120,14 +116,12 @@ class _MenuHubScreenState extends State<MenuHubScreen> {
       'notifications' => const NotificationsScreen(),
       'calendar' => const ScheduleScreen(),
       'explorer' => const ExploreScreen(),
-      'watch-together' => const WatchPartyLobbyScreen(),
       'forum' => const MenuForumScreen(),
       'feed' || 'users' => MenuSocialScreen(featureId: feature.id),
       'characters' || 'stats' || 'compare' => MenuCatalogToolsScreen(featureId: feature.id),
       'ranking' || 'collections' => MenuPersonalListScreen(featureId: feature.id),
       'timeline' || 'map' => MenuRelationsScreen(timeline: feature.id == 'timeline'),
       'polls' => const MenuPollsScreen(),
-      'messages' => const MenuMessagesScreen(),
       'match' => const MenuRecommendationMatchScreen(),
       'journal' || 'challenge' || 'games' || 'roulette' || 'random-character' || 'guess' || 'quiz' || 'screenshots' => MenuToolsScreen(featureId: feature.id),
       _ => null,
