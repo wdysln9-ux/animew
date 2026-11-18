@@ -22,7 +22,7 @@ class _MenuRelationsScreenState extends State<MenuRelationsScreen> {
     setState(() { _loading = true; _error = null; _relations = []; });
     try {
       final result = await sl<AniListService>().api.mediaExtrasBySearch(_query.text.trim());
-      final rows = result.relations.toList();
+      final rows = result.relations.where((r) => !r.isAdult).toList();
       if (widget.timeline) {
         rows.sort((a, b) => (a.year ?? 9999).compareTo(b.year ?? 9999));
       }
