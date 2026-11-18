@@ -1135,7 +1135,7 @@ query($page:Int) {
   Future<int?> createThread({required String title, required String body}) async {
     final cleanTitle = title.trim();
     final cleanBody = body.trim();
-    if (cleanTitle.isEmpty || cleanBody.isEmpty) return null;
+    if (cleanTitle.length < 6 || cleanTitle.length > 120 || cleanBody.isEmpty || cleanBody.length > 30000) return null;
     final d = await _gql(
       r'mutation($title:String,$body:String,$categories:[Int],$mediaCategories:[Int]){ SaveThread(title:$title,body:$body,categories:$categories,mediaCategories:$mediaCategories){ id } }',
       {'title': cleanTitle, 'body': cleanBody, 'categories': <int>[], 'mediaCategories': <int>[]},
@@ -1150,10 +1150,10 @@ query($page:Int) {
     required String comment,
   }) async {
     final cleanComment = comment.trim();
-    if (cleanComment.isEmpty) return null;
+    if (cleanComment.isEmpty || cleanComment.length > 12000) return null;
     final d = await _gql(
-      r'mutation($threadId:Int,$comment:String){ SaveThreadComment(threadId:$threadId,comment:$comment){ id } }',
-      {'threadId': threadId, 'comment': cleanComment},
+      r'mutation($threadId:Int,$parentCommentId:Int,$comment:String){ SaveThreadComment(threadId:$threadId,parentCommentId:$parentCommentId,comment:$comment){ id } }',
+      {'threadId': threadId, 'parentCommentId': 0, 'comment': cleanComment},
       auth: true,
     );
     return ((d?['SaveThreadComment'] as Map?)?['id'] as num?)?.toInt();
