@@ -481,7 +481,7 @@ class _NewsScreenState extends State<_NewsScreen> {
       const SizedBox(height: 8), Text(_plain(item.summary), maxLines: 3, overflow: TextOverflow.ellipsis, style: AppText.caption.copyWith(color: AppColors.textSecondary, height: 1.45)),
       const SizedBox(height: 10), Text('Baca ringkasan  →', style: AppText.caption.copyWith(color: AppColors.accent, fontWeight: FontWeight.w800)),
     ]))));
-  }), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded))]);
+  })), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded))]);
 }
 String _plain(String s) => s.replaceAll(RegExp(r'<[^>]*>'), ' ').replaceAll('&amp;', '&').replaceAll('&quot;', '"').replaceAll(RegExp(r'\s+'), ' ').trim();
 
