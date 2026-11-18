@@ -69,29 +69,3 @@ create policy community_poll_votes_change_own on public.community_poll_votes
   );
 create policy community_poll_votes_delete_own on public.community_poll_votes
   for delete to authenticated using (user_id = auth.uid());
-
-create table if not exists public.community_messages (
-  id uuid primary key default gen_random_uuid(),
-  sender_id uuid not null references auth.users(id) on delete cascade,
-  recipient_id uuid not null references auth.users(id) on delete cascade,
-  body text not null check (char_length(body) between 1 and 4000),
-  created_at timestamptz not null default now(),
-  read_at timestamptz,
-  check (sender_id <> recipient_id)
-);
-
-create index if not exists community_messages_pair_idx
-  on public.community_messages(sender_id, recipient_id, created_at desc);
-create index if not exists community_messages_recipient_idx
-  on public.community_messages(recipient_id, created_at desc);
-
-alter table public.community_messages enable row level security;
-create policy community_messages_read_participant on public.community_messages
-  for select to authenticated using (sender_id = auth.uid() or recipient_id = auth.uid());
-create policy community_messages_send on public.community_messages
-  for insert to authenticated with check (sender_id = auth.uid());
-create policy community_messages_mark_read on public.community_messages
-  for update to authenticated using (recipient_id = auth.uid()) with check (recipient_id = auth.uid());
-
-alter publication supabase_realtime add table public.community_messages;
-alter publication supabase_realtime add table public.community_poll_votes;
