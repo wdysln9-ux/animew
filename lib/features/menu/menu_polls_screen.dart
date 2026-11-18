@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/di/injector.dart';
+import '../auth/auth_screens.dart';
 import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
@@ -21,6 +22,10 @@ class _MenuPollsScreenState extends State<MenuPollsScreen> {
 
   Future<void> _load() async {
     setState(() { _loading = true; _error = null; });
+    if (_userId == null) {
+      if (mounted) setState(() { _error = 'Login diperlukan untuk melihat polling komunitas.'; _loading = false; });
+      return;
+    }
     try {
       final rows = await _client.from('community_polls').select('id,question,description,created_at,creator_id,community_poll_options(id,label,position),community_poll_votes(option_id,user_id)').order('created_at', ascending: false).limit(50);
       if (mounted) setState(() => _polls = List<Map<String, dynamic>>.from(rows));
@@ -31,7 +36,7 @@ class _MenuPollsScreenState extends State<MenuPollsScreen> {
 
   Future<void> _create() async {
     if (_userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login diperlukan untuk membuat polling.')));
+      requireLogin(context, action: 'membuat polling');
       return;
     }
     final question = TextEditingController();
@@ -65,7 +70,7 @@ class _MenuPollsScreenState extends State<MenuPollsScreen> {
   Future<void> _vote(Map<String, dynamic> poll, String optionId) async {
     final userId = _userId;
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login diperlukan untuk memilih.')));
+      requireLogin(context, action: 'memilih polling');
       return;
     }
     try {
@@ -80,7 +85,7 @@ class _MenuPollsScreenState extends State<MenuPollsScreen> {
     backgroundColor: AppColors.bg,
     appBar: AppBar(backgroundColor: AppColors.bg, foregroundColor: AppColors.textPrimary, title: Text('Polling Komunitas', style: AppText.title.copyWith(color: AppColors.textPrimary)), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
     floatingActionButton: FloatingActionButton.extended(onPressed: _create, backgroundColor: AppColors.accent, foregroundColor: Colors.white, icon: const Icon(Icons.add), label: const Text('Buat polling')),
-    body: RefreshIndicator(onRefresh: _load, child: _loading ? const ListView(children: [SizedBox(height: 280, child: Center(child: CircularProgressIndicator()))]) : _error != null ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text(_error!, style: AppText.body.copyWith(color: AppColors.textSecondary)))]) : _polls.isEmpty ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text('Belum ada polling. Buat polling pertama!', style: AppText.body.copyWith(color: AppColors.textSecondary)))]) : ListView.separated(padding: const EdgeInsets.fromLTRB(14, 12, 14, 90), itemCount: _polls.length, separatorBuilder: (_, __) => const SizedBox(height: 10), itemBuilder: (_, i) => _PollCard(poll: _polls[i], userId: _userId, onVote: (id) => _vote(_polls[i], id)))),
+    body: RefreshIndicator(onRefresh: _load, child: _loading ? const ListView(children: [SizedBox(height: 280, child: Center(child: CircularProgressIndicator()))]) : _error != null ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Column(children: [Text(_error!, textAlign: TextAlign.center, style: AppText.body.copyWith(color: AppColors.textSecondary)), if (_userId == null) Padding(padding: const EdgeInsets.only(top: 12), child: FilledButton(onPressed: () => requireLogin(context, action: 'menggunakan polling'), child: const Text('Masuk')))]))]) : _polls.isEmpty ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text('Belum ada polling. Buat polling pertama!', style: AppText.body.copyWith(color: AppColors.textSecondary)))]) : ListView.separated(padding: const EdgeInsets.fromLTRB(14, 12, 14, 90), itemCount: _polls.length, separatorBuilder: (_, __) => const SizedBox(height: 10), itemBuilder: (_, i) => _PollCard(poll: _polls[i], userId: _userId, onVote: (id) => _vote(_polls[i], id)))),
   );
 }
 
