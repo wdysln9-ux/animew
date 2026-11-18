@@ -18,6 +18,7 @@ extension DockTabL10n on DockTab {
         DockTab.history => context.l10n.history,
         DockTab.sources => context.l10n.sources,
         DockTab.explore => 'Jelajahi',
+        DockTab.menu => 'Menu',
         DockTab.profile => context.l10n.profile,
       };
 }
