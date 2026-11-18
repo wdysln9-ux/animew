@@ -37,7 +37,7 @@ class _ActivityFeedScreenState extends State<_ActivityFeedScreen> {
     backgroundColor: AppColors.bg,
     appBar: AppBar(backgroundColor: AppColors.bg, foregroundColor: AppColors.textPrimary, title: Text('Feed Komunitas', style: AppText.title.copyWith(color: AppColors.textPrimary)), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
     body: RefreshIndicator(onRefresh: _load, child: _loading
-      ? const ListView(children: [SizedBox(height: 280, child: Center(child: CircularProgressIndicator()))])
+      ? ListView(children: const [SizedBox(height: 280, child: Center(child: CircularProgressIndicator()))])
       : _error != null
         ? ListView(children: [Padding(padding: const EdgeInsets.all(24), child: Text(_error!, style: AppText.body.copyWith(color: AppColors.textSecondary)))])
         : _items.isEmpty
