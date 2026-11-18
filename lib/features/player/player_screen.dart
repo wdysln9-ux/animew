@@ -3538,8 +3538,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
             active: _c.state.activeQuality?.url == v.url,
             onTap: () {
               Navigator.of(context, rootNavigator: true).pop();
-            Navigator.of(context, rootNavigator: true).pop();
-            _c.chooseQuality(v);
+              Navigator.of(context, rootNavigator: true).pop();
+              _c.chooseQuality(v);
               _bumpControls();
             },
           ),
@@ -3553,8 +3553,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
             active: _c.selectedVideoTrack?.id == t.id,
             onTap: () {
               Navigator.of(context, rootNavigator: true).pop();
-            Navigator.of(context, rootNavigator: true).pop();
-            _c.selectVideoTrack(t);
+              Navigator.of(context, rootNavigator: true).pop();
+              _c.selectVideoTrack(t);
               _bumpControls();
             },
           ),
