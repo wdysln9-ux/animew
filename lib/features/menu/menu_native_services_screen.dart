@@ -141,7 +141,7 @@ class _ChessScreenState extends State<_ChessScreen> {
     final board = _makeBoard(initial, moves);
     final fields = initial.split(' ');
     final startsWhite = fields.length < 2 || fields[1] == 'w';
-    final count = moves.trim().isEmpty ? 0 : moves.trim().split(RegExp(r'\\s+')).length;
+    final count = moves.trim().isEmpty ? 0 : moves.trim().split(RegExp(r'\s+')).length;
     final whiteTurn = startsWhite ? count.isEven : count.isOdd;
     _gameState = state;
     _board = board;
