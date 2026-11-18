@@ -692,7 +692,7 @@ class _SearchViewState extends State<_SearchView>
         (f.formats.isNotEmpty ? 1 : 0) +
         (f.statuses.isNotEmpty ? 1 : 0) +
         (f.minYear > 1980 || f.maxYear < 2026 ? 1 : 0) +
-        (f.minEpisodes > 0 || f.maxEpisodes < 200 ? 1 : 0) +
+        (f.minEpisodes > 0 || f.maxEpisodes < 250 ? 1 : 0) +
         (f.year != null ? 1 : 0) +
         (f.season != null ? 1 : 0) +
         (f.format != null ? 1 : 0) +
@@ -1382,7 +1382,7 @@ class _SearchViewState extends State<_SearchView>
         (country.label, f.copyWith(countries: [...f.countries]..remove(country))),
       if (f.minEpisodes > 0 || f.maxEpisodes < 200)
         ('Episode: ${f.minEpisodes}–${f.maxEpisodes}',
-          f.copyWith(minEpisodes: 0, maxEpisodes: 200)),
+          f.copyWith(minEpisodes: 0, maxEpisodes: 250)),
       if (f.minScore != null) ('Skor ${f.minScore}+', f.copyWith(clearScore: true)),
       if (f.adult) ('NSFW', f.copyWith(adult: false)),
       if (f.sort != MetaSort.popularity || f.sortAscending)
@@ -1391,7 +1391,6 @@ class _SearchViewState extends State<_SearchView>
           MetaSort.score => 'Rating',
           MetaSort.trending => 'Trending',
           MetaSort.newest => 'Terbaru',
-          MetaSort.episodeNew => 'Episode baru',
           MetaSort.title => 'Judul',
           MetaSort.recommendation => 'Rekomendasi',
         }}${f.sortAscending ? ' ↑' : ''}',
