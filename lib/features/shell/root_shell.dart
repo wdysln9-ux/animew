@@ -37,6 +37,7 @@ import '../home/home_screen.dart';
 import '../home/my_list_screen.dart';
 import '../home/search_screen.dart';
 import '../home/explore_screen.dart';
+import '../menu/menu_hub_screen.dart';
 import '../settings/settings_screen.dart';
 import 'dock_icons.dart';
 import 'mode_bar.dart';
@@ -298,6 +299,7 @@ class _RootShellState extends State<RootShell>
           key: ValueKey('$profileId:${t.name}'),
           child: switch (t) {
             DockTab.home => MiniPlayerState.active.value?.pageBuilder?.call(context) ?? shared[0],
+            DockTab.menu => const MenuHubScreen(),
             DockTab.myList => shared[2],
             DockTab.profile => const ViewerProfileHomeScreen(),
             // Both normally get pushed with a back button; as tabs they own the
