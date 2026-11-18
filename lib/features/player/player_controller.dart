@@ -1638,8 +1638,8 @@ class PlayerCubit extends Cubit<PlayerState> {
   SubtitleTrack get activeSubtitleTrack => player.state.track.subtitle;
 
   /// File extension for the active subtitle when its source is identifiable.
-  /// Unknown embedded codecs intentionally return null: touch layout editing
-  /// is enabled only for confirmed SRT tracks, never ASS/SSA.
+  /// Unknown embedded codecs intentionally return null. Plain external formats
+  /// (SRT/VTT/SUB) can use the draggable overlay; ASS/SSA keep authored layout.
   String? get activeSubtitleFileExtension {
     final candidates = <String>[
       activeSubtitleTrack.id,
@@ -3778,9 +3778,10 @@ class PlayerCubit extends Cubit<PlayerState> {
     // (styled subtitles) keep it faithful — 'no' preserves signs/karaoke/
     // positions. Plain SRT has no authored positioning, so keep it editable
     // with the Flutter overlay even while the libass preference is enabled.
-    final srtUsesFlutterOverlay =
-        prefs.styledSubtitles && activeSubtitleFileExtension == '.srt';
-    await set('sub-visibility', srtUsesFlutterOverlay ? 'no' : 'yes');
+    final extension = activeSubtitleFileExtension;
+    final plainSubtitleUsesFlutterOverlay = prefs.styledSubtitles &&
+        extension != null && extension != '.ass' && extension != '.ssa';
+    await set('sub-visibility', plainSubtitleUsesFlutterOverlay ? 'no' : 'yes');
     await set(
       'sub-ass-override',
       prefs.styledSubtitles ? 'no' : 'force',
