@@ -27,7 +27,7 @@ class MenuToolsScreen extends StatelessWidget {
     return switch (featureId) {
       'journal' => const _JournalScreen(),
       'challenge' => const _ChallengeScreen(),
-      'games' => const _TicTacToeScreen(),
+      'games' => const _MiniGamesScreen(),
       'roulette' => const _AnimeRouletteScreen(),
       'random-character' => const _RandomCharacterScreen(),
       'guess' => const _GuessCharacterScreen(),
@@ -621,5 +621,91 @@ class _ScreenshotGalleryScreenState extends State<_ScreenshotGalleryScreen> {
       final path = _paths[i];
       return GestureDetector(onLongPress: () => _remove(path), onTap: () => showDialog<void>(context: context, builder: (_) => Dialog(child: InteractiveViewer(child: Image.file(File(path), fit: BoxFit.contain)))), child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.file(File(path), fit: BoxFit.cover, errorBuilder: (_,__,___) => const ColoredBox(color: Colors.black12, child: Icon(Icons.broken_image)))));
     })),
+  ]));
+}
+
+
+class _MiniGamesScreen extends StatelessWidget {
+  const _MiniGamesScreen();
+  @override Widget build(BuildContext context) => _BasePage(title: 'Mini Games', child: ListView(padding: const EdgeInsets.all(16), children: [
+    _gameTile(context, 'Tic-tac-toe', 'Dua pemain bergantian dalam satu perangkat.', Icons.grid_3x3, const _TicTacToeScreen()),
+    _gameTile(context, 'Tebak Kata', 'Tebak kata dari petunjuk dan jumlah huruf.', Icons.lightbulb_outline, const _WordGuessScreen()),
+    _gameTile(context, 'Sambung Kata', 'Bergantian membuat kata dari huruf terakhir.', Icons.link, const _WordChainScreen()),
+  ]));
+}
+
+Widget _gameTile(BuildContext context, String title, String subtitle, IconData icon, Widget page) => Card(
+  color: AppColors.surface,
+  child: ListTile(
+    leading: CircleAvatar(backgroundColor: AppColors.accent.withValues(alpha: .14), child: Icon(icon, color: AppColors.accent)),
+    title: Text(title, style: AppText.body.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+    subtitle: Text(subtitle, style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+    trailing: const Icon(Icons.chevron_right),
+    onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => page)),
+  ),
+);
+
+class _WordGuessScreen extends StatefulWidget {
+  const _WordGuessScreen();
+  @override State<_WordGuessScreen> createState() => _WordGuessScreenState();
+}
+
+class _WordGuessScreenState extends State<_WordGuessScreen> {
+  static const _words = <String, String>{
+    'sakura': 'Bunga yang identik dengan musim semi di Jepang.',
+    'ninja': 'Petarung bayangan dalam cerita Jepang.',
+    'manga': 'Komik yang berasal dari Jepang.',
+    'samurai': 'Prajurit kelas ksatria pada zaman Jepang feodal.',
+    'komet': 'Benda langit yang sering punya ekor bercahaya.',
+    'tanuki': 'Hewan yang sering muncul dalam cerita rakyat Jepang.',
+  };
+  final _input = TextEditingController();
+  late String _word;
+  String? _feedback;
+  int _score = 0;
+  @override void initState() { super.initState(); _newWord(); }
+  void _newWord() { final keys = _words.keys.toList()..shuffle(); setState(() { _word = keys.first; _feedback = null; _input.clear(); }); }
+  void _check() { final correct = _input.text.trim().toLowerCase() == _word; setState(() { _feedback = correct ? 'Benar! +1 poin' : 'Belum tepat, coba lagi.'; if (correct) _score++; }); }
+  @override void dispose() { _input.dispose(); super.dispose(); }
+  @override Widget build(BuildContext context) => _BasePage(title: 'Tebak Kata', child: Padding(padding: const EdgeInsets.all(20), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+    Text('Skor: $_score', style: AppText.title.copyWith(color: AppColors.accent)),
+    const SizedBox(height: 20),
+    Text(_words[_word]!, textAlign: TextAlign.center, style: AppText.headline.copyWith(color: AppColors.textPrimary, fontSize: 22)),
+    const SizedBox(height: 10),
+    Text('${_word.length} huruf', style: AppText.caption.copyWith(color: AppColors.textSecondary)),
+    const SizedBox(height: 18),
+    TextField(controller: _input, textCapitalization: TextCapitalization.none, decoration: const InputDecoration(labelText: 'Jawaban')),
+    const SizedBox(height: 12),
+    if (_feedback != null) Text(_feedback!, style: AppText.body.copyWith(color: AppColors.accent)),
+    const SizedBox(height: 12),
+    Row(children: [Expanded(child: FilledButton(onPressed: _check, child: const Text('Periksa'))), const SizedBox(width: 10), Expanded(child: OutlinedButton(onPressed: _newWord, child: const Text('Kata baru')))]),
+  ])));
+}
+
+class _WordChainScreen extends StatefulWidget {
+  const _WordChainScreen();
+  @override State<_WordChainScreen> createState() => _WordChainScreenState();
+}
+
+class _WordChainScreenState extends State<_WordChainScreen> {
+  final _input = TextEditingController();
+  final List<String> _words = [];
+  String _player = 'Pemain 1';
+  String? _error;
+  void _submit() {
+    final word = _input.text.trim().toLowerCase();
+    if (word.length < 2) { setState(() => _error = 'Kata minimal dua huruf.'); return; }
+    if (_words.contains(word)) { setState(() => _error = 'Kata itu sudah dipakai.'); return; }
+    if (_words.isNotEmpty && word[0] != _words.last.characters.last) { setState(() => _error = 'Kata harus dimulai dengan huruf "${_words.last.characters.last}".'); return; }
+    setState(() { _words.add(word); _input.clear(); _error = null; _player = _player == 'Pemain 1' ? 'Pemain 2' : 'Pemain 1'; });
+  }
+  void _reset() => setState(() { _words.clear(); _player = 'Pemain 1'; _error = null; _input.clear(); });
+  @override void dispose() { _input.dispose(); super.dispose(); }
+  @override Widget build(BuildContext context) => _BasePage(title: 'Sambung Kata', child: Column(children: [
+    Padding(padding: const EdgeInsets.all(16), child: Text('Giliran: $_player', style: AppText.title.copyWith(color: AppColors.accent))),
+    Expanded(child: _words.isEmpty ? Center(child: Text('Mulai dengan kata apa saja.', style: AppText.body.copyWith(color: AppColors.textSecondary))) : ListView.builder(reverse: true, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: _words.length, itemBuilder: (_, i) { final index = _words.length - 1 - i; return ListTile(leading: CircleAvatar(child: Text('${index + 1}')), title: Text(_words[index], style: AppText.body.copyWith(color: AppColors.textPrimary)), subtitle: Text(index.isEven ? 'Pemain 1' : 'Pemain 2', style: AppText.caption.copyWith(color: AppColors.textTertiary))); })),
+    if (_error != null) Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text(_error!, style: AppText.caption.copyWith(color: AppColors.accent))),
+    SafeArea(top: false, child: Padding(padding: const EdgeInsets.all(12), child: Row(children: [Expanded(child: TextField(controller: _input, onSubmitted: (_) => _submit(), decoration: const InputDecoration(hintText: 'Masukkan kata...'))), IconButton.filled(onPressed: _submit, icon: const Icon(Icons.send))]))),
+    TextButton(onPressed: _reset, child: const Text('Mulai ulang')),
   ]));
 }
