@@ -4,6 +4,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/hive/safe_box.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
+import '../notify/notifications_screen.dart';
+import '../schedule/schedule_screen.dart';
+import '../home/explore_screen.dart';
+import '../watch_together/ui/watch_party_lobby_screen.dart';
 
 enum _MenuGroup { community, fun, anime, unique }
 class _MenuFeature {
@@ -97,10 +101,22 @@ class _MenuHubScreenState extends State<MenuHubScreen> {
       else SliverPadding(padding:const EdgeInsets.fromLTRB(14,12,14,32),sliver:SliverGrid(
         gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,mainAxisSpacing:10,crossAxisSpacing:10,childAspectRatio:.94),
         delegate:SliverChildBuilderDelegate((context,i){final f=rows[i];final enabled=_enabled.contains(f.id);return _FeatureTile(feature:f,enabled:enabled,editing:_editing,onTap:(){
-          if(_editing){_toggle(f);}else{Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>_MenuFeatureScreen(feature:f)));}
+          if(_editing){_toggle(f);}else{_openFeature(f);}
         });},childCount:rows.length),
       )),
     ])));
+  }
+  void _openFeature(_MenuFeature feature) {
+    final Widget? page = switch (feature.id) {
+      'notifications' => const NotificationsScreen(),
+      'calendar' => const ScheduleScreen(),
+      'explorer' => const ExploreScreen(),
+      'watch-together' => const WatchPartyLobbyScreen(),
+      _ => null,
+    };
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => page ?? _MenuFeatureScreen(feature: feature),
+    ));
   }
   Widget _chip(String label,bool selected,VoidCallback onTap)=>Padding(padding:const EdgeInsets.only(right:8),child:ChoiceChip(label:Text(label),selected:selected,onSelected:(_)=>onTap(),selectedColor:AppColors.accent.withValues(alpha:.18),labelStyle:AppText.caption.copyWith(color:selected?AppColors.accent:AppColors.textSecondary,fontWeight:selected?FontWeight.w700:FontWeight.w500),side:BorderSide(color:selected?AppColors.accent.withValues(alpha:.5):AppColors.hairline),backgroundColor:AppColors.surface));
 }
