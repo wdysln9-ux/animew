@@ -59,7 +59,7 @@ String searchMediaQuery(MediaKind kind, {bool novelFormat = false}) {
       : '';
   return 'query(\$q:String,\$n:Int){ Page(perPage:\$n){ media(search:\$q,type:${_anilistType(kind)}$formatArg){ '
       'id idMal ${_totalCountFields(kind)} format seasonYear averageScore popularity status genres '
-      'studios { nodes { name } } title{ romaji english native } coverImage{ large } } } }';
+      'studios { nodes { name } } isAdult title{ romaji english native } coverImage{ large } } } }';
 }
 
 /// Query text for the library read-back ([AniListService.fetchList]).
