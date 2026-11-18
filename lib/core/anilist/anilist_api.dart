@@ -1046,6 +1046,51 @@ query($id:Int,$page:Int) {
     return [for (final row in rows) if (row is Map) Map<String, dynamic>.from(row)];
   }
 
+  /// Fetch the global AniList discussion feed (not limited to one media title).
+  Future<List<Map<String, dynamic>>> fetchGlobalThreads({int page = 1}) async {
+    const query = r'''
+query($page:Int) {
+  Page(page:$page,perPage:30) {
+    threads(sort:[REPLIED_AT_DESC]) {
+      id title body viewCount likeCount isLiked replyCount createdAt updatedAt
+      user { id name avatar { large } }
+    }
+  }
+}''';
+    final d = await _gql(query, {'page': page});
+    final rows = (d?['Page'] as Map?)?['threads'];
+    if (rows is! List) return const [];
+    return [for (final row in rows) if (row is Map) Map<String, dynamic>.from(row)];
+  }
+
+  /// Create a public AniList forum thread. Requires an authenticated viewer.
+  Future<int?> createThread({required String title, required String body}) async {
+    final cleanTitle = title.trim();
+    final cleanBody = body.trim();
+    if (cleanTitle.isEmpty || cleanBody.isEmpty) return null;
+    final d = await _gql(
+      r'mutation($title:String,$body:String){ CreateThread(title:$title,body:$body){ id } }',
+      {'title': cleanTitle, 'body': cleanBody},
+      auth: true,
+    );
+    return ((d?['CreateThread'] as Map?)?['id'] as num?)?.toInt();
+  }
+
+  /// Add a comment to an AniList thread. Requires an authenticated viewer.
+  Future<int?> createThreadComment({
+    required int threadId,
+    required String comment,
+  }) async {
+    final cleanComment = comment.trim();
+    if (cleanComment.isEmpty) return null;
+    final d = await _gql(
+      r'mutation($threadId:Int,$comment:String){ SaveThreadComment(threadId:$threadId,comment:$comment){ id } }',
+      {'threadId': threadId, 'comment': cleanComment},
+      auth: true,
+    );
+    return ((d?['SaveThreadComment'] as Map?)?['id'] as num?)?.toInt();
+  }
+
   Future<Map<String, dynamic>?> fetchThread(int threadId) async {
     final d = await _gql(
       'query(\$id:Int){ Thread(id:\$id){ id title body viewCount likeCount replyCount '
