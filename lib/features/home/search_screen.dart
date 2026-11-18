@@ -217,6 +217,7 @@ class _SearchScreenState extends State<SearchScreen> {
               fixedSourceId: widget.fixedSourceId,
               initialFilters: widget.initialFilters,
               initialHideMyAnime: widget.initialHideMyAnime,
+              preserveInitialSort: widget.preserveInitialSort,
             ),
     );
   }
@@ -248,6 +249,7 @@ class _SearchView extends StatefulWidget {
     this.fixedSourceId,
     this.initialFilters,
     this.initialHideMyAnime = false,
+    this.preserveInitialSort = false,
   });
 
   final String? initialQuery;
@@ -258,6 +260,7 @@ class _SearchView extends StatefulWidget {
   final String? fixedSourceId;
   final MetaFilters? initialFilters;
   final bool initialHideMyAnime;
+  final bool preserveInitialSort;
 
   @override
   State<_SearchView> createState() => _SearchViewState();
