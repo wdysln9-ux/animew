@@ -3182,7 +3182,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 active: (current - rate).abs() < 0.01,
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  if (closeQuickSettings) Navigator.pop(context);
+                  if (closeQuickSettings) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  }
                   _c.setRateRemembered(rate);
                   _bumpControls();
                 },
@@ -3523,7 +3525,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
           label: context.l10n.auto,
           active: _c.state.activeQuality == null,
           onTap: () {
-            Navigator.pop(context);
+            Navigator.of(context, rootNavigator: true).pop();
+            Navigator.of(context, rootNavigator: true).pop();
             _c.chooseQuality(null);
             _bumpControls();
           },
@@ -3534,8 +3537,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
             label: v.quality,
             active: _c.state.activeQuality?.url == v.url,
             onTap: () {
-              Navigator.pop(context);
-              _c.chooseQuality(v);
+              Navigator.of(context, rootNavigator: true).pop();
+            Navigator.of(context, rootNavigator: true).pop();
+            _c.chooseQuality(v);
               _bumpControls();
             },
           ),
@@ -3548,8 +3552,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
             label: '${t.h}p',
             active: _c.selectedVideoTrack?.id == t.id,
             onTap: () {
-              Navigator.pop(context);
-              _c.selectVideoTrack(t);
+              Navigator.of(context, rootNavigator: true).pop();
+            Navigator.of(context, rootNavigator: true).pop();
+            _c.selectVideoTrack(t);
               _bumpControls();
             },
           ),
@@ -3563,7 +3568,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
             subtitle: _sourceGroupName(source),
             active: source.url == _c.state.active?.url,
             onTap: () async {
-              Navigator.pop(context);
+              Navigator.of(context, rootNavigator: true).pop();
+              Navigator.of(context, rootNavigator: true).pop();
               await _c.selectSource(source);
               await _maybeRecast();
               _bumpControls();
@@ -3611,7 +3617,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 : (RegExp(r'\d{3,4}\s*p', caseSensitive: false).firstMatch(s.label ?? '')?.group(0) ?? s.container.name),
             active: s == _c.state.active,
             onTap: () async {
-              Navigator.pop(context);
+              Navigator.of(context, rootNavigator: true).pop();
+              Navigator.of(context, rootNavigator: true).pop();
               await _c.selectSource(s);
               await _maybeRecast();
               _bumpControls();
@@ -3668,11 +3675,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     ));
                 },
                 onTap: () async {
-                  Navigator.pop(context);
+                  Navigator.of(context, rootNavigator: true).pop();
                   if (options.length > 1) {
                     _openGroupedSourceQualities(name, options);
                     return;
                   }
+                  Navigator.of(context, rootNavigator: true).pop();
                   await _c.selectSource(active);
                   await _maybeRecast();
                   _bumpControls();
