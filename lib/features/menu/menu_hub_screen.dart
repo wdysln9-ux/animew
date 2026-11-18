@@ -127,7 +127,7 @@ class _MenuHubScreenState extends State<MenuHubScreen> {
       'timeline' || 'map' => MenuRelationsScreen(timeline: feature.id == 'timeline'),
       'polls' => const MenuPollsScreen(),
       'messages' => const MenuMessagesScreen(),
-      'journal' || 'challenge' || 'games' || 'roulette' || 'random-character' => MenuToolsScreen(featureId: feature.id),
+      'journal' || 'challenge' || 'games' || 'roulette' || 'random-character' || 'guess' || 'quiz' || 'screenshots' => MenuToolsScreen(featureId: feature.id),
       _ => null,
     };
     Navigator.of(context).push(MaterialPageRoute<void>(
