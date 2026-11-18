@@ -76,7 +76,7 @@ class _MenuForumScreenState extends State<MenuForumScreen> {
   );
 }
 
-String _plain(String? s) => (s ?? '').replaceAll(RegExp(r'<br\\s*/?>', caseSensitive: false), '\n').replaceAll(RegExp(r'</p>', caseSensitive: false), '\n').replaceAll(RegExp(r'<[^>]*>'), '').replaceAll('&amp;', '&').replaceAll('&quot;', '"').trim();
+String _plain(String? s) => (s ?? '').replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n').replaceAll(RegExp(r'</p>', caseSensitive: false), '\n').replaceAll(RegExp(r'<[^>]*>'), '').replaceAll('&amp;', '&').replaceAll('&quot;', '"').trim();
 
 class _ThreadCard extends StatelessWidget {
   const _ThreadCard({required this.thread, required this.onTap});
