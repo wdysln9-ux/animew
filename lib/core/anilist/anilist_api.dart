@@ -1137,11 +1137,11 @@ query($page:Int) {
     final cleanBody = body.trim();
     if (cleanTitle.isEmpty || cleanBody.isEmpty) return null;
     final d = await _gql(
-      r'mutation($title:String,$body:String){ CreateThread(title:$title,body:$body){ id } }',
-      {'title': cleanTitle, 'body': cleanBody},
+      r'mutation($title:String,$body:String,$categories:[Int],$mediaCategories:[Int]){ SaveThread(title:$title,body:$body,categories:$categories,mediaCategories:$mediaCategories){ id } }',
+      {'title': cleanTitle, 'body': cleanBody, 'categories': <int>[], 'mediaCategories': <int>[]},
       auth: true,
     );
-    return ((d?['CreateThread'] as Map?)?['id'] as num?)?.toInt();
+    return ((d?['SaveThread'] as Map?)?['id'] as num?)?.toInt();
   }
 
   /// Add a comment to an AniList thread. Requires an authenticated viewer.
