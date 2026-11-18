@@ -13,6 +13,7 @@ import '../platform/apple_tv.dart';
 import '../tracker/tracker.dart';
 import '../ui/global_messenger.dart';
 import 'anilist_api.dart';
+import 'anilist_graphql.dart';
 import '../di/injector.dart';
 import '../zmode/metadata_provider_prefs.dart';
 import 'anilist_title.dart';
