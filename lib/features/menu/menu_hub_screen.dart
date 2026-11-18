@@ -4,19 +4,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/hive/safe_box.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
-import '../notify/notifications_screen.dart';
-import '../schedule/schedule_screen.dart';
-import '../home/explore_screen.dart';
 import 'menu_tools_screen.dart';
 import 'menu_forum_screen.dart';
-import 'menu_social_screen.dart';
-import 'menu_catalog_tools_screen.dart';
-import 'menu_personal_list_screen.dart';
-import 'menu_relations_screen.dart';
-import 'menu_polls_screen.dart';
-import 'menu_recommendation_match_screen.dart';
 import 'menu_embedded_service_screen.dart';
-import 'menu_release_tracker_screen.dart';
 
 enum _MenuGroup { community, fun, anime }
 class _MenuFeature {
@@ -29,30 +19,11 @@ class _MenuFeature {
 const _features = <_MenuFeature>[
   _MenuFeature('feed','Feed','Aktivitas AniList pengguna: mulai menonton, menyelesaikan anime, dan perubahan status.',_MenuGroup.community,Icons.dynamic_feed_rounded),
   _MenuFeature('forum','Forum','Diskusi anime dan manga, thread, komentar, balasan, dan membuat thread.',_MenuGroup.community,Icons.forum_rounded),
-  _MenuFeature('notifications','Notifikasi','Pemberitahuan aktivitas, komentar, balasan thread, dan interaksi akun.',_MenuGroup.community,Icons.notifications_rounded),
-  _MenuFeature('users','Pengguna','Jelajahi profil AniList, daftar anime, statistik, dan aktivitas pengguna.',_MenuGroup.community,Icons.people_alt_rounded),
-  _MenuFeature('polls','Polling','Buat dan ikuti voting anime, karakter favorit, dan topik komunitas.',_MenuGroup.community,Icons.poll_rounded),
   _MenuFeature('chess','Catur','Main catur online melawan pemain lain melalui Lichess.',_MenuGroup.fun,Icons.grid_4x4_rounded),
   _MenuFeature('shorts','Short','Jelajahi video pendek YouTube langsung di AnimeW.',_MenuGroup.fun,Icons.smart_display_rounded),
-  _MenuFeature('guess','Tebak Karakter','Tebak karakter dari gambar, petunjuk, atau siluet.',_MenuGroup.fun,Icons.person_search_rounded),
   _MenuFeature('quiz','Kuis Anime','Uji pengetahuan tentang anime, studio, karakter, dan pengisi suara.',_MenuGroup.fun,Icons.quiz_rounded),
-  _MenuFeature('games','Mini Games','Tic-tac-toe, tebak kata, dan sambung kata untuk dimainkan lokal.',_MenuGroup.fun,Icons.sports_esports_rounded),
   _MenuFeature('music','Musik','Cari dan dengarkan musik serta soundtrack anime melalui YouTube Music.',_MenuGroup.fun,Icons.music_note_rounded),
-  _MenuFeature('explorer','Penjelajah Anime','Jelajahi anime berdasarkan studio, genre, tema, tahun, dan rekomendasi.',_MenuGroup.anime,Icons.travel_explore_rounded),
-  _MenuFeature('characters','Database Karakter','Jelajahi karakter, pengisi suara, relasi, dan anime terkait.',_MenuGroup.anime,Icons.face_rounded),
-  _MenuFeature('calendar','Kalender Anime','Jadwal episode terbaru, hitung mundur, dan pengingat tayang.',_MenuGroup.anime,Icons.calendar_month_rounded),
-  _MenuFeature('stats','Statistik Anime','Genre yang paling sering kamu tonton berdasarkan statistik AniList.',_MenuGroup.anime,Icons.query_stats_rounded),
-  _MenuFeature('collections','Koleksi','Simpan dan kelola koleksi anime favorit secara lokal.',_MenuGroup.anime,Icons.collections_bookmark_rounded),
-  _MenuFeature('compare','Perbandingan Anime','Bandingkan rating, popularitas, genre, durasi, dan statistik dua anime.',_MenuGroup.anime,Icons.compare_arrows_rounded),
   _MenuFeature('roulette','Anime Roulette','Pilih anime acak berdasarkan filter pilihan.',_MenuGroup.anime,Icons.casino_rounded),
-  _MenuFeature('timeline','Timeline Anime','Linimasa perkembangan anime dan franchise.',_MenuGroup.anime,Icons.timeline_rounded),
-  _MenuFeature('map','Anime Map','Jelajahi daftar relasi prekuel, sekuel, dan judul terkait dari AniList.',_MenuGroup.anime,Icons.hub_rounded),
-  _MenuFeature('journal','Personal Journal','Catatan pribadi dan kesan setelah menonton anime.',_MenuGroup.anime,Icons.edit_note_rounded),
-  _MenuFeature('ranking','Ranking Builder','Susun ranking anime sendiri dan simpan urutannya di perangkat.',_MenuGroup.anime,Icons.leaderboard_rounded),
-  _MenuFeature('challenge','Challenge','Atur target menonton dan catat progres tantangan secara lokal.',_MenuGroup.anime,Icons.flag_rounded),
-  _MenuFeature('random-character','Random Character','Temukan karakter anime secara acak.',_MenuGroup.anime,Icons.shuffle_rounded),
-  _MenuFeature('releases','Release Tracker','Pantau episode berikutnya dan anime yang akan mulai tayang.',_MenuGroup.anime,Icons.event_available_rounded),
-  _MenuFeature('match','Recommendation Match','Cari pengguna dengan selera anime yang mirip.',_MenuGroup.anime,Icons.favorite_rounded),
   _MenuFeature('news','Anime News','Baca berita anime terbaru langsung di dalam AnimeW.',_MenuGroup.anime,Icons.newspaper_rounded),
   _MenuFeature('screenshots','Screenshot Gallery','Impor dan simpan screenshot anime di perangkat.',_MenuGroup.anime,Icons.photo_library_rounded),
 ];
@@ -115,21 +86,11 @@ class _MenuHubScreenState extends State<MenuHubScreen> {
   }
   void _openFeature(_MenuFeature feature) {
     final Widget? page = switch (feature.id) {
-      'notifications' => const NotificationsScreen(),
-      'calendar' => const ScheduleScreen(),
-      'explorer' => const ExploreScreen(),
       'forum' => const MenuForumScreen(),
-      'feed' || 'users' => MenuSocialScreen(featureId: feature.id),
-      'characters' || 'stats' || 'compare' => MenuCatalogToolsScreen(featureId: feature.id),
-      'ranking' || 'collections' => MenuPersonalListScreen(featureId: feature.id),
-      'timeline' || 'map' => MenuRelationsScreen(timeline: feature.id == 'timeline'),
-      'polls' => const MenuPollsScreen(),
-      'match' => const MenuRecommendationMatchScreen(),
       'chess' => const MenuEmbeddedServiceScreen(title: 'Catur', url: 'https://lichess.org/mobile'),
       'shorts' => const MenuEmbeddedServiceScreen(title: 'Short', url: 'https://m.youtube.com/shorts'),
       'music' => const MenuEmbeddedServiceScreen(title: 'Musik', url: 'https://music.youtube.com/search?q=anime%20soundtrack'),
       'news' => const MenuEmbeddedServiceScreen(title: 'Anime News', url: 'https://www.animenewsnetwork.com/news/'),
-      'releases' => const MenuReleaseTrackerScreen(),
       'journal' || 'challenge' || 'games' || 'roulette' || 'random-character' || 'guess' || 'quiz' || 'screenshots' => MenuToolsScreen(featureId: feature.id),
       _ => null,
     };
