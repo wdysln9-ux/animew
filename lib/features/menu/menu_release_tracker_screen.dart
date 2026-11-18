@@ -42,6 +42,20 @@ class _MenuReleaseTrackerScreenState extends State<MenuReleaseTrackerScreen> {
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
+  String _startDateLabel(Map<String, dynamic> item) {
+    final d = item['startDate'];
+    if (d is! Map || d['year'] is! num) return 'Tanggal belum diumumkan';
+    final year = (d['year'] as num).toInt();
+    final month = d['month'];
+    final day = d['day'];
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    if (month is num && day is num) {
+      return '${day.toInt()} ${months[month.toInt() - 1]} $year';
+    }
+    if (month is num) return '${months[month.toInt() - 1]} $year';
+    return year.toString();
+  }
+
   String _countdown(DateTime date) {
     final d = date.difference(DateTime.now());
     if (d.isNegative) return 'Sedang tayang';
@@ -91,7 +105,7 @@ class _MenuReleaseTrackerScreenState extends State<MenuReleaseTrackerScreen> {
                     final episode = (_tab == 0 ? (item['nextAiringEpisode'] as Map?)?['episode'] : null);
                     final details = _tab == 0
                       ? '${episode == null ? 'Episode berikutnya' : 'Episode $episode'} · ${_dateLabel(date)}'
-                      : _dateLabel(date);
+                      : _startDateLabel(item);
                     return Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14)),
