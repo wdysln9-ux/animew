@@ -15,6 +15,7 @@ import 'menu_catalog_tools_screen.dart';
 import 'menu_personal_list_screen.dart';
 import 'menu_relations_screen.dart';
 import 'menu_polls_screen.dart';
+import 'menu_messages_screen.dart';
 
 enum _MenuGroup { community, fun, anime }
 class _MenuFeature {
@@ -125,6 +126,7 @@ class _MenuHubScreenState extends State<MenuHubScreen> {
       'ranking' || 'collections' => MenuPersonalListScreen(featureId: feature.id),
       'timeline' || 'map' => MenuRelationsScreen(timeline: feature.id == 'timeline'),
       'polls' => const MenuPollsScreen(),
+      'messages' => const MenuMessagesScreen(),
       'journal' || 'challenge' || 'games' || 'roulette' || 'random-character' => MenuToolsScreen(featureId: feature.id),
       _ => null,
     };
