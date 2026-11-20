@@ -1197,20 +1197,10 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
         child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () {
-            final nextExpanded = !_expanded;
-            setState(() {
-              _expanded = nextExpanded;
-              unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('characters', _expanded));
-            });
-            if (nextExpanded) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted && _scrollController.hasClients) {
-                  _scrollController.jumpTo(0);
-                }
-              });
-            }
-          },
+          onTap: () => setState(() {
+            _expanded = !_expanded;
+            unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('characters', _expanded));
+          }),
           child: Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Row(children: [
