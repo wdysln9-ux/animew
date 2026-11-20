@@ -151,7 +151,7 @@ class _EpisodeGallerySectionState extends State<EpisodeGallerySection> {
                 children: [
                   const SizedBox(height: 10),
                   SizedBox(
-                    height: 34,
+                    height: 30,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -229,10 +229,11 @@ class _EpisodeGalleryChip extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           child: Text(
             label,
             style: AppText.caption.copyWith(
+              fontSize: 11.5,
               color: selected ? Colors.white : AppColors.textSecondary,
               fontWeight: FontWeight.w700,
             ),
