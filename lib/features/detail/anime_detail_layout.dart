@@ -1526,21 +1526,30 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
                 if (selectedTab == 'Rekomendasi' && widget.recommendationsLoading) {
                   cards.add(SizedBox(width: 54, child: Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 1.8)))));
                 }
-                // The outer rail already supplies the 16dp leading inset.
-                // Keep the viewport flush with the screen's right edge so the
-                // last poster is never clipped early by an expanded padding.
-                return ListView.separated(
-                  controller: selectedTab == 'Rekomendasi' ? _recommendationsController : null,
-                  scrollDirection: Axis.horizontal,
-                  dragStartBehavior: DragStartBehavior.down,
-                  clipBehavior: Clip.none,
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
+                // Extend the scroll viewport to the physical left screen edge,
+                // while keeping the first poster aligned to the rail's 16dp inset.
+                // This prevents the first poster from being clipped at x=16 while
+                // scrolling, without sacrificing the right-edge reach.
+                return LayoutBuilder(
+                  builder: (context, constraints) => Transform.translate(
+                    offset: const Offset(-16, 0),
+                    child: SizedBox(
+                      width: constraints.maxWidth + 16,
+                      child: ListView.separated(
+                        controller: selectedTab == 'Rekomendasi' ? _recommendationsController : null,
+                        scrollDirection: Axis.horizontal,
+                        dragStartBehavior: DragStartBehavior.down,
+                        clipBehavior: Clip.none,
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
+                        padding: const EdgeInsets.only(left: 16),
+                        itemCount: cards.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 12),
+                        itemBuilder: (_, index) => cards[index],
+                      ),
+                    ),
                   ),
-                  padding: EdgeInsets.zero,
-                  itemCount: cards.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (_, index) => cards[index],
                 );
               },
             ),
