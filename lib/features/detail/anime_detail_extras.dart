@@ -123,7 +123,7 @@ class _AnimeExternalApi {
           }
         }
       } catch (_) {}
-      final fallback = await _jikanThemes(id, title);
+      final fallback = [...await _jikanThemes(id, title)];
       fallback.addAll(await _jikanMusicVideos(id, title));
       return fallback;
     });
