@@ -1192,7 +1192,9 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
     final cast = widget.cast;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
-      child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: SizedBox(
+        width: double.infinity,
+        child: AnimatedSize(duration: const Duration(milliseconds: 240), curve: Curves.easeInOutCubic, alignment: Alignment.topCenter, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => setState(() {
@@ -1275,7 +1277,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
             },
           )),
         ],
-      ])),
+      ]))),
     );
   }
 }
