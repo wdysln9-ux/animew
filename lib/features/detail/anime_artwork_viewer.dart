@@ -455,7 +455,9 @@ class _AnimeArtworkViewer extends StatefulWidget {
 
 class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   late final PageController _pages = PageController();
+  final TransformationController _zoomController = TransformationController();
   int _index = 0;
+  bool _isZoomed = false;
   bool _saving = false;
   bool _loadingAdditionalArtwork = false;
 
@@ -521,6 +523,7 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
   @override
   void dispose() {
     _pages.dispose();
+    _zoomController.dispose();
     super.dispose();
   }
 
@@ -607,9 +610,16 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
           children: [
             PageView.builder(
               controller: _pages,
+              physics: _isZoomed
+                  ? const NeverScrollableScrollPhysics()
+                  : const PageScrollPhysics(),
               itemCount: widget.images.length,
               onPageChanged: (index) {
-                setState(() => _index = index);
+                _zoomController.value = Matrix4.identity();
+                setState(() {
+                  _index = index;
+                  _isZoomed = false;
+                });
                 // Warm the pages on either side so a quick swipe back and
                 // forth can reuse the image cache instead of showing a blank
                 // placeholder while the same artwork is fetched again.
@@ -631,23 +641,44 @@ class _AnimeArtworkViewerState extends State<_AnimeArtworkViewer> {
                 final image = widget.images[index];
                 // Keep every page mounted as an image page. CachedNetworkImage
                 // reuses its disk/memory cache when the user returns to it.
-                return Center(
-                  child: InteractiveViewer(
+                return LayoutBuilder(
+                  builder: (context, constraints) => InteractiveViewer(
                     key: ValueKey(image.url),
+                    transformationController: _zoomController,
                     minScale: 1,
-                    maxScale: 4,
-                    child: CachedNetworkImage(
-                      imageUrl: image.url,
-                      httpHeaders: _headersForArtwork(image.label),
-                      fit: BoxFit.contain,
-                      fadeInDuration: Duration.zero,
-                      placeholder: (_, _) => const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      ),
-                      errorWidget: (_, _, _) => const Icon(
-                        Icons.broken_image_outlined,
-                        color: Colors.white70,
-                        size: 42,
+                    maxScale: 6,
+                    boundaryMargin: const EdgeInsets.all(96),
+                    clipBehavior: Clip.none,
+                    onInteractionUpdate: (_) {
+                      final zoomed =
+                          _zoomController.value.getMaxScaleOnAxis() > 1.01;
+                      if (zoomed != _isZoomed && mounted) {
+                        setState(() => _isZoomed = zoomed);
+                      }
+                    },
+                    onInteractionEnd: (_) {
+                      final zoomed =
+                          _zoomController.value.getMaxScaleOnAxis() > 1.01;
+                      if (zoomed != _isZoomed && mounted) {
+                        setState(() => _isZoomed = zoomed);
+                      }
+                    },
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      height: constraints.maxHeight,
+                      child: CachedNetworkImage(
+                        imageUrl: image.url,
+                        httpHeaders: _headersForArtwork(image.label),
+                        fit: BoxFit.contain,
+                        fadeInDuration: Duration.zero,
+                        placeholder: (_, _) => const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        ),
+                        errorWidget: (_, _, _) => const Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white70,
+                          size: 42,
+                        ),
                       ),
                     ),
                   ),
