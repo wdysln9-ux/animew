@@ -509,15 +509,54 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                       fontFamily: f.bundled ? f.family : null,
                     ),
                   ),
-                  trailing: f.family == AppFontPrefs.family
-                      ? Icon(Icons.check, color: AppColors.accent)
-                      : (f.bundled
-                            ? null
-                            : Icon(
-                                Icons.download_outlined,
-                                size: 18,
-                                color: AppColors.textTertiary,
-                              )),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (f.family == AppFontPrefs.family)
+                        Icon(Icons.check, color: AppColors.accent)
+                      else if (!f.bundled && !AppFontPrefs.isCustom(f.family))
+                        Icon(
+                          Icons.download_outlined,
+                          size: 18,
+                          color: AppColors.textTertiary,
+                        ),
+                      if (AppFontPrefs.isCustom(f.family))
+                        IconButton(
+                          tooltip: 'Hapus font',
+                          icon: const Icon(Icons.delete_outline_rounded),
+                          color: AppColors.textSecondary,
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: ctx,
+                              builder: (dialogContext) => AlertDialog(
+                                backgroundColor: AppColors.surface,
+                                title: const Text('Hapus font?'),
+                                content: Text(
+                                  'Font "${f.label}" akan dihapus dari perangkat.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(dialogContext, false),
+                                    child: const Text('Batal'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(dialogContext, true),
+                                    child: const Text('Hapus'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm != true) return;
+                            if (AppFontPrefs.family == f.family) {
+                              await AppFontPrefs.setFamily(AppText.defaultFontFamily);
+                            }
+                            await SubtitleFontService.instance.removeCustomFont(f.family);
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            if (mounted) setState(() {});
+                          },
+                        ),
+                    ],
+                  ),
                 ),
               const SizedBox(height: 8),
             ],
