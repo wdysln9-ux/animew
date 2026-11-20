@@ -1384,12 +1384,14 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
       seasonTitles: seasonTitles,
     );
 
-    // Empty categories are omitted entirely, so there is no dead tab.
+    // Omit every category that has no content. The seasons tab only exists
+    // when the franchise lookup found more than one season for this anime.
     final tabs = <String>[
-      'Semua Musim',
+      if (widget.seasons.isNotEmpty) 'Semua Musim',
       if (related.isNotEmpty) 'Terkait',
       if (recommendations.isNotEmpty) 'Rekomendasi',
     ];
+    if (tabs.isEmpty) return const SizedBox.shrink();
     if (_selected >= tabs.length) _selected = 0;
 
     final width = posterRowWidth(context);
