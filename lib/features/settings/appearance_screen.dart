@@ -161,7 +161,6 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
 
   Future<void> _pickCustomBackground() async {
     var temp = ThemeController.customBackgroundColor ?? AppColors.bg;
-    var hue = HSLColor.fromColor(temp).hue;
     var lightness = HSLColor.fromColor(temp).lightness;
     var saturation = HSLColor.fromColor(temp).saturation;
     var hexValid = true;
@@ -193,7 +192,6 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   onColorChanged: (color) => setDialogState(() {
                     temp = color;
                     final hsl = HSLColor.fromColor(color);
-                    hue = hsl.hue;
                     saturation = hsl.saturation;
                     lightness = hsl.lightness;
                     syncHex();
@@ -232,7 +230,6 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                       if (parsed != null) {
                         temp = Color(0xFF000000 | parsed);
                         final hsl = HSLColor.fromColor(temp);
-                        hue = hsl.hue;
                         saturation = hsl.saturation;
                         lightness = hsl.lightness;
                       }
@@ -240,17 +237,6 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   },
                 ),
                 const SizedBox(height: 8),
-                Align(alignment: Alignment.centerLeft, child: Text('Hue', style: AppText.caption)),
-                Slider(
-                  value: hue.clamp(0, 360).toDouble(),
-                  min: 0,
-                  max: 360,
-                  onChanged: (value) => setDialogState(() {
-                    hue = value;
-                    temp = HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
-                    syncHex();
-                  }),
-                ),
                 Align(alignment: Alignment.centerLeft, child: Text('Kecerahan', style: AppText.caption)),
                 Slider(
                   value: lightness.clamp(0, 1).toDouble(),
