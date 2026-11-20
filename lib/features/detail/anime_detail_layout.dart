@@ -1114,7 +1114,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
             ),
           ],
           if (_expanded && hasCredits) ...[
-            const SizedBox(height: 7),
+            const SizedBox(height: 9),
             Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6, children: [
               for (final studio in widget.studios)
                 _chip(studio, studioBlue, icon: Icons.business_rounded, onTap: () => widget.onStudioTap(studio)),
@@ -1236,7 +1236,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
             ),
           ),
         if (_expanded && cast.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 9),
           SizedBox(height: 124, child: ListView.separated(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
