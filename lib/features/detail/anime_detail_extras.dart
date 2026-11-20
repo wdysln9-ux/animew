@@ -85,18 +85,21 @@ class _AnimeExternalApi {
             ? _list(root['anime']) : _list(_map(root['search'])['anime']);
         if (candidates.isNotEmpty) {
           final wanted = _norm(title);
-          final anime = _map(candidates.where((raw) =>
-              _norm(_str(_map(raw)['name'])) == wanted).firstOrNull ?? candidates.first);
+          final matched = candidates.where((raw) =>
+              _norm(_str(_map(raw)['name'])) == wanted).firstOrNull;
+          final anime = _map(matched ?? (candidates.length == 1 ? candidates.first : null));
+          if (anime.isEmpty) return _jikanThemes(id, title);
+          final included = _list(root['included']).map(_map).toList();
           final parsed = <_AnimeTheme>[];
-          for (final raw in _list(anime['animethemes'])) {
+          for (final raw in _related(anime, 'animethemes', included, 'animethemes')) {
             final theme = _map(raw);
-            final song = _map(theme['song']);
+            final song = _relatedOne(theme, 'song', included, 'songs');
             final songTitle = _str(song['title']);
-            final artists = _list(song['artists']).map((a) => _str(_map(a)['name']))
+            final artists = _related(song, 'artists', included, 'artists').map((a) => _str(_map(a)['name']))
                 .where((v) => v.isNotEmpty).toList();
             String? videoUrl;
-            for (final entry in _list(theme['animethemeentries'])) {
-              final videos = _list(_map(entry)['videos']);
+            for (final entry in _related(theme, 'animethemeentries', included, 'animethemeentries')) {
+              final videos = _related(_map(entry), 'videos', included, 'videos');
               if (videos.isEmpty) continue;
               final video = _map(videos.first);
               final link = _str(video['link']).isNotEmpty ? _str(video['link']) : _str(video['url']);
@@ -121,6 +124,37 @@ class _AnimeExternalApi {
       } catch (_) {}
       return _jikanThemes(id, title);
     });
+  }
+
+  static List<Map<String, dynamic>> _related(
+    Map<String, dynamic> owner,
+    String key,
+    List<Map<String, dynamic>> included,
+    String type,
+  ) {
+    final direct = owner[key];
+    if (direct is List) return direct.map(_map).toList();
+    final relation = _map(_map(owner['relationships'])[key]);
+    final data = relation['data'];
+    final refs = data is List ? data : data == null ? const [] : [data];
+    return refs.map((ref) {
+      final id = _str(_map(ref)['id']);
+      return included.where((item) => _str(item['id']) == id &&
+          (_str(item['type']).isEmpty ||
+           _str(item['type']).toLowerCase().contains(type.toLowerCase())))
+          .firstOrNull ?? <String, dynamic>{};
+    }).where((item) => item.isNotEmpty).toList();
+  }
+
+  static Map<String, dynamic> _relatedOne(
+    Map<String, dynamic> owner,
+    String key,
+    List<Map<String, dynamic>> included,
+    String type,
+  ) {
+    final direct = owner[key];
+    if (direct is Map) return _map(direct);
+    return _related(owner, key, included, type).firstOrNull ?? <String, dynamic>{};
   }
 
   static Future<List<_AnimeTheme>> _jikanThemes(int? id, String title) async {
