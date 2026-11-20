@@ -312,6 +312,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   );
                 },
               ),
+          ),
           // ── Theme ─────────────────────────────────────────────────────────
           SettingsSectionLabel(context.l10n.theme),
           SettingsCard(
