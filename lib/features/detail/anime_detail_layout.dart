@@ -1114,7 +1114,7 @@ class _DetailCreditsState extends State<_DetailCredits> {
             ),
           ],
           if (_expanded && hasCredits) ...[
-            const SizedBox(height: 9),
+            const SizedBox(height: 7),
             Wrap(alignment: WrapAlignment.center, spacing: 6, runSpacing: 6, children: [
               for (final studio in widget.studios)
                 _chip(studio, studioBlue, icon: Icons.business_rounded, onTap: () => widget.onStudioTap(studio)),
@@ -1236,7 +1236,7 @@ class _AnimeDetailCharacterRailState extends State<AnimeDetailCharacterRail> {
             ),
           ),
         if (_expanded && cast.isNotEmpty) ...[
-          const SizedBox(height: 9),
+          const SizedBox(height: 4),
           SizedBox(height: 124, child: ListView.separated(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
@@ -1384,14 +1384,12 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
       seasonTitles: seasonTitles,
     );
 
-    // Omit every category that has no content. The seasons tab only exists
-    // when the franchise lookup found more than one season for this anime.
+    // Empty categories are omitted entirely, so there is no dead tab.
     final tabs = <String>[
-      if (widget.seasons.isNotEmpty) 'Semua Musim',
+      'Semua Musim',
       if (related.isNotEmpty) 'Terkait',
       if (recommendations.isNotEmpty) 'Rekomendasi',
     ];
-    if (tabs.isEmpty) return const SizedBox.shrink();
     if (_selected >= tabs.length) _selected = 0;
 
     final width = posterRowWidth(context);
