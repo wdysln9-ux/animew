@@ -11,7 +11,6 @@ import 'package:watch_app/core/hive/safe_box.dart';
 /// moment the user can reorder or hide them.
 enum DockTab {
   home('Home'),
-  menu('Menu'),
   myList('My List'),
   downloads('Downloads'),
   history('History'),
@@ -65,7 +64,7 @@ class NavPrefs extends ChangeNotifier {
   /// tab, so these four names fill all five icon slots.
   static const List<DockTab> defaultTabs = [
     DockTab.home,
-    DockTab.menu,
+    DockTab.downloads,
     DockTab.history,
     DockTab.myList,
     DockTab.profile,
@@ -89,10 +88,10 @@ class NavPrefs extends ChangeNotifier {
   List<DockTab> get tabs {
     final raw = _box?.get(_tabsKey);
     if (raw is! List || raw.isEmpty) return defaultTabs;
-    // Upgrade the former shipped default dock by replacing Sources with Menu.
-    // Keep custom user ordering untouched.
+    // Remove the retired Menu destination from previously saved dock layouts.
     final oldDefault = raw.map((value) => value.toString()).toList();
-    if (listEquals(oldDefault, const ['home', 'sources', 'history', 'myList', 'profile'])) {
+    if (listEquals(oldDefault, const ['home', 'sources', 'history', 'myList', 'profile']) ||
+        listEquals(oldDefault, const ['home', 'menu', 'history', 'myList', 'profile'])) {
       return defaultTabs;
     }
     final out = <DockTab>[];
