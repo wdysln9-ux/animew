@@ -147,6 +147,20 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _setAmoled(bool enabled) async {
+    if (enabled && ThemeController.customBackgroundEnabled) {
+      await ThemeController.setCustomBackgroundEnabled(false);
+    }
+    await _updateProfileTheme(amoled: enabled);
+  }
+
+  Future<void> _setCustomBackgroundEnabled(bool enabled) async {
+    if (enabled && ThemeController.amoled) {
+      await _updateProfileTheme(amoled: false);
+    }
+    await ThemeController.setCustomBackgroundEnabled(enabled);
+  }
+
   Future<void> _pickCustomBackground() async {
     var temp = ThemeController.customBackgroundColor ?? AppColors.bg;
     var lightness = HSLColor.fromColor(temp).lightness;
@@ -322,14 +336,14 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                 title: context.l10n.pureBlackBackground,
                 subtitle: context.l10n.trueBlackForOLED,
                 value: ThemeController.amoled,
-                onChanged: (value) => _updateProfileTheme(amoled: value),
+                onChanged: _setAmoled,
               ),
               _switchTile(
                 icon: Icons.color_lens_outlined,
                 title: 'Latar kustom',
                 subtitle: 'Gunakan latar pilihanmu atau kembali ke latar biasa',
                 value: ThemeController.customBackgroundEnabled,
-                onChanged: ThemeController.setCustomBackgroundEnabled,
+                onChanged: _setCustomBackgroundEnabled,
               ),
               SettingsTile(
                 icon: Icons.palette_outlined,
