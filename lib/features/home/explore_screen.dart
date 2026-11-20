@@ -558,12 +558,36 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ]))));
         })),
       if (items.length > 1) Padding(padding: const EdgeInsets.only(top: 9),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          for (var i = 0; i < items.length; i++) AnimatedContainer(duration: const Duration(milliseconds: 180),
-            margin: const EdgeInsets.symmetric(horizontal: 2), width: _heroIndex == i ? 12 : 5, height: 4,
-            decoration: BoxDecoration(color: _heroIndex == i ? AppColors.accent : AppColors.textTertiary.withValues(alpha: .55),
-              borderRadius: BorderRadius.circular(5))),
-        ])),
+        child: Center(child: Builder(builder: (dotsContext) => GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragStart: (_) { _heroTimer?.cancel(); _heroTimer = null; },
+          onHorizontalDragUpdate: (details) {
+            final box = dotsContext.findRenderObject() as RenderBox;
+            final width = box.size.width;
+            if (width <= 0) return;
+            final target = (details.localPosition.dx / width * items.length).floor().clamp(0, items.length - 1);
+            final currentPage = _heroController.hasClients ? (_heroController.page?.round() ?? 10000) : 10000;
+            final page = currentPage - (currentPage % items.length) + target;
+            if (target != _heroIndex && _heroController.hasClients) _heroController.jumpToPage(page);
+          },
+          onHorizontalDragEnd: (_) => _syncHeroTimer(),
+          onTapUp: (details) {
+            final box = dotsContext.findRenderObject() as RenderBox;
+            final width = box.size.width;
+            if (width <= 0) return;
+            final target = (details.localPosition.dx / width * items.length).floor().clamp(0, items.length - 1);
+            final currentPage = _heroController.hasClients ? (_heroController.page?.round() ?? 10000) : 10000;
+            final page = currentPage - (currentPage % items.length) + target;
+            if (_heroController.hasClients) _heroController.animateToPage(page, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+            _syncHeroTimer();
+          },
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            for (var i = 0; i < items.length; i++) AnimatedContainer(duration: const Duration(milliseconds: 180),
+              margin: const EdgeInsets.symmetric(horizontal: 2), width: _heroIndex == i ? 12 : 5, height: 4,
+              decoration: BoxDecoration(color: _heroIndex == i ? AppColors.accent : AppColors.textTertiary.withValues(alpha: .55),
+                borderRadius: BorderRadius.circular(5))),
+          ]),
+        )))),
     ]);
   }
 
