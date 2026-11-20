@@ -37,7 +37,6 @@ import '../home/home_screen.dart';
 import '../home/my_list_screen.dart';
 import '../home/search_screen.dart';
 import '../home/explore_screen.dart';
-import '../menu/menu_hub_screen.dart';
 import '../settings/settings_screen.dart';
 import 'dock_icons.dart';
 import 'mode_bar.dart';
