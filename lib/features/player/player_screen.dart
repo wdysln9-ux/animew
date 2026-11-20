@@ -1950,11 +1950,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _subtitleScaleStartY = 0.88;
   double _subtitleScaleStartSize = 1.0;
 
-  bool get _canEditActiveSubtitle {
-    final extension = _c.activeSubtitleFileExtension;
-    // ASS/SSA carry authored positioning and are rendered by libass. Plain
-    // external subtitle formats can use the draggable Flutter overlay.
-    return extension != null && extension != '.ass' && extension != '.ssa';
+  bool get _canEditActiveSubtitle => true;
+
+  void _openQuickSettingChild(BuildContext dialogContext, VoidCallback open) {
+    Navigator.of(dialogContext).pop();
+    WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) open(); });
   }
 
   void _onSubtitleScaleStart(ScaleStartDetails details) {
@@ -2147,7 +2147,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 icon: Icons.tune_rounded,
                 label: 'Kualitas',
                 value: qualityValue,
-                onTap: _openQualitySheet,
+                onTap: () => _openQuickSettingChild(dialogContext, _openQualitySheet),
               ),
               _QuickSettingRow(
                 icon: Icons.speed_rounded,
@@ -2162,7 +2162,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 enabled: hasSubtitles,
                 onTap: () {
                   if (hasSubtitles) {
-                    _openAudioSubsSheet();
+                    _openQuickSettingChild(dialogContext, _openAudioSubsSheet);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Subtitle tidak tersedia untuk sumber ini')),
@@ -2174,14 +2174,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 icon: Icons.volume_up_rounded,
                 label: 'Boost Audio',
                 value: boostEnabled ? '${boostPercent}%' : 'Mati',
-                onTap: _openAudioBoostSheet,
+                onTap: () => _openQuickSettingChild(dialogContext, _openAudioBoostSheet),
               ),
               _QuickSettingRow(
                 icon: Icons.layers_rounded,
                 label: 'Sumber',
                 value: active == null ? 'Tidak tersedia' : _sourceGroupName(active),
                 enabled: active != null,
-                onTap: active == null ? () {} : _openSourceSheet,
+                onTap: active == null ? () {} : () => _openQuickSettingChild(dialogContext, _openSourceSheet),
               ),
               _QuickSettingRow(
                 icon: Icons.skip_next_rounded,
@@ -2224,7 +2224,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   refresh(() => cinematicLighting = value);
                   _setCinematicLighting(value);
                 },
-                onTap: _openCinematicLightingSheet,
+                onTap: () => _openQuickSettingChild(dialogContext, _openCinematicLightingSheet),
               ),
               _QuickSettingRow(
                 icon: Icons.subject_rounded,
@@ -4822,8 +4822,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   // Keep the subtitle gesture layer above the player's full-screen
                   // touch/seek overlay so it can receive drag and pinch gestures.
                   // The GestureDetector itself wraps only the rendered text bounds.
-                  if (!sl<PlaybackPrefs>().styledSubtitles ||
-                      _canEditActiveSubtitle)
+                  if (true)
                     Positioned.fill(
                       child: StreamBuilder<List<String>>(
                         stream: _c.player.stream.subtitle,
@@ -4882,12 +4881,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                      : const Alignment(0, 0.76),
                                  child: subtitle,
                                );
-                               if (!canEditSubtitle) return alignedSubtitle;
                                return GestureDetector(
                                  key: _subtitleGestureKey,
-                                 // Only confirmed SRT captions support freeform
-                                 // drag and pinch. ASS/SSA retain authored layout.
-                                 behavior: HitTestBehavior.deferToChild,
+                                 // All subtitle formats share the same draggable caption layer.
+                                 behavior: HitTestBehavior.translucent,
                                  onScaleStart: _onSubtitleScaleStart,
                                  onScaleUpdate: _onSubtitleScaleUpdate,
                                  onScaleEnd: _onSubtitleScaleEnd,
