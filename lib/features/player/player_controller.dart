@@ -3774,14 +3774,9 @@ class PlayerCubit extends Cubit<PlayerState> {
       } catch (_) {}
     }
 
-    // ASS/SSA subtitles carry their OWN embedded styling. With libass ON
-    // (styled subtitles) keep it faithful — 'no' preserves signs/karaoke/
-    // positions. Plain SRT has no authored positioning, so keep it editable
-    // with the Flutter overlay even while the libass preference is enabled.
-    final extension = activeSubtitleFileExtension;
-    final plainSubtitleUsesFlutterOverlay = prefs.styledSubtitles &&
-        extension != null && extension != '.ass' && extension != '.ssa';
-    await set('sub-visibility', plainSubtitleUsesFlutterOverlay ? 'no' : 'yes');
+    // Route every active subtitle through the Flutter overlay so every format
+    // can be repositioned with touch gestures.
+    await set('sub-visibility', 'no');
     await set(
       'sub-ass-override',
       prefs.styledSubtitles ? 'no' : 'force',
