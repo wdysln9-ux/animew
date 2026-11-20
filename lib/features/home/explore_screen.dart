@@ -62,6 +62,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Map<String, int> _studioFavourites = const {};
   final PageController _heroController = PageController(viewportFraction: .90, initialPage: 10000);
   Timer? _heroTimer;
+  bool _heroIndicatorDragging = false;
 
   void _syncHeroTimer() {
     _heroTimer?.cancel();
@@ -518,7 +519,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         physics: const FastFlingPageScrollPhysics(parent: BouncingScrollPhysics()),
         onPageChanged: (i) {
           setState(() => _heroIndex = i % items.length);
-          _syncHeroTimer();
+          if (!_heroIndicatorDragging) _syncHeroTimer();
         },
         itemBuilder: (_, page) {
           final i = page % items.length;
@@ -560,7 +561,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       if (items.length > 1) Padding(padding: const EdgeInsets.only(top: 9),
         child: Center(child: Builder(builder: (dotsContext) => GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onHorizontalDragStart: (_) { _heroTimer?.cancel(); _heroTimer = null; },
+          onHorizontalDragStart: (_) { _heroIndicatorDragging = true; _heroTimer?.cancel(); _heroTimer = null; },
           onHorizontalDragUpdate: (details) {
             final box = dotsContext.findRenderObject() as RenderBox;
             final width = box.size.width;
@@ -570,7 +571,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             final page = currentPage - (currentPage % items.length) + target;
             if (target != _heroIndex && _heroController.hasClients) _heroController.jumpToPage(page);
           },
-          onHorizontalDragEnd: (_) => _syncHeroTimer(),
+          onHorizontalDragEnd: (_) { _heroIndicatorDragging = false; _syncHeroTimer(); },
           onTapUp: (details) {
             final box = dotsContext.findRenderObject() as RenderBox;
             final width = box.size.width;
