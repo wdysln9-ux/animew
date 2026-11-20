@@ -55,9 +55,10 @@ Color? parseAniListCoverColor(String? raw) {
   return parsed == null ? null : Color(parsed);
 }
 
-/// Uses the artwork's original dominant / AniList coverImage.color without
-/// darkening or desaturating it.
-Color tintFromDominant(Color dominant) => dominant;
+/// Keeps the artwork's original hue and saturation while lowering lightness
+/// to the same fixed dark level used by the previous adaptive colour style.
+Color tintFromDominant(Color dominant) =>
+    HSLColor.fromColor(dominant).withLightness(0.15).toColor();
 
 /// Full-bleed animated colour wash for a screen's background. Sits as the
 /// bottom child of the screen's body Stack; [notifier] carries the current
