@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import '../player/mini_player_overlay.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart' show CupertinoPicker;
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/gestures.dart' show DragStartBehavior;
@@ -2594,12 +2595,12 @@ class _DetailViewState extends State<_DetailView> {
             ),
           ),
 
-        // Trailer is part of the same AniList detail response; no follow-up API call.
-        if (!isReading && !isSingleMusicVideo && detail.trailerUrl != null)
+        // Use external promo data instead of AniList's single, often-missing trailer field.
+        if (!isReading && !isSingleMusicVideo)
           SliverToBoxAdapter(
-            child: _AniListTrailerSection(
-              url: detail.trailerUrl!,
-              thumbnail: detail.trailerThumbnail,
+            child: _ExternalTrailerSection(
+              malId: detail.malId ?? widget.item.malId,
+              title: detail.title,
             ),
           ),
         if (!isReading)
@@ -2627,6 +2628,13 @@ class _DetailViewState extends State<_DetailView> {
                 context,
               ).push(PersonPage.route(ref, sourceId: widget.item.sourceId)),
               ),
+            ),
+          ),
+        if (!isReading && !isSingleMusicVideo)
+          SliverToBoxAdapter(
+            child: _AnimeMusicSection(
+              malId: detail.malId ?? widget.item.malId,
+              title: detail.title,
             ),
           ),
         if (!isReading)
