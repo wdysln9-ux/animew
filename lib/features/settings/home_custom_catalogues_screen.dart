@@ -79,7 +79,12 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
                       const SizedBox(height: 8),
                       OutlinedButton.icon(
                         onPressed: () async {
-                          final selected = await showMetaFilterSheet(context, _kind, filters, showStatus: true);
+                          final selected = await showMetaFilterSheet(
+                            context, _kind, filters, showStatus: true,
+                            hideMyAnime: hideMyAnime,
+                            onHideMyAnimeChanged: (value) =>
+                                setDialogState(() => hideMyAnime = value),
+                          );
                           if (selected != null) setDialogState(() => filters = selected);
                         },
                         icon: const Icon(Icons.tune_rounded, size: 18),
@@ -89,18 +94,7 @@ class _HomeCustomCataloguesScreenState extends State<HomeCustomCataloguesScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                         ),
                       ),
-                      if (_kind == ZKind.anime) ...[
-                        const SizedBox(height: 12),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                          value: hideMyAnime,
-                          onChanged: (value) => setDialogState(() => hideMyAnime = value),
-                          title: const Text('Sembunyikan Daftar'),
-                          subtitle: const Text('Sembunyikan anime yang sudah ada di daftar AniList kamu.'),
-                          secondary: const Icon(Icons.visibility_off_outlined),
-                        ),
-                      ],
+
                     ],
                   ))),
                   const SizedBox(height: 8),
