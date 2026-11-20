@@ -77,11 +77,7 @@ class ThemeController {
 
   /// Whether the user asked for wallpaper colours. Off by default, so an
   /// untouched install looks exactly as it does today.
-  static bool get materialYou =>
-      Platform.isAndroid &&
-      _supported != false &&
-      (_profileMaterialYou ??
-          _box.get(_materialYouKey, defaultValue: false) as bool);
+  static bool get materialYou => false;
 
   /// Persist + apply the device-wide Material You fallback.
   static Future<void> setMaterialYou(bool on) async {
