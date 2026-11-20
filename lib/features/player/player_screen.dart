@@ -4621,7 +4621,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                             children: [
                               Expanded(
                                 child: GestureDetector(
-                                  behavior: HitTestBehavior.translucent,
+                                  behavior: HitTestBehavior.deferToChild,
                                   onTap: () => _tapZone(-1),
                                   child: const SizedBox.expand(),
                                 ),
@@ -4822,8 +4822,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   // Keep the subtitle gesture layer above the player's full-screen
                   // touch/seek overlay so it can receive drag and pinch gestures.
                   // The GestureDetector itself wraps only the rendered text bounds.
-                  if (true)
-                    Positioned.fill(
+                  Positioned.fill(
                       child: StreamBuilder<List<String>>(
                         stream: _c.player.stream.subtitle,
                         initialData: _c.player.state.subtitle,
