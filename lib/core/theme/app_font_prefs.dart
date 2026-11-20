@@ -71,6 +71,12 @@ class AppFontPrefs {
   static bool isBundled(String family) =>
       _builtInFonts.any((f) => f.family == family && f.bundled);
 
+  /// True only for fonts imported by the user from local files.
+  static bool isCustom(String family) {
+    if (!sl.isRegistered<PlaybackPrefs>()) return false;
+    return sl<PlaybackPrefs>().customSubtitleFonts.containsKey(family);
+  }
+
   /// Fetch + register [family] if it isn't already usable. False means the
   /// download failed — the caller must NOT save it, or the app restarts into a
   /// family Flutter has never heard of and silently draws the platform default.
