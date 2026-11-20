@@ -647,26 +647,70 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> with RouteAware {
               left: 0,
               right: 0,
               child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(_count, (i) {
-                    final isActive = i == _realIndex;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 3),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOut,
-                        width: isActive ? 20 : 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? AppColors.accent
-                              : AppColors.textTertiary.withAlpha(120),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    );
-                  }),
+                child: Builder(
+                  builder: (dotsContext) => GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onHorizontalDragStart: (_) {
+                      _timer?.cancel();
+                      _timer = null;
+                    },
+                    onHorizontalDragUpdate: (details) {
+                      final box = dotsContext.findRenderObject() as RenderBox;
+                      final width = box.size.width;
+                      if (width <= 0) return;
+                      final target = (details.localPosition.dx / width * _count)
+                          .floor()
+                          .clamp(0, _count - 1);
+                      if (target == _realIndex) return;
+                      if (widget.style == HeroTransition.cinematic) {
+                        setState(() => _index = _index - _realIndex + target);
+                        _syncActiveTint();
+                      } else if (_pc.hasClients) {
+                        _pc.jumpToPage(_index - _realIndex + target);
+                      }
+                    },
+                    onHorizontalDragEnd: (_) => _startTimer(),
+                    onTapUp: (details) {
+                      final box = dotsContext.findRenderObject() as RenderBox;
+                      final width = box.size.width;
+                      if (width <= 0) return;
+                      final target = (details.localPosition.dx / width * _count)
+                          .floor()
+                          .clamp(0, _count - 1);
+                      if (widget.style == HeroTransition.cinematic) {
+                        setState(() => _index = _index - _realIndex + target);
+                        _syncActiveTint();
+                      } else if (_pc.hasClients) {
+                        _pc.animateToPage(
+                          _index - _realIndex + target,
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOut,
+                        );
+                      }
+                      _startTimer();
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(_count, (i) {
+                        final isActive = i == _realIndex;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOut,
+                            width: isActive ? 20 : 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? AppColors.accent
+                                  : AppColors.textTertiary.withAlpha(120),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
                 ),
               ),
             ),
