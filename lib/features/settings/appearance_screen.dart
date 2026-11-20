@@ -164,6 +164,20 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
     var hue = HSLColor.fromColor(temp).hue;
     var lightness = HSLColor.fromColor(temp).lightness;
     var saturation = HSLColor.fromColor(temp).saturation;
+    var hexValid = true;
+    final hexController = TextEditingController(
+      text: '#${temp.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
+    );
+
+    void syncHex() {
+      hexController.text =
+          '#${temp.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+      hexController.selection = TextSelection.collapsed(
+        offset: hexController.text.length,
+      );
+      hexValid = true;
+    }
+
     final result = await showDialog<int>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -182,12 +196,48 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                     hue = hsl.hue;
                     saturation = hsl.saturation;
                     lightness = hsl.lightness;
+                    syncHex();
                   }),
                   enableAlpha: false,
                   displayThumbColor: true,
                   paletteType: PaletteType.hueWheel,
                   labelTypes: const [],
                   pickerAreaBorderRadius: BorderRadius.circular(12),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: hexController,
+                  textCapitalization: TextCapitalization.characters,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  maxLength: 7,
+                  decoration: InputDecoration(
+                    labelText: 'Kode HEX',
+                    hintText: '#121218',
+                    prefixIcon: const Icon(Icons.tag_rounded),
+                    counterText: '',
+                    errorText: hexValid ? null : 'Masukkan HEX valid, contoh #121218',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    var raw = value.trim();
+                    if (raw.startsWith('#')) raw = raw.substring(1);
+                    final parsed = raw.length == 6
+                        ? int.tryParse(raw, radix: 16)
+                        : null;
+                    setDialogState(() {
+                      hexValid = parsed != null;
+                      if (parsed != null) {
+                        temp = Color(0xFF000000 | parsed);
+                        final hsl = HSLColor.fromColor(temp);
+                        hue = hsl.hue;
+                        saturation = hsl.saturation;
+                        lightness = hsl.lightness;
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(height: 8),
                 Align(alignment: Alignment.centerLeft, child: Text('Hue', style: AppText.caption)),
@@ -198,6 +248,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   onChanged: (value) => setDialogState(() {
                     hue = value;
                     temp = HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+                    syncHex();
                   }),
                 ),
                 Align(alignment: Alignment.centerLeft, child: Text('Kecerahan', style: AppText.caption)),
@@ -208,6 +259,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   onChanged: (value) => setDialogState(() {
                     lightness = value;
                     temp = HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+                    syncHex();
                   }),
                 ),
               ],
@@ -223,13 +275,14 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
               child: Text(context.l10n.cancel, style: TextStyle(color: AppColors.textSecondary)),
             ),
             TextButton(
-              onPressed: () => Navigator.pop(ctx, temp.toARGB32()),
+              onPressed: hexValid ? () => Navigator.pop(ctx, temp.toARGB32()) : null,
               child: Text(context.l10n.apply, style: TextStyle(color: AppColors.accent)),
             ),
           ],
         ),
       ),
     );
+    hexController.dispose();
     if (result == null) return;
     await ThemeController.setCustomBackgroundColor(
       result == -1 ? null : Color(result),
