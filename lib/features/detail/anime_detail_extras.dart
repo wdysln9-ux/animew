@@ -113,6 +113,7 @@ class _AnimeExternalApi {
                   title: songTitle, artists: artists, videoUrl: videoUrl));
             }
           }
+          parsed.addAll(await _jikanMusicVideos(id, title));
           if (parsed.isNotEmpty) {
             parsed.sort((a, b) {
               final byType = a.kind.compareTo(b.kind);
@@ -122,8 +123,40 @@ class _AnimeExternalApi {
           }
         }
       } catch (_) {}
-      return _jikanThemes(id, title);
+      final fallback = await _jikanThemes(id, title);
+      fallback.addAll(await _jikanMusicVideos(id, title));
+      return fallback;
     });
+  }
+
+  static Future<List<_AnimeTheme>> _jikanMusicVideos(int? id, String title) async {
+    final mal = await _malId(id, title);
+    if (mal == null) return [];
+    try {
+      final response = await _dio.get('https://api.jikan.moe/v4/anime/$mal/videos');
+      final data = _map(_map(response.data)['data']);
+      final result = <_AnimeTheme>[];
+      final videos = _list(data['music_videos']);
+      for (var i = 0; i < videos.length; i++) {
+        final row = _map(videos[i]);
+        final video = _map(row['video']);
+        final url = _str(video['url']);
+        final meta = _map(row['meta']);
+        final songTitle = _str(meta['title']).isNotEmpty
+            ? _str(meta['title']) : _str(row['title']);
+        if (songTitle.isEmpty) continue;
+        result.add(_AnimeTheme(
+          kind: 'MV',
+          sequence: i + 1,
+          title: songTitle,
+          artists: _str(meta['author']).isEmpty ? const [] : [_str(meta['author'])],
+          videoUrl: url.startsWith('http') ? url : null,
+        ));
+      }
+      return result;
+    } catch (_) {
+      return [];
+    }
   }
 
   static List<Map<String, dynamic>> _related(
