@@ -246,7 +246,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   max: 0.8,
                   onChanged: (value) => setDialogState(() {
                     lightness = value;
-                    temp = HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+                    temp = HSLColor.fromAHSL(1, HSLColor.fromColor(temp).hue, saturation, lightness).toColor();
                     syncHex();
                   }),
                 ),
