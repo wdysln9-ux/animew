@@ -299,7 +299,6 @@ class _RootShellState extends State<RootShell>
           key: ValueKey('$profileId:${t.name}'),
           child: switch (t) {
             DockTab.home => MiniPlayerState.active.value?.pageBuilder?.call(context) ?? shared[0],
-            DockTab.menu => const MenuHubScreen(),
             DockTab.myList => shared[2],
             DockTab.profile => const ViewerProfileHomeScreen(),
             // Both normally get pushed with a back button; as tabs they own the
@@ -738,7 +737,6 @@ class _FloatingDock extends StatelessWidget {
   DockTab.history => (Icons.history_outlined, Icons.history_rounded),
   DockTab.sources => (Icons.extension_outlined, Icons.extension_rounded),
   DockTab.explore => (Icons.explore_outlined, Icons.explore_rounded),
-  DockTab.menu => (Icons.apps_outlined, Icons.apps_rounded),
   _ => null,
 };
 
