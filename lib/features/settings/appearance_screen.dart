@@ -31,18 +31,6 @@ class AppearanceScreen extends StatefulWidget {
 }
 
 class _AppearanceScreenState extends State<AppearanceScreen> {
-  /// Android 12+ only. Resolved once; the row stays hidden everywhere else
-  /// rather than showing a switch that couldn't do anything.
-  bool _wallpaperSupported = false;
-
-  @override
-  void initState() {
-    super.initState();
-    ThemeController.supported().then((ok) {
-      if (mounted) setState(() => _wallpaperSupported = ok);
-    });
-  }
-
   bool get _accentIsCustom => !ThemeController.accentPresets.any(
     (p) => p.$2.toARGB32() == AppColors.accent.toARGB32(),
   );
@@ -290,11 +278,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
           // The swatch strip stays exactly as it was, and stays first.
           SettingsSectionLabel(context.l10n.accentColour, first: true),
           _blurb(context.l10n.accentColourBlurb),
-          Opacity(
-            // Dimmed while the wallpaper is choosing — the swatches still work,
-            // and tapping one takes you back to picking by hand.
-            opacity: ThemeController.materialYou ? 0.4 : 1,
-            child: SizedBox(
+          SizedBox(
               height: 100,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
@@ -310,7 +294,6 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                       selected: _accentIsCustom,
                       currentColor: AppColors.accent,
                       onTap: () {
-                        if (_blockedByMaterialYou()) return;
                         _pickCustom();
                       },
                     );
@@ -324,27 +307,15 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                         AppColors.accent.toARGB32() == color.toARGB32(),
                     isDefault: ThemeController.isDefault(color),
                     onTap: () async {
-                      if (_blockedByMaterialYou()) return;
                       await _updateProfileTheme(accentColor: color.toARGB32());
                     },
                   );
                 },
               ),
-            ),
-          ),
           // ── Theme ─────────────────────────────────────────────────────────
           SettingsSectionLabel(context.l10n.theme),
           SettingsCard(
             children: [
-              if (_wallpaperSupported)
-                _switchTile(
-                  icon: Icons.palette_outlined,
-                  title: context.l10n.materialYou,
-                  // Doubles as the hint that the strip above still works.
-                  subtitle: context.l10n.coloursFromYourWallpaper,
-                  value: ThemeController.materialYou,
-                  onChanged: (value) => _updateProfileTheme(materialYou: value),
-                ),
               _switchTile(
                 icon: Icons.dark_mode_outlined,
                 title: context.l10n.pureBlackBackground,
@@ -435,31 +406,6 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
         ],
       ),
     );
-  }
-
-  /// True when the wallpaper is choosing the accent, so a swatch tap can't
-  /// apply. Says so rather than doing nothing — the swatches are dimmed, but a
-  /// dim control that swallows taps is still confusing.
-  bool _blockedByMaterialYou() {
-    if (!ThemeController.materialYou) return false;
-    // FToast, matching the shell's exit toast — the app doesn't use SnackBars.
-    (FToast()..init(context)).showToast(
-      gravity: ToastGravity.BOTTOM,
-      toastDuration: const Duration(seconds: 2),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 40),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xF01C1C1E),
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Text(
-          context.l10n.turnOffMaterialYouToPickAColourYourself,
-          style: TextStyle(color: Colors.white, fontSize: 14),
-        ),
-      ),
-    );
-    return true;
   }
 
   /// Import a local TTF/OTF and make it the active app-wide font.
