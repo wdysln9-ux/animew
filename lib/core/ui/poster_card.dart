@@ -612,8 +612,13 @@ class _PosterCardState extends State<PosterCard>
                           ].join(' · ')
                         : (widget.metaLine?.trim() ?? '');
                     final showMeta = (prefs?.posterMetaLine ?? true) && meta.isNotEmpty;
+                    final reserveMetaLine = prefs?.posterMetaLine ?? true;
                     return SizedBox(
-                      height: _titleBoxHeight + (showMeta ? 12 : 0),
+                      // Keep the title area identical to posterCellHeight /
+                      // posterRowHeight even when a TBA entry has no metadata.
+                      // Without the empty slot, Expanded gives the artwork the
+                      // missing 12px and makes only those posters look stretched.
+                      height: _titleBoxHeight + (reserveMetaLine ? 12 : 0),
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Column(
@@ -627,17 +632,22 @@ class _PosterCardState extends State<PosterCard>
                               maxHeight: _titleBoxHeight,
                               inside: false,
                             ),
-                            if (showMeta)
-                              Text(
-                                meta,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppText.body.copyWith(
-                                  fontSize: 11,
-                                  height: 1.1,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
-                                ),
+                            if (reserveMetaLine)
+                              SizedBox(
+                                height: 12,
+                                child: showMeta
+                                    ? Text(
+                                        meta,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppText.body.copyWith(
+                                          fontSize: 11,
+                                          height: 1.1,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      )
+                                    : null,
                               ),
                           ],
                         ),
