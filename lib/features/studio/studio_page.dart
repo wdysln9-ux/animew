@@ -87,7 +87,7 @@ class _StudioPageState extends State<StudioPage> {
             'query': query,
             'variables': {
               'search': widget.studioName,
-              'sort': [_sort],
+              'sort': [_sort == 'RANDOM' ? 'START_DATE_DESC' : _sort],
               'page': page,
             },
           },
@@ -133,6 +133,7 @@ class _StudioPageState extends State<StudioPage> {
       }
 
       if (result == null) return null;
+      if (_sort == 'RANDOM') allAnime.shuffle();
       result['media'] = {'nodes': allAnime, 'pageInfo': {'hasNextPage': false}};
       try {
         final service = sl<AniListService>();
