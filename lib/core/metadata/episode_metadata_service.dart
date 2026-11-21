@@ -95,7 +95,7 @@ class EpisodeMetadataService {
             for (final entry in filled.entries)
               entry.key.toString(): {
                 'title': entry.value.title,
-                'overview': entry.value.overview,
+                'summary': entry.value.overview,
                 'image': entry.value.image,
                 'rating': entry.value.rating,
                 'runtime': entry.value.runtime,
