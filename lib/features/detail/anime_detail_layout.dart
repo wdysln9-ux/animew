@@ -1388,7 +1388,7 @@ class _AnimeDetailSeasonRailState extends State<AnimeDetailSeasonRail> {
 
     // Empty categories are omitted entirely, so there is no dead tab.
     final tabs = <String>[
-      'Semua Musim',
+      if (widget.seasons.length > 1) 'Semua Musim',
       if (related.isNotEmpty) 'Terkait',
       if (recommendations.isNotEmpty) 'Rekomendasi',
     ];
