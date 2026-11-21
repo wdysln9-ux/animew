@@ -2599,6 +2599,7 @@ class _DetailViewState extends State<_DetailView> {
         if (!isReading && !isSingleMusicVideo)
           SliverToBoxAdapter(
             child: _ExternalTrailerSection(
+              anilistId: detail.anilistId,
               malId: detail.malId ?? widget.item.malId,
               title: detail.title,
             ),
@@ -2633,6 +2634,7 @@ class _DetailViewState extends State<_DetailView> {
         if (!isReading && !isSingleMusicVideo)
           SliverToBoxAdapter(
             child: _AnimeMusicSection(
+              anilistId: detail.anilistId,
               malId: detail.malId ?? widget.item.malId,
               title: detail.title,
             ),
