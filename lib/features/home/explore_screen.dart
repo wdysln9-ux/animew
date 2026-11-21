@@ -582,12 +582,26 @@ class _ExploreScreenState extends State<ExploreScreen> {
             if (_heroController.hasClients) _heroController.animateToPage(page, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
             _syncHeroTimer();
           },
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            for (var i = 0; i < items.length; i++) AnimatedContainer(duration: const Duration(milliseconds: 180),
-              margin: const EdgeInsets.symmetric(horizontal: 2), width: _heroIndex == i ? 12 : 5, height: 4,
-              decoration: BoxDecoration(color: _heroIndex == i ? AppColors.accent : AppColors.textTertiary.withValues(alpha: .55),
-                borderRadius: BorderRadius.circular(5))),
-          ]),
+          child: SizedBox(
+            width: 120,
+            height: 28,
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              for (var i = 0; i < items.length; i++)
+                Center(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: _heroIndex == i ? 12 : 5,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: _heroIndex == i
+                          ? AppColors.accent
+                          : AppColors.textTertiary.withValues(alpha: .55),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                ),
+            ]),
+          ),
         )))),
     ]);
   }
