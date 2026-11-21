@@ -15,6 +15,7 @@ class AppImageCache {
   AppImageCache._();
 
   static CacheManager? _tvManager;
+  static CacheManager? _sharedManager;
 
   /// Call once during boot on Apple TV before any [CachedNetworkImage] mounts.
   static Future<void> init() async {
@@ -23,30 +24,37 @@ class AppImageCache {
     final index = File('${dir.path}/cache_index.json');
     _tvManager = CacheManager(
       Config(
-        'zangetsuTvImageCache',
-        stalePeriod: const Duration(days: 14),
-        maxNrOfCacheObjects: 400,
+        'animewTvImageCache',
+        stalePeriod: const Duration(days: 30),
+        maxNrOfCacheObjects: 900,
         repo: JsonCacheInfoRepository.withFile(index),
       ),
     );
   }
 
   static CacheManager get manager {
-    if (!isAppleTv) return DefaultCacheManager();
-    final manager = _tvManager;
-    if (manager == null) {
-      throw StateError(
-        'AppImageCache.init() must complete before TV UI mounts',
-      );
+    if (isAppleTv) {
+      final tvManager = _tvManager;
+      if (tvManager == null) {
+        throw StateError(
+          'AppImageCache.init() must complete before TV UI mounts',
+        );
+      }
+      return tvManager;
     }
-    return manager;
+    return _sharedManager ??= CacheManager(
+      Config(
+        'animewImageCache',
+        stalePeriod: const Duration(days: 30),
+        maxNrOfCacheObjects: 1200,
+      ),
+    );
   }
 
   /// Pass to [CachedNetworkImage.cacheManager] / [CachedNetworkImageProvider].
   /// On Apple TV the default sqflite-backed cache is read-only — callers that
   /// omit this get empty/error images on device.
-  static CacheManager? get cacheManagerOrDefault =>
-      isAppleTv ? manager : null;
+  static CacheManager? get cacheManagerOrDefault => manager;
 
   /// [ImageProvider] for network covers when not using [CachedNetworkImage].
   static CachedNetworkImageProvider imageProvider(
