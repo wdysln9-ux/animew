@@ -55,6 +55,7 @@ import '../../core/discord/discord_rpc.dart';
 import '../../core/mihon/mihon_extension_service.dart';
 import '../../core/mangayomi/mangayomi_cloudflare.dart';
 import '../../core/metadata/episode_metadata_service.dart';
+import '../../core/metadata/jikan_api.dart';
 import '../../core/metadata/metadata_enrichment.dart';
 import '../../core/metadata/people_service.dart';
 import '../../core/share/share_link.dart';
