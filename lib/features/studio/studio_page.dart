@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
@@ -6,6 +5,8 @@ import '../../core/anilist/anilist_graphql.dart';
 import '../../core/di/injector.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
+import '../../core/playback/playback_prefs.dart';
+import '../../core/ui/poster_card.dart';
 import '../../core/ui/states.dart';
 import '../detail/open_related.dart';
 
@@ -198,6 +199,9 @@ class _StudioPageState extends State<StudioPage> {
         final media = studio['media'] is Map ? (studio['media'] as Map)['nodes'] : null;
         final anime = <Map>[if (media is List) ...media.whereType<Map>()];
         final name = (studio['name'] as String?) ?? widget.studioName;
+        final widePosters = posterLayout(context) == PosterCardLayout.wide;
+        final posterWidth = posterGridCellWidth(context);
+        final titleInside = posterTitleInside(context, wide: widePosters);
         return CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
@@ -301,25 +305,44 @@ class _StudioPageState extends State<StudioPage> {
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                 sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 0.49,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: posterGridColumns(context),
+                    childAspectRatio: posterCellAspect(
+                      posterWidth,
+                      wide: widePosters,
+                      titleInside: titleInside,
+                    ),
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 16,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final item = anime[index];
-                      final titleData = item['title'] is Map ? item['title'] as Map : const {};
-                      final title = (titleData['english'] as String?)?.trim().isNotEmpty == true
+                      final titleData = item['title'] is Map
+                          ? item['title'] as Map
+                          : const {};
+                      final title = (titleData['english'] as String?)
+                                  ?.trim()
+                                  .isNotEmpty ==
+                              true
                           ? titleData['english'] as String
                           : (titleData['romaji'] as String?) ?? 'Unknown title';
-                      final cover = item['coverImage'] is Map ? (item['coverImage'] as Map)['large'] as String? : null;
+                      final cover = item['coverImage'] is Map
+                          ? (item['coverImage'] as Map)['large'] as String?
+                          : null;
                       final score = item['averageScore'];
                       final episodes = item['episodes'];
                       final year = item['seasonYear'];
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(12),
+                      return PosterCard(
+                        title: title,
+                        imageUrl: cover,
+                        cellWidth: posterWidth,
+                        scoreBadge: score is int && score > 0 ? score : null,
+                        metaFormat: item['format'] as String?,
+                        metaEpisodes: episodes is int && episodes > 0
+                            ? episodes
+                            : null,
+                        metaYear: year is int ? year.toString() : null,
                         onTap: () => openRelatedTitle(
                           context,
                           title: title,
@@ -330,67 +353,6 @@ class _StudioPageState extends State<StudioPage> {
                           malId: item['idMal'] as int?,
                           sourceId: null,
                           fromReadingPage: false,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: cover == null
-                                      ? ColoredBox(color: AppColors.surface, child: Icon(Icons.image_not_supported_outlined, color: AppColors.textSecondary))
-                                      : CachedNetworkImage(
-                                          imageUrl: cover,
-                                          fit: BoxFit.cover,
-                                          placeholder: (_, __) => ColoredBox(color: AppColors.surface),
-                                          errorWidget: (_, __, ___) => ColoredBox(color: AppColors.surface, child: Icon(Icons.broken_image_outlined, color: AppColors.textSecondary)),
-                                        ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 7),
-                            Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body.copyWith(fontSize: 12)),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    [if (year is int) '$year', if (episodes is int) '$episodes eps'].join(' · '),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppText.caption.copyWith(color: AppColors.textSecondary),
-                                  ),
-                                ),
-                                if (score is int && score > 0) ...[
-                                  const SizedBox(width: 5),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.surface2,
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.star_rounded, size: 12, color: AppColors.accent),
-                                        const SizedBox(width: 2),
-                                        Text(
-                                          '$score/100',
-                                          style: AppText.caption.copyWith(
-                                            color: AppColors.textPrimary,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ],
                         ),
                       );
                     },
