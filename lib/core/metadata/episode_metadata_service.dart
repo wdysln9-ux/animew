@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:watch_app/core/hive/safe_box.dart';
 
@@ -58,8 +59,10 @@ class EpisodeMetadataService {
     final disk = await _readDisk('a:$malId');
     if (disk != null) {
       final parsed = parseAniZip(disk);
-      final filled = await _backfillStillsFromTmdb(parsed, parseAniZipTmdbId(disk));
-      return _animeCache[malId] = filled;
+      // AniZip is the fast, primary source. Never make its cached answer wait
+      // for TMDB's season list and still-image requests.
+      _refreshAnimeStillsInBackground(malId, parsed, parseAniZipTmdbId(disk));
+      return _animeCache[malId] = parsed;
     }
     try {
       final res = await _dio
@@ -70,11 +73,39 @@ class EpisodeMetadataService {
           .timeout(const Duration(seconds: 6));
       final out = parseAniZip(res.data);
       if (out.isNotEmpty) await _writeDisk('a:$malId', res.data);
-      final filled = await _backfillStillsFromTmdb(out, parseAniZipTmdbId(res.data));
-      return _animeCache[malId] = filled;
+      _refreshAnimeStillsInBackground(malId, out, parseAniZipTmdbId(res.data));
+      return _animeCache[malId] = out;
     } catch (_) {
       return const {};
     }
+  }
+
+  void _refreshAnimeStillsInBackground(
+    int malId,
+    Map<int, EpisodeMeta> base,
+    int? tmdbId,
+  ) {
+    if (base.isEmpty || tmdbId == null) return;
+    unawaited(_backfillStillsFromTmdb(base, tmdbId).then((filled) {
+      if (filled.length > base.length ||
+          filled.entries.any((entry) => base[entry.key]?.image != entry.value.image)) {
+        _animeCache[malId] = filled;
+        unawaited(_writeDisk('a:$malId', {
+          'episodes': {
+            for (final entry in filled.entries)
+              entry.key.toString(): {
+                'title': entry.value.title,
+                'overview': entry.value.overview,
+                'image': entry.value.image,
+                'rating': entry.value.rating,
+                'runtime': entry.value.runtime,
+                'airDate': entry.value.airDate,
+              },
+          },
+          'mappings': {'themoviedb_id': tmdbId},
+        }));
+      }
+    }).catchError((_) {}));
   }
 
   /// The real season number for [malId], or null when AniZip has no mapping.
