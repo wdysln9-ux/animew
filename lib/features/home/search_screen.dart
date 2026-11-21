@@ -1349,9 +1349,25 @@ class _SearchViewState extends State<_SearchView>
     );
   }
 
-  /// One removable chip per narrowing the catalogue is under, plus a Clear
-  /// when there is more than one. Tapping a chip drops that one term and
-  /// re-runs, so a filtered browse can be widened without opening the sheet.
+  /// Clears every temporary search filter while preserving the default
+  /// sort for the current catalogue mode.
+  void _clearAllSearchFilters() {
+    final kind = browseKindFor(
+      sl<ContentModeCubit>().state,
+      ZModePrefs.streamKind,
+    );
+    setState(() {
+      _metaFilters = MetaFilters(
+        sort: kind == ZKind.anime ? MetaSort.trending : MetaSort.popularity,
+      );
+      _hideMyAnime = false;
+    });
+    context.read<SearchBloc>().add(const SearchFiltersReset());
+    _applyMetaFilters(browseDefaults: true);
+  }
+
+  /// One removable chip per narrowing the catalogue is under. The clear-all
+  /// chip stays pinned at the start of this horizontally scrollable row.
   Widget _activeFilterChips() {
     final f = _metaFilters;
     final chips = <(String, MetaFilters)>[
@@ -1412,6 +1428,10 @@ class _SearchViewState extends State<_SearchView>
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
         children: [
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 8),
+            child: _ClearAllFilterChip(onTap: _clearAllSearchFilters),
+          ),
           for (final (label, without) in chips)
             Padding(
               padding: const EdgeInsetsDirectional.only(end: 8),
@@ -3582,6 +3602,43 @@ class _SearchFilterSheet extends StatelessWidget {
 }
 
 /// An active catalogue filter, with an × that removes just that one.
+class _ClearAllFilterChip extends StatelessWidget {
+  const _ClearAllFilterChip({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 8, 10, 8),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.red.withValues(alpha: 0.28)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.close_rounded, size: 14, color: Colors.red),
+              const SizedBox(width: 5),
+              Text(
+                'Bersihkan semua',
+                style: AppText.caption.copyWith(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ActiveFilterChip extends StatelessWidget {
   const _ActiveFilterChip({required this.label, required this.onRemove});
 
