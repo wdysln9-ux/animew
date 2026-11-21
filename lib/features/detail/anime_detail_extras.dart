@@ -49,8 +49,8 @@ class _AnimeExternalApi {
       final mal = await _resolveMalId(anilistId, malId);
       if (mal == null) return const [];
       try {
-        final response = await _dio.get('$_jikan/anime/$mal/videos');
-        final data = _map(_map(response.data)['data']);
+        final payload = await JikanApi.get(_dio, '$_jikan/anime/$mal/videos');
+        final data = _map(_map(payload)['data']);
         final result = <_AnimePromo>[];
         for (final raw in [..._list(data['promo']), ..._list(data['music_videos'])]) {
           final row = _map(raw);
