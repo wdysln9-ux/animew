@@ -4819,93 +4819,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       ),
                     ),
 
-                  // Keep the subtitle gesture layer above the player's full-screen
-                  // touch/seek overlay so it can receive drag and pinch gestures.
-                  // The GestureDetector itself wraps only the rendered text bounds.
-                  Positioned.fill(
-                      child: StreamBuilder<List<String>>(
-                        stream: _c.player.stream.subtitle,
-                        initialData: _c.player.state.subtitle,
-                        builder: (context, snapshot) {
-                          final lines = snapshot.data ?? const <String>[];
-                          final liveCaption = lines
-                              .where((line) => line.trim().isNotEmpty)
-                              .join('\n');
-                          if (liveCaption.isNotEmpty) {
-                            _lastSubtitleCaption = liveCaption;
-                          }
-                          // If the subtitle timer clears its text while the user is
-                          // still dragging, keep the same text hit target mounted.
-                          // Once the gesture ends, an empty live caption disappears
-                          // normally and cannot be grabbed until a caption appears.
-                          final caption = liveCaption.isNotEmpty
-                              ? liveCaption
-                              : (_subtitleGestureActive ? _lastSubtitleCaption : '');
-                          if (caption.isEmpty) return const SizedBox.shrink();
-                          final prefs = sl<PlaybackPrefs>();
-                           final canEditSubtitle =
-                               _canEditActiveSubtitle;
-                          return LayoutBuilder(
-                            builder: (context, constraints) {
-                              final subtitle = Transform.scale(
-                                key: _subtitleTextKey,
-                                scale: canEditSubtitle ? _subtitleSize : 1.0,
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    maxWidth: constraints.maxWidth * 0.9,
-                                  ),
-                                  child: Opacity(
-                                    opacity: prefs.subtitleOverallOpacity,
-                                    child: Text(
-                                      caption,
-                                      textAlign: switch (prefs.subtitleJustification) {
-                                        'left' => TextAlign.left,
-                                        'right' => TextAlign.right,
-                                        _ => TextAlign.center,
-                                      },
-                                      style: buildSubtitleTextStyle(
-                                        prefs,
-                                        fontSize: 32.0 * prefs.subtitleScale,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                               final alignedSubtitle = Align(
-                                 alignment: canEditSubtitle
-                                     ? Alignment(
-                                         _subtitleX * 2 - 1,
-                                         _subtitleY * 2 - 1,
-                                       )
-                                     : const Alignment(0, 0.76),
-                                 child: subtitle,
-                               );
-                               return GestureDetector(
-                                 key: _subtitleGestureKey,
-                                 // All subtitle formats share the same draggable caption layer.
-                                 behavior: HitTestBehavior.translucent,
-                                 onScaleStart: _onSubtitleScaleStart,
-                                 onScaleUpdate: _onSubtitleScaleUpdate,
-                                 onScaleEnd: _onSubtitleScaleEnd,
-                                 child: Stack(
-                                   fit: StackFit.expand,
-                                   children: [
-                                     if (_subtitleGestureActive)
-                                       const Positioned.fill(
-                                         child: ColoredBox(
-                                           color: Colors.transparent,
-                                         ),
-                                       ),
-                                     alignedSubtitle,
-                                   ],
-                                 ),
-                               );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-
                   // 6. Controls overlay (phone only — TV uses PlayerTvControls above).
                   if (!sl<AppMode>().isTv && !_locked)
                     AnimatedOpacity(
@@ -5018,6 +4931,93 @@ class _PlayerScreenState extends State<PlayerScreen> {
                             ],
                           ),
                         ),
+                      ),
+                    ),
+
+                  // Keep the subtitle gesture layer above the player's full-screen
+                  // touch/seek overlay so it can receive drag and pinch gestures.
+                  // The GestureDetector itself wraps only the rendered text bounds.
+                  Positioned.fill(
+                      child: StreamBuilder<List<String>>(
+                        stream: _c.player.stream.subtitle,
+                        initialData: _c.player.state.subtitle,
+                        builder: (context, snapshot) {
+                          final lines = snapshot.data ?? const <String>[];
+                          final liveCaption = lines
+                              .where((line) => line.trim().isNotEmpty)
+                              .join('\n');
+                          if (liveCaption.isNotEmpty) {
+                            _lastSubtitleCaption = liveCaption;
+                          }
+                          // If the subtitle timer clears its text while the user is
+                          // still dragging, keep the same text hit target mounted.
+                          // Once the gesture ends, an empty live caption disappears
+                          // normally and cannot be grabbed until a caption appears.
+                          final caption = liveCaption.isNotEmpty
+                              ? liveCaption
+                              : (_subtitleGestureActive ? _lastSubtitleCaption : '');
+                          if (caption.isEmpty) return const SizedBox.shrink();
+                          final prefs = sl<PlaybackPrefs>();
+                           final canEditSubtitle =
+                               _canEditActiveSubtitle;
+                          return LayoutBuilder(
+                            builder: (context, constraints) {
+                              final subtitle = Transform.scale(
+                                key: _subtitleTextKey,
+                                scale: canEditSubtitle ? _subtitleSize : 1.0,
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: constraints.maxWidth * 0.9,
+                                  ),
+                                  child: Opacity(
+                                    opacity: prefs.subtitleOverallOpacity,
+                                    child: Text(
+                                      caption,
+                                      textAlign: switch (prefs.subtitleJustification) {
+                                        'left' => TextAlign.left,
+                                        'right' => TextAlign.right,
+                                        _ => TextAlign.center,
+                                      },
+                                      style: buildSubtitleTextStyle(
+                                        prefs,
+                                        fontSize: 32.0 * prefs.subtitleScale,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                               final alignedSubtitle = Align(
+                                 alignment: canEditSubtitle
+                                     ? Alignment(
+                                         _subtitleX * 2 - 1,
+                                         _subtitleY * 2 - 1,
+                                       )
+                                     : const Alignment(0, 0.76),
+                                 child: subtitle,
+                               );
+                               return GestureDetector(
+                                 key: _subtitleGestureKey,
+                                 // All subtitle formats share the same draggable caption layer.
+                                 behavior: HitTestBehavior.translucent,
+                                 onScaleStart: _onSubtitleScaleStart,
+                                 onScaleUpdate: _onSubtitleScaleUpdate,
+                                 onScaleEnd: _onSubtitleScaleEnd,
+                                 child: Stack(
+                                   fit: StackFit.expand,
+                                   children: [
+                                     if (_subtitleGestureActive)
+                                       const Positioned.fill(
+                                         child: ColoredBox(
+                                           color: Colors.transparent,
+                                         ),
+                                       ),
+                                     alignedSubtitle,
+                                   ],
+                                 ),
+                               );
+                            },
+                          );
+                        },
                       ),
                     ),
 
