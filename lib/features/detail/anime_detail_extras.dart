@@ -3,60 +3,66 @@ part of 'detail_screen.dart';
 
 class _AnimeExternalApi {
   static final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 12),
-    receiveTimeout: const Duration(seconds: 18),
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 15),
+    sendTimeout: const Duration(seconds: 10),
+    headers: const {'Accept': 'application/json'},
   ));
+  static const _anilist = 'https://graphql.anilist.co';
+  static const _themes = 'https://graphql.animethemes.moe/';
+  static const _jikan = 'https://api.jikan.moe/v4';
+  static final Map<int, Future<int?>> _malIds = {};
   static final Map<String, Future<List<_AnimePromo>>> _promoCache = {};
-  static final Map<String, Future<List<_AnimeTheme>>> _themeCache = {};
+  static final Map<int, Future<List<_AnimeTheme>>> _themeCache = {};
 
-  static Map<String, dynamic> _map(dynamic value) {
-    if (value is Map<String, dynamic>) return value;
-    if (value is Map) return value.map((k, v) => MapEntry(k.toString(), v));
-    return <String, dynamic>{};
-  }
-
+  static Map<String, dynamic> _map(dynamic value) => value is Map
+      ? value.map((k, v) => MapEntry(k.toString(), v))
+      : <String, dynamic>{};
   static List<dynamic> _list(dynamic value) => value is List ? value : const [];
   static String _str(dynamic value) => value?.toString().trim() ?? '';
-  static String _norm(String value) =>
-      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
 
-  static Future<int?> _malId(int? id, String title) async {
-    if (id != null && id > 0) return id;
-    try {
-      final response = await _dio.get('https://api.jikan.moe/v4/anime',
-          queryParameters: {'q': title, 'limit': 5});
-      final rows = _list(_map(response.data)['data']);
-      if (rows.isEmpty) return null;
-      final wanted = _norm(title);
-      final exact = rows.where((raw) {
-        final row = _map(raw);
-        return [_str(row['title']), _str(row['title_english']), _str(row['title_japanese'])]
-            .any((v) => _norm(v) == wanted);
-      }).firstOrNull;
-      final value = _map(exact ?? rows.first)['mal_id'];
-      return value is num ? value.toInt() : int.tryParse('$value');
-    } catch (_) {
-      return null;
+  static Future<int?> _resolveMalId(int? anilistId, int? suppliedMalId) {
+    if (suppliedMalId != null && suppliedMalId > 0) {
+      return Future.value(suppliedMalId);
     }
+    if (anilistId == null || anilistId <= 0) return Future.value(null);
+    return _malIds.putIfAbsent(anilistId, () async {
+      try {
+        const query = r'query($id:Int!){Media(id:$id,type:ANIME){idMal}}';
+        final response = await _dio.post(_anilist, data: {
+          'query': query,
+          'variables': {'id': anilistId},
+        });
+        final media = _map(_map(response.data)['data'])['Media'];
+        final value = _map(media)['idMal'];
+        return value is num ? value.toInt() : int.tryParse(_str(value));
+      } catch (_) {
+        _malIds.remove(anilistId);
+        return null;
+      }
+    });
   }
 
-  static Future<List<_AnimePromo>> promos(int? id, String title) {
-    final key = id?.toString() ?? _norm(title);
+  static Future<List<_AnimePromo>> promos(int? anilistId, int? malId) async {
+    final key = 'a:${anilistId ?? 0}:m:${malId ?? 0}';
     return _promoCache.putIfAbsent(key, () async {
-      final mal = await _malId(id, title);
+      final mal = await _resolveMalId(anilistId, malId);
       if (mal == null) return const [];
       try {
-        final response = await _dio.get('https://api.jikan.moe/v4/anime/$mal/videos');
+        final response = await _dio.get('$_jikan/anime/$mal/videos');
         final data = _map(_map(response.data)['data']);
         final result = <_AnimePromo>[];
-        for (final raw in _list(data['promo'])) {
+        for (final raw in [..._list(data['promo']), ..._list(data['music_videos'])]) {
           final row = _map(raw);
           final trailer = _map(row['trailer']);
           final videoId = _str(trailer['youtube_id']);
           if (videoId.isEmpty) continue;
           final jpg = _map(_map(trailer['images'])['jpg']);
           final image = _str(jpg['maximum_image_url']).isNotEmpty
-              ? _str(jpg['maximum_image_url']) : _str(jpg['image_url']);
+              ? _str(jpg['maximum_image_url'])
+              : _str(jpg['large_image_url']).isNotEmpty
+                  ? _str(jpg['large_image_url'])
+                  : 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
           result.add(_AnimePromo(
             title: _str(row['title']).isEmpty ? 'Video promosi' : _str(row['title']),
             youtubeId: videoId,
@@ -65,151 +71,79 @@ class _AnimeExternalApi {
         }
         return result;
       } catch (_) {
+        _promoCache.remove(key);
         return const [];
       }
     });
   }
 
-  static Future<List<_AnimeTheme>> themes(int? id, String title) {
-    final key = id?.toString() ?? _norm(title);
-    return _themeCache.putIfAbsent(key, () async {
+  static Future<List<_AnimeTheme>> themes(int? anilistId, int? malId) async {
+    if (anilistId == null || anilistId <= 0) return const [];
+    return _themeCache.putIfAbsent(anilistId, () async {
       try {
-        final response = await _dio.get('https://api.animethemes.moe/anime',
-          queryParameters: {
-            'q': title,
-            'page[limit]': 5,
-            'include': 'animethemes.song.artists,animethemes.animethemeentries.videos',
-          });
+        const query = r'''
+          query($id:[Int!]) {
+            findAnimeByExternalSite(site:ANILIST,id:$id) {
+              slug resources(site:ANILIST){nodes{externalId}}
+              animethemes {
+                type sequence
+                song { title { romaji } performances { alias artist { name { main } } } }
+                animethemeentries { videos { nodes { link resolution } } }
+              }
+            }
+          }
+        ''';
+        final response = await _dio.post(_themes, data: {
+          'query': query,
+          'variables': {'id': [anilistId]},
+        });
         final root = _map(response.data);
-        final candidates = _list(root['anime']).isNotEmpty
-            ? _list(root['anime']) : _list(_map(root['search'])['anime']);
-        if (candidates.isNotEmpty) {
-          final wanted = _norm(title);
-          final matched = candidates.where((raw) =>
-              _norm(_str(_map(raw)['name'])) == wanted).firstOrNull;
-          final anime = _map(matched ?? (candidates.length == 1 ? candidates.first : null));
-          if (anime.isEmpty) return _jikanThemes(id, title);
-          final included = _list(root['included']).map(_map).toList();
-          final parsed = <_AnimeTheme>[];
-          for (final raw in _related(anime, 'animethemes', included, 'animethemes')) {
-            final theme = _map(raw);
-            final song = _relatedOne(theme, 'song', included, 'songs');
-            final songTitle = _str(song['title']);
-            final artists = _related(song, 'artists', included, 'artists').map((a) => _str(_map(a)['name']))
-                .where((v) => v.isNotEmpty).toList();
+        if (_list(root['errors']).isNotEmpty) throw StateError('AnimeThemes GraphQL error');
+        final animeRows = _list(_map(root['data'])['findAnimeByExternalSite']);
+        final result = <_AnimeTheme>[];
+        for (final rawAnime in animeRows) {
+          final anime = _map(rawAnime);
+          final ids = _list(_map(anime['resources'])['nodes'])
+              .map((e) => _map(e)['externalId']).whereType<num>().map((e) => e.toInt());
+          if (!ids.contains(anilistId)) continue;
+          for (final rawTheme in _list(anime['animethemes'])) {
+            final theme = _map(rawTheme);
+            final kind = _str(theme['type']).toUpperCase();
+            if (kind != 'OP' && kind != 'ED' && kind != 'IN') continue;
+            final song = _map(theme['song']);
+            final songTitle = _str(_map(song['title'])['romaji']);
+            if (songTitle.isEmpty) continue;
+            final artists = _list(song['performances']).map((p) {
+              final performance = _map(p);
+              return _str(performance['alias']).isNotEmpty
+                  ? _str(performance['alias'])
+                  : _str(_map(_map(performance['artist'])['name'])['main']);
+            }).where((v) => v.isNotEmpty).toList();
             String? videoUrl;
-            for (final entry in _related(theme, 'animethemeentries', included, 'animethemeentries')) {
-              final videos = _related(_map(entry), 'videos', included, 'videos');
+            for (final entry in _list(theme['animethemeentries'])) {
+              final videos = _list(_map(entry)['videos'] is Map
+                  ? _map(_map(entry)['videos'])['nodes']
+                  : null);
               if (videos.isEmpty) continue;
-              final video = _map(videos.first);
-              final link = _str(video['link']).isNotEmpty ? _str(video['link']) : _str(video['url']);
+              final link = _str(_map(videos.first)['link']);
               if (link.startsWith('https://')) { videoUrl = link; break; }
             }
-            final kind = _str(theme['type']).toUpperCase();
-            final rawSequence = theme['sequence'];
-            final sequence = rawSequence is num ? rawSequence.toInt() : int.tryParse('$rawSequence') ?? 1;
-            if ((kind == 'OP' || kind == 'ED') && songTitle.isNotEmpty) {
-              parsed.add(_AnimeTheme(kind: kind, sequence: sequence,
-                  title: songTitle, artists: artists, videoUrl: videoUrl));
-            }
-          }
-          parsed.addAll(await _jikanMusicVideos(id, title));
-          if (parsed.isNotEmpty) {
-            parsed.sort((a, b) {
-              final byType = a.kind.compareTo(b.kind);
-              return byType != 0 ? byType : a.sequence.compareTo(b.sequence);
-            });
-            return parsed;
+            final sequenceValue = theme['sequence'];
+            final sequence = sequenceValue is num ? sequenceValue.toInt() : int.tryParse(_str(sequenceValue)) ?? 1;
+            result.add(_AnimeTheme(kind: kind, sequence: sequence,
+                title: songTitle, artists: artists, videoUrl: videoUrl));
           }
         }
-      } catch (_) {}
-      final fallback = [...await _jikanThemes(id, title)];
-      fallback.addAll(await _jikanMusicVideos(id, title));
-      return fallback;
+        result.sort((a, b) {
+          final type = a.kind.compareTo(b.kind);
+          return type != 0 ? type : a.sequence.compareTo(b.sequence);
+        });
+        return result;
+      } catch (_) {
+        _themeCache.remove(anilistId);
+        return const [];
+      }
     });
-  }
-
-  static Future<List<_AnimeTheme>> _jikanMusicVideos(int? id, String title) async {
-    final mal = await _malId(id, title);
-    if (mal == null) return [];
-    try {
-      final response = await _dio.get('https://api.jikan.moe/v4/anime/$mal/videos');
-      final data = _map(_map(response.data)['data']);
-      final result = <_AnimeTheme>[];
-      final videos = _list(data['music_videos']);
-      for (var i = 0; i < videos.length; i++) {
-        final row = _map(videos[i]);
-        final video = _map(row['video']);
-        final url = _str(video['url']);
-        final meta = _map(row['meta']);
-        final songTitle = _str(meta['title']).isNotEmpty
-            ? _str(meta['title']) : _str(row['title']);
-        if (songTitle.isEmpty) continue;
-        result.add(_AnimeTheme(
-          kind: 'MV',
-          sequence: i + 1,
-          title: songTitle,
-          artists: _str(meta['author']).isEmpty ? const [] : [_str(meta['author'])],
-          videoUrl: url.startsWith('http') ? url : null,
-        ));
-      }
-      return result;
-    } catch (_) {
-      return [];
-    }
-  }
-
-  static List<Map<String, dynamic>> _related(
-    Map<String, dynamic> owner,
-    String key,
-    List<Map<String, dynamic>> included,
-    String type,
-  ) {
-    final direct = owner[key];
-    if (direct is List) return direct.map(_map).toList();
-    final relation = _map(_map(owner['relationships'])[key]);
-    final data = relation['data'];
-    final refs = data is List ? data : data == null ? const [] : [data];
-    return refs.map((ref) {
-      final id = _str(_map(ref)['id']);
-      return included.where((item) => _str(item['id']) == id &&
-          (_str(item['type']).isEmpty ||
-           _str(item['type']).toLowerCase().contains(type.toLowerCase())))
-          .firstOrNull ?? <String, dynamic>{};
-    }).where((item) => item.isNotEmpty).toList();
-  }
-
-  static Map<String, dynamic> _relatedOne(
-    Map<String, dynamic> owner,
-    String key,
-    List<Map<String, dynamic>> included,
-    String type,
-  ) {
-    final direct = owner[key];
-    if (direct is Map) return _map(direct);
-    return _related(owner, key, included, type).firstOrNull ?? <String, dynamic>{};
-  }
-
-  static Future<List<_AnimeTheme>> _jikanThemes(int? id, String title) async {
-    final mal = await _malId(id, title);
-    if (mal == null) return const [];
-    try {
-      final response = await _dio.get('https://api.jikan.moe/v4/anime/$mal/themes');
-      final data = _map(_map(response.data)['data']);
-      final result = <_AnimeTheme>[];
-      for (final group in [('OP', _list(data['openings'])), ('ED', _list(data['endings']))]) {
-        for (var i = 0; i < group.$2.length; i++) {
-          final value = _str(group.$2[i]);
-          if (value.isNotEmpty) {
-            result.add(_AnimeTheme(kind: group.$1, sequence: i + 1,
-                title: value, artists: const []));
-          }
-        }
-      }
-      return result;
-    } catch (_) {
-      return const [];
-    }
   }
 }
 
@@ -231,7 +165,8 @@ class _AnimeTheme {
 }
 
 class _ExternalTrailerSection extends StatefulWidget {
-  const _ExternalTrailerSection({required this.malId, required this.title});
+  const _ExternalTrailerSection({required this.anilistId, required this.malId, required this.title});
+  final int? anilistId;
   final int? malId;
   final String title;
   @override
@@ -245,7 +180,7 @@ class _ExternalTrailerSectionState extends State<_ExternalTrailerSection> {
   void _toggle() {
     setState(() {
       _expanded = !_expanded;
-      if (_expanded) _future ??= _AnimeExternalApi.promos(widget.malId, widget.title);
+      if (_expanded) _future ??= _AnimeExternalApi.promos(widget.anilistId, widget.malId);
       unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('trailer', _expanded));
     });
   }
@@ -316,7 +251,8 @@ class _ExternalTrailerSectionState extends State<_ExternalTrailerSection> {
 }
 
 class _AnimeMusicSection extends StatefulWidget {
-  const _AnimeMusicSection({required this.malId, required this.title});
+  const _AnimeMusicSection({required this.anilistId, required this.malId, required this.title});
+  final int? anilistId;
   final int? malId;
   final String title;
   @override
@@ -330,7 +266,7 @@ class _AnimeMusicSectionState extends State<_AnimeMusicSection> {
   void _toggle() {
     setState(() {
       _expanded = !_expanded;
-      if (_expanded) _future ??= _AnimeExternalApi.themes(widget.malId, widget.title);
+      if (_expanded) _future ??= _AnimeExternalApi.themes(widget.anilistId, widget.malId);
       unawaited(sl<PlaybackPrefs>().setDetailSectionExpanded('music', _expanded));
     });
   }
